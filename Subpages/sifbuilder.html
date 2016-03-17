@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>SIFBuilder</title>
+
+    <link rel="stylesheet" href="../stylesheets/styles.css">
+    <link rel="stylesheet" href="../stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+      <div class="wrapper">
+      <header>
+        <h1>OpenSees for Fire</h1>
+        <p></p>
+
+        <ul>
+          <li><a href="../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/LimingXLiming/OpenSees">View On <strong>GitHub</strong></a></li>
+        </ul>
+        
+         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../user.html">Users </a></p></h4>
+        <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../pubs.html">Publications </a></p></h4>
+          
+      </header>
+<section>
+      
+<h3>SIFBuilder</h3>
+    <hr>
+<h4> Introduction to this tool</h4>
+
+<p>In order to move towards a more comprehensive solution for a unified analysis, development of an OpenSees based research tool named SIFBuilder was started in 2014, which aims to perform automated structural fire analyses for large structures under realistic fires. It is a comprehensive computational tool, which could enable structural engineers to obtain the structural response automatically with the application of the fire load on the structure in the same manner as any other form of load and so provide a performance-based structural fire engineering tool.
+SIFBuilder requires the user to input basic structural information for generating the structural model. Procedural scripts are written to specify geometry, materials, loads, heat transfer parameters, fire type, analysis procedures, solution algorithm and output requirements using Tool Command Language / Tool Kit (Tcl/Tk). A typical user input script for model generation includes: model type definition for identifying the dimension of analysis (2D or 3D), geometry of the structure (bay length in each directions in a Cartesian coordinate system), material type and cross section type for the structure members, and boundary conditions for the structural model.
+Following model generation, the user defines the structural loading and thereafter the fire loading information. SIFBuilder is programmed to hold the thermal loading information throughout the structural analysis. Subsequently, the heat transfer analysis module launches and the nodal temperature histories are automatically mapped to the fibres of the structural mesh. Following the heat transfer analysis, structural analysis is performed on the building, accounting for the degraded material properties. Hence, the output generated will be the result of a thermo-mechanical analysis in response to realistic fire scenarios. Figure 1 shows the flow chart of different operations in the project SIFBuilder.<br>
+</p>
+
+        
+<h4> User Documentation for Fire</h4>
+
+<p>The following documents are specially developed for OpenSees for fire. <br>
+</p>
+
+<h5> <p class="view"><a href="pubs.html">Getting Started with OpenSeesThermal </a></p></h5>
+    <p>This documentation provides a basic understanding on how to evaluate the structural response in fire using OpenSeesThermal. Relevent Tcl Commands are illustrated by several examples.  <br>
+     </p>   
+<h5> <p class="view"><a href="pubs.html">Command Manual for OpenSeesThermal </a></p></h5>
+    <p>This manual provides a list of all new commands along with its attributes.  <br>
+     </p>   
+<h5> <p class="view"><a href="sifbuilder.html">SIFBuilder Project </a></p></h5>
+    <p>SIFBuilder is developed as an computational tool to perfomr integrated analysis of structures in fire <br>
+     </p>   
+<h5> <p class="view"><a href="pubs.html">Examples for OpenSeesThermal </a></p></h5>
+    <p>Examples are presented to demonstrate the thermomechanical analyses using the thermal version of OpenSees Framework. These are in addition to the simple example discussed in Getting Started with OpenSees Thermal. <br>
+     </p> 
+
+
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/LimingXLiming">LimingXLiming</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
