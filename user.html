@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>About OpenSees for fire</title>
+    <title>For Users</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/github-light.css">
@@ -33,30 +33,35 @@
       </header>
 <section>
       
-<h3>About OpenSees for Fire</h3>
+<h3>For Users</h3>
     <hr>
-<h4>
-<a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Objectives and scope</h4>
+<h4> User Documentation at Main OpenSees Site</h4>
 
-<p>The aim of this work is to add a "structures in fire" modelling capability in OpenSees. The following functionality will be provided: <br>
-1. Fire load modelling to provide boundary conditions for the subsequent heat transfer into structural components <br>
-2. Modelling of heat transfer into structural components to determine accurate evolution of structural temperatures over space and time <br>
-3. Implementing temperature dependent material properties for the main material models available in OpenSees (currently steel and concrete only)<br>
-4. Implementing temperature dependent transient thermal strain or LITS (load induced thermal strain) type effects<br>
-5. Modification of 2D and 3D beam element and shell element classes available in OpenSees to develop new classes that account for thermal effects in order to model the thermo-mechanical response of structures<br>
-6. Enabling modelling of earthquake damaged structures in fire </p>
+<p>It is important for all users who intend to use the thermal version of OpenSees to first read the user manuals on OpenSees Berkley Site. A pdf version of the step-by-step instructions on downloading,installing and using OpenSees can be downloaded here.<br>
+</p>
 
-<h4>
-<a id="developers" class="anchor" href="#developers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Work done so far</h4>
+<h5> <p class="view"><a href="pubs.html">Getting Started Manual </a></p></h5>
+    <p>This getting started manual provides step by step instructions on how to download, install and use OpenSees. <br>
+        
+<h5> <p class="view"><a href="pubs.html">Command Manual </a></p></h5>
+    <p>The command manual gives a list of commands that have been added to Tcl by the OpenSees interpreter. <br>
+        
+<h4> User Documentation at Main OpenSees Site</h4>
 
-<p>Significant progress has been made on items 1, 2, 3, 5 and 6 above and all completed and tested work can be downloaded from these pages. This is currently limited to thermomechanical analysis of planar (2D) frames. All the completed and tested development work has also been forwarded to OpenSees Berkeley for inclusion in the next general release.</p>
+<p>The following documents are specially developed for OpenSees for fire. <br>
+</p>
 
-<h4>
-<a id="publications" class="anchor" href="#publications" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Planned future work</h4>
+<h5> <p class="view"><a href="pubs.html">Getting Started with OpenSeesThermal </a></p></h5>
+    <p>This documentation provides a basic understanding on how to evaluate the structural response in fire using OpenSeesThermal. Relevent Tcl Commands are illustrated by several examples.  <br>
+     </p>   
+<h5> <p class="view"><a href="pubs.html">Command Manual for OpenSeesThermal </a></p></h5>
+    <p>This manual provides a list of all new commands along with its attributes.  <br>
+     </p>   
+<h5> <p class="view"><a href="pubs.html">Examples for OpenSeesThermal </a></p></h5>
+    <p>Examples are presented to demonstrate the thermomechanical analyses using the thermal version of OpenSees Framework. These are in addition to the simple example discussed in Getting Started with OpenSees Thermal. <br>
+     </p> 
 
-<p>The immediate next step will be to complete the 3D thermomechanical analysis and thoroughly test it in the same way as the 2D work has been and make it available for integration into the next OpenSees release.<br>
-The medium term work will focus on integrating the inputs required for Fire and Heat Transfer analysis into the current tcl-tk scripting system. When complete this work will enable the modelling of structures subjected to complex evolutions of temperatures in space and time much more conveniently than is possible now (even with commercial codes).<br>
-Once the above is completed our longer term plan is to develop an interface between OpenSees and the open CFD code OpenFOAM (which can simulate external combustion or fires).</p>
+
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/LimingXLiming">LimingXLiming</a></p>
