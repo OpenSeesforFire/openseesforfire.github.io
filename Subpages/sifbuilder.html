@@ -37,29 +37,35 @@
     <hr>
 <h4> Introduction to this tool</h4>
 
-<p>In order to move towards a more comprehensive solution for a unified analysis, development of an OpenSees based research tool named SIFBuilder was started in 2014, which aims to perform automated structural fire analyses for large structures under realistic fires. It is a comprehensive computational tool, which could enable structural engineers to obtain the structural response automatically with the application of the fire load on the structure in the same manner as any other form of load and so provide a performance-based structural fire engineering tool.
-SIFBuilder requires the user to input basic structural information for generating the structural model. Procedural scripts are written to specify geometry, materials, loads, heat transfer parameters, fire type, analysis procedures, solution algorithm and output requirements using Tool Command Language / Tool Kit (Tcl/Tk). A typical user input script for model generation includes: model type definition for identifying the dimension of analysis (2D or 3D), geometry of the structure (bay length in each directions in a Cartesian coordinate system), material type and cross section type for the structure members, and boundary conditions for the structural model.
-Following model generation, the user defines the structural loading and thereafter the fire loading information. SIFBuilder is programmed to hold the thermal loading information throughout the structural analysis. Subsequently, the heat transfer analysis module launches and the nodal temperature histories are automatically mapped to the fibres of the structural mesh. Following the heat transfer analysis, structural analysis is performed on the building, accounting for the degraded material properties. Hence, the output generated will be the result of a thermo-mechanical analysis in response to realistic fire scenarios. Figure 1 shows the flow chart of different operations in the project SIFBuilder.<br>
+<p>Development of OpenSees Thermal is an ongoing project and is presently limited to only a few elements, material models and fire scenarios. This cannot fully exploit the great potential of the OpenSees framework. Furthermore, a single software to carry out the full set of analyses including realistic fire load modelling (e.g. localised and travelling fires); heat transfer to structural components (by radiation, convection and conduction); and structural response, is still unavailable. In order to move towards a more comprehensive solution for a unified analysis, an OpenSees based research tool named SIFBuilder is proposed, which aims to perform automated structural fire analyses for large structures under realistic fires. It is a comprehensive computational tool, which could enable structural engineers to obtain the structural response automatically with the application of the fire load on the structure in the same manner as any other form of load and so provide a performance-based structural fire engineering tool. It would potentially also become a testbed to foster a wide range of future developments, which may be new fire models featuring advanced characteristics in terms of fire science, or new thermo-mechanical constitutive models for materials, sections and elements to improve the accuracy and efficiency of integrated simulations. <br>
+
+For modelling structures subjected to fire loading, the heat transfer analyses and the subsequent definitions of thermal actions presents a much greater level of complexity. C++ based process is thus adopted, taking advantage of its object-oriented property and the generalised application interfaces (APIs) to the OpenSees classes. As an individual project in OpenSees, SIFBuilder is designed to be a hub that communicates with different modules and controls the integrated analysis based on user instructions via the Tcl interpreter. Here new Tcl commands are specially developed for SIFBuilder, and have been kept simple in terms of the grammar and intuitive in terms of the architecture. <br>
 </p>
 
         
-<h4> User Documentation for Fire</h4>
+<h4> SIFBuilder workflow</h4>
 
-<p>The following documents are specially developed for OpenSees for fire. <br>
+<p>Unlike commercial packages, neither OpenSees nor SIFBuilder have a graphical user interface (GUI). However, there is a script based user input capability based on Tcl, which provides considerable flexibility and scope due to its programmable nature. Similar to other commonly used FEM software, SIFBuilder requires the user to input basic structural information for generating the structural model. Procedural scripts are written to specify geometry, materials, loads, heat transfer parameters, fire type, analysis procedures, solution algorithm and output requirements using Tcl commands. A <i>SIFModel</i> is firstly created to store the building information, for which the typical user input script includes:<br>
+
+(1) model type definition for identifying the dimension of analysis (2D or 3D); <br>
+(2) geometry of the structure (bay lengths in each direction and storey heights in a Cartesian coordinate system);<br>
+(3) material type and cross section type for the structural members;<br>
+(4) boundary conditions for the structural model.<br> 
+
+Following the <i>SIFModel</i> generation, a user may define:<br>
+(5) structural loading (point load at joints or uniformly distributed load on members);<br>
+(6) and thereafter the fire loading information.<br>
+
+The mechanical load and fire action are stored in the \textsf{SIFModel}, out of which a finite element model can be created as:<br>
+(7) building FE model with mesh control specified.<br>
+
+Data output after creating FE model can be requested as:<br>
+(8) a variety of SIFRecorders which captures the nodal displacement or elemental forces.<br>
+
+Finally the full set of loading can be set up and executed by:<br>
+(9) \textsf{SIFAnalyze} command followed by incremental step and number of steps that are defined for each corresponding analysis. <br>
 </p>
 
-<h5> <p class="view"><a href="pubs.html">Getting Started with OpenSeesThermal </a></p></h5>
-    <p>This documentation provides a basic understanding on how to evaluate the structural response in fire using OpenSeesThermal. Relevent Tcl Commands are illustrated by several examples.  <br>
-     </p>   
-<h5> <p class="view"><a href="pubs.html">Command Manual for OpenSeesThermal </a></p></h5>
-    <p>This manual provides a list of all new commands along with its attributes.  <br>
-     </p>   
-<h5> <p class="view"><a href="sifbuilder.html">SIFBuilder Project </a></p></h5>
-    <p>SIFBuilder is developed as an computational tool to perfomr integrated analysis of structures in fire <br>
-     </p>   
-<h5> <p class="view"><a href="pubs.html">Examples for OpenSeesThermal </a></p></h5>
-    <p>Examples are presented to demonstrate the thermomechanical analyses using the thermal version of OpenSees Framework. These are in addition to the simple example discussed in Getting Started with OpenSees Thermal. <br>
-     </p> 
 
 
       </section>
