@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>SIFBuilder</title>
+    <title>OpenSees for Fire</title>
 
     <link rel="stylesheet" href="../stylesheets/styles.css">
     <link rel="stylesheet" href="../stylesheets/github-light.css">
@@ -53,6 +53,9 @@ As an individual project in OpenSees, SIFBuilder is designed to be a hub that co
 <hr>
 <h4> SIFBuilder workflow</h4>
 
+     <img src="../images/workflowSif.png" alt="OPS_logo" style="width:840px;">    
+<center><small>Figure 1:  Workflow of using SIFBuilder</small></center>   
+    
 <p>Unlike commercial packages, neither OpenSees nor SIFBuilder have a graphical user interface (GUI). However, there is a script based user input capability based on Tcl, which provides considerable flexibility and scope due to its programmable nature. Similar to other commonly used FEM software, SIFBuilder requires the user to input basic structural information for generating the structural model. Procedural scripts are written to specify geometry, materials, loads, heat transfer parameters, fire type, analysis procedures, solution algorithm and output requirements using Tcl commands. A <i>SIFModel</i> is firstly created to store the building information, for which the typical user input script includes:</p>
 
 <ul class="a">
@@ -79,18 +82,32 @@ Finally the full set of loading can be set up and executed by:
 <ul class="a">
 <li><i>SIFAnalyze</i> command followed by incremental step and number of steps that are defined for each corresponding analysis.</li> 
 </ul>
-
- <img src="../images/workflowSif.png" alt="OPS_logo" style="width:840px;">    
-<center><small>Figure 1:  Workflow of using SIFBuilder</small></center>    
-  
+   
 <hr>
 <h4> SIFBuilder Script demo</h4>
+<code>
+SIFBuilder; <br>
+SIFXBay 6 9 ; <br>
+SIFZBay 6 9;<br>
+SIFStorey 5 4;<br>
+AddMaterial steel 1 -type EC3 3e8  2e11;<br>
+AddSection ISection 1 1 0.203 0.102 0.0054 0.009;<br>
+AssignSection beams 1;<br>
+SetBC fixedJoint -locy 0; <br>
+AddLoad -member allslabs -load 0 -1000 0;<br>
+AddFire -compartment 111 -type standard;<br>
+BuildModel -MeshCtrl 6 6 6;<br>
+SIFRecorder Joint -file Joint111.out -joint 111 disp;   <br>
+SIFAnalyze Load -dt 0.2 Fire -dt 30 -duration 1800 -output HTData; <br>
+    
+</code>
 
-
-
+<br>
+<hr>
+<small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
       <footer>
-        <p>This project is maintained by <a href="https://github.com/LimingXLiming">LimingXLiming</a></p>
+        <p>This project is maintained by <a href="https://github.com/Liming Jiang">LimingXLiming</a></p>
         <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
     </div>
