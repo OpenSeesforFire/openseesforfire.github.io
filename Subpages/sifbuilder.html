@@ -23,7 +23,7 @@
         <ul>
           <li><a href="../index.html">Back<strong>Home</strong></a></li>
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
-          <li><a href="https://github.com/LimingXLiming/OpenSees">View On <strong>GitHub</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
         
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
@@ -58,30 +58,26 @@ As an individual project in OpenSees, SIFBuilder is designed to be a hub that co
     
 <p>Unlike commercial packages, neither OpenSees nor SIFBuilder have a graphical user interface (GUI). However, there is a script based user input capability based on Tcl, which provides considerable flexibility and scope due to its programmable nature. Similar to other commonly used FEM software, SIFBuilder requires the user to input basic structural information for generating the structural model. Procedural scripts are written to specify geometry, materials, loads, heat transfer parameters, fire type, analysis procedures, solution algorithm and output requirements using Tcl commands. A <i>SIFModel</i> is firstly created to store the building information, for which the typical user input script includes:</p>
 
-<ul class="a">
+<ol class="a">
   <li>model type definition for identifying the dimension of analysis (2D or 3D);</li>
   <li>geometry of the structure (bay lengths in each direction and storey heights in a Cartesian coordinate system);</li>
   <li>material type and cross section type for the structural members;</li>
  <li>boundary conditions for the structural model.</li>
-</ul>
-
-Following the <i>SIFModel</i> generation, a user may define:
-<ul class="a">
+<br>
+Following the <b>SIFModel</b> generation, a user may define:
+<br>
 <li>structural loading (point load at joints or uniformly distributed load on members);</li>
 <li>and thereafter the fire loading information.</li>
-</ul>
-The mechanical load and fire action are stored in the <i>SIFModel</i>, out of which a finite element model can be created as:
-<ul class="a">
+<br>
+The mechanical load and fire action are stored in the <b>SIFModel</b>, out of which a finite element model can be created as:
 <li>building FE model with mesh control specified.</li> 
-</ul>
+<br>
 Data output after creating FE model can be requested as:
-<ul class="a">
 <li>a variety of SIFRecorders which captures the nodal displacement or elemental forces.</li> 
-</ul>
+<br>
 Finally the full set of loading can be set up and executed by:
-<ul class="a">
-<li><i>SIFAnalyze</i> command followed by incremental step and number of steps that are defined for each corresponding analysis.</li> 
-</ul>
+<li><b>SIFAnalyze</b> command followed by incremental step and number of steps that are defined for each corresponding analysis.</li> 
+</ol>
    
 <hr>
 <h4> SIFBuilder Script demo</h4>

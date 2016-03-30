@@ -23,7 +23,7 @@
         <ul>
           <li><a href="../index.html">Back<strong>Home</strong></a></li>
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
-          <li><a href="https://github.com/LimingXLiming/OpenSees">View On <strong>GitHub</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
         
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
@@ -55,34 +55,60 @@ Heat transfer analysis in OpenSees is based on the finite element method to solv
 <p>
 First and foremost, the module is activated by <i>HeatTransfer</i> to enable the application of the relevant commands and facilities. Notice that the argument following the <i>HeatTransfer</i> command shall define the number of dimensions that can be either 1D or 2D or 3D, which is useful in the cases that dimensional reduction is applied. 
 </p>
-<p>
-<i>HTMesh</i> shall be in association with <i>HTMaterial</i> and <i>HTEntity</i>, which accepts a wide range of entity types that are linked to the subclasses in the SimpleEntity family. The available types of entities and their usage can be found in detail in the later section. Seed distribution for the mesh can be refined if necessary by providing a vector containing element size and number. The final mesh is completed once <i>HTMeshAll</i> is detected. </p>
-<p>
-This is followed by a few commands to declare the appropriate boundary conditions, as either fixed (<i>HTSetT</i>) or coupled (<i>HTcoupleT</i>) temperatures. Constants shall be defined before the heat flux boundary conditions are specified which list the coefficient of convection to or from ambient, ambient air temperature and the resultant emissivity of the fire plume. </p>
-<p>
-<i>HTPattern</i> is then used in association with <i>AmbientBC</i> for describing the heat loss to the ambient environment, while the keyword <i>FireExp</i> is to invoke fire exposure defined as a specified fire model ranging from uniform fire action to localised fire exposure. Before proceeding to heat transfer analysis definition, heat transfer results can be requested via HTRecorder command. </p>
-<p>
-Heat transfer analysis is finally completed after receiving <i>HTAnalyze</i> and thereafter the model can be wiped out using command <i>wipeHT</i>.</p>
+<ol class="a">
+<li>
+<b>HTMesh</b> shall be in association with <b>HTMaterial</b> and <b>HTEntity</b>, which accepts a wide range of entity types that are linked to the subclasses in the SimpleEntity family. The available types of entities and their usage can be found in detail in the later section. Seed distribution for the mesh can be refined if necessary by providing a vector containing element size and number. The final mesh is completed once <b>HTMeshAll</b> is detected. 
+</li>
+<li>
+This is followed by a few commands to declare the appropriate boundary conditions, as either fixed (<b>HTSetT</b>) or coupled (<b>HTcoupleT</b>) temperatures. Constants shall be defined before the heat flux boundary conditions are specified which list the coefficient of convection to or from ambient, ambient air temperature and the resultant emissivity of the fire plume. 
+</li>
+<li>
+<b>HTPattern</b> is then used in association with <b>AmbientBC</b> for describing the heat loss to the ambient environment, while the keyword <b>FireExp</b> is to invoke fire exposure defined as a specified fire model ranging from uniform fire action to localised fire exposure. Before proceeding to heat transfer analysis definition, heat transfer results can be requested via HTRecorder command. 
+</li>
+<li>
+Heat transfer analysis is finally completed after receiving <b>HTAnalyze</b> and thereafter the model can be wiped out using command <b>wipeHT</b>.
+</li>
+</ol>
    
 <hr>
 <h4> SIFBuilder Script demo</h4>
 <code>
-SIFBuilder; <br>
-SIFXBay 6 9 ; <br>
-SIFZBay 6 9;<br>
-SIFStorey 5 4;<br>
-AddMaterial steel 1 -type EC3 3e8  2e11;<br>
-AddSection ISection 1 1 0.203 0.102 0.0054 0.009;<br>
-AssignSection beams 1;<br>
-SetBC fixedJoint -locy 0; <br>
-AddLoad -member allslabs -load 0 -1000 0;<br>
-AddFire -compartment 111 -type standard;<br>
-BuildModel -MeshCtrl 6 6 6;<br>
-SIFRecorder Joint -file Joint111.out -joint 111 disp;   <br>
-SIFAnalyze Load -dt 0.2 Fire -dt 30 -duration 1800 -output HTData; <br>
-    
+HeatTransfer 2D; <br>
+HTMaterial CarbonSteelEC3 1; <br>
+HTMaterial ConcreteEC2 2 0.0; <br>
+HTEntity Isection 1 0.0 0.2 0.4 0.20 0.02 0.02;<br>
+HTEntity  Block   2    0.0      0.45     0.6    0.1;<br>
+HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.0198;<br>
+HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02;<br> 
+HTRefineMesh -Entity 2 -SeedTag 1 4 -space 0.02 10 0.01 9 0.005 4 0.01 9 0.02 10;<br>
+HTMeshAll;<br>
+<br>
+SetInitialT 293.15;<br>
+HTNodeSet 1 -Entity 1 -face 12;<br>
+HTNodeSet 2 -Entity 2 -face 1 -locx -0.1 0.1;<br>
+HTCoupleT -NodeSet 1 2;<br>
+HTConstants 1 4.0 293.15 0.7 5.67e-8 0.7;<br>
+HTConstants 2 25.0 293.15 0.7 5.67e-8 0.7;<br>
+<br>
+HTPattern AmbientBC 1 { <br>
+	HeatFluxBC -HTEntity 2 -faceTag 4 -type ConvecAndRad -HTConstants 1; <br>	
+}<br>
+FireModel standard 1; <br>
+HTNodeSet 3 -Entity 2 -Locx -0.3 -0.1;<br>
+HTEleSet 1 -Entity 2 -NodeSet 3 -face 1;<br>
+HTNodeSet 4 -Entity 2 -Locx 0.1 0.3;<br>
+HTEleSet 2 -Entity 2 -NodeSet 4 -face 1;<br>
+HTPattern fire 2 model 1 {<br>
+	HeatFluxBC -HTEntity 1 -face 1 4 5 6 7 8 9 -type ConvecAndRad -HTConstants 2;	<br>
+	HeatFluxBC -HTEleSet 1 -face 1 -type ConvecAndRad -HTConstants 2;<br>
+	HeatFluxBC -HTEleSet 2 -face 1 -type ConvecAndRad -HTConstants 2;<br>
+} <br>
+HTRecorder -file temp0.out -NodeSet 1;<br>
+HTRecorder -file temp1.out -NodeSet 2;<br>
+HTAnalysis HeatTransfer<br>
+HTAnalyze 20 30;<br>	
+wipeHT; <br> 
 </code>
-
 <br>
 <hr>
 <small><p>This page is created by Liming Jiang, 2016</p></small>

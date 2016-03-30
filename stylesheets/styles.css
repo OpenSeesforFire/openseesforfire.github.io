@@ -233,9 +233,8 @@ section {
 small {
   font-size:11px;
 }
-
-ul.a {
-    list-style-type: circle;
+ol.a {
+    list-style-type: decimal;
 }
 header li.a {
   width:89px;
@@ -264,6 +263,13 @@ nav {
   height:50px;
   background:#006699;
   border-right: none;
+}
+
+div.box{
+    
+    padding: 10px;
+    border: 1px dashed #1380B6;
+    margin: 20px;
 }
 
 @media print, screen and (max-width: 1200px) {

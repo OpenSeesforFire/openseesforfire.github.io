@@ -35,44 +35,35 @@
       </header>
 <section>
       
-<h2>Command Manual for OpenSees Thermal</h2>
+<h2>Commands for Heat Transfer Analysis in OpenSees</h2>
     <hr>
 <p>
- This command manual is specially developed for modelling 'Structures in fire' in OpenSees. The work refers to the PhD projects of Dr. Jian Jiang, Dr. Yaqiang Jiang, Dr. Jian Zhang, Dr. Liming Jiang.</p>
+ This page explains the commands used for heat transfer analysis in OpenSees </p>
 
 <hr>
 
-<h4>Thermo-mechanical analysis</h4>
-<ul class="a">
-<li> Material </li> 
-<li> Section </li>
-<li> Element </li>
-<li> Thermal Load </li>
-</ul>
+<h4>HeatTransfer</h4>
+<b>HeatTransfer</b> command is used to activate the Heat Transfer module, which is followed by <i>2D</i> or <i>3D</i> to initialise a 2D or 3D environment. Commands can be written as:
+
+<div class="box">
+<code>
+HeatTransfer 2D <br>
+or <br>
+HeatTransfer 3D <br>
+</code>
+</div>
+
 
 <hr>
-<h4> Heat transfer analysis </h4>
-<ul class="a">
-<li><a href="HTcommands1.html"><b> HeatTransfer</b></a> </li>
-<li> <a href="HTcommands1.html"><b> HTMaterial</b></a></li> 
-<li> HTEntity </li>
-<li> HTMesh </li>
-<li> HTMeshAll </li>
-<li> HTConstants </li>
-<li> HTPattern </li>
-<li> FireModel </li>
-<li> HTNodeSet </li>    
-    
-</ul>
-    
-<hr>
-<h4> Using SIFBuilder </h4>
-<ul class="a">
-<li> 2X2X2 frame building </li> 
-<li> Plane frame </li>
-</ul>
 
-    
+<h4> HTMaterial </h4>
+<b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
+
+<div class="box">
+<code>
+HTMaterial $matType $matTag <$par1 $par2..>
+</code>
+</div>
 
 <br>
 <hr>
