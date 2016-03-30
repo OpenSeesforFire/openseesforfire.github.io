@@ -35,53 +35,34 @@
       </header>
 <section>
       
-<h2>SIFBuilder</h2>
+<h2>Heat Transfer in OpenSees</h2>
     <hr>
-<h4> Introduction to this tool</h4>
+<h4> Introduction</h4>
 
 <p>
-In order to move towards a more comprehensive solution for a unified analysis, SIFBuilder is proposed and aims to perform automated structural fire analyses for large structures under realistic fires. </p>
+Tcl command library has been added to facilitate the script based usage of OpenSees. Since the fire and heat transfer modules were developed, it is desirable to have corresponding Tcl commands for performing heat transfer analyses in OpenSees. This will significantly reduce the complexity in constructing a heat transfer model without requiring knowledge of C++ programming as a user. </p>
 <p>
-It is a comprehensive computational tool, which could enable structural engineers to obtain the structural response automatically with the application of the fire load on the structure in the same manner as any other form of load and so provide a performance-based structural fire engineering tool. </p>
-<p>
-It would potentially also become a testbed to foster a wide range of future developments, which may be new fire models featuring advanced characteristics in terms of fire science, or new thermo-mechanical constitutive models for materials, sections and elements to improve the accuracy and efficiency of integrated simulations. </p>
-<p>
-For modelling structures subjected to fire loading, the heat transfer analyses and the subsequent definitions of thermal actions presents a much greater level of complexity. C++ based process is thus adopted, taking advantage of its object-oriented property and the generalised application interfaces (APIs) to the OpenSees classes.  </p>
-<p>
-As an individual project in OpenSees, SIFBuilder is designed to be a hub that communicates with different modules and controls the integrated analysis based on user instructions via the Tcl interpreter. Here new Tcl commands are specially developed for SIFBuilder, and have been kept simple in terms of the grammar and intuitive in terms of the architecture. </p>
+Heat transfer analysis in OpenSees is based on the finite element method to solve the transient governing equations. Therefore a mesh tool becomes necessary to discretise the model into nodes and elements.</p>
   
 <hr>
-<h4> SIFBuilder workflow</h4>
+<h4> Heat Transfer Workflow</h4>
 
-     <img src="../images/workflowSif.png" alt="OPS_logo" style="width:840px;">    
-<center><small>Figure 1:  Workflow of using SIFBuilder</small></center>   
+     <img src="../images/TclforHTfolowchart0.png"  style="width:840px;">    
+<center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>   
     
-<p>Unlike commercial packages, neither OpenSees nor SIFBuilder have a graphical user interface (GUI). However, there is a script based user input capability based on Tcl, which provides considerable flexibility and scope due to its programmable nature. Similar to other commonly used FEM software, SIFBuilder requires the user to input basic structural information for generating the structural model. Procedural scripts are written to specify geometry, materials, loads, heat transfer parameters, fire type, analysis procedures, solution algorithm and output requirements using Tcl commands. A <i>SIFModel</i> is firstly created to store the building information, for which the typical user input script includes:</p>
+<p>For users who want to conduct heat transfer analysis with OpenSees, it is necessary to follow the flowchart shown in Figure 1 when organising the Tcl commands and creating the script.</p>
 
-<ul class="a">
-  <li>model type definition for identifying the dimension of analysis (2D or 3D);</li>
-  <li>geometry of the structure (bay lengths in each direction and storey heights in a Cartesian coordinate system);</li>
-  <li>material type and cross section type for the structural members;</li>
- <li>boundary conditions for the structural model.</li>
-</ul>
-
-Following the <i>SIFModel</i> generation, a user may define:
-<ul class="a">
-<li>structural loading (point load at joints or uniformly distributed load on members);</li>
-<li>and thereafter the fire loading information.</li>
-</ul>
-The mechanical load and fire action are stored in the <i>SIFModel</i>, out of which a finite element model can be created as:
-<ul class="a">
-<li>building FE model with mesh control specified.</li> 
-</ul>
-Data output after creating FE model can be requested as:
-<ul class="a">
-<li>a variety of SIFRecorders which captures the nodal displacement or elemental forces.</li> 
-</ul>
-Finally the full set of loading can be set up and executed by:
-<ul class="a">
-<li><i>SIFAnalyze</i> command followed by incremental step and number of steps that are defined for each corresponding analysis.</li> 
-</ul>
+<p>
+First and foremost, the module is activated by <i>HeatTransfer</i> to enable the application of the relevant commands and facilities. Notice that the argument following the <i>HeatTransfer</i> command shall define the number of dimensions that can be either 1D or 2D or 3D, which is useful in the cases that dimensional reduction is applied. 
+</p>
+<p>
+<i>HTMesh</i> shall be in association with <i>HTMaterial</i> and <i>HTEntity</i>, which accepts a wide range of entity types that are linked to the subclasses in the SimpleEntity family. The available types of entities and their usage can be found in detail in the later section. Seed distribution for the mesh can be refined if necessary by providing a vector containing element size and number. The final mesh is completed once <i>HTMeshAll</i> is detected. </p>
+<p>
+This is followed by a few commands to declare the appropriate boundary conditions, as either fixed (<i>HTSetT</i>) or coupled (<i>HTcoupleT</i>) temperatures. Constants shall be defined before the heat flux boundary conditions are specified which list the coefficient of convection to or from ambient, ambient air temperature and the resultant emissivity of the fire plume. </p>
+<p>
+<i>HTPattern</i> is then used in association with <i>AmbientBC</i> for describing the heat loss to the ambient environment, while the keyword <i>FireExp</i> is to invoke fire exposure defined as a specified fire model ranging from uniform fire action to localised fire exposure. Before proceeding to heat transfer analysis definition, heat transfer results can be requested via HTRecorder command. </p>
+<p>
+Heat transfer analysis is finally completed after receiving <i>HTAnalyze</i> and thereafter the model can be wiped out using command <i>wipeHT</i>.</p>
    
 <hr>
 <h4> SIFBuilder Script demo</h4>
