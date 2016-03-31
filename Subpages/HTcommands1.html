@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../stylesheets/styles.css">
+    <link rel="stylesheet" href="../stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav> 
+      <center><img src="../images/banner.png" style="height:50px;"></center>
+      </nav>
+      
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+        
+        <h4> <p class="view"><a href="../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../user.html">Users </a></p></h4>
+        <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../pubs.html">Publications </a></p></h4>
+          
+      </header>
+<section>
+      
+<h2>Commands for Heat Transfer Analysis in OpenSees</h2>
+    <hr>
+<p>
+ This page explains the commands used for heat transfer analysis in OpenSees </p>
+
+<hr>
+
+<h4>HeatTransfer</h4>
+<b>HeatTransfer</b> command is used to activate the Heat Transfer module, which is followed by <i>2D</i> or <i>3D</i> to initialise a 2D or 3D environment. Commands can be written as:
+
+<div class="box">
+<code>
+HeatTransfer 2D <br>
+or <br>
+HeatTransfer 3D <br>
+</code>
+</div>
+
+
+<hr>
+
+<h4> HTMaterial </h4>
+<b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
+
+<div class="box">
+<code>
+HTMaterial $matType $matTag <$par1 $par2..> 
+</code>
+</div>
+
+Currently, there are three types of material can be defined, which may be extended to meet future needs. Examples of different materials are defined as follows for steel, concrete and generic material.
+<div class="box">
+<code>
+HTMaterial ECSteel 1
+</code>
+</div>
+    
+<br>
+<hr>
+<small><p>This page is created by Liming Jiang, 2016</p></small>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/LimingXLiming">Liming Jiang</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
