@@ -51,10 +51,41 @@
 
 <div class="box">
 <code>
-HTEntity $EntityTYpe $EntityTag $Centrelocx $Centrelocy < centreLocz > <br>
+HTEntity $EntityTYpe $EntityTag $Centrelocx $Centrelocy < centreLocz > $dim1 < $dim2 $dim3 ...> <br>
 </code>
 </div>
+<p>
+The parameters for defiing <b> HTEntity</b> are listed in th following tables:</p>
+<table style="width:80%">
+  <tr>
+    <td>Category</td>
+    <td>EntityType</td> 
+    <td>Centroid</td>
+	<td>Dimension</td>
+  </tr>
+  <tr>
+    <td>1D</td>
+    <td>Line</td>
+    <td>x<sub>c</sub></td>
+	<td>l</td>
+  </tr>
+    <tr>
+    <td>2D</td>
+    <td>Block</td>
+    <td>x<sub>c</sub>, y<sub>c</sub></td>
+	<td>b,d</td>
+  </tr>
+    </tr>
+    <tr>
+    <td>2D</td>
+    <td>Isection</td>
+    <td>x<sub>c</sub>, y<sub>c</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub></td>
+  </tr>
+</table>
 
+<img src="../images/htentity2d.png"  style="width:700px;">    
+<center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center> 
 
 <hr>
 
