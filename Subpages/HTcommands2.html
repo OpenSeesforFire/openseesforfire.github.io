@@ -46,14 +46,12 @@
 
 <hr>
 
-<h4>HeatTransfer</h4>
-<b>HeatTransfer</b> command is used to activate the Heat Transfer module, which is followed by <i>2D</i> or <i>3D</i> to initialise a 2D or 3D environment. Commands can be written as:
+<h4>HTEntity</h4>
+<b>HTEntity</b> command is used to create an entity of regular shape, which maybe a 1D line, a 2D rectangular block and a number of other options. The template for defining an entity is :
 
 <div class="box">
 <code>
-HeatTransfer 2D <br>
-or <br>
-HeatTransfer 3D <br>
+HTEntity $EntityTYpe $EntityTag $Centrelocx $Centrelocy < centreLocz > <br>
 </code>
 </div>
 
