@@ -75,18 +75,54 @@ The parameters for defiing <b> HTEntity</b> are listed in th following tables:</
     <td>x<sub>c</sub>, y<sub>c</sub></td>
 	<td>b,d</td>
   </tr>
-    </tr>
     <tr>
     <td>2D</td>
     <td>Isection</td>
     <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub></td>
+  </tr>
+  <tr>
+    <td>2D</td>
+    <td>IsectionPro</td>
+    <td>x<sub>c</sub>, y<sub>c</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>,t<sub>f</sub>, coat</td>
+  </tr>
+    <tr>
+    <td>2D</td>
+    <td>Composite</td>
+    <td>x<sub>c</sub>, y<sub>c</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub>, b<sub>s</sub>,h<sub>s</sub> </td>
+  </tr>
+     <tr>
+    <td>3D</td>
+    <td>Brick</td>
+    <td>x<sub>c</sub>, y<sub>c</sub>, z<sub>c</sub></td>
+	<td>b,d,h</td>
+  </tr>
+    <tr>
+    <td>3D</td>
+    <td>Isection3D</td>
+    <td>x<sub>c</sub>, y<sub>c</sub>, z<sub>c</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub>, l </td>
   </tr>
 </table>
 
-<img src="../images/htentity2d.png"  style="width:700px;">    
+<p>
+The definition of the parameters mentioned above for 1D and 2D HTEntities are illustrated in Figure 1.    
+</p>
+<img src="../images/htentity2d.png"  style="width:600px;">    
 <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center> 
+<br>
+<p>A few examples have been shown as below:</p>
 
+<div class="box">
+<code>
+HTEntity  Isection   1    0.0      0.2    0.4 0.20 0.02 0.02;<br>
+HTEntity  Block   2    0.0      0.45     0.6    0.1; 
+</code>
+</div>
+    
+    
 <hr>
 
 <h4> HTMaterial </h4>
