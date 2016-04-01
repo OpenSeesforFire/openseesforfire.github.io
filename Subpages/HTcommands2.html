@@ -122,29 +122,43 @@ HTEntity  Block   2    0.0      0.45     0.6    0.1;
 </code>
 </div>
     
-    
+<br>    
 <hr>
 
 <h4> <a name = "HTMesh"> HTMesh </a> </h4>
-<b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
+<b>HTMesh</b> command is used to define mesh parameters which is associated with an <b>HTEntity</b> . The command should be written as:
 
 <div class="box">
 <code>
-HTMaterial $matType $matTag <$par1 $par2..> 
+HTMesh $meshTag $EntityTag $MaterialTag <-SecondMat $secMatTag> -phaseChange $PCTag <$PCTag2> -MeshCtrls $eleSizeX <$eleSizeY $eleSizeZ..> 
 </code>
 </div>
 
-Currently, there are three differnt types of heat transfer material can be defined, which may be extended to meet future needs. Examples of different materials are defined as follows for steel, concrete and generic material.
+For an <b>HTEntity</b> which consists of only two materials such as a composite beam, the second material tag should be specfied as well as the phase change parameter (0 or 1). The Mesh control parameters specified as element sizes following the <i>-MeshCtrls</i> should be given to configure the mesh scheme. A few examples are shown as below:
 <div class="box">
 <code>
-HTMaterial CarbonSteelEC3 1; <br>
-HTMaterial ConcreteEC2 2 $moist; <br>
+HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.0198 ; #for I-section <br>
+HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02; #for block<br>
 HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
 </code>
 </div>
     
 <br>
 <hr>
+
+<h4> <a name = "HTMeshAll"> HTMeshAll </a> </h4>
+<b>HTMeshAll</b> command is used to initialise the mesh which have been speficed for an <b>HTEntity</b> or more than one <b>HTEntities</b>. This is the ending point by now all the mesh definitions should be complete. The command is as simple as:
+
+<div class="box">
+<code>
+HTMeshAll; 
+</code>
+</div>
+    
+<br>
+<hr>
+    
+
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
       <footer>
