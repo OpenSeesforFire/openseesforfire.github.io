@@ -46,19 +46,86 @@
 
 <hr>
 
-<h4><a name = "HTEntity">HTEntity</a></h4>
+<h4>HTEntity</h4>
 <b>HTEntity</b> command is used to create an entity of regular shape, which maybe a 1D line, a 2D rectangular block and a number of other options. The template for defining an entity is :
 
 <div class="box">
 <code>
-HTEntity $EntityTYpe $EntityTag $Centrelocx $Centrelocy < centreLocz > <br>
+HTEntity $EntityTYpe $EntityTag $Centrelocx $Centrelocy < centreLocz > $dim1 < $dim2 $dim3 ...> <br>
 </code>
 </div>
+<p>
+The parameters for defiing <b> HTEntity</b> are listed in th following tables:</p>
+<table style="width:80%">
+  <tr>
+    <td>Category</td>
+    <td>EntityType</td> 
+    <td>Centroid</td>
+	<td>Dimension</td>
+  </tr>
+  <tr>
+    <td>1D</td>
+    <td>Line</td>
+    <td>x<sub>c</sub></td>
+	<td>l</td>
+  </tr>
+    <tr>
+    <td>2D</td>
+    <td>Block</td>
+    <td>x<sub>c</sub>, y<sub>c</sub></td>
+	<td>b,d</td>
+  </tr>
+    <tr>
+    <td>2D</td>
+    <td>Isection</td>
+    <td>x<sub>c</sub>, y<sub>c</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub></td>
+  </tr>
+  <tr>
+    <td>2D</td>
+    <td>IsectionPro</td>
+    <td>x<sub>c</sub>, y<sub>c</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>,t<sub>f</sub>, coat</td>
+  </tr>
+    <tr>
+    <td>2D</td>
+    <td>Composite</td>
+    <td>x<sub>c</sub>, y<sub>c</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub>, b<sub>s</sub>,h<sub>s</sub> </td>
+  </tr>
+     <tr>
+    <td>3D</td>
+    <td>Brick</td>
+    <td>x<sub>c</sub>, y<sub>c</sub>, z<sub>c</sub></td>
+	<td>b,d,h</td>
+  </tr>
+    <tr>
+    <td>3D</td>
+    <td>Isection3D</td>
+    <td>x<sub>c</sub>, y<sub>c</sub>, z<sub>c</sub></td>
+	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub>, l </td>
+  </tr>
+</table>
 
+<p>
+The definition of the parameters mentioned above for 1D and 2D HTEntities are illustrated in Figure 1.    
+</p>
+<img src="../images/htentity2d.png"  style="width:600px;">    
+<center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center> 
+<br>
+<p>A few examples have been shown as below:</p>
 
+<div class="box">
+<code>
+HTEntity  Isection   1    0.0      0.2    0.4 0.20 0.02 0.02;<br>
+HTEntity  Block   2    0.0      0.45     0.6    0.1; 
+</code>
+</div>
+    
+    
 <hr>
 
-<h4><a name = "HTMesh">HTMesh</a></h4>
+<h4> HTMaterial </h4>
 <b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
 
 <div class="box">
