@@ -182,7 +182,7 @@ HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
 <br>
 <hr>
 <!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTMeshAll"> HTMeshAll </a> </h4>
+<h4> <a name = "HTMeAll"> HTMeshAll </a> </h4>
 <b>HTMeshAll</b> command is used to initialise the mesh which have been speficed for an <b>HTEntity</b> or more than one <b>HTEntities</b>. This is the ending point by now all the mesh definitions should be complete. The command is as simple as:
 
 <div class="box">
@@ -194,7 +194,18 @@ HTMeshAll;
 <br>
 <hr>    
     
+<!HTMesh command---------------------------------------------------------------------->
+<h4> <a name = "HTSetInit"> SetInitialT </a> </h4>
+<b>SetInitialT</b> command is used to initialise the temperature field for all the objects (<b>HTEntity</b>), which is usually assigned with the ambient temperature as the first and only argument following the command.
+
+<div class="box">
+<code>
+SetInitialT $initialT; 
+</code>
+</div>
     
+<br>
+<hr>        
     
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
