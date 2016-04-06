@@ -162,14 +162,19 @@ HTEntity  Block   2    0.0      0.45     0.6    0.1;
 <hr>
 <!HTMesh command---------------------------------------------------------------------->
 <h4> <a name = "HTMesh"> HTMesh </a> </h4>
-<b>HTMesh</b> command is used to define mesh parameters which is associated with an <b>HTEntity</b> . The command should be written as:
+<b>HTMesh</b> command is used to define mesh parameters which are associated with an <b>HTEntity</b> . The command should be written as:
 
 <div class="box">
 <code>
 HTMesh $meshTag $EntityTag $MaterialTag <-SecondMat $secMatTag> -phaseChange $PCTag <$PCTag2> -MeshCtrls $eleSizeX <$eleSizeY $eleSizeZ..> 
 </code>
 </div>
-
+<p>The mesh scheme for 1D and 2D sections are illustrated in the following fiugre, where N<sub>i</sub> represents the heat transfer node, and E<sub>i</sub> indicates an element. Note that e<sub>_x</sub> is the element size along x axis, while e<sub>_y</sub> is for y direction</p>.
+    
+<img src="../images/HTMesh.png"  style="width:600px;">    
+<center><small>Figure 2:  Default mesh scheme for HTEntites</small></center> 
+<br>   
+    
 For an <b>HTEntity</b> which consists of only two materials such as a composite beam, the second material tag should be specfied as well as the phase change parameter (0 or 1). The Mesh control parameters specified as element sizes following the <i>-MeshCtrls</i> should be given to configure the mesh scheme. A few examples are shown as below:
 <div class="box">
 <code>
