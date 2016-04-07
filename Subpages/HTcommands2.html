@@ -44,8 +44,28 @@
 <p>
  This page explains the commands used for heat transfer analysis in OpenSees </p>
 
-<hr>
+<!HTMaterial command---------------------------------------------------------------------->
+<h4> <a name = "HTMaterial">HTMaterial</a> </h4>
+<b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
 
+<div class="box">
+<code>
+HTMaterial $matType $matTag <$par1 $par2..> 
+</code>
+</div>
+
+Currently, there are three differnt types of heat transfer material can be defined, which may be extended to meet future needs. Examples of different materials are defined as follows for steel, concrete and generic material.
+<div class="box">
+<code>
+HTMaterial CarbonSteelEC3 1; <br>
+HTMaterial ConcreteEC2 2 $moist; <br>
+HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
+</code>
+</div>
+<br>
+<hr>
+    
+<!HTEntity command---------------------------------------------------------------------->    
 <h4><a name = "HTEntity">HTEntity</a></h4>
 <b>HTEntity</b> command is used to create an entity of regular shape, which maybe a 1D line, a 2D rectangular block and a number of other options. The template for defining an entity is :
 
@@ -124,16 +144,21 @@ HTEntity  Block   2    0.0      0.45     0.6    0.1;
     
 <br>    
 <hr>
-
+<!HTMesh command---------------------------------------------------------------------->
 <h4> <a name = "HTMesh"> HTMesh </a> </h4>
-<b>HTMesh</b> command is used to define mesh parameters which is associated with an <b>HTEntity</b> . The command should be written as:
+<b>HTMesh</b> command is used to define mesh parameters which are associated with an <b>HTEntity</b> . The command should be written as:
 
 <div class="box">
 <code>
 HTMesh $meshTag $EntityTag $MaterialTag <-SecondMat $secMatTag> -phaseChange $PCTag <$PCTag2> -MeshCtrls $eleSizeX <$eleSizeY $eleSizeZ..> 
 </code>
 </div>
-
+<p>The mesh scheme for 1D and 2D sections are illustrated in the following fiugre, where N<sub>i</sub> represents the heat transfer node, and E<sub>i</sub> indicates an element. Note that e<sub>_x</sub> is the element size along x axis, while e<sub>_y</sub> is for y direction</p>.
+    
+<img src="../images/HTMesh.png"  style="width:600px;">    
+<center><small>Figure 2:  Default mesh scheme for HTEntites</small></center> 
+<br>   
+    
 For an <b>HTEntity</b> which consists of only two materials such as a composite beam, the second material tag should be specfied as well as the phase change parameter (0 or 1). The Mesh control parameters specified as element sizes following the <i>-MeshCtrls</i> should be given to configure the mesh scheme. A few examples are shown as below:
 <div class="box">
 <code>
@@ -145,8 +170,8 @@ HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
     
 <br>
 <hr>
-
-<h4> <a name = "HTMeshAll"> HTMeshAll </a> </h4>
+<!HTMesh command---------------------------------------------------------------------->
+<h4> <a name = "HTMeAll"> HTMeshAll </a> </h4>
 <b>HTMeshAll</b> command is used to initialise the mesh which have been speficed for an <b>HTEntity</b> or more than one <b>HTEntities</b>. This is the ending point by now all the mesh definitions should be complete. The command is as simple as:
 
 <div class="box">
@@ -156,9 +181,53 @@ HTMeshAll;
 </div>
     
 <br>
-<hr>
+<hr>   
     
+<!HTMesh command---------------------------------------------------------------------->
+<h4> <a name = "HTNodeSet"> HTNodeSet </a> </h4>
+<b>HTNodeSet</b> command is used to select a range of nodes which may be nodes on a specified surface of an HTEntity or nodes based on the specified coordinates. The command should be wrriten as:
 
+<div class="box">
+<code>
+HTNodeSet $NodeSetTag -Entity $EntityTag -Face $faceTag;  <br>
+HTNodeSet $NodeSetTag -Locx $locxMin <$locxMax> <-Locy $locyMin $locyMax> <-Locz $loczMin $loczMax>;  <br>
+</code>
+</div> 
+    
+The example scripts are shown as below:
+<div class="box">
+<code>
+HTNodeSet 1 -Entity 1 -face 1; <br>
+HTNodeSet 2 -Locx 0.01 0.02 -Locy 0.0 0.2; <br>
+</code>
+</div>
+
+<hr>  
+<br>
+
+    
+<!HTMesh command---------------------------------------------------------------------->
+<h4> <a name = "HTEleSet"> HTEleSet </a> </h4>
+<b>HTEleSet</b> command is used to select a range of elements which may be elements on a specified surface of an HTEntity or elemnts that contain given nodes on one user-defined face. The command should be wrriten as:
+
+<div class="box">
+<code>
+HTEleSet $EleSetTag -Entity $EntityTag -Face $faceTag;  <br>
+HTEleSet $EleSetTag -NodeSet $NodeSetTag -Face $faceTag;  <br>
+</code>
+</div> 
+    
+The example scripts are shown as below:
+<div class="box">
+<code>
+HTEleSet 1 -Entity 1 -Face 1; <br>
+HTEleSet 2 -NodeSet 2 -face 2; <br>
+</code>
+</div>
+
+<hr>  
+<br>
+    
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
       <footer>

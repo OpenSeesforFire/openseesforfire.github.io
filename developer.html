@@ -42,28 +42,26 @@
       
 <h3>For Developers</h3>
     <hr>
-<h4>About this page</h4>
+<h4>Introduction</h4>
 
-<p>The aim of this work is to add a "structures in fire" modelling capability in OpenSees. The following functionality will be provided: <br>
-1. Fire load modelling to provide boundary conditions for the subsequent heat transfer into structural components <br>
-2. Modelling of heat transfer into structural components to determine accurate evolution of structural temperatures over space and time <br>
-3. Implementing temperature dependent material properties for the main material models available in OpenSees (currently steel and concrete only)<br>
-4. Implementing temperature dependent transient thermal strain or LITS (load induced thermal strain) type effects<br>
+<p>The aim of this work is to add a "structures in fire" modelling capability in OpenSees. The development can be categorised as three parts: 
  </p>
 
 <h4>Thermomechanical Classes</h4>
 
-<p>Significant progress has been made on items 1, 2, 3, 5 and 6 above and all completed and tested work can be downloaded from these pages. This is currently limited to thermomechanical analysis of planar (2D) frames. All the completed and tested development work has also been forwarded to OpenSees Berkeley for inclusion in the next general release.</p>
-
-<h4>
-<a id="publications" class="anchor" href="#publications" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Planned future work</h4>
-
-<p>The immediate next step will be to complete the 3D thermomechanical analysis and thoroughly test it in the same way as the 2D work has been and make it available for integration into the next OpenSees release.<br>
-The medium term work will focus on integrating the inputs required for Fire and Heat Transfer analysis into the current tcl-tk scripting system. When complete this work will enable the modelling of structures subjected to complex evolutions of temperatures in space and time much more conveniently than is possible now (even with commercial codes).<br>
-Once the above is completed our longer term plan is to develop an interface between OpenSees and the open CFD code OpenFOAM (which can simulate external combustion or fires).</p>
-    
-    <br>
+<p>The new derived classes are developed on the basis of existing classes which are modified by adding temperature related features. Then some necessary changes are made in the definition of the base classes, details about this can be found in the document. Furthermore, to facilitate the Tcl implementation of these new derived classes, corresponding identifiers have been added into the defintion of the Tcl commands.</p>
 <hr>
+    
+<h4>Heat Transfer Classes</h4>
+
+<p>The new derived classes are developed on the basis of existing classes which are modified by adding temperature related features. Then some necessary changes are made in the definition of the base classes, details about this can be found in the document. Furthermore, to facilitate the Tcl implementation of these new derived classes, corresponding identifiers have been added into the defintion of the Tcl commands.</p>
+    
+<hr>
+    
+<h4>SIFBuilder Classes</h4>
+
+<p>The new derived classes are developed on the basis of existing classes which are modified by adding temperature related features. Then some necessary changes are made in the definition of the base classes, details about this can be found in the document. Furthermore, to facilitate the Tcl implementation of these new derived classes, corresponding identifiers have been added into the defintion of the Tcl commands.</p>
+    
 <small><p>This page is created by Liming Jiang, 2016</p></small>
     
       </section>
