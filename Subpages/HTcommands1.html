@@ -73,12 +73,12 @@ SetInitialT $initialT;
 <hr>        
     
 <!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTSetInit"> SetInitialT </a> </h4>
-<b>SetInitialT</b> command is used to initialise the temperature field for all the objects (<b>HTEntity</b>), which is usually assigned with the ambient temperature as the first and only argument following the command.
+<h4> <a name = "HTRecorder"> HTRecorder </a> </h4>
+<b>HTRecorder</b> command is used to request the temperature data inside an (<b>HTEntity</b>), which could come up with location (coordinates) based or predefined data points at the interested section.
 
 <div class="box">
 <code>
-SetInitialT $initialT; 
+HTRecorder -locx $locx -locy $locy1 <locy2...locyn>; 
 </code>
 </div>
     
