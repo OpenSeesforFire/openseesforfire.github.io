@@ -145,7 +145,7 @@ HTEntity  Block   2    0.0      0.45     0.6    0.1;
 <br>    
 <hr>
 <!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTMesh"> HTMesh </a> </h4>
+<h4> <a name = "HTMesh">HTMesh </a> </h4>
 <b>HTMesh</b> command is used to define mesh parameters which are associated with an <b>HTEntity</b> . The command should be written as:
 
 <div class="box">
@@ -171,7 +171,7 @@ HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
 <br>
 <hr>
 <!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTMeAll"> HTMeshAll </a> </h4>
+<h4> <a name = "HTMeAll">HTMeshAll </a> </h4>
 <b>HTMeshAll</b> command is used to initialise the mesh which have been speficed for an <b>HTEntity</b> or more than one <b>HTEntities</b>. This is the ending point by now all the mesh definitions should be complete. The command is as simple as:
 
 <div class="box">
@@ -184,7 +184,7 @@ HTMeshAll;
 <hr>   
     
 <!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTNodeSet"> HTNodeSet </a> </h4>
+<h4> <a name = "HTNodeSet">HTNodeSet </a> </h4>
 <b>HTNodeSet</b> command is used to select a range of nodes which may be nodes on a specified surface of an HTEntity or nodes based on the specified coordinates. The command should be wrriten as:
 
 <div class="box">
@@ -207,13 +207,13 @@ HTNodeSet 2 -Locx 0.01 0.02 -Locy 0.0 0.2; <br>
 
     
 <!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTEleSet"> HTEleSet </a> </h4>
+<h4> <a name = "HTEleSet">HTEleSet </a> </h4>
 <b>HTEleSet</b> command is used to select a range of elements which may be elements on a specified surface of an HTEntity or elemnts that contain given nodes on one user-defined face. The command should be wrriten as:
 
 <div class="box">
 <code>
 HTEleSet $EleSetTag -Entity $EntityTag -Face $faceTag;  <br>
-HTEleSet $EleSetTag -NodeSet $NodeSetTag -Face $faceTag;  <br>
+HTEleSet $EleSetTag -NodeSet $NodeSetTag -Face $faceTag; 
 </code>
 </div> 
     
@@ -229,7 +229,7 @@ HTEleSet 2 -NodeSet 2 -face 2; <br>
 <br>
     
 <small><p>This page is created by Liming Jiang, 2016</p></small>
-      </section>
+</section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/LimingXLiming">Liming Jiang</a></p>
         <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>

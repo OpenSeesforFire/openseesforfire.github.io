@@ -57,147 +57,20 @@ HeatTransfer 3D <br>
 </code>
 </div>
 
-
 <hr>
-
-<!HTMaterial command---------------------------------------------------------------------->
-<h4> <a name = "HTMaterial">HTMaterial</a> </h4>
-<b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
-
-<div class="box">
-<code>
-HTMaterial $matType $matTag <$par1 $par2..> 
-</code>
-</div>
-
-Currently, there are three differnt types of heat transfer material can be defined, which may be extended to meet future needs. Examples of different materials are defined as follows for steel, concrete and generic material.
-<div class="box">
-<code>
-HTMaterial CarbonSteelEC3 1; <br>
-HTMaterial ConcreteEC2 2 $moist; <br>
-HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
-</code>
-</div>
-<br>
-<hr>
-    
-<!HTEntity command---------------------------------------------------------------------->    
-<h4><a name = "HTEntity">HTEntity</a></h4>
-<b>HTEntity</b> command is used to create an entity of regular shape, which maybe a 1D line, a 2D rectangular block and a number of other options. The template for defining an entity is :
-
-<div class="box">
-<code>
-HTEntity $EntityTYpe $EntityTag $Centrelocx $Centrelocy < centreLocz > $dim1 < $dim2 $dim3 ...> <br>
-</code>
-</div>
-<p>
-The parameters for defiing <b> HTEntity</b> are listed in th following tables:</p>
-<table style="width:80%">
-  <tr>
-    <td>Category</td>
-    <td>EntityType</td> 
-    <td>Centroid</td>
-	<td>Dimension</td>
-  </tr>
-  <tr>
-    <td>1D</td>
-    <td>Line</td>
-    <td>x<sub>c</sub></td>
-	<td>l</td>
-  </tr>
-    <tr>
-    <td>2D</td>
-    <td>Block</td>
-    <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b,d</td>
-  </tr>
-    <tr>
-    <td>2D</td>
-    <td>Isection</td>
-    <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub></td>
-  </tr>
-  <tr>
-    <td>2D</td>
-    <td>IsectionPro</td>
-    <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>,t<sub>f</sub>, coat</td>
-  </tr>
-    <tr>
-    <td>2D</td>
-    <td>Composite</td>
-    <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub>, b<sub>s</sub>,h<sub>s</sub> </td>
-  </tr>
-     <tr>
-    <td>3D</td>
-    <td>Brick</td>
-    <td>x<sub>c</sub>, y<sub>c</sub>, z<sub>c</sub></td>
-	<td>b,d,h</td>
-  </tr>
-    <tr>
-    <td>3D</td>
-    <td>Isection3D</td>
-    <td>x<sub>c</sub>, y<sub>c</sub>, z<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub>, l </td>
-  </tr>
-</table>
-
-<p>
-The definition of the parameters mentioned above for 1D and 2D HTEntities are illustrated in Figure 1.    
-</p>
-<img src="../images/htentity2d.png"  style="width:600px;">    
-<center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center> 
-<br>
-<p>A few examples have been shown as below:</p>
-
-<div class="box">
-<code>
-HTEntity  Isection   1    0.0      0.2    0.4 0.20 0.02 0.02;<br>
-HTEntity  Block   2    0.0      0.45     0.6    0.1; 
-</code>
-</div>
-    
-<br>    
-<hr>
+     
 <!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTMesh"> HTMesh </a> </h4>
-<b>HTMesh</b> command is used to define mesh parameters which are associated with an <b>HTEntity</b> . The command should be written as:
+<h4> <a name = "HTSetInit"> SetInitialT </a> </h4>
+<b>SetInitialT</b> command is used to initialise the temperature field for all the objects (<b>HTEntity</b>), which is usually assigned with the ambient temperature as the first and only argument following the command.
 
 <div class="box">
 <code>
-HTMesh $meshTag $EntityTag $MaterialTag <-SecondMat $secMatTag> -phaseChange $PCTag <$PCTag2> -MeshCtrls $eleSizeX <$eleSizeY $eleSizeZ..> 
-</code>
-</div>
-<p>The mesh scheme for 1D and 2D sections are illustrated in the following fiugre, where N<sub>i</sub> represents the heat transfer node, and E<sub>i</sub> indicates an element. Note that e<sub>_x</sub> is the element size along x axis, while e<sub>_y</sub> is for y direction</p>.
-    
-<img src="../images/HTMesh.png"  style="width:600px;">    
-<center><small>Figure 2:  Default mesh scheme for HTEntites</small></center> 
-<br>   
-    
-For an <b>HTEntity</b> which consists of only two materials such as a composite beam, the second material tag should be specfied as well as the phase change parameter (0 or 1). The Mesh control parameters specified as element sizes following the <i>-MeshCtrls</i> should be given to configure the mesh scheme. A few examples are shown as below:
-<div class="box">
-<code>
-HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.0198 ; #for I-section <br>
-HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02; #for block<br>
-HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
+SetInitialT $initialT; 
 </code>
 </div>
     
 <br>
-<hr>
-<!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTMeAll"> HTMeshAll </a> </h4>
-<b>HTMeshAll</b> command is used to initialise the mesh which have been speficed for an <b>HTEntity</b> or more than one <b>HTEntities</b>. This is the ending point by now all the mesh definitions should be complete. The command is as simple as:
-
-<div class="box">
-<code>
-HTMeshAll; 
-</code>
-</div>
-    
-<br>
-<hr>    
+<hr>        
     
 <!HTMesh command---------------------------------------------------------------------->
 <h4> <a name = "HTSetInit"> SetInitialT </a> </h4>
