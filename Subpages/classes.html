@@ -42,19 +42,22 @@
 <h2>Classes for OpenSees Thermal</h2>
     <hr>
 <p>
-A large amount of coding work has been carried out for the past more than 5 years, aiming to bring 'structure in fire' modelling capability into this open-source finite element computational framework. </p>
+A decent amount of coding work has been carried out for the past more than 5 years, which aims to bring the capability of modelling 'structure in fire' into this open-source finite element computational framework. </p>
 
 <hr>
 
-<h4> <a name = "TMA">Thermo-mechanical analysis</a> </h4> 
+<h4> <a name = "TMA">Thermo-mechanical analysis</a> </h4>
+<p>The classes associated with the thermo-mechanical beam elements are presented in the following figure, where the hierachy of these classes has been also illustrated. </p>
 
-<img src="../images/UML4Beam.png"  style="width:600px;">    
-<center><small>Figure 1:  classes for thermo-mechanical beam element</small></center> 
+<img src="../images/UML4Beam.png"  style="width:700px;">    
+<center><small>Figure 1:  classes associated with thermo-mechanical beam elements</small></center> 
 
+<p>As shown in the figure, a beam element shall be constructed with a few sections, while for each section it is descretised into a number of fibres. Thermo-mechanical materials shall be assigned to these fibres to determine the section state.</p>
+<p>Currently there are couples of materials avaiable, which oould be used to describe a steel or a concrete material. Additionally, an elastic material </P>
 <img src="../images/UML4Shell.png"  style="width:600px;">    
 <center><small>Figure 1:  classes for thermo-mechanical shell element</small></center>     
 
-<img src="../images/UML4ThermalAction.png"  style="width:600px;">    
+<img src="../images/UML4ThermalAction.png"  style="width:500px;">    
 <center><small>Figure 1:  classes for thermal action</small></center> 
 
 <br>  
