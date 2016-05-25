@@ -72,17 +72,19 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
     <img src="../images/Drawing1-Model.jpg"  style="width:500px;">  
 <ul class="a">
 <li> Model Builder </li> 
-    <p>A basic model builder command is used here to initialise the model environmrnt, which will be created in a two dimensional plane and for each node it has three degrees of freedom</p>
+    <p>A basic model builder command is used here to initialise the model environmrnt, which will be created in a two dimensional plane and for each node it has three degrees of freedom.</p>
     <code>model BasicBuilder -ndm 2 -ndf 3;<br></code> 
     <br>
-    <p>Two external Tcl files are employed to visualise the model, which are pre-written by other developers and have been vastly used</p>
-    <code>source DisplayPlane.tcl;<br>
+    <p>Two external Tcl files are employed to visualise the model, which are pre-written by other developers and have been vastly used.</p>
+    <code>
+    source DisplayPlane.tcl;<br>
     source  DisplayModel2D.tcl;<br>
     </code> 
     <br>
 <li> Nodal definition </li>
-    <p>The coordinates of the beam nodes are defined using the node command, which are followed by the boundary conditions at the end nodes to define a simply supported configuration</p>
-    <code>node 1 0 0;<br>
+    <p>The coordinates of the beam nodes are defined using the node command, which are followed by the boundary conditions at the end nodes to define a simply supported configuration.</p>
+    <code>
+    node 1 0 0;<br>
     node 2 1000 0;<br>
     node 3 2000 0;<br>
     node 4 3000 0;<br>
@@ -90,17 +92,25 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
     node 6 5000 0;<br>
     node 7 6000 0;<br>
     <br>
-    fix 1 1 1 0;
-    fix 7 0 1 0;</code>
+    fix 1 1 1 0;<br>
+    fix 7 0 1 0;<br>
+    </code>
+    <br>
 <li> Material and section definition </li>
-    <p>A uniaxial material including thermo-mechanial properties is defined according to Eurocode 3 steel material. Then a fibre based section can be defined </p>
-    <code>node 1 0 0;<br>
-    node 2 1000 0;<br>
-    node 3 2000 0;<br>
-    node 4 3000 0;<br>
-    node 5 4000 0;<br>
-    node 6 5000 0;<br>
-    node 7 6000 0;<br></code>
+    <p>A uniaxial material including thermo-mechanial properties is defined according to Eurocode 3 steel material. Then a fibre based section can be defined. </p>
+    <code>
+    uniaxialMaterial SteelECThermal 1 308 2.1e5;<br>
+  
+    set d 355;	# depth <br>
+    set bf 171.5;	# flange width <br>
+    set tf 11.5;	# flange thickness <br>
+    set tw 7.4;	    # web thickness <br>
+    set nfdw 8;		# number of fibers along dw <br>
+    set nftw 1;		# number of fibers along tw <br>
+    set nfbf 1;		# number of fibers along bf <br>
+    set nftf 4;			# number of fibers along tf <br>
+    Wsection  1 1 $d $bf $tf $tw $nfdw $nftw $nfbf $nftf <br>
+    </code>
 </ul>
     
     
