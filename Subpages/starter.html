@@ -81,7 +81,19 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
     </code> 
     <br>
 <li> Nodal definition </li>
-    <p>The coordinates of the beam nodes are defined using the node command, which are followed by the boundary conditions at the end nodes</p>
+    <p>The coordinates of the beam nodes are defined using the node command, which are followed by the boundary conditions at the end nodes to define a simply supported configuration</p>
+    <code>node 1 0 0;<br>
+    node 2 1000 0;<br>
+    node 3 2000 0;<br>
+    node 4 3000 0;<br>
+    node 5 4000 0;<br>
+    node 6 5000 0;<br>
+    node 7 6000 0;<br>
+    <br>
+    fix 1 1 1 0;
+    fix 7 0 1 0;</code>
+<li> Material and section definition </li>
+    <p>A uniaxial material including thermo-mechanial properties is defined according to Eurocode 3 steel material. Then a fibre based section can be defined </p>
     <code>node 1 0 0;<br>
     node 2 1000 0;<br>
     node 3 2000 0;<br>
