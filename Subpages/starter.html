@@ -54,7 +54,7 @@
 <br>
 <hr>
 <!Download and Run---------------------------------------------------------------------->
-<h4><a name = "DownloadRun"> Download and Run OpenSees </a></h4>
+<h3><a name = "DownloadRun"> Download and Run OpenSees </a></h3>
 <p>For users of OpenSeesThermal, the executable binary file is required to be downloaded, either with Tcl/Tk being installed in the right place in your operating system. 
 The latest version of OpenSeesThermal could be downloaded from the <a href= "../download.html">Download page </a>. also the web-link for downloading Tcl/Tk could be found over there.</p>
 <p>Tcl should be installed properly in user's computer before running OpenSees. The installation should be directed to the directory as shwon as below;</p>
@@ -66,12 +66,12 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
 <br>
 <hr>
 <!Run TMA---------------------------------------------------------------------->
-<h4> <a name = "RunTMA">Run Thermo-mechanical Analysis</a></h4>
+<h3> <a name = "RunTMA">Run Thermo-mechanical Analysis</a></h3>
     <p><a href = "/Download/GettingStartedwithTM.zip" > [Download the example package </a> for Thermo-mechanical analysis]</p>
     <p>Let's start from the "example-SteelBeam-uniform.tcl" which models a simply supported steel beam subjected to UDL and thermal action varying with time. The model configuration is shown as below:</p>
     <img src="../images/Drawing1-Model.jpg"  style="width:500px;">  
 <ul class="a">
-<li> Model Builder </li> 
+<li> <b>Model Builder</b> </li> 
     <p>A basic model builder command is used here to initialise the model environmrnt, which will be created in a two dimensional plane and for each node it has three degrees of freedom.</p>
     <code>model BasicBuilder -ndm 2 -ndf 3;<br></code> 
     <br>
@@ -81,7 +81,8 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
     source  DisplayModel2D.tcl;<br>
     </code> 
     <br>
-<li> Nodal definition </li>
+    <hr>
+<li> <b>Nodal definition</b> </li>
     <p>The coordinates of the beam nodes are defined using the node command, which are followed by the boundary conditions at the end nodes to define a simply supported configuration.</p>
     <code>
     node 1 0 0;<br>
@@ -96,8 +97,9 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
     fix 7 0 1 0;<br>
     </code>
     <br>
-<li> Material and section definition </li>
-    <p>A uniaxial material including thermo-mechanial properties is defined according to Eurocode 3 steel material. Then a fibre based section can be defined. </p>
+    <hr>
+<li> <b>Material and section definition</b> </li>
+    <p>A uniaxial material including thermo-mechanial properties is defined according to Eurocode 3 steel material. Then a fibre based section can be defined. Noticed the keyword for thermo-mechanical fiber section should be written as <i>fiberSecThermal</i> which can be found in Wsection definition or explicitly in the main script. </p>
     <code>
     uniaxialMaterial SteelECThermal 1 308 2.1e5;<br>
   
@@ -109,21 +111,73 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
     set nftw 1;		# number of fibers along tw <br>
     set nfbf 1;		# number of fibers along bf <br>
     set nftf 4;			# number of fibers along tf <br>
-    Wsection  1 1 $d $bf $tf $tw $nfdw $nftw $nfbf $nftf <br>
+    Wsection  1 1 $d $bf $tf $tw $nfdw $nftw $nfbf $nftf; <br>
     </code>
+    <br>
+     <hr>
+<li> <b>Thermal action definition</b> </li>
+    <p>The recorder and uniform load implementation are defined accordingly which could be referred to as the command manual at Berkeley site. After resetting the pseudo time to 0.0, thermal action shall be defined: </p>
+    <code>
+    set HalfD [expr $d/2];<br>
+	<br>
+    pattern Plain 2 Linear { <br>
+	eleLoad -range 1 6 -type -beamThermal 1000 -$HalfD 1000 $HalfD; <br>
+    } <br>
+    </code>
+    <br>
+    <p>The thermal action can also be defined through an external data file using the following format:</p>
+    <code>
+    eleLoad -range 1 6 -type -beamThermal -source $fileName $locy1 $locy2 &lt;$locy3 ..&gt; <br>
+    </code><br>
+    <p>where the <code>fileName</code> is referred as to the data file which shoudl be written with first column to specify the time step and the rest of columns for the temperature histories corresponding to the certain locations across the section.</p>
 </ul>
     
     
 <hr>
     
 <!Run TMA---------------------------------------------------------------------->
-<h4> <a name = "RunHT">Run Heat Transfer analysis</a></h4>
+<h3> <a name = "RunHT">Run Heat Transfer analysis</a></h3>
 <p><a href = "/Download/HTDemo.tcl" > [Download the example script </a> for Heat Transfer analysis]</p>
-    
 
+<p>This example is to demonstrate the usage of heat transfer commands in OpenSees. A composite section exposed to standard fire is modelled as shown as below: </p>
+<img src="../images/HTDemo1.png"  style="width:300px;">  
+
+<ul class="a">
+<li> <b>HTModel Builder</b> </li> 
+<p>Firstly the <i>HeatTransfer</i> command is used to initialise the 2D (or 3D) environment for heat transfer analysis.</p>
+<code>HeatTransfer 2D;</code>
+<br> <hr>
+<li> <b>HTMaterials</b> </li> 
+<p>Then we start to define heat transfer materials using <i>HTMaterial</i> command:</p>
+<code>HTMaterial CarbonSteelEC3 1;<br>
+HTMaterial ConcreteEC2 2 0.0;
+</code>
+<br><hr>
+<li> <b>HTEntities</b> </li> 
+<p>HTEntities here can be defined to define the dimensions of slab and I section for this heat transfer problem. The <i>HTEntity</i> command specifies the type of section and its tag, which are followed by the centroid coordinates in the user-defined coordinate system and the dimensions</p>
+<code>
+HTEntity Isection 1 0.0 0.2 0.20 0.40 0.02 0.02;<br>
+HTEntity Block 2 0.0 0.45 0.6 
+</code>
+<br><hr>
+<li> <b>HTMeshes</b> </li> 
+<p>Since the HTEntities have been defined, it is possible to implement the mesh scheme over these HTEntities. </p>
+<code>
+HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.014;<br>
+HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02;<br>
+<br>
+HTRefineMesh -Entity 2 -SeedTag 1 4 -space 0.02 10 0.014 10 0.005 4 0.014 10 0.02 10;<br>
+HTMeshAll;<br>
+</code>
+The above <i>HTRefineMesh</i> command is used to refine the mesh seed distribution on rectangular blocks because it may be desirable to have nodal distribution compatible with HTIsection.
+<hr>
+<li> <b>Boundary Conditions</b> </li> 
+<p>The initial temperature and coupled surface are defined.</p>
+</ul>
+<hr>
     
 <!Run SIFBuilder---------------------------------------------------------------------->    
-<h4> <a name = "RunSIF"> Using SIFBuilder </h4>
+<h3> <a name = "RunSIF"> Using SIFBuilder</a> </h3>
 <p><a href = "/Download/STestSt.tcl" > [Download the example script </a> for SIFBuilder aided analysis]</p>
 
     
