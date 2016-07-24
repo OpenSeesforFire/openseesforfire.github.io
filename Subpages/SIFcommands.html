@@ -46,49 +46,68 @@
  This page lists the available commands for modelling structures in fire using SIFBuilder in OpenSees </p>
 
 <hr>
+<h3> Basic Commands </h3>
+<hr>
 <!Sifbuilder command---------------------------------------------------------------------->
-<h4><a name = "HeatTransfer"> HeatTransfer</a></h4>
-<b>HeatTransfer</b> command is used to activate the Heat Transfer module, which is followed by <i>2D</i> or <i>3D</i> to initialise a 2D or 3D environment. Commands can be written as:
+<h4><a name = "SIFBuilder"> SIFBuilder</a></h4>
+<b>SIFBuilder</b> command is used to activate the SIFBuilder module, which is followed by <i>frame</i> or <i>plane</i> and other options. Thses options are associated with different model type to creat a 3D frame model or 2D plane frame models. Here the command can be written as:
 
 <div class="box">
 <code>
-HeatTransfer 2D <br>
+SIFBuilder <br>
 or <br>
-HeatTransfer 3D <br>
+SIFBuilder frame <br>
 </code>
 </div>
 
 
 <hr>
-
-<!HTMaterial command---------------------------------------------------------------------->
-<h4> <a name = "HTMaterial">HTMaterial</a> </h4>
-<b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
+<h3> Geometry Commands </h3>
+<hr>
+<!SIFXBay command---------------------------------------------------------------------->
+<h4> <a name = "SIFBay">SIFXBay/SIFYBay/SIFStorey</a> </h4>
+<b>SIFXBay</b> command is used to define the distribution of bays along global x axis. The XBay dimension is defined directly following the command and being listed as a numbe of variables, which is written in the following form:
 
 <div class="box">
 <code>
-HTMaterial $matType $matTag <$par1 $par2..> 
+SIFXBay $XBay1 <$XBay2 $XBay3..> 
 </code>
 </div>
 
-Currently, there are three differnt types of heat transfer material can be defined, which may be extended to meet future needs. Examples of different materials are defined as follows for steel, concrete and generic material.
+Similarly, <b>SIFZBay</b> and <b>SIFStorey</b>commands are used to define ZBays and stroreys of the frame building.
 <div class="box">
 <code>
-HTMaterial CarbonSteelEC3 1; <br>
-HTMaterial ConcreteEC2 2 $moist; <br>
-HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
+SIFZBay $ZBay1 <$ZBay2 $ZBay3..> <br>
+SIFStorey $Storey1 <$Storey2 $Storey3..> 
+</code>
+</div>
+    
+    
+For example, to creat a 2X2X2 frame, of dimensions as shown as below:
+<center>
+<img src="../images/demoframe.png"  style="width:400px;"> 
+</center> 
+<center>
+<small>Figure 1:  Dimension of 2x2x2 frame</small>
+</center> 
+
+<div class="box">
+<code>
+SIFXBay 6 9; <br>
+SIFYBay 6 9; <br>
+SIFStorey 5 4; <br>
 </code>
 </div>
 <br>
 <hr>
     
-<!HTEntity command---------------------------------------------------------------------->    
-<h4><a name = "HTEntity">HTEntity</a></h4>
-<b>HTEntity</b> command is used to create an entity of regular shape, which maybe a 1D line, a 2D rectangular block and a number of other options. The template for defining an entity is :
+<!AddMaterial command---------------------------------------------------------------------->    
+<h4><a name = "AddMaterial">AddMaterial</a></h4>
+<b>AddMaterial</b> command is used to create a structural material, such as concrete and steel and PFP materials:
 
 <div class="box">
 <code>
-HTEntity $EntityTYpe $EntityTag $Centrelocx $Centrelocy < centreLocz > $dim1 < $dim2 $dim3 ...> <br>
+AddMaterial steel $MaterialTag -type $MaterialType $MatPar1 $MatPar2 <$MatPar3 $MatPar4..> <br>
 </code>
 </div>
 <p>
