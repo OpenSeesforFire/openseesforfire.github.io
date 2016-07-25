@@ -43,7 +43,7 @@
 <h2>Commands for Using Sifbuilder</h2>
     <hr>
 <p>
- This page lists the available commands for modelling structures in fire using SIFBuilder in OpenSees </p>
+ This page lists the available commands for modelling structures in fire using SIFBuilder in OpenSees. <a href = "sifbuilder.html">SIFBuilder</a> is an integrated tool developed in OpenSees, of which the development is still ongoing. Therefore the commands may be added as time goes by. </p>
 
 <hr>
 <h3> Basic Commands </h3>
@@ -111,72 +111,62 @@ AddMaterial $MatType $MatTag -type $MatSubType $MatPar1 <$MatPar2 $MatPar3 $MatP
 </code>
 </div>
 <p>
-The parameters for defiing <b> HTEntity</b> are listed in th following tables:</p>
-<table style="width:80%">
-  <tr>
-    <td>Category</td>
-    <td>EntityType</td> 
-    <td>Centroid</td>
-	<td>Dimension</td>
-  </tr>
-  <tr>
-    <td>1D</td>
-    <td>Line</td>
-    <td>x<sub>c</sub></td>
-	<td>l</td>
-  </tr>
-    <tr>
-    <td>2D</td>
-    <td>Block</td>
-    <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b,d</td>
-  </tr>
-    <tr>
-    <td>2D</td>
-    <td>Isection</td>
-    <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub></td>
-  </tr>
-  <tr>
-    <td>2D</td>
-    <td>IsectionPro</td>
-    <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>,t<sub>f</sub>, coat</td>
-  </tr>
-    <tr>
-    <td>2D</td>
-    <td>Composite</td>
-    <td>x<sub>c</sub>, y<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub>, b<sub>s</sub>,h<sub>s</sub> </td>
-  </tr>
-     <tr>
-    <td>3D</td>
-    <td>Brick</td>
-    <td>x<sub>c</sub>, y<sub>c</sub>, z<sub>c</sub></td>
-	<td>b,d,h</td>
-  </tr>
-    <tr>
-    <td>3D</td>
-    <td>Isection3D</td>
-    <td>x<sub>c</sub>, y<sub>c</sub>, z<sub>c</sub></td>
-	<td>b<sub>f</sub>,h<sub>b</sub>, t<sub>w</sub>, t<sub>f</sub>, l </td>
-  </tr>
-</table>
-
-<br>
-<p>A few examples have been shown as below:</p>
+Currently it's possible to define masterials such as steel, concrete in accordance to Eurocodes. Commands may be written as:
 
 <div class="box">
 <code>
-HTEntity  Isection   1    0.0      0.2    0.4 0.20 0.02 0.02;<br>
-HTEntity  Block   2    0.0      0.45     0.6    0.1; 
+AddMaterial  steel   1   -type EC3  2.75e8 2e11;<br>
+AddMaterial concrete 2 -type EC2 0.0 30e6; 
+</code>
+</div>  
+<br>    
+<hr>    
+
+<!AddSection command---------------------------------------------------------------------->    
+<h4><a name = "AddSection">AddSection</a></h4>
+<b>AddSection</b> command is used to create a structural member section, such as rectangular and I sections:
+
+<div class="box">
+<code>
+AddSection $SectionType $SecTag $MatTag $MatPar1 <$MatPar2 $MatPar3 $MatPar4..> <br>
 </code>
 </div>
-    
-<br>    
+<p>
+Currently it's possible to define structural sections such as rectangular or I sections. Theses commands may be written as:
 
-<hr>    
-           
+<div class="box">
+<code>
+AddSection  Rect   1  2  0.4 0.4 0.4 0.4;<br>
+AddSection  ISection   2  1 0.355 0.1715 0.0074 0.0115;; 
+</code>
+</div>  
+<br>    
+<hr>  
+    
+<!AssignSection command---------------------------------------------------------------------->    
+<h4><a name = "AssignSection">AssignSection</a></h4>
+<b>AssignSection</b> command is used to assign sections to the specified structural members, which include Xbeams, Zbeams, Columns, Slabs. And it also allows the user to change the sections for the sepcific members which are identified through XBay and ZBay locations.
+
+<div class="box">
+<code>
+AssignSection $MemberGroup $SecTag <-XBay $XBayTag> <-ZBay $ZBayTag> <-Storey $StoreyTag> <br>
+</code>
+</div>
+<p>
+A few examples are shwon as below:
+
+<div class="box">
+<code>
+AssignSection Xbeams 3 ; <br>
+AssignSection Zbeams 1 ; <br>
+AssignSection Zbeams 1 -ZBay 1; <br>
+AssignSection Zbeams 2 -ZBay 2; <br>
+AssignSection columns 4; <br>
+AssignSection slabs 5; 
+</code>
+</div>  
+<br>    
+<hr>
     
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
