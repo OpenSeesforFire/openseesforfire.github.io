@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../stylesheets/styles.css">
+    <link rel="stylesheet" href="../stylesheets/github-light.css">
+    <meta name="viewport" content="../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav> 
+      <center><img src="../images/banner.png" style="height:50px;"></center>
+      </nav>
+      
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+        
+        <h4> <p class="view"><a href="../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../user.html">Users </a></p></h4>
+          <small><p class="view"><a href="starter.html">Getting Started </a></p></small>
+        <small><p class="view"><a href="heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
+          
+      </header>
+<section>
+      
+<h2>Commands for Thermo-Mechanical analysis in OpenSees</h2>
+    <hr>
+<p>
+This page introduces the developed commands for performing thermo-mechanical analysis in OpenSees.
+ </p>
+
+<hr>
+<!Beam2DThermalAction command---------------------------------------------------------------------->
+<h4><a name = "BeamThermal2D"> BeamThermal(2D)</a></h4>
+This class is created as a subclass of abstract class <b>ElementalLoad</b> to define a thermal field which stores the termperature distribution (history) across a beam type section. <br>
+
+Currently, two different approaches are recommended to define thermal action for beamcolumn element as a longitudinally uniform elemental load. <br>
+<hr>
+<b>A. In-line temperature definition</b>
+<p>The in-line temperature would accept 2,5,9 temperature data points to set up multiple temperature zones which are up to 8 zones for 2D beamcolumn element. It could be applied either with linear patterns or fire load patterns, and the load control integrator should be specified in the analysis. Typical commands may follow the form shown as below</p>
+<div class="box">
+<code>
+eleLoad -ele $eleTag -type -beamThermal $T1 $y1 $T2 $Y2 <T3 $y3, ...., $T9 $y9>
+</code>
+</div>
+where T1 to T9 are temperatures corresponding to y coordinates y1 to y9, as illustrated in Figure 1. 
+
+<img src="../images/ThermalAction2DDrawing.jpg"  style="width:500px;">    
+<center><small>Figure 1:  8 temperature zones defined using Beam2dThermalAction</small></center> 
+<br>
+<hr>
+
+<b>B. Using external temperature data file</b>
+<p>To define a history of temperature vration across the section, it is possible to import the temperature data from an external file which should be presented in the format shown as below</p>
+
+<div class="box">
+<code>
+$time1 $T11 $T12 $T13 $T14 $T15 $T16 $T17 $T18 $T19 <br>
+$time2 $T21 $T22 $T23 $T24 $T25 $T26 $T27 $T28 $T29 <br>
+$time3 $T31 $T32 $T33 $T34 $T35 $T36 $T37 $T38 $T39 <br>
+...
+..
+</code>
+</div>
+    
+    
+<!Beam3DThermalAction command---------------------------------------------------------------------->
+<h4> <a name = "BeamThermal3D">BeamThermal(3D)</a> </h4>
+<b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
+
+<div class="box">
+<code>
+HTMaterial $matType $matTag <$par1 $par2..> 
+</code>
+</div>
+
+Currently, there are three differnt types of heat transfer material can be defined, which may be extended to meet future needs. Examples of different materials are defined as follows for steel, concrete and generic material.
+<div class="box">
+<code>
+HTMaterial CarbonSteelEC3 1; <br>
+HTMaterial ConcreteEC2 2 $moist; <br>
+HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
+</code>
+</div>
+<br>
+<hr>
+      
+    
+    
+    
+<small><p>This page is created by Liming Jiang, 2016</p></small>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/LimingXLiming">Liming Jiang</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
