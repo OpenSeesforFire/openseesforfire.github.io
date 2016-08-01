@@ -28,4 +28,11 @@
 *.app
 
 images/Xu Dai - Pic.jpg
+<<<<<<< HEAD
 images/MeshCls.jpg
+=======
+index.html
+*.html
+*.html
+>>>>>>> origin/master
+*.jpg
