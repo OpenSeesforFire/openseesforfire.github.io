@@ -68,7 +68,7 @@ where T1 to T9 are temperatures corresponding to y coordinates y1 to y9, as illu
 <hr>
 
 <b>B. Using external temperature data file</b>
-<p>To define a history of temperature vration across the section, it is possible to import the temperature data from an external file which should be presented in the format shown as below</p>
+<p>To define a history of temperature vration across the section, it is possible to import the temperature data from an external file which should be presented in the format shown as below:</p>
 
 <div class="box">
 <code>
@@ -79,11 +79,35 @@ $time3 $T31 $T32 $T33 $T34 $T35 $T36 $T37 $T38 $T39 <br>
 ..
 </code>
 </div>
+<p>where the first column is to specify timesteps, and the second to tenth columns are temperatures corrsponding to each time step and zone boundaries. To use external file, the command can be written as:</p>
+<div class="box">
+<code>
+eleLoad -ele $eleTag -beamThermal -source $fileName $Y1 $Y2 < $Y3 ... $Y9>
+</code>
+</div>
     
-    
+<p>An example of using beam thermal action for 2D beam elements are presented as below:</p>
+<div class="box">
+<code>
+pattern Plain 1 Linear { <br>
+    eleLoad -range 1 6 -type -beamThermal 600 -150 500 150;<br>
+}
+</code>
+</div>
+<p>The above script is to define a linear distribution of termperatures through the depth from 600C at the bottom (y=-150,in local cordinate system) to 500C at the top (y=150). A linear load pattern is used here which indicates the real temperatures applied are these final ones multiplied by load factors which are controled by analaysis parameters</p> 
+
+<p>When an external temperature history file is available, the script may look like:</p>
+<div class="box">
+<code>
+pattern Plain 1 Linear { <br>
+    eleLoad -range 1 6 -type -beamThermal -source temp1.dat -150 150;<br>
+}
+</code>
+</div>
+<p>The above definition is quite handy for beams that are subjected to real fires, where it is even possible to produce the ready-to-use temperature data from <a href="heattransfer.html">heat transfer </a> analysis module in OpenSees.</p>
 <!Beam3DThermalAction command---------------------------------------------------------------------->
 <h4> <a name = "BeamThermal3D">BeamThermal(3D)</a> </h4>
-<b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
+<b>BeamThermal</b> command in a context of 3D analysis is used to define temperature field. which shall be defined as:
 
 <div class="box">
 <code>
