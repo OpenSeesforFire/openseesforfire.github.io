@@ -105,29 +105,63 @@ pattern Plain 1 Linear { <br>
 </code>
 </div>
 <p>The above definition is quite handy for beams that are subjected to real fires, where it is even possible to produce the ready-to-use temperature data from <a href="heattransfer.html">heat transfer </a> analysis module in OpenSees.</p>
+
+<hr>
+    
 <!Beam3DThermalAction command---------------------------------------------------------------------->
 <h4> <a name = "BeamThermal3D">BeamThermal(3D)</a> </h4>
 <b>BeamThermal</b> command in a context of 3D analysis is used to define temperature field. which shall be defined as:
 
 <div class="box">
 <code>
-HTMaterial $matType $matTag <$par1 $par2..> 
+eleLoad -ele $eleTag -beamThermal -source $fileName $y1 $y2 $z1 $z2;
 </code>
 </div>
 
-Currently, there are three differnt types of heat transfer material can be defined, which may be extended to meet future needs. Examples of different materials are defined as follows for steel, concrete and generic material.
+<p>The above command is used for 3D I-section beam. An example is shown as below</p>
 <div class="box">
 <code>
-HTMaterial CarbonSteelEC3 1; <br>
-HTMaterial ConcreteEC2 2 $moist; <br>
-HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
+eleLoad -ele 2 -beamThermal -source data.dat -0.25 0.25 -0.15 0.15 <br>
 </code>
 </div>
 <br>
+<center>
+<img src="../images/3DThermalaction.png"  style="width:300px;">     
+</center>   
+<center><small>Figure 2:  15 temperature zones defined using Beam3dThermalAction</small></center> 
 <hr>
-      
+
+<!NodalThermalAction command---------------------------------------------------------------------->
+<h4> <a name = "NodalThermal">Nodal Thermal Action</a> </h4>
+Thermal action can be defined on nodes using <b>load</b> command as the <b>NodalThermalAction</b> is an extended nodal load. The folling command could be used to define a linear gradient or uniform distribution of temperatures through depth of a section. The temperatures will be multiplied by load factors obtained from analysis control.
+
+<div class="box">
+<code>
+load $nodeTag -nodalThermal $T1 $y1 $T2 $y2;  
+</code>
+</div>
+
+<p>More commonly, it might be of users's interest to define temperatures in an external file. The following commands are recommended:</p>
+<div class="box">
+<code>
+load $nodeTag -nodalThermal -source $fileName $y1 $y2;<br>
+load $nodeTag -nodalThermal -source $fileName $y1 $y2..$y9;<br>
+load $nodeTag -nodalThermal -source $fileName $y1 $y2 $z1 $z2;<br>
+</code>
+</div>
+<p>Among the above definitions, the first one is to specify the bottom y coordinate and the top coordinate, where the y coordinates are equally interpolated between them.</p> The second definition is to specify 9 y coordinates, while the last one is used for 3D I-section with two z coordinates. These definitions are similar to beam sections.   
+
+<p>An example is shown as below:</p>
+<div class="box">
+<code>
+set minusHalfD -0.125;<br>
+set HalfD 0.125; <br>
+load 1 -nodalThermal 800 $minusHalfD 400 $HalfD;
+</code>
+</div>
+<br>
     
-    
+<hr>  
     
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
