@@ -132,7 +132,7 @@ eleLoad -ele 2 -beamThermal -source data.dat -0.25 0.25 -0.15 0.15 <br>
 <hr>
 
 <!NodalThermalAction command---------------------------------------------------------------------->
-<h4> <a name = "NodalThermal">Nodal Thermal Action</a> </h4>
+<h4> <a name = "NodalTA">Nodal Thermal Action</a> </h4>
 Thermal action can be defined on nodes using <b>load</b> command as the <b>NodalThermalAction</b> is an extended nodal load. The folling command could be used to define a linear gradient or uniform distribution of temperatures through depth of a section. The temperatures will be multiplied by load factors obtained from analysis control.
 
 <div class="box">
@@ -160,7 +160,41 @@ load 1 -nodalThermal 800 $minusHalfD 400 $HalfD;
 </code>
 </div>
 <br>
+<hr>
+<!ThermalActionWrapper command---------------------------------------------------------------------->
+<h4> <a name = "TAWrapper">ThermalActionWrapper</a> </h4>
+<p><b>ThermalActionWrapper</b> is introduced to describe the temperature variation along the member length, providing the fibre temperature at the integration points. Nodal Thermal Actions are wrapped up into the class, which enables a different form of interpolation to be performed to determine the temperature profile at each section (integration point) of the beam element. For instance, assuming a beam as shown in Figure 3 has been discretised into <i>n</i> nodes and <i>n-1</i> elements, an arbitrary beam element among them may be between node $m$ and node <i>m+1</i>. </p>
     
+<center>
+<img src="../images/ImpThermalAction.png"  style="width:600px;">     
+</center>   
+<center><small>Figure 3: Implementation of ThermalActionWrapper</small></center> 
+
+<p>Different interpolations are provided with <b>ThermalActionWrapper</b>, which should always work nodal thermal action. Commands should follow the format shwon as below:</p>
+<div class="box">
+<code>
+eleLoad -range $startEleTag $EndEleTag -type -ThermalWrapper -nodeLoc $NodeTag1 $loc1 $NodeTag2 $loc2 <$NodeTag3 $loc3..>; 
+</code>
+</div>
+<br>
+
+<p>An example of using ThermalActionWrapper is shown as below:</p>
+<div class="box">
+<code>
+set MiddleTag 6; <br>
+set EndTag 11; <br>
+load 1 -nodalThermal 800 -0.2 400 0.2; <br>
+load $MiddleTag -nodalThermal 400 -0.2 200 0.2; <br>
+load $EndTag -nodalThermal 0 -0.2 0 0.2; <br>
+eleLoad -range 1 10 -type -ThermalWrapper -nodeLoc 1 0.2 $MiddleTag 0.45 $EndTag 0.7; 
+</code>
+</div>
+
+<center>
+<img src="../images/thermalWrapperint.png"  style="width:500px;">     
+</center>   
+<center><small>Figure 4: Example usage of ThermalActionWrapper</small></center> 
+
 <hr>  
     
 <small><p>This page is created by Liming Jiang, 2016</p></small>
