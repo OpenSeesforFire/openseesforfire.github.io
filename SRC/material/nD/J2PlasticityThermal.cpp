@@ -15,7 +15,7 @@
                                                                         
 // $Revision: 1.12 $
 // $Date: 2008-10-20 22:23:03 $
-// $Source: /usr/local/cvs/OpenSees/SRC/material/nD/J2Plasticity.cpp,v $
+// $Source: /usr/local/cvs/OpenSees/SRC/material/nD/J2PlasticityThermal.cpp,v $
 
 // Written: Ed "C++" Love
 //
@@ -28,7 +28,7 @@
 //  phi(sigma,q) = || dev(sigma) ||  - sqrt(2/3)*q(xi) 
 //
 //  Saturation Isotropic Hardening with linear term
-//  q(xi) = simga_infty + (sigma_0 - sigma_infty)*exp(-delta*xi) + H*xi 
+//  q(xi) = simga_infty + (sigma_y - sigma_infty)*exp(-delta*xi) + H*xi 
 //
 //  Flow Rules
 //  \dot{epsilon_p} =  gamma * d_phi/d_sigma
@@ -43,28 +43,30 @@
 //  set eta := 0 for rate independent case
 //
 
-#include <J2Plasticity.h>
+#include <J2PlasticityThermal.h>
 #include <J2PlaneStress.h>
 #include <J2PlaneStrain.h>
 #include <J2AxiSymm.h>
 #include <J2PlateFiber.h>
+
 #include <J2ThreeDimensional.h> 
+#include <J2ThreeDimensionalThermal.h> 
 #include <string.h>
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
 
 //parameters
-const double J2Plasticity :: one3   = 1.0 / 3.0 ;
-const double J2Plasticity :: two3   = 2.0 / 3.0 ;
-const double J2Plasticity :: four3  = 4.0 / 3.0 ;
-const double J2Plasticity :: root23 = sqrt( 2.0 / 3.0 ) ;
+const double J2PlasticityThermal :: one3   = 1.0 / 3.0 ;
+const double J2PlasticityThermal :: two3   = 2.0 / 3.0 ;
+const double J2PlasticityThermal :: four3  = 4.0 / 3.0 ;
+const double J2PlasticityThermal :: root23 = sqrt( 2.0 / 3.0 ) ;
 
-double J2Plasticity::initialTangent[3][3][3][3] ;   //material tangent
-double J2Plasticity::IIdev[3][3][3][3] ; //rank 4 deviatoric 
-double J2Plasticity::IbunI[3][3][3][3] ; //rank 4 I bun I 
+double J2PlasticityThermal::initialTangent[3][3][3][3] ;   //material tangent
+double J2PlasticityThermal::IIdev[3][3][3][3] ; //rank 4 deviatoric 
+double J2PlasticityThermal::IbunI[3][3][3][3] ; //rank 4 I bun I 
 
 //zero internal variables
-void J2Plasticity :: zero ( ) 
+void J2PlasticityThermal :: zero ( ) 
 {
   xi_n = 0.0 ;
   xi_nplus1 = 0.0 ;
@@ -78,16 +80,17 @@ void J2Plasticity :: zero ( )
 
 
 //null constructor
-J2Plasticity ::  J2Plasticity( ) : 
+J2PlasticityThermal ::  J2PlasticityThermal( ) : 
 NDMaterial( ),
 epsilon_p_n(3,3),
 epsilon_p_nplus1(3,3),
 stress(3,3),
-strain(3,3)
+strain(3,3),
+TempAndElong(2)
 { 
   bulk        = 0.0 ;
   shear       = 0.0 ;
-  sigma_0     = 0.0 ;
+  sigma_y     = 0.0 ;
   sigma_infty = 0.0 ;
   delta       = 0.0 ;
   Hard        = 0.0 ;
@@ -150,12 +153,13 @@ strain(3,3)
   IIdev [2][2] [1][1] = -one3 ; //-0.333333 
   IIdev [2][2] [2][2] =  two3 ; // 0.666667 
 
+  ThermalElongation = 0.0;
   plastic_integrator();
 }
 
 
 //full constructor
-J2Plasticity :: J2Plasticity(int    tag,
+J2PlasticityThermal :: J2PlasticityThermal(int    tag,
 			     int classTag,
 			     double K,
 			     double G,
@@ -170,11 +174,12 @@ J2Plasticity :: J2Plasticity(int    tag,
   epsilon_p_n(3,3),
   epsilon_p_nplus1(3,3),
   stress(3,3),
-  strain(3,3)
+  strain(3,3),
+	TempAndElong(2)
 {
   bulk        = K ;
   shear       = G ;
-  sigma_0     = yield0 ;
+  sigma_y     = yield0 ;
   sigma_infty = yield_infty ;
   delta       = d ;
   Hard        = H ;
@@ -237,13 +242,14 @@ J2Plasticity :: J2Plasticity(int    tag,
   IIdev [2][2] [1][1] = -one3 ; //-0.333333 
   IIdev [2][2] [2][2] =  two3 ; // 0.666667 
 
+  ThermalElongation = 0;
   plastic_integrator();
 }
 
 
 //elastic constructor
-J2Plasticity :: 
-J2Plasticity(   int    tag, 
+J2PlasticityThermal :: 
+J2PlasticityThermal(   int    tag, 
                 int  classTag,
                 double K, 
                 double G ) :
@@ -251,12 +257,13 @@ NDMaterial(tag, classTag),
 epsilon_p_n(3,3),
 epsilon_p_nplus1(3,3),
 stress(3,3),
-strain(3,3)
+strain(3,3),
+TempAndElong(2)
 {
   bulk        = K ;
   shear       = G ; 
-  sigma_0     = 1.0e16*shear ;
-  sigma_infty = sigma_0 ;
+  sigma_y     = 1.0e16*shear ;
+  sigma_infty = sigma_y ;
   delta       = 0.0 ;
   Hard        = 0.0 ;
   eta         = 0.0 ;
@@ -316,54 +323,43 @@ strain(3,3)
   IIdev [2][2] [0][0] = -one3 ; //-0.333333 
   IIdev [2][2] [1][1] = -one3 ; //-0.333333 
   IIdev [2][2] [2][2] =  two3 ; // 0.666667 
+
+  ThermalElongation = 0.0;
 }
 
 
 //destructor
-J2Plasticity :: ~J2Plasticity( ) 
+J2PlasticityThermal :: ~J2PlasticityThermal( ) 
 {  } 
 
 
 
 NDMaterial*
-J2Plasticity :: getCopy (const char *type)
+J2PlasticityThermal :: getCopy (const char *type)
 {
     if (strcmp(type,"PlaneStress2D") == 0 || strcmp(type,"PlaneStress") == 0)
     {
 	J2PlaneStress  *clone ;
-	clone = new J2PlaneStress(this->getTag(), bulk, shear, sigma_0,
+	clone = new J2PlaneStress(this->getTag(), bulk, shear, sigma_y,
 				  sigma_infty, delta, Hard, eta, rho) ;
 	return clone ;
-    }
-    else if (strcmp(type,"PlaneStrain2D") == 0 || strcmp(type,"PlaneStrain") == 0)
-    {
-	J2PlaneStrain  *clone ;
-	clone = new J2PlaneStrain(this->getTag(), bulk, shear, sigma_0,
-				  sigma_infty, delta, Hard, eta, rho) ;
-	return clone ;
-    }
-    else if (strcmp(type,"AxiSymmetric2D") == 0 || strcmp(type,"AxiSymmetric") == 0)
-    {
-	J2AxiSymm  *clone ;
-	clone = new J2AxiSymm(this->getTag(), bulk, shear, sigma_0,
-			      sigma_infty, delta, Hard, eta, rho) ;
-	return clone ;	
     }
     else if ((strcmp(type,"ThreeDimensional") == 0) ||
 	     (strcmp(type,"3D") == 0))
     {
 	J2ThreeDimensional  *clone ;
-	clone = new J2ThreeDimensional(this->getTag(), bulk, shear, sigma_0,
+	clone = new J2ThreeDimensional(this->getTag(), bulk, shear, sigma_y,
 				       sigma_infty, delta, Hard, eta, rho) ;
 	return clone ;	
     }
-    else if ( (strcmp(type,"PlateFiber") == 0) )
-    {
-	J2PlateFiber  *clone ;
-	clone = new J2PlateFiber(this->getTag(), bulk, shear, sigma_0,
-				 sigma_infty, delta, Hard, eta, rho) ;
-	return clone ;	
-    }
+	else if ((strcmp(type, "ThreeDimensionalThermal") == 0) ||
+		(strcmp(type, "3DThermal") == 0))
+	{
+		J2ThreeDimensionalThermal  *clone;
+		clone = new J2ThreeDimensionalThermal(this->getTag(), bulk, shear, sigma_y,
+			sigma_infty, delta, Hard, eta, rho);
+		return clone;
+	}
     // Handle other cases
     else
     {
@@ -372,14 +368,14 @@ J2Plasticity :: getCopy (const char *type)
 }
 
 //print out material data
-void J2Plasticity :: Print( OPS_Stream &s, int flag )
+void J2PlasticityThermal :: Print( OPS_Stream &s, int flag )
 {
   s << endln ;
   s << "J2-Plasticity : " ; 
   s << this->getType( ) << endln ;
   s << "Bulk Modulus =   " << bulk        << endln ;
   s << "Shear Modulus =  " << shear       << endln ;
-  s << "Sigma_0 =        " << sigma_0     << endln ;
+  s << "sigma_y =        " << sigma_y     << endln ;
   s << "Sigma_infty =    " << sigma_infty << endln ;
   s << "Delta =          " << delta       << endln ;
   s << "H =              " << Hard        << endln ;
@@ -392,9 +388,9 @@ void J2Plasticity :: Print( OPS_Stream &s, int flag )
 //--------------------Plasticity-------------------------------------
 
 //plasticity integration routine
-void J2Plasticity :: plastic_integrator( )
+void J2PlasticityThermal :: plastic_integrator( )
 {
-  const double tolerance = (1.0e-8)*sigma_0 ;
+  const double tolerance = (1.0e-8)*sigma_y ;
 
   const double dt = ops_Dt ; //time step
 
@@ -582,9 +578,133 @@ void J2Plasticity :: plastic_integrator( )
 
 
 
+double
+J2PlasticityThermal::setThermalTangentAndElongation(double &tempT, double&ET, double&Elong)
+{
+	double TempT = tempT + 20;
+	double E00; //Initial tangent 
+	ET = 2E11;
+	E00 = 2E11;
+
+	// EN 1992 pt 1-2-1. Class N hot rolled  reinforcing steel at elevated temperatures
+
+	if (TempT <= 100) {
+
+	}
+	else if (TempT <= 200) {
+
+		bulk = bulk0*(1 - (TempT - 100)*0.1 / 100);
+		shear = shear0*(1 - (TempT - 100)*0.1 / 100);
+		sigma_y = sigma_0;
+		ET = E00*(1 - (TempT - 100)*0.1 / 100);
+		Hard = 0.01*ET / 2.8;
+
+	}
+	else if (TempT <= 300) {
+
+		bulk = bulk0*(0.9 - (TempT - 200)*0.1 / 100);
+		shear = shear0*(0.9 - (TempT - 200)*0.1 / 100);
+
+		sigma_y = sigma_0;
+		ET = E00*(0.9 - (TempT - 200)*0.1 / 100);
+		Hard = 0.01*ET / 2.8;
+
+	}
+	else if (TempT <= 400) {
+		bulk = bulk0*(0.8 - (TempT - 300)*0.1 / 100);
+		shear = shear0*(0.8 - (TempT - 300)*0.1 / 100);
+
+		sigma_y = sigma_0;
+		ET = E00*(0.8 - (TempT - 300)*0.1 / 100);
+		Hard = 0.01*ET / 2.8;
+	}
+	else if (TempT <= 500) {
+		bulk = bulk0*(0.7 - (TempT - 400)*0.1 / 100);
+		shear = shear0*(0.7 - (TempT - 400)*0.1 / 100);
+
+		sigma_y = sigma_0*(1 - (TempT - 400)*0.22 / 100);
+		ET = E00*(0.7 - (TempT - 400)*0.1 / 100);
+		Hard = 0.01*ET / 2.8;
+	}
+	else if (TempT <= 600) {
+		bulk = bulk0*(0.6 - (TempT - 500)*0.29 / 100);
+		shear = shear0*(0.6 - (TempT - 500)*0.29 / 100);
+		sigma_y = sigma_0*(0.78 - (TempT - 500)*0.31 / 100);
+		ET = E00*(0.6 - (TempT - 500)*0.29 / 100);
+		Hard = 0.01*ET / 2.8;
+	}
+	else if (TempT <= 700) {
+		bulk = bulk0*(0.31 - (TempT - 600)*0.18 / 100);
+		shear = shear0*(0.31 - (TempT - 600)*0.18 / 100);
+
+		sigma_y = sigma_0*(0.47 - (TempT - 600)*0.24 / 100);
+		ET = E00*(0.31 - (TempT - 600)*0.18 / 100);
+		Hard = 0.01*ET / 2.8;
+	}
+	else if (TempT <= 800) {
+		bulk = bulk0*(0.13 - (TempT - 700)*0.04 / 100);
+		shear = shear0*(0.13 - (TempT - 700)*0.04 / 100);
+
+		sigma_y = sigma_0*(0.23 - (TempT - 700)*0.12 / 100);
+		ET = E00*(0.13 - (TempT - 700)*0.04 / 100);
+		Hard = 0.01*ET / 2.8;
+	}
+	else if (TempT <= 900) {
+		bulk = bulk0*(0.09 - (TempT - 800)*0.02 / 100);
+		shear = shear0*(0.09 - (TempT - 800)*0.02 / 100);
+
+		sigma_y = sigma_0*(0.11 - (TempT - 800)*0.05 / 100);
+		ET = E00*(0.09 - (TempT - 800)*0.02 / 100);
+		Hard = 0.01*ET / 2.8;
+	}
+	else if (TempT <= 1000) {
+		bulk = bulk0*(0.0675 - (TempT - 900)*(0.00675 - 0.0045) / 100);
+		shear = shear0*(0.0675 - (TempT - 900)*(0.00675 - 0.0045) / 100);
+
+		sigma_y = sigma_0*(0.06 - (TempT - 900)*0.02 / 100);
+		ET = E00*(0.0675 - (TempT - 900)*(0.00675 - 0.0045) / 100);
+		Hard = 0.01*ET / 2.8;
+	}
+
+	else {
+		opserr << "the temperature is invalid\n";
+	}
+
+	// Calculate thermal elongation 
+	if (TempT <= 20) {
+		ThermalElongation = 0.0;
+	}
+	else if (TempT <= 750) {
+		ThermalElongation = -2.416e-4 + 1.2e-5 *TempT + 0.4e-8 *TempT*TempT;
+		//ThermalElongation = 12e-6*(TempT);
+	}
+	else if (TempT <= 860) {
+		ThermalElongation = 11e-3;
+		//ThermalElongation = 12e-6*(TempT);
+	}
+	else if (TempT <= 1200) {
+		ThermalElongation = -6.2e-3 + 2e-5*TempT;
+		//ThermalElongation = 12e-6*(TempT);
+
+	}
+	else {
+		opserr << "the temperature is invalid\n";
+	}
+
+	TempAndElong(0) = TempT - 20;
+	TempAndElong(1) = ThermalElongation;
+	//ET = E;  
+	//ET = 3.84e10;
+	Elong = ThermalElongation;
+
+	return 0;
+}
+
+
+
 
 // set up for initial elastic
-void J2Plasticity :: doInitialTangent( )
+void J2PlasticityThermal :: doInitialTangent( )
 {
   int ii,jj,i,j,k,l;
 
@@ -614,26 +734,26 @@ void J2Plasticity :: doInitialTangent( )
 
 
 //hardening function
-double J2Plasticity :: q( double xi ) 
+double J2PlasticityThermal :: q( double xi ) 
 {
-//  q(xi) = simga_infty + (sigma_0 - sigma_infty)*exp(-delta*xi) + H*xi 
+//  q(xi) = simga_infty + (sigma_y - sigma_infty)*exp(-delta*xi) + H*xi 
 
  return    sigma_infty
-         + (sigma_0 - sigma_infty)*exp(-delta*xi)
+         + (sigma_y - sigma_infty)*exp(-delta*xi)
          + Hard*xi ;
 }
 
 
 //hardening function derivative
-double J2Plasticity :: qprime( double xi )
+double J2PlasticityThermal :: qprime( double xi )
 {
-  return  (sigma_0 - sigma_infty) * (-delta) * exp(-delta*xi)
+  return  (sigma_y - sigma_infty) * (-delta) * exp(-delta*xi)
          + Hard ;
 }
 
 
 //matrix_index ---> tensor indices i,j
-void J2Plasticity :: index_map( int matrix_index, int &i, int &j )
+void J2PlasticityThermal :: index_map( int matrix_index, int &i, int &j )
 {
   switch ( matrix_index+1 ) { //add 1 for standard tensor indices
 
@@ -683,32 +803,32 @@ return ;
 
 
 NDMaterial*
-J2Plasticity::getCopy (void)
+J2PlasticityThermal::getCopy (void)
 {
-  opserr << "J2Plasticity::getCopy -- subclass responsibility\n"; 
+  opserr << "J2PlasticityThermal::getCopy -- subclass responsibility\n"; 
   exit(-1);
   return 0;
 }
 
 const char*
-J2Plasticity::getType (void) const
+J2PlasticityThermal::getType (void) const
 {
-    opserr << "J2Plasticity::getType -- subclass responsibility\n";
+    opserr << "J2PlasticityThermal::getType -- subclass responsibility\n";
     exit(-1);
     return 0;
 }
 
 int
-J2Plasticity::getOrder (void) const
+J2PlasticityThermal::getOrder (void) const
 {
-    opserr << "J2Plasticity::getOrder -- subclass responsibility\n";
+    opserr << "J2PlasticityThermal::getOrder -- subclass responsibility\n";
     exit(-1);
     return 0;
 }
 
 
 int 
-J2Plasticity::commitState( ) 
+J2PlasticityThermal::commitState( ) 
 {
   epsilon_p_n = epsilon_p_nplus1 ;
   xi_n        = xi_nplus1 ;
@@ -717,14 +837,14 @@ J2Plasticity::commitState( )
 }
 
 int 
-J2Plasticity::revertToLastCommit( ) 
+J2PlasticityThermal::revertToLastCommit( ) 
 {
   return 0;
 }
 
 
 int 
-J2Plasticity::revertToStart( ) {
+J2PlasticityThermal::revertToStart( ) {
 
   // added: C.McGann, U.Washington for InitialStateAnalysis
   if (ops_InitialStateAnalysis) {
@@ -738,7 +858,7 @@ J2Plasticity::revertToStart( ) {
 }
 
 int
-J2Plasticity::sendSelf(int commitTag, Channel &theChannel)
+J2PlasticityThermal::sendSelf(int commitTag, Channel &theChannel)
 {
   // we place all the data needed to define material and it's state
   // int a vector object
@@ -747,7 +867,7 @@ J2Plasticity::sendSelf(int commitTag, Channel &theChannel)
   data(cnt++) = this->getTag();
   data(cnt++) = bulk;
   data(cnt++) = shear;
-  data(cnt++) = sigma_0;
+  data(cnt++) = sigma_y;
   data(cnt++) = sigma_infty;
   data(cnt++) = delta;
   data(cnt++) = Hard;
@@ -763,7 +883,7 @@ J2Plasticity::sendSelf(int commitTag, Channel &theChannel)
 
   // send the vector object to the channel
   if (theChannel.sendVector(this->getDbTag(), commitTag, data) < 0) {
-    opserr << "J2Plasticity::sendSelf - failed to send vector to channel\n";
+    opserr << "J2PlasticityThermal::sendSelf - failed to send vector to channel\n";
     return -1;
   }
 
@@ -771,13 +891,13 @@ J2Plasticity::sendSelf(int commitTag, Channel &theChannel)
 }
 
 int
-J2Plasticity::recvSelf (int commitTag, Channel &theChannel, 
+J2PlasticityThermal::recvSelf (int commitTag, Channel &theChannel, 
 			 FEM_ObjectBroker &theBroker)
 {
   // recv the vector object from the channel which defines material param and state
   static Vector data(10+9);
   if (theChannel.recvVector(this->getDbTag(), commitTag, data) < 0) {
-    opserr << "J2Plasticity::recvSelf - failed to recv vector from channel\n";
+    opserr << "J2PlasticityThermal::recvSelf - failed to recv vector from channel\n";
     return -1;
   }
 
@@ -786,7 +906,7 @@ J2Plasticity::recvSelf (int commitTag, Channel &theChannel,
   this->setTag(data(cnt++));
   bulk = data(cnt++);
   shear = data(cnt++);
-  sigma_0 = data(cnt++);
+  sigma_y = data(cnt++);
   sigma_infty = data(cnt++);
   delta = data(cnt++);
   Hard = data(cnt++);

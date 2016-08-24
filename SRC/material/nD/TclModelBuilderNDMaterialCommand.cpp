@@ -42,6 +42,7 @@
 //#include <ElasticIsotropic3DThermalSteel.h>//J.Jiang
 #include <PressureDependentElastic3D.h>
 #include <J2Plasticity.h>
+#include <J2PlasticityThermal.h>   //added by Liming Jiang
 #include <MultiaxialCyclicPlasticity.h> //Gang Wang
 
 #include <PlaneStressMaterial.h>
@@ -51,9 +52,9 @@
 #include <BeamFiberMaterial.h>
 //#include <CapPlasticityThermal.h> //L.Jiang(UoE)
 
-#include <PlateRebarMaterialThermal.h> //Liming(UoE)
-#include <PlateFromPlaneStressMaterialThermal.h>
-#include <ConcreteSThermal.h>
+#include <PlateRebarMaterialThermal.h> //Liming Jiang
+#include <PlateFromPlaneStressMaterialThermal.h>   //Liming Jiang
+#include <ConcreteSThermal.h>  //Liming Jiang
 
 #include <PressureIndependMultiYield.h>
 #include <PressureDependMultiYield.h>
@@ -78,7 +79,6 @@ extern  void *OPS_NewRAFourSteelPCPlaneStressMaterial(void);
 extern  void *OPS_NewElasticIsotropicMaterial(void);
 extern  void *OPS_NewDruckerPragerMaterial(void);
 extern  void *OPS_NewDruckerPragerThermalMaterial(void);//J.Jiang add (UoE)
-extern  void *OPS_NewDruckerPragerSteelThermalMaterial(void);//J.Jiang add (UoE)
 extern  void *OPS_CapPlasticityThermal(void); //L.Jiang add (UoE)
 
 extern  void *OPS_NewBoundingCamClayMaterial(void);
@@ -227,16 +227,6 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
       else 
 	return TCL_ERROR;
     }
-
-	// //J.Jiang  04.2012
-	else if ((strcmp(argv[1],"DruckerPragerSteelThermal") == 0)){
-
-      void *theMat = OPS_NewDruckerPragerSteelThermalMaterial();
-      if (theMat != 0) 
-	theMaterial = (NDMaterial *)theMat;
-      else 
-	return TCL_ERROR;
-    }//
 
 	 // ----- Cap plasticity model ------    // Quan Gu & ZhiJian Qiu  2013
 
@@ -619,7 +609,67 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
 	theMaterial = new J2Plasticity (tag, 0, K, G, sig0, sigInf,
 					delta, H, eta);
     }
+	else if ((strcmp(argv[1], "J2PlasticityThermal") == 0) ||
+		(strcmp(argv[1], "J2Thermal") == 0)) {
+		if (argc < 9) {
+			opserr << "WARNING insufficient arguments\n";
+			printCommand(argc, argv);
+			opserr << "Want: nDMaterial J2PlasticityThermal tag? K? G? sig0? sigInf? delta? H? <eta?>" << endln;
+			return TCL_ERROR;
+		}
 
+		int tag;
+		double K, G, sig0, sigInf, delta, H;
+		double eta = 0.0;
+
+		if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
+			opserr << "WARNING invalid J2PlasticityThermal tag" << endln;
+			return TCL_ERROR;
+		}
+
+		if (Tcl_GetDouble(interp, argv[3], &K) != TCL_OK) {
+			opserr << "WARNING invalid K\n";
+			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		if (Tcl_GetDouble(interp, argv[4], &G) != TCL_OK) {
+			opserr << "WARNING invalid G\n";
+			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		if (Tcl_GetDouble(interp, argv[5], &sig0) != TCL_OK) {
+			opserr << "WARNING invalid sig0\n";
+			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		if (Tcl_GetDouble(interp, argv[6], &sigInf) != TCL_OK) {
+			opserr << "WARNING invalid sigInf\n";
+			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		if (Tcl_GetDouble(interp, argv[7], &delta) != TCL_OK) {
+			opserr << "WARNING invalid delta\n";
+			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
+			return TCL_ERROR;
+		}
+		if (Tcl_GetDouble(interp, argv[8], &H) != TCL_OK) {
+			opserr << "WARNING invalid H\n";
+			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
+			return TCL_ERROR;
+		}
+		if (argc > 9 && Tcl_GetDouble(interp, argv[9], &eta) != TCL_OK) {
+			opserr << "WARNING invalid eta\n";
+			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		theMaterial = new J2PlasticityThermal(tag, 0, K, G, sig0, sigInf,
+			delta, H, eta);
+	}
 
     //
     //  MultiAxialCyclicPlasticity Model   by Gang Wang

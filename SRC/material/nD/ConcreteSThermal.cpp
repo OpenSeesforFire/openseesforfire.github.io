@@ -283,7 +283,7 @@ ConcreteSThermal::setThermalTangentAndElongation(double &tempT, double&ET, doubl
     
   }
   
-  double ThermalElongation;
+  double ThermalElongation=0;
   if (Temp <= 1) {
 		  ThermalElongation = Temp  * 9.213e-6;
   }
