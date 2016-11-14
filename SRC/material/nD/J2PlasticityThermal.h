@@ -125,8 +125,8 @@ protected :
   double eta ;         //viscosity
   double ThermalElongation;    //ThermalElongation
 
-  double bulk0;  //initial bulk modulus
-  double shear0; //initial shear modulus
+  double bulk_0;  //initial bulk modulus
+  double shear_0; //initial shear modulus
 
 
   Vector TempAndElong;  //TempAndElong, Liming
