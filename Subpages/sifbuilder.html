@@ -47,7 +47,7 @@
 <p>
 In order to move towards a more comprehensive solution for a unified analysis, SIFBuilder is proposed and aims to perform automated structural fire analyses for large structures under realistic fires. </p>
 <p>
-It is a comprehensive computational tool, which could enable structural engineers to obtain the structural response automatically with the application of the fire load on the structure in the same manner as any other form of load and so provide a performance-based structural fire engineering tool. </p>
+It is a <b>comprehensive computational tool</b>, which could enable structural engineers to obtain the structural response automatically with the application of the fire load on the structure in the same manner as any other form of load and so provide a performance-based structural fire engineering tool. </p>
 <p>
 It would potentially also become a testbed to foster a wide range of future developments, which may be new fire models featuring advanced characteristics in terms of fire science, or new thermo-mechanical constitutive models for materials, sections and elements to improve the accuracy and efficiency of integrated simulations. </p>
 <p>
@@ -58,9 +58,9 @@ As an individual project in OpenSees, SIFBuilder is designed to be a hub that co
 <hr>
 <h4> SIFBuilder workflow</h4>
 
-     <img src="../images/workflowSif.png" alt="OPS_logo" style="width:840px;">    
+<center><img src="../images/workflowSif.png" alt="OPS_logo" style="width:840px;"></center>    
 <center><small>Figure 1:  Workflow of using SIFBuilder</small></center>   
-    
+<br>   
 <p>Unlike commercial packages, neither OpenSees nor SIFBuilder have a graphical user interface (GUI). However, there is a script based user input capability based on Tcl, which provides considerable flexibility and scope due to its programmable nature. Similar to other commonly used FEM software, SIFBuilder requires the user to input basic structural information for generating the structural model. Procedural scripts are written to specify geometry, materials, loads, heat transfer parameters, fire type, analysis procedures, solution algorithm and output requirements using Tcl commands. A <i>SIFModel</i> is firstly created to store the building information, for which the typical user input script includes:</p>
 
 <ol class="a">
@@ -83,9 +83,31 @@ Data output after creating FE model can be requested as:
 Finally the full set of loading can be set up and executed by:
 <li><b>SIFAnalyze</b> command followed by incremental step and number of steps that are defined for each corresponding analysis.</li> 
 </ol>
-   
 <hr>
-<h4> SIFBuilder Script demo</h4>
+<h4> SIFModel</h4>
+<p>The so-called SIFModel is a higher-level term compared to the finite element
+description of the structure. It divides a structure into <b>SIFCompartment</b>, which consists of <b>SIFMember</b>s and <b>SIFJoint</b>s.</p>
+<p> When the Tcl interpreter receives definitions about the boundary conditions and
+loading cases, the SIFModel shall be established beforehand. While defining
+boundary conditions, restraints are attached to the relevant SIFJoint located
+by their tag or coordinates. Similarly for self weight or mechanical load, a load
+vector in each SIFMember is employed to specify the magnitude and direction.
+Slight difference is seen in adding fire action, where SIFireAction as a class is
+instantiated with a specific fire model type and compartment tag, and is added
+to the SIFBuilderDomain for later implementation. The input may vary as it
+is dependent on the type of fire model, which may be standard fire that just
+requires a duration, or parametric fire that asks for opening factor and
+boundary insulation properties, or localised fire models that require heat release
+rate, coordinates of fire origin, and so on. The above information is embedded into
+SIFModel, and can be read and extracted from the associated objects to create
+finite element based structural model for thermo-mechanical analysis.</p>
+
+ <center><img src="../images/SIFModel.jpg" alt="OPS_logo" style="width:400px;"></center>  
+<center><small>Figure 2:  SIFModel to store structural info</small></center>   
+<br>       
+    
+<hr>
+<h4> Demo of using SIFBuilder</h4>
 <code>
 SIFBuilder; <br>
 SIFXBay 6 9 ; <br>
