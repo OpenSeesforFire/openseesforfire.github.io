@@ -79,7 +79,7 @@ SetInitialT 293.15;
 <hr>
     
 <!------------HTConstants command----------------------------------------------->
-<h4> <a name = "HTConstantsT"> HTConstants </a> </h4>
+<h4> <a name = "HTConstants"> HTConstants </a> </h4>
 <b>HTConstants</b> command is used to define the co-efficients for heat transfer boundary conditions, which shall be used in associatation with <b>HeatFluxBC</b> command when defining convection and radiation or prescribed heat fluxes.
 
 <div class="box">
@@ -95,6 +95,39 @@ HTConstants 1 4.0 293.15 0.7 5.67e-8 0.7 418.738;
 </div>
 <hr>        
 
+<!------------HTPattern command----------------------------------------------->
+<h4> <a name = "HTPattern"> HTPattern </a> </h4>
+<b>HTPattern</b> command is used to define a time series based load pattern which can be appointed to ambient boudary condition or fire exposure boundary condition.
+
+<div class="box">
+<code>
+HTPattern AmbientBc $PatternTag {
+   HeatFluxBC..... ;
+} 
+HTPattern fire $patternTag model $FireModelTag {
+   HeatFluxBC..... ;
+}
+</code>
+</div>  
+<p>An examples is given as below, which is to define the heat transfer boudanry conditions for the unexposed surface of a concrete slab:</p>
+<div class="box">
+<code>
+HTConstants 1 4.0 293.15 0.7 5.67e-8 0.7 418.738;
+HTPattern AmbientBC 1 {
+	HeatFluxBC -HTEntity 1 -face 5 -type ConvecAndRad -HTConstants 1; 
+}
+</code>
+</div>
+<p>Another example is given here to show how the fire exposure being defined in a heat transfer analysis. A Standard Fire time-temperature relationship curve is adopted to define the fire exposure, and more fire models can be used which can be referred to as <b>FireModel</b></p>    
+<div class="box">
+<code>
+FireModel 1 -type standard ;
+HTPattern fire 2 model 1 {
+	HeatFluxBC -HTEntity 1 -face 3 -type -ConvecAndRad -HTConstants 1; 
+}
+</code>
+</div>
+<hr>
 
 <!HTMesh command---------------------------------------------------------------------->
 <h4> <a name = "HTRecorder"> HTRecorder </a> </h4>
