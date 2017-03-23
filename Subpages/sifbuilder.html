@@ -111,18 +111,27 @@ finite element based structural model for thermo-mechanical analysis.</p>
 <hr>
 <h4> Demo of using SIFBuilder</h4>
 <code>
+source DisplayPlane.tcl;<br>
+source DisplayModel2D.tcl;<br>
+source DisplayModel3D.tcl;<br>  
 SIFBuilder; <br>
 SIFXBay 6 9 ; <br>
 SIFZBay 6 9;<br>
 SIFStorey 5 4;<br>
 AddMaterial steel 1 -type EC3 3e8  2e11;<br>
+AddMaterial concrete 2 -type EC2 0 30e6;<br>
 AddSection ISection 1 1 0.203 0.102 0.0054 0.009;<br>
-AssignSection beams 1;<br>
-SetBC fixedJoint -locy 0; <br>
+AddSection ISection 3 1 0.254 0.254 0.0086 0.0142;<br>
+AddSection  SlabSection 5 2 0.1;<br>
+AssignSection 1 beams;<br>
+AssignSection 3 column -all;<br>
+AssignSection 5 slab -all;<br>
+SetBC fixedJoint -Locy 0; <br>
 AddLoad -member allslabs -load 0 -1000 0;<br>
-AddFire -compartment 111 -type standard;<br>
+AddFire -compartment 1101 -type standard;<br>
 BuildModel -MeshCtrl 6 6 6;<br>
-SIFRecorder Joint -file Joint111.out -joint 111 disp;   <br>
+SIFRecorder Joint -file Joint111.out -joint 1101 disp;   <br>
+DisplayModel3D DeformedShape 1 50 50 800 800 0;
 SIFAnalyze Load -dt 0.2 Fire -dt 30 -duration 1800 -output HTData; <br>
 </code>
 <p>Here a 2</p>
