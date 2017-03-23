@@ -36,7 +36,7 @@
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-          
+         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>   
       </header>
 <section>
       
@@ -131,10 +131,14 @@ AddLoad -member allslabs -load 0 -1000 0;<br>
 AddFire -compartment 1101 -type standard;<br>
 BuildModel -MeshCtrl 6 6 6;<br>
 SIFRecorder Joint -file Joint111.out -joint 1101 disp;   <br>
-DisplayModel3D DeformedShape 1 50 50 800 800 0;
+DisplayModel3D DeformedShape 1 50 50 800 800 0;<br>
 SIFAnalyze Load -dt 0.2 Fire -dt 30 -duration 1800 -output HTData; <br>
 </code>
-<p>Here a 2</p>
+
+<center><img src="../images/DemoModel.PNG" alt="OPS_logo" style="width:400px;"></center>  
+<center><small>Figure 4:  Demo example model</small></center>   
+<br>  
+    
 <br>
 <hr>
 <small><p>This page is created by Liming Jiang, 2016</p></small>
