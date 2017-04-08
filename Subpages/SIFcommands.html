@@ -63,7 +63,7 @@ SIFBuilder frame <br>
 <hr>
 <!Sifbuilder command---------------------------------------------------------------------->
 <h4><a name = "BuildModel"> BuildModel</a></h4>
-<b>BuildModel</b> command is used to activate the SIFBuilder module, which is followed by <i>frame</i> or <i>plane</i> and other options. Thses options are associated with different model type to creat a 3D frame model or 2D plane frame models. Here the command can be written as:
+<b>BuildModel</b> command is used to set up the finite element model for the structure. So the command keyword is followed by the model mesh control information, which may be the model type such as <i>elastic</i> or <i>dynamic</i> (in the future). If the <i>-MeshCtrl</i> or <i>MeshCtrl</i> is detected, there should be two or three parameters following this keyword to specify the number of elemets for each structural member along x, y, z axis. After this, an extra option is provided for defining pinned connections at the beam-column joints, which enables that the all the primary beams are pinned to the continuous columns. The command is written as follows:
 
 <div class="box">
 <code>
@@ -180,6 +180,21 @@ AssignSection slabs 5;
 </div>  
 <br>    
 <hr>
+    
+<hr>
+<h3> Basic Commands </h3>
+<hr>
+<!SetBC command---------------------------------------------------------------------->
+<h4> <a name = "SetBC">SetBC</a> </h4>
+<b>SetBC</b> command is used to define the boundary conditions of the SIFModel. Currently the boundary conditions are defined on SIFJoints which are selected according to their global coordinates. Two types of joint connection can be assigned: a pinned joint or a fixed joint. The global coordinates are specifed in terms of <i>locx</i>, <i>locy</i>, and <i>locz</i> which are corresppinding to the x,y,z coordinate. Notice that each keyword can be written as <i>locx</i>, <i>Locx</i> or <i>-Locx</i>, and it is followed by lower bound and upper bound of the coordinate or a single specified value of the coordinate. 
+
+<div class="box">
+<code>
+SetBC -pinnedJoint -Locx $locxLB <$locxUB> <-Locy $locyLB <$locyUB> > <-Locz $loczLB <$loczUB> > <br>
+SetBC -fixedJoint -Locx $locxLB <$locxUB> <-Locy $locyLB <$locyUB> > <-Locz $loczLB <$loczUB> > <br>
+</code>
+</div>    
+
     
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
