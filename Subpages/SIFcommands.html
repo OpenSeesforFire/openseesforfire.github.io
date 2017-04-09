@@ -180,13 +180,12 @@ AssignSection slabs 5;
 </div>  
 <br>    
 <hr>
-    
-<hr>
+
 <h3> Basic Commands </h3>
 <hr>
 <!SetBC command---------------------------------------------------------------------->
 <h4> <a name = "SetBC">SetBC</a> </h4>
-<b>SetBC</b> command is used to define the boundary conditions of the SIFModel. Currently the boundary conditions are defined on SIFJoints which are selected according to their global coordinates. Two types of joint connection can be assigned: a pinned joint or a fixed joint. The global coordinates are specifed in terms of <i>locx</i>, <i>locy</i>, and <i>locz</i> which are corresppinding to the x,y,z coordinate. Notice that each keyword can be written as <i>locx</i>, <i>Locx</i> or <i>-Locx</i>, and it is followed by lower bound and upper bound of the coordinate or a single specified value of the coordinate. 
+<b>SetBC</b> command is responsible to define the boundary conditions of the SIFModel. Currently the boundary conditions are defined on SIFJoints which are selected according to their global coordinates. Two types of joint connection can be assigned: a pinned joint or a fixed joint. The global coordinates are specifed in terms of <i>locx</i>, <i>locy</i>, and <i>locz</i> which are corresppinding to the x,y,z coordinate. Notice that each keyword can be written as <i>locx</i>, <i>Locx</i> or <i>-Locx</i>, and it is followed by lower bound and upper bound of the coordinate or a single specified value of the coordinate. 
 
 <div class="box">
 <code>
@@ -195,6 +194,33 @@ SetBC -fixedJoint -Locx $locxLB <$locxUB> <-Locy $locyLB <$locyUB> > <-Locz $loc
 </code>
 </div>    
 
+<p>An example of using <b>SetBC</b> is shown as below, which is intending to create fixed connections at the base of the structure.</p>
+<div class="box">
+<code>
+SetBC fixedJoint -Locy 0;<br>
+</code>
+</div>   
+<hr>    
+<!AddLoad command---------------------------------------------------------------------->
+<h4> <a name = "AddLoad">AddLoad</a> </h4>
+<b>AddLoad</b> command is used to apply mechanic load which includes point loads on <i>SIFJoints</i>, distributed loads on <i>SIFMembers</i>. The prototype of defining loads using this command is shown as below:
+
+<div class="box">
+<code>
+AddLoad -Joint $JointTag -load $loadVal1 <$loadVal2> <$loadVal3> <$loadVal4> <$loadVal5> <$loadVal6><br>
+AddLoad -Member AllSlabs -load $loadVal1 <$loadVal2> <$loadVal3> <br>
+AddLoad -Member AllBeams -load $loadVal1 <$loadVal2> <$loadVal3> <br>
+</code>
+</div>    
+
+<p>An example of using <b>AddLoad</b> is shown as below, which will apply a point load on the node primarily assigned to the SIFJoint tagged as 2202, and a UDL on all the slabs.</p>
+<div class="box">
+<code>
+AddLoad -joint 2202 -load 0 600000 0;
+AddLoad -member allslabs -load 0 -6000 0;<br>
+</code>
+</div>    
+<hr>    
     
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
