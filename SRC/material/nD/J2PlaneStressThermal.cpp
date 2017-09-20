@@ -394,9 +394,6 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 
 
 			if ((fabs(Xres) / Snorm < tol) && (fabs(Fres) / fy < tol) && lamda > 0) {
-				if (sigma1 > 0 && beta > 0)
-					break;
-				else if (sigma1 < 0 && beta == 0)
 					break;
 			}
 
