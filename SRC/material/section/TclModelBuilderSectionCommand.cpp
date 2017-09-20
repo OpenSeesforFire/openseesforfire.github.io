@@ -39,6 +39,7 @@
 #include <ElasticSection3d.h>
 #include <ElasticShearSection2d.h>
 #include <ElasticShearSection3d.h>
+#include <ElasticWarpingShearSection2d.h>
 #include <ElasticTubeSection3d.h>
 //#include <GenericSection1d.h>
 //#include <GenericSectionNd.h>
@@ -48,20 +49,17 @@
 #include <FiberSection2d.h>
 #include <NDFiberSection2d.h>
 #include <NDFiberSection3d.h>
+#include <NDFiberSectionWarping2d.h>
 #include <FiberSection2dInt.h>
 #include <FiberSection3d.h>
 //#include <FiberSectionGJ.h>
 #include <FiberSectionRepr.h>
-#include <FiberSection2dThermal.h>
-#include <FiberSection3dThermal.h> //Added by Liming,UoE,2013
-#include <FiberSectionGJThermal.h> //Added by Liming,UoE,2013
 
+#include <LayeredShellFiberSection.h> // Yuli Huang & Xinzheng Lu 
 
 #include <ElasticPlateSection.h>
 #include <ElasticMembranePlateSection.h>
 #include <MembranePlateFiberSection.h>
-#include <MembranePlateFiberSectionThermal.h> //Added by Liming,UoE,2013
-#include <LayeredShellFiberSectionThermal.h> //Added by Liming,UoE, 2015
 
 #include <QuadPatch.h>
 #include <CircPatch.h>
@@ -76,6 +74,7 @@
 #include <NDFiber3d.h>
 
 #include <Bidirectional.h>
+#include <Elliptical2.h>
 #include <Isolator2spring.h>
 
 //#include <WSection2d.h>
@@ -103,8 +102,12 @@ TclCommand_addFiberIntSection (ClientData clientData, Tcl_Interp *interp, int ar
 
 
 //--- Adding Thermo-mechanical Sections:[BEGIN]   by UoE OpenSees Group ---//  
-#include <FiberSection3dThermal.h>
-#include <FiberSectionGJThermal.h>
+#include <FiberSection2dThermal.h>
+#include <FiberSection3dThermal.h> //Added by L.Jiang [SIF] 2017
+#include <FiberSectionGJThermal.h> //Added by Liming, [SIF] 2017
+#include <MembranePlateFiberSectionThermal.h> //Added by Liming, [SIF] 2017
+#include <LayeredShellFiberSectionThermal.h> //Added by Liming, [SIF] 2017
+
 int TclCommand_addFiberSectionThermal (ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv, TclModelBuilder *theBuilder);
 int buildSectionThermal(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,int secTag, bool isTorsion, double GJ);
 //--- Adding Thermo-mechanical Sections: [END]   by UoE OpenSees Group ---//  
@@ -138,7 +141,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
       }
 	
 	int tag;
-	double E, A, Iz, Iy, G, J, alpha;
+	double E, A, Iz, Iy, G, J, alphaY, alphaZ;
 	
 	if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
 	    opserr << "WARNING invalid section Elastic tag" << endln;
@@ -171,13 +174,13 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	      return TCL_ERROR;
 	    }
 
-	    if (Tcl_GetDouble (interp, argv[7], &alpha) != TCL_OK) {
-	      opserr << "WARNING invalid G" << endln;
+	    if (Tcl_GetDouble (interp, argv[7], &alphaY) != TCL_OK) {
+	      opserr << "WARNING invalid alpha" << endln;
 	      opserr << "Elastic section: " << tag << endln;	    	    
 	      return TCL_ERROR;
 	    }
 
-	    theSection = new ElasticShearSection2d(tag, E, A, Iz, G, alpha);
+	    theSection = new ElasticShearSection2d(tag, E, A, Iz, G, alphaY);
 	  }
 	  else 
 	    theSection = new ElasticSection2d(tag, E, A, Iz);
@@ -208,20 +211,89 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	  }
 
 	  if (argc > 9) {
-	    if (Tcl_GetDouble (interp, argv[9], &alpha) != TCL_OK) {
-	      opserr << "WARNING invalid J" << endln;
+	    if (Tcl_GetDouble (interp, argv[9], &alphaY) != TCL_OK) {
+	      opserr << "WARNING invalid alphaY" << endln;
 	      opserr << "Elastic section: " << tag << endln;	    
 	      return TCL_ERROR;
 	    }
 
-	    theSection =
-	      new ElasticShearSection3d(tag, E, A, Iz, Iy, G, J, alpha);
+	    if (Tcl_GetDouble (interp, argv[10], &alphaZ) != TCL_OK) {
+	      opserr << "WARNING invalid alphaZ" << endln;
+	      opserr << "Elastic section: " << tag << endln;	    
+	      return TCL_ERROR;
+	    }
+
+	    theSection = new ElasticShearSection3d(tag, E, A, Iz, Iy,
+                                               G, J, alphaY, alphaZ);
 	  }
 	  else 
 	    theSection = new ElasticSection3d(tag, E, A, Iz, Iy, G, J);
 	}
     }	
+
+    else if (strcmp(argv[1],"ElasticWarpingShear") == 0) {
+      if (argc < 11) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: section ElasticWarpingShear tag? E? A? Iz? G? alpha? J? B? C?>" << endln;
+	return TCL_ERROR;
+      }
 	
+      int tag;
+      double E, A, Iz, G, alpha, J, B, C;
+      
+      if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
+	opserr << "WARNING invalid section ElasticWarpingShearSection2d tag" << endln;
+	return TCL_ERROR;		
+      }
+      
+      if (Tcl_GetDouble (interp, argv[3], &E) != TCL_OK) {
+	opserr << "WARNING invalid E" << endln;
+	opserr << "ElasticWarpingShearSection2d section: " << tag << endln;	    
+	return TCL_ERROR;
+      }	
+      
+      if (Tcl_GetDouble (interp, argv[4], &A) != TCL_OK) {
+	opserr << "WARNING invalid A" << endln;
+	opserr << "ElasticWarpingShearSection2d section: " << tag << endln;	    
+	return TCL_ERROR;
+      }	
+      
+      if (Tcl_GetDouble (interp, argv[5], &Iz) != TCL_OK) {
+	opserr << "WARNING invalid Iz" << endln;
+	opserr << "ElasticWarpingShearSection2d section: " << tag << endln;	    	    
+	return TCL_ERROR;
+      }	
+      
+      if (Tcl_GetDouble (interp, argv[6], &G) != TCL_OK) {
+	opserr << "WARNING invalid G" << endln;
+	opserr << "ElasticWarpingShearSection2d section: " << tag << endln;	    	    
+	return TCL_ERROR;
+      }
+      
+      if (Tcl_GetDouble (interp, argv[7], &alpha) != TCL_OK) {
+	opserr << "WARNING invalid alpha" << endln;
+	opserr << "ElasticWarpingShearSection2d section: " << tag << endln;	    	    
+	return TCL_ERROR;
+      }
+      if (Tcl_GetDouble (interp, argv[8], &J) != TCL_OK) {
+	opserr << "WARNING invalid J" << endln;
+	opserr << "ElasticWarpingShearSection2d section: " << tag << endln;	    	    
+	return TCL_ERROR;
+      }
+      if (Tcl_GetDouble (interp, argv[9], &B) != TCL_OK) {
+	opserr << "WARNING invalid B" << endln;
+	opserr << "ElasticWarpingShearSection2d section: " << tag << endln;	    	    
+	return TCL_ERROR;
+      }
+      if (Tcl_GetDouble (interp, argv[10], &C) != TCL_OK) {
+	opserr << "WARNING invalid C" << endln;
+	opserr << "ElasticWarpingShearSection2d section: " << tag << endln;	    	    
+	return TCL_ERROR;
+      }
+      
+      theSection = new ElasticWarpingShearSection2d(tag, E, A, Iz, G, alpha, J, B, C);
+    }
+    	
     // Check argv[1] for section type
     else if (strcmp(argv[1],"ElasticTube") == 0) {
       if (argc < 7) {
@@ -450,7 +522,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 
 	int numFibers = wfsect.getNumFibers();
 
-	if (argc > 10 && strcmp(argv[10],"-nd") == 0) {
+	if (argc > 10) {
 
 	  double shape = 1.0;
 	  if (argc > 11) {
@@ -461,7 +533,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	    }
 	  }
 
-	  NDMaterial *theSteel = theTclBuilder->getNDMaterial(matTag);
+	  NDMaterial *theSteel = OPS_getNDMaterial(matTag);
 	
 	  if (theSteel == 0) {
 	    opserr << "WARNING ND material does not exist\n";
@@ -473,9 +545,13 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	  NDMaterial **theMats = new NDMaterial *[numFibers];
 	  
 	  wfsect.arrangeFibers(theMats, theSteel);
-	  
+
 	  // Parsing was successful, allocate the section
-	  theSection = new NDFiberSection2d(tag, numFibers, theMats, wfsect, shape);
+	  theSection = 0;
+	  if (strcmp(argv[10],"-nd") == 0)
+	    theSection = new NDFiberSection2d(tag, numFibers, theMats, wfsect, shape);
+	  if (strcmp(argv[10],"-ndWarping") == 0)
+	    theSection = new NDFiberSectionWarping2d(tag, numFibers, theMats, wfsect, shape);
 
 	  delete [] theMats;	  
 	}
@@ -782,7 +858,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	delete [] theUniMat;
       } 
       else {
-	NDMaterial *theCore = theTclBuilder->getNDMaterial(coreTag);
+	NDMaterial *theCore = OPS_getNDMaterial(coreTag);
 	if (theCore == 0) {
 	  opserr << "WARNING uniaxial material does not exist\n";
 	  opserr << "material: " << coreTag; 
@@ -790,7 +866,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	  return TCL_ERROR;
 	}
 
-	NDMaterial *theCover = theTclBuilder->getNDMaterial(coverTag);      
+	NDMaterial *theCover = OPS_getNDMaterial(coverTag);      
 	if (theCover == 0) {
 	  opserr << "WARNING uniaxial material does not exist\4n";
 	  opserr << "material: " << coverTag; 
@@ -996,6 +1072,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
     
     else if (strcmp(argv[1],"Fiber") == 0 || 
 	     strcmp(argv[1],"fiberSec") == 0 ||
+	     strcmp(argv[1],"NDFiberWarping") == 0 ||
 	     strcmp(argv[1],"NDFiber") == 0)
 	return TclCommand_addFiberSection (clientData, interp, argc, argv,
 					   theTclBuilder);
@@ -1119,7 +1196,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	    return TCL_ERROR;
 	}	
 
-	NDMaterial *theMaterial = theTclBuilder->getNDMaterial(matTag);
+	NDMaterial *theMaterial = OPS_getNDMaterial(matTag);
 	if (theMaterial == 0) {
 	    opserr << "WARNING nD material does not exist\n";
 	    opserr << "nD material: " << matTag; 
@@ -1129,44 +1206,10 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 
 	theSection = new MembranePlateFiberSection( tag, h, *theMaterial );
     }	
-	//-----Add by J.Jiang, UoE.....Begin
-	else if (strcmp(argv[1],"PlateFiberThermal") == 0) {
-	int tag, matTag;
-	double  h;
-	
-	if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
-	    opserr << "WARNING invalid section PlateFiberThermal tag" << endln;
-	    return TCL_ERROR;		
-	}
-
-	if (Tcl_GetInt (interp, argv[3], &matTag) != TCL_OK) {
-	    opserr << "WARNING invalid matTag" << endln;
-	    opserr << "PlateFiberThermal section: " << matTag << endln;	    	    
-	    return TCL_ERROR;
-	}	
-
-	if (Tcl_GetDouble (interp, argv[4], &h) != TCL_OK) {
-	    opserr << "WARNING invalid h" << endln;
-	    opserr << "PlateFiberThermal section: " << tag << endln;	    	    
-	    return TCL_ERROR;
-	}	
-
-	NDMaterial *theMaterial = theTclBuilder->getNDMaterial(matTag);
-	if (theMaterial == 0) {
-	    opserr << "WARNING nD material does not exist\n";
-	    opserr << "nD material: " << matTag; 
-	    opserr << "\nPlateFiberThermal section: " << tag << endln;
-	    return TCL_ERROR;
-	}
-
-	theSection = new MembranePlateFiberSectionThermal( tag, h, *theMaterial );
-    }
-	//-----Add by J.Jiang, UoE.....End
 
 
-	//Added by Liming,UoE.......2015.........
-	//start Yuli Huang & Xinzheng Lu LayeredShellFiberSectionThermal
-    else if (strcmp(argv[1],"LayeredShellThermal") == 0) {
+    //start Yuli Huang & Xinzheng Lu LayeredShellFiberSection
+    else if (strcmp(argv[1],"LayeredShell") == 0) {
       if (argc < 6) {
 	opserr << "WARNING insufficient arguments" << endln;
 	opserr << "Want: section LayeredShell tag? nLayers? matTag1? h1? ... matTagn? hn? " << endln;
@@ -1204,7 +1247,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	  return TCL_ERROR;
 	}
 	
-	theMats[iLayer] = theTclBuilder->getNDMaterial(matTag);
+	theMats[iLayer] = OPS_getNDMaterial(matTag);
 	if (theMats[iLayer] == 0) {
 	  opserr << "WARNING nD material does not exist" << endln;;
 	  opserr << "nD material: " << matTag; 
@@ -1227,14 +1270,121 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	thickness[iLayer] = h;
       }
       
-      theSection = new LayeredShellFiberSectionThermal(tag, nLayers, thickness, theMats);
+      theSection = new LayeredShellFiberSection(tag, nLayers, thickness, theMats);
       if (thickness != 0) delete thickness;
       if (theMats != 0) delete [] theMats;
     }
-    //end Liming(UoE 2015) added based on LayeredShellFiberSectionThermal section created by Yuli Huang & Xinzheng Lu ----
+    //end Yuli Huang & Xinzheng Lu LayeredShellFiberSection
 
+	//-----Thermo-mechanical shell sections added by L.Jiang [SIF] 
+	else if (strcmp(argv[1], "PlateFiberThermal") == 0) {
+		if (argc < 5) {
+			opserr << "WARNING insufficient arguments\n";
+			opserr << "Want: section PlateFiberThermal tag? matTag? h? " << endln;
+			return TCL_ERROR;
+		}
+
+		int tag, matTag;
+		double  h;
+
+		if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
+			opserr << "WARNING invalid section PlateFiberThermal tag" << endln;
+			return TCL_ERROR;
+		}
+
+		if (Tcl_GetInt(interp, argv[3], &matTag) != TCL_OK) {
+			opserr << "WARNING invalid matTag" << endln;
+			opserr << "PlateFiberThermal section: " << matTag << endln;
+			return TCL_ERROR;
+		}
+
+		if (Tcl_GetDouble(interp, argv[4], &h) != TCL_OK) {
+			opserr << "WARNING invalid h" << endln;
+			opserr << "PlateFiberThermal section: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		NDMaterial *theMaterial = OPS_getNDMaterial(matTag);
+		if (theMaterial == 0) {
+			opserr << "WARNING nD material does not exist\n";
+			opserr << "nD material: " << matTag;
+			opserr << "\nPlateFiberThermal section: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		theSection = new MembranePlateFiberSectionThermal(tag, h, *theMaterial);
+	}
+
+	
+	// LayeredShellFiberSectionThermal based on the LayeredShellFiberSectionThermal by Yuli Huang & Xinzheng Lu
+	else if (strcmp(argv[1], "LayeredShellThermal") == 0) {
+		if (argc < 6) {
+			opserr << "WARNING insufficient arguments" << endln;
+			opserr << "Want: section LayeredShellThermal tag? nLayers? matTag1? h1? ... matTagn? hn? " << endln;
+			return TCL_ERROR;
+		}
+
+		int tag, nLayers, matTag;
+		double h, *thickness;
+		NDMaterial **theMats;
+
+		if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
+			opserr << "WARNING invalid section LayeredShellThermal tag" << endln;
+			return TCL_ERROR;
+		}
+
+		if (Tcl_GetInt(interp, argv[3], &nLayers) != TCL_OK) {
+			opserr << "WARNING invalid nLayers" << endln;
+			opserr << "LayeredShellThermal section: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		if (nLayers < 3) {
+			opserr << "ERROR number of layers must be larger than 2" << endln;
+			opserr << "LayeredShellThermal section: " << tag << endln;
+			return TCL_ERROR;
+		}
+
+		theMats = new NDMaterial*[nLayers];
+		thickness = new double[nLayers];
+
+		for (int iLayer = 0; iLayer < nLayers; iLayer++) {
+			if (Tcl_GetInt(interp, argv[4 + 2 * iLayer], &matTag) != TCL_OK) {
+				opserr << "WARNING invalid matTag" << endln;
+				opserr << "LayeredShellThermal section: " << tag << endln;
+				return TCL_ERROR;
+			}
+
+			theMats[iLayer] = OPS_getNDMaterial(matTag);
+			if (theMats[iLayer] == 0) {
+				opserr << "WARNING nD material does not exist" << endln;;
+				opserr << "nD material: " << matTag;
+				opserr << "LayeredShellThermal section: " << tag << endln;
+				return TCL_ERROR;
+			}
+
+			if (Tcl_GetDouble(interp, argv[5 + 2 * iLayer], &h) != TCL_OK) {
+				opserr << "WARNING invalid h" << endln;
+				opserr << "LayeredShellThermal section: " << tag << endln;
+				return TCL_ERROR;
+			}
+
+			if (h < 0) {
+				opserr << "WARNING invalid h" << endln;
+				opserr << "LayeredShellThermal section: " << tag << endln;
+				return TCL_ERROR;
+			}
+
+			thickness[iLayer] = h;
+		}
+
+		theSection = new LayeredShellFiberSectionThermal(tag, nLayers, thickness, theMats);
+		if (thickness != 0) delete thickness;
+		if (theMats != 0) delete[] theMats;
+	}
+	//end L.Jiang [SIF] added based on LayeredShellFiberSectionThermal section created by Yuli Huang & Xinzheng Lu ----
     
-        else if (strcmp(argv[1],"Bidirectional") == 0) {
+    else if (strcmp(argv[1],"Bidirectional") == 0) {
 	if (argc < 7) {
 	    opserr << "WARNING insufficient arguments\n";
 	    opserr << "Want: section Bidirectional tag? E? sigY? Hiso? Hkin?" << endln;
@@ -1317,6 +1467,115 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 
 	}
 
+        else if (strcmp(argv[1],"Elliptical") == 0 || strcmp(argv[1],"Elliptical2") == 0) {
+	if (argc < 10) {
+	    opserr << "WARNING insufficient arguments\n";
+	    opserr << "Want: section Elliptical tag? E1? E2? sigY1? sigY2? Hiso? Hkin1? Hkin2? <code1? code2?>" << endln;
+	    return TCL_ERROR;
+	}    
+
+	int tag;
+	double E1, E2, sigY1, sigY2, Hi, Hk1, Hk2;
+	
+	if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
+	    opserr << "WARNING invalid Elliptical tag" << endln;
+	    return TCL_ERROR;		
+	}
+
+	if (Tcl_GetDouble(interp, argv[3], &E1) != TCL_OK) {
+	    opserr << "WARNING invalid E1\n";
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;	
+	}
+
+	if (Tcl_GetDouble(interp, argv[4], &E2) != TCL_OK) {
+	    opserr << "WARNING invalid E2\n";
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;	
+	}
+
+	if (Tcl_GetDouble(interp, argv[5], &sigY1) != TCL_OK) {
+	    opserr << "WARNING invalid sigY1\n";
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;	
+	}
+
+	if (Tcl_GetDouble(interp, argv[6], &sigY2) != TCL_OK) {
+	    opserr << "WARNING invalid sigY2\n";
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;	
+	}
+
+	if (Tcl_GetDouble(interp, argv[7], &Hi) != TCL_OK) {
+	    opserr << "WARNING invalid Hiso\n";
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;	
+	}
+
+	if (Tcl_GetDouble(interp, argv[8], &Hk1) != TCL_OK) {
+	    opserr << "WARNING invalid Hkin1\n";
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;	
+	}
+
+	if (Tcl_GetDouble(interp, argv[9], &Hk2) != TCL_OK) {
+	    opserr << "WARNING invalid Hkin2\n";
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;	
+	}
+
+	if (argc > 11) {
+	  int code1, code2;
+	  if (strcmp(argv[10],"Mz") == 0)
+	    code1 = SECTION_RESPONSE_MZ;
+	  else if (strcmp(argv[10],"P") == 0)
+	    code1 = SECTION_RESPONSE_P;
+	  else if (strcmp(argv[10],"Vy") == 0)
+	    code1 = SECTION_RESPONSE_VY;
+	  else if (strcmp(argv[10],"My") == 0)
+	    code1 = SECTION_RESPONSE_MY;
+	  else if (strcmp(argv[10],"Vz") == 0)
+	    code1 = SECTION_RESPONSE_VZ;
+	  else if (strcmp(argv[10],"T") == 0)
+	    code1 = SECTION_RESPONSE_T;
+	  else {
+	    opserr << "WARNING invalid code 1 " << argv[10] << endln;
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;		
+	  }
+
+	  if (strcmp(argv[11],"Mz") == 0)
+	    code2 = SECTION_RESPONSE_MZ;
+	  else if (strcmp(argv[11],"P") == 0)
+	    code2 = SECTION_RESPONSE_P;
+	  else if (strcmp(argv[11],"Vy") == 0)
+	    code2 = SECTION_RESPONSE_VY;
+	  else if (strcmp(argv[11],"My") == 0)
+	    code2 = SECTION_RESPONSE_MY;
+	  else if (strcmp(argv[11],"Vz") == 0)
+	    code2 = SECTION_RESPONSE_VZ;
+	  else if (strcmp(argv[11],"T") == 0)
+	    code2 = SECTION_RESPONSE_T;
+	  else {
+	    opserr << "WARNING invalid code 2 " << argv[11] << endln;
+	    opserr << "section Elliptical: " << tag << endln;
+	    return TCL_ERROR;		
+	  }
+	  if (strcmp(argv[1],"Elliptical") == 0)
+	    //theSection = new Elliptical(tag, E1, E2, sigY1, sigY2, Hi, Hk1, Hk2, code1, code2);
+	    theSection = new Elliptical2(tag, E1, E2, sigY1, sigY2, Hi, Hk1, Hk2, code1, code2);
+	  else
+	    theSection = new Elliptical2(tag, E1, E2, sigY1, sigY2, Hi, Hk1, Hk2, code1, code2);
+	}
+	else {
+	  if (strcmp(argv[1],"Elliptical") == 0)
+	    //theSection = new Elliptical(tag, E1, E2, sigY1, sigY2, Hi, Hk1, Hk2);
+	    theSection = new Elliptical2(tag, E1, E2, sigY1, sigY2, Hi, Hk1, Hk2);
+	  else 
+	    theSection = new Elliptical2(tag, E1, E2, sigY1, sigY2, Hi, Hk1, Hk2);
+	}
+	}
+
         else if (strcmp(argv[1],"Iso2spring") == 0) {
 	  if (argc < 10) {
 	    opserr << "WARNING insufficient arguments\n";
@@ -1325,7 +1584,8 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	  }    
 	  
 	  int tag;
-	  double tol, k1, Fy, kb, kvo, hb, Pe, Po;
+	  double tol, k1, Fy, kb, kvo, hb, Pe;
+      double Po = 0.0;
 
 	  if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
 	    opserr << "WARNING invalid Iso2spring tag" << endln;
@@ -1395,7 +1655,8 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
     }
     
     // Now add the material to the modelBuilder
-    if (theTclBuilder->addSection(*theSection) < 0) {
+    //    if (theTclBuilder->addSection(*theSection) < 0) {
+    if (OPS_addSectionForceDeformation(theSection) != true) {
 	opserr << "WARNING could not add section to the domain\n";
 	opserr << *theSection << endln;
 	delete theSection; // invoke the material objects destructor, otherwise mem leak
@@ -1407,6 +1668,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 
 static int currentSectionTag = 0;
 static bool currentSectionIsND = false;
+static bool currentSectionIsWarping = false;
     
 int
 buildSection(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
@@ -1435,8 +1697,13 @@ TclCommand_addFiberSection (ClientData clientData, Tcl_Interp *interp, int argc,
     
     currentSectionTag = secTag;
     currentSectionIsND = false;
+    currentSectionIsWarping = false;
     if (strcmp(argv[1],"NDFiber") == 0)
       currentSectionIsND = true;
+    if (strcmp(argv[1],"NDFiberWarping") == 0) {
+      currentSectionIsND = true;
+      currentSectionIsWarping = true;
+    }
 
     // create the fiber section representation (with the geometric information) 
       
@@ -1447,7 +1714,6 @@ TclCommand_addFiberSection (ClientData clientData, Tcl_Interp *interp, int argc,
       opserr <<  "WARNING - ran out of memory to create section representation\n";
 	return TCL_ERROR;
     }
-
 
     if (theTclModelBuilder->addSectionRepres(*fiberSectionRepr) < 0) {
 	opserr <<  "WARNING - cannot add section representation\n";
@@ -1996,7 +2262,7 @@ TclCommand_addFiber(ClientData clientData, Tcl_Interp *interp, int argc,
     if (NDM == 2) {
 
       if (currentSectionIsND) {
-	NDMaterial *material = theTclModelBuilder->getNDMaterial(matTag);
+	NDMaterial *material = OPS_getNDMaterial(matTag);
 	if (material == 0) {
 	  opserr <<  "WARNING invalid NDMaterial ID for patch\n";
 	  return TCL_ERROR;
@@ -2025,7 +2291,7 @@ TclCommand_addFiber(ClientData clientData, Tcl_Interp *interp, int argc,
       fiberPosition(1) = zLoc;
       
       if (currentSectionIsND) {
-	NDMaterial *material = theTclModelBuilder->getNDMaterial(matTag);
+	NDMaterial *material = OPS_getNDMaterial(matTag);
 	if (material == 0) {
 	  opserr <<  "WARNING invalid NDMaterial ID for patch\n";
 	  return TCL_ERROR;
@@ -2590,7 +2856,7 @@ buildSection(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
 	 k = 0;
 	 for (i = numSectionRepresFibers; i < numFibers; i++) {    
 	   if (currentSectionIsND) {
-	     ndmaterial = theTclModelBuilder->getNDMaterial(fibersMaterial(k));
+	     ndmaterial = OPS_getNDMaterial(fibersMaterial(k));
 	     if (ndmaterial == 0) {
                opserr <<  "WARNING invalid NDmaterial ID for patch\n";
                return TCL_ERROR;
@@ -2616,8 +2882,12 @@ buildSection(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
 	
 	 
 	 SectionForceDeformation *section = 0;
-	 if (currentSectionIsND)
-	   section = new NDFiberSection2d(secTag, numFibers, fiber);
+	 if (currentSectionIsND) {
+           if (currentSectionIsWarping)
+  	     section = new NDFiberSectionWarping2d(secTag, numFibers, fiber);
+           else 
+	     section = new NDFiberSection2d(secTag, numFibers, fiber);
+         }
 	 else
 	   section = new FiberSection2d(secTag, numFibers, fiber);
 
@@ -2633,8 +2903,8 @@ buildSection(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
             return TCL_ERROR;
          }
        
-         if (theTclModelBuilder->addSection (*section) < 0)
-         {
+         //if (theTclModelBuilder->addSection (*section) < 0) {
+	 if (OPS_addSectionForceDeformation(section) != true) {
             opserr <<  "WARNING - cannot add section\n";
             return TCL_ERROR;
          }
@@ -2651,7 +2921,7 @@ buildSection(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
 	   fiberPosition(0) = fibersPosition(0,k);
 	   fiberPosition(1) = fibersPosition(1,k);  
 	   if (currentSectionIsND) {
-	     ndmaterial = theTclModelBuilder->getNDMaterial(fibersMaterial(k));
+	     ndmaterial = OPS_getNDMaterial(fibersMaterial(k));
 	     if (ndmaterial == 0) {
                opserr <<  "WARNING invalid NDmaterial ID for patch\n";
                return TCL_ERROR;
@@ -2679,9 +2949,10 @@ buildSection(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
 	 if (currentSectionIsND)
 	   section = new NDFiberSection3d(secTag, numFibers, fiber);
 	 else if (isTorsion) {
-	   ElasticMaterial theGJ(0, GJ);
-	   FiberSection3d theFS(0, numFibers, fiber);
-	   section = new SectionAggregator(secTag, theFS, theGJ, SECTION_RESPONSE_T);
+           ElasticMaterial theGJ(0, GJ);
+           //FiberSection3d theFS(0, numFibers, fiber);
+           //section = new SectionAggregator(secTag, theFS, theGJ, SECTION_RESPONSE_T);
+           section = new FiberSection3d(secTag, numFibers, fiber, &theGJ);
 	 }
 	 else
 	   section = new FiberSection3d(secTag, numFibers, fiber);
@@ -2696,8 +2967,8 @@ buildSection(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
             return TCL_ERROR;
          }
        
-         if (theTclModelBuilder->addSection (*section) < 0)
-         {
+         //if (theTclModelBuilder->addSection (*section) < 0) {
+	 if (OPS_addSectionForceDeformation(section) != true) {
             opserr <<  "WARNING - cannot add section\n";
             return TCL_ERROR;
          }
@@ -2900,8 +3171,8 @@ buildSectionInt(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
             return TCL_ERROR;
          }
        
-         if (theTclModelBuilder->addSection (*section) < 0)
-         {
+         //if (theTclModelBuilder->addSection (*section) < 0) {
+	 if (OPS_addSectionForceDeformation(section) != true) {
             opserr <<  "WARNING - cannot add section\n";
             return TCL_ERROR;
          }
@@ -2936,9 +3207,10 @@ buildSectionInt(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
 	
 	 SectionForceDeformation *section = 0;
 	 if (isTorsion) {
-	   ElasticMaterial theGJ(0, GJ);
-	   FiberSection3d theFS(0, numFibers, fiber);
-	   section = new SectionAggregator(secTag, theFS, theGJ, SECTION_RESPONSE_T);
+           ElasticMaterial theGJ(0, GJ);
+           //FiberSection3d theFS(0, numFibers, fiber);
+           //section = new SectionAggregator(secTag, theFS, theGJ, SECTION_RESPONSE_T);
+           section = new FiberSection3d(secTag, numFibers, fiber, &theGJ);
 	 }
 	 else
 	   section = new FiberSection3d(secTag, numFibers, fiber);
@@ -2953,8 +3225,8 @@ buildSectionInt(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder,
             return TCL_ERROR;
          }
        
-         if (theTclModelBuilder->addSection (*section) < 0)
-         {
+	 // if (theTclModelBuilder->addSection (*section) < 0) {
+	 if (OPS_addSectionForceDeformation(section) != true) {
             opserr <<  "WARNING - cannot add section\n";
             return TCL_ERROR;
          }
@@ -3009,7 +3281,8 @@ TclCommand_addUCFiberSection (ClientData clientData, Tcl_Interp *interp, int arg
       section = section2d;
       //SectionForceDeformation *section = new FiberSection(secTag, 0, 0);
     } else if (NDM == 3) {
-      section3d = new FiberSection3d(secTag, 0, 0);
+      ElasticMaterial theGJ(0, 1e10);
+      section3d = new FiberSection3d(secTag, 0, 0, &theGJ);
       section = section3d;
     } 
 
@@ -3079,7 +3352,8 @@ TclCommand_addUCFiberSection (ClientData clientData, Tcl_Interp *interp, int arg
     }
 
     // finally add the section to our modelbuilder
-    if (theTclModelBuilder->addSection (*section) < 0) {
+    //if (theTclModelBuilder->addSection (*section) < 0) {
+    if (OPS_addSectionForceDeformation(section) != true) {
       opserr <<  "WARNING - cannot add section\n";
       return TCL_ERROR;
     }
@@ -3088,271 +3362,274 @@ TclCommand_addUCFiberSection (ClientData clientData, Tcl_Interp *interp, int arg
     return TCL_OK;
 }
 
+////Changes made by L.Jiang [SIF] 2017
 ///--Adding Tclcommand for FiberSectionThermal:[BEGIN] by UoE OpenSees Group --///  
-int TclCommand_addFiberSectionThermal (ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv, TclModelBuilder *theTclModelBuilder)
+int TclCommand_addFiberSectionThermal(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv, TclModelBuilder *theTclModelBuilder)
 {
-  int secTag;
-  int maxNumPatches = 30; 
-  int maxNumReinfLayers = 30;
-    
-  if (argc < 4) 
-    return TCL_ERROR;
-    
-  if (Tcl_GetInt(interp, argv[2], &secTag) != TCL_OK) {
-    opserr <<  "WARNING bad command - want: \nsection fiberSec secTag { \n\tpatch <patch arguments> \n\tlayer <layer arguments> \n}\n";
-    return TCL_ERROR;
-  }
-  currentSectionTag = secTag;
-  // create the fiber section representation (with the geometric information) 
-    SectionRepres *fiberSectionRepr =
-      new FiberSectionRepr(secTag, maxNumPatches, maxNumReinfLayers);  
+	int secTag;
+	int maxNumPatches = 30;
+	int maxNumReinfLayers = 30;
 
-    if (fiberSectionRepr == 0) {
-      opserr <<  "WARNING - ran out of memory to create section representation\n";
-      return TCL_ERROR;
-    }
+	if (argc < 4)
+		return TCL_ERROR;
 
-    if (theTclModelBuilder->addSectionRepres(*fiberSectionRepr) < 0) {
-      opserr <<  "WARNING - cannot add section representation\n";
-      return TCL_ERROR;
-    }
+	if (Tcl_GetInt(interp, argv[2], &secTag) != TCL_OK) {
+		opserr << "WARNING bad command - want: \nsection fiberSec secTag { \n\tpatch <patch arguments> \n\tlayer <layer arguments> \n}\n";
+		return TCL_ERROR;
+	}
+	currentSectionTag = secTag;
+	// create the fiber section representation (with the geometric information) 
+	SectionRepres *fiberSectionRepr =
+		new FiberSectionRepr(secTag, maxNumPatches, maxNumReinfLayers);
 
-    int brace = 3; // Start of recursive parse
-    double GJ = 1.0;
-    bool isTorsion = false;
-    if (strcmp(argv[3],"-GJ") == 0) {
-      if (Tcl_GetDouble(interp, argv[4], &GJ) != TCL_OK) {
-	opserr <<  "WARNING invalid GJ";
-	return TCL_ERROR;
-      }
-      isTorsion = true;
-      brace = 5;
-    }
-    // parse the information inside the braces (patches and reinforcing layers)
-    if (Tcl_Eval(interp, argv[brace]) != TCL_OK) {
-      opserr << "WARNING - error reading information in { } \n";
-      return TCL_ERROR;
-    }
-    // build the fiber section (for analysis)
-    if (buildSectionThermal(interp, theTclModelBuilder, secTag, isTorsion, GJ) != TCL_OK) {
-      opserr << "WARNING - error constructing the section\n";
-      return TCL_ERROR;
-    }
-    //    currentSectionTag = 0;
-    return TCL_OK;
+	if (fiberSectionRepr == 0) {
+		opserr << "WARNING - ran out of memory to create section representation\n";
+		return TCL_ERROR;
+	}
+
+	if (theTclModelBuilder->addSectionRepres(*fiberSectionRepr) < 0) {
+		opserr << "WARNING - cannot add section representation\n";
+		return TCL_ERROR;
+	}
+
+	int brace = 3; // Start of recursive parse
+	double GJ = 1.0;
+	bool isTorsion = false;
+	if (strcmp(argv[3], "-GJ") == 0) {
+		if (Tcl_GetDouble(interp, argv[4], &GJ) != TCL_OK) {
+			opserr << "WARNING invalid GJ";
+			return TCL_ERROR;
+		}
+		isTorsion = true;
+		brace = 5;
+	}
+	// parse the information inside the braces (patches and reinforcing layers)
+	if (Tcl_Eval(interp, argv[brace]) != TCL_OK) {
+		opserr << "WARNING - error reading information in { } \n";
+		return TCL_ERROR;
+	}
+	// build the fiber section (for analysis)
+	if (buildSectionThermal(interp, theTclModelBuilder, secTag, isTorsion, GJ) != TCL_OK) {
+		opserr << "WARNING - error constructing the section\n";
+		return TCL_ERROR;
+	}
+	//    currentSectionTag = 0;
+	return TCL_OK;
 }
 
 ///--Adding function for building FiberSectionThermal:[BEGIN] by UoE OpenSees Group --///  
 int buildSectionThermal(Tcl_Interp *interp, TclModelBuilder *theTclModelBuilder, int secTag, bool isTorsion, double GJ)
 {
-  SectionRepres *sectionRepres = theTclModelBuilder->getSectionRepres(secTag);
-  if (sectionRepres == 0) 
-    {
-      opserr <<  "WARNING cannot retrieve section\n";
-      return TCL_ERROR;
-    }    
-     
-  if (sectionRepres->getType() == SEC_TAG_FiberSection)
-    {
-      // build the section
-      FiberSectionRepr *fiberSectionRepr = (FiberSectionRepr *) sectionRepres;
-      int i, j, k;
-      int numFibers;
-      int numPatches;
-      Patch **patch;
-
-      int  numReinfLayers;
-      ReinfLayer **reinfLayer;
-
-      numPatches     = fiberSectionRepr->getNumPatches();
-      patch          = fiberSectionRepr->getPatches();
-      numReinfLayers = fiberSectionRepr->getNumReinfLayers();
-      reinfLayer     = fiberSectionRepr->getReinfLayers(); 
-
-      int numSectionRepresFibers = fiberSectionRepr->getNumFibers();
-      Fiber **sectionRepresFibers = fiberSectionRepr->getFibers();
-      
-      numFibers = numSectionRepresFibers;
-      for (i = 0; i < numPatches; i++)
-	numFibers += patch[i]->getNumCells();
-      
-      for (i = 0; i < numReinfLayers; i++)
-	numFibers += reinfLayer[i]->getNumReinfBars();
-      //opserr << "\nnumFibers: " << numFibers;
-      
-      static Vector fiberPosition(2);
-      int    matTag;
-      
-      ID     fibersMaterial(numFibers-numSectionRepresFibers);
-      Matrix fibersPosition(2,numFibers-numSectionRepresFibers);
-      Vector fibersArea(numFibers-numSectionRepresFibers);
-
-      int  numCells;
-      Cell **cell;
-    
-      k = 0;
-      for (i = 0; i < numPatches; i++)
+	SectionRepres *sectionRepres = theTclModelBuilder->getSectionRepres(secTag);
+	if (sectionRepres == 0)
 	{
-	  //opserr << "\nPatch :" << i;
-	  numCells   = patch[i]->getNumCells();
-	  matTag = patch[i]->getMaterialID();
-	  //opserr << "\nmatTag: " << matTag(k);
-	  cell = patch[i]->getCells();
-	  if (cell == 0)
-	    {
-	      opserr <<  "WARNING out of run to create fibers\n";
-	      return TCL_ERROR;
-	    }    
-	  //opserr << "\n\tnumCells :" << numCells;
-	  for (j = 0; j < numCells; j++)
-	    {
-	      fibersMaterial(k) = matTag;
-	      fibersArea(k)     = cell[j]->getArea();
-	      fiberPosition     = cell[j]->getCentroidPosition();
-
-	      fibersPosition(0,k) = fiberPosition(0);
-	      fibersPosition(1,k) = fiberPosition(1);
-	      k++;
-	    }
-	  for (j = 0; j < numCells; j++)
-	    delete cell[j];
-	  delete [] cell;
-	}  
-      ReinfBar *reinfBar;
-      int numReinfBars;
-      for (i = 0; i < numReinfLayers; i++)
-	{
-	  numReinfBars = reinfLayer[i]->getNumReinfBars();
-	  reinfBar     = reinfLayer[i]->getReinfBars();
-	  matTag  = reinfLayer[i]->getMaterialID();
-   
-	  for (j = 0; j < numReinfBars; j++)
-	    {
-	      fibersMaterial(k) = matTag; 
-	      fibersArea(k)  = reinfBar[j].getArea();
-	      fiberPosition   = reinfBar[j].getPosition();
-	      fibersPosition(0,k) = fiberPosition(0);
-	      fibersPosition(1,k) = fiberPosition(1);
-	      k++;
-	    }
-	  delete [] reinfBar;
+		opserr << "WARNING cannot retrieve section\n";
+		return TCL_ERROR;
 	}
-      UniaxialMaterial *material;
 
-      int NDM = theTclModelBuilder->getNDM();   // dimension of the structure (1d, 2d, or 3d)
-      Fiber **fiber = new Fiber *[numFibers];
-      if (fiber == 0) {
-	opserr <<  "WARNING unable to allocate fibers \n";
-	return TCL_ERROR;
-      }          
-      // copy the section repres fibers
-      for (i=0; i<numSectionRepresFibers; i++)
-	fiber[i] = sectionRepresFibers[i];
-      // creates 2d section      
-      if (NDM == 2)     
+	if (sectionRepres->getType() == SEC_TAG_FiberSection)
 	{
-	  k = 0;
-	  for (i = numSectionRepresFibers; i < numFibers; i++)
-	    {    
-	      material = OPS_getUniaxialMaterial(fibersMaterial(k));
-	      if (material == 0)
-		{
-		  opserr <<  "WARNING invalid material ID for patch\n";
-		  return TCL_ERROR;
-		}   
-	          
-	      fiber[i] = new UniaxialFiber2d(k, *material, fibersArea(k), fibersPosition(0,k));
-	      if (!fiber[i]) 
-		{
-		  opserr <<  "WARNING unable to allocate fiber \n";
-		  return TCL_ERROR;
-		}    
-	      //opserr << *fiber[k];
-	      k++;
-	    }
-	  
-	  SectionForceDeformation *section = new FiberSection2dThermal(secTag, numFibers, fiber);
-   
-	  // Delete fibers
-	  for (i = 0; i < numFibers; i++)
-	    delete fiber[i];
+		// build the section
+		FiberSectionRepr *fiberSectionRepr = (FiberSectionRepr *)sectionRepres;
+		int i, j, k;
+		int numFibers;
+		int numPatches;
+		Patch **patch;
 
-	  if (section == 0)
-	    {
-	      opserr <<  "WARNING - cannot construct section\n";
-	      return TCL_ERROR;
-	    }
-       
-	  if (theTclModelBuilder->addSection (*section) < 0)
-	    {
-	      opserr <<  "WARNING - cannot add section\n";
-	      return TCL_ERROR;
-	    }
-	  //opserr << "section: " << *section;
+		int  numReinfLayers;
+		ReinfLayer **reinfLayer;
+
+		numPatches = fiberSectionRepr->getNumPatches();
+		patch = fiberSectionRepr->getPatches();
+		numReinfLayers = fiberSectionRepr->getNumReinfLayers();
+		reinfLayer = fiberSectionRepr->getReinfLayers();
+
+		int numSectionRepresFibers = fiberSectionRepr->getNumFibers();
+		Fiber **sectionRepresFibers = fiberSectionRepr->getFibers();
+
+		numFibers = numSectionRepresFibers;
+		for (i = 0; i < numPatches; i++)
+			numFibers += patch[i]->getNumCells();
+
+		for (i = 0; i < numReinfLayers; i++)
+			numFibers += reinfLayer[i]->getNumReinfBars();
+		//opserr << "\nnumFibers: " << numFibers;
+
+		static Vector fiberPosition(2);
+		int    matTag;
+
+		ID     fibersMaterial(numFibers - numSectionRepresFibers);
+		Matrix fibersPosition(2, numFibers - numSectionRepresFibers);
+		Vector fibersArea(numFibers - numSectionRepresFibers);
+
+		int  numCells;
+		Cell **cell;
+
+		k = 0;
+		for (i = 0; i < numPatches; i++)
+		{
+			//opserr << "\nPatch :" << i;
+			numCells = patch[i]->getNumCells();
+			matTag = patch[i]->getMaterialID();
+			//opserr << "\nmatTag: " << matTag(k);
+			cell = patch[i]->getCells();
+			if (cell == 0)
+			{
+				opserr << "WARNING out of run to create fibers\n";
+				return TCL_ERROR;
+			}
+			//opserr << "\n\tnumCells :" << numCells;
+			for (j = 0; j < numCells; j++)
+			{
+				fibersMaterial(k) = matTag;
+				fibersArea(k) = cell[j]->getArea();
+				fiberPosition = cell[j]->getCentroidPosition();
+
+				fibersPosition(0, k) = fiberPosition(0);
+				fibersPosition(1, k) = fiberPosition(1);
+				k++;
+			}
+			for (j = 0; j < numCells; j++)
+				delete cell[j];
+			delete[] cell;
+		}
+		ReinfBar *reinfBar;
+		int numReinfBars;
+		for (i = 0; i < numReinfLayers; i++)
+		{
+			numReinfBars = reinfLayer[i]->getNumReinfBars();
+			reinfBar = reinfLayer[i]->getReinfBars();
+			matTag = reinfLayer[i]->getMaterialID();
+
+			for (j = 0; j < numReinfBars; j++)
+			{
+				fibersMaterial(k) = matTag;
+				fibersArea(k) = reinfBar[j].getArea();
+				fiberPosition = reinfBar[j].getPosition();
+				fibersPosition(0, k) = fiberPosition(0);
+				fibersPosition(1, k) = fiberPosition(1);
+				k++;
+			}
+			delete[] reinfBar;
+		}
+		UniaxialMaterial *material;
+
+		int NDM = theTclModelBuilder->getNDM();   // dimension of the structure (1d, 2d, or 3d)
+		Fiber **fiber = new Fiber *[numFibers];
+		if (fiber == 0) {
+			opserr << "WARNING unable to allocate fibers \n";
+			return TCL_ERROR;
+		}
+		// copy the section repres fibers
+		for (i = 0; i<numSectionRepresFibers; i++)
+			fiber[i] = sectionRepresFibers[i];
+		// creates 2d section      
+		if (NDM == 2)
+		{
+			k = 0;
+			for (i = numSectionRepresFibers; i < numFibers; i++)
+			{
+				material = OPS_getUniaxialMaterial(fibersMaterial(k));
+				if (material == 0)
+				{
+					opserr << "WARNING invalid material ID for patch\n";
+					return TCL_ERROR;
+				}
+
+				fiber[i] = new UniaxialFiber2d(k, *material, fibersArea(k), fibersPosition(0, k));
+				if (!fiber[i])
+				{
+					opserr << "WARNING unable to allocate fiber \n";
+					return TCL_ERROR;
+				}
+				//opserr << *fiber[k];
+				k++;
+			}
+
+			SectionForceDeformation *section = new FiberSection2dThermal(secTag, numFibers, fiber);
+
+			// Delete fibers
+			for (i = 0; i < numFibers; i++)
+				delete fiber[i];
+
+			if (section == 0)
+			{
+				opserr << "WARNING - cannot construct section\n";
+				return TCL_ERROR;
+			}
+
+			if (theTclModelBuilder->addSection(*section) < 0)
+			{
+				opserr << "WARNING - cannot add section\n";
+				return TCL_ERROR;
+			}
+			//opserr << "section: " << *section;
+		}
+		else if (NDM == 3)
+		{
+			static Vector fiberPosition(2);
+			k = 0;
+			for (i = numSectionRepresFibers; i < numFibers; i++)
+			{
+				material = OPS_getUniaxialMaterial(fibersMaterial(k));
+				if (material == 0)
+				{
+					opserr << "WARNING invalid material ID for patch\n";
+					return TCL_ERROR;
+				}
+				fiberPosition(0) = fibersPosition(0, k);
+				fiberPosition(1) = fibersPosition(1, k);
+
+				fiber[i] = new UniaxialFiber3d(k, *material, fibersArea(k), fiberPosition);
+				if (fibersArea(k) < 0) opserr << "ERROR: " << fiberPosition(0) << " " << fiberPosition(1) << endln;
+				if (!fiber[k])
+				{
+					opserr << "WARNING unable to allocate fiber \n";
+					return TCL_ERROR;
+				}
+				k++;
+				//opserr << *fiber[k];
+			}
+			//SectionForceDeformation *section = new FiberSection(secTag, numFibers, fiber);
+
+			SectionForceDeformation *section = 0;
+			if (isTorsion)
+				section = new FiberSectionGJThermal(secTag, numFibers, fiber, GJ);
+			else
+				section = new FiberSection3dThermal(secTag, numFibers, fiber);
+
+			// Delete fibers
+			for (i = 0; i < numFibers; i++)
+				delete fiber[i];
+			if (section == 0)
+			{
+				opserr << "WARNING - cannot construct section\n";
+				return TCL_ERROR;
+			}
+
+			if (theTclModelBuilder->addSection(*section) < 0)
+			{
+				opserr << "WARNING - cannot add section\n";
+				return TCL_ERROR;
+			}
+			//opserr << "section: " << *section;
+		}
+		else
+		{
+			opserr << "WARNING NDM = " << NDM << " is imcompatible with available frame elements\n";
+			return TCL_ERROR;
+		}
+		// Delete fiber array
+		delete[] fiber;
 	}
-      else if (NDM == 3)     
+	else
 	{
-	  static Vector fiberPosition(2);
-	  k = 0;
-	  for (i = numSectionRepresFibers; i < numFibers; i++)
-	    {    
-	      material = OPS_getUniaxialMaterial(fibersMaterial(k));
-	      if (material == 0)
-		{
-		  opserr <<  "WARNING invalid material ID for patch\n";
-		  return TCL_ERROR;
-		}   
-	      fiberPosition(0) = fibersPosition(0,k);
-	      fiberPosition(1) = fibersPosition(1,k);
-	          
-	      fiber[i] = new UniaxialFiber3d(k, *material, fibersArea(k), fiberPosition);
-	      if (fibersArea(k) < 0) opserr << "ERROR: " << fiberPosition(0) << " " << fiberPosition(1) << endln;
-	      if (!fiber[k]) 
-		{
-		  opserr <<  "WARNING unable to allocate fiber \n";
-		  return TCL_ERROR;
-		}    
-	      k++;
-	      //opserr << *fiber[k];
-	    }
-	  //SectionForceDeformation *section = new FiberSection(secTag, numFibers, fiber);
-
-	 SectionForceDeformation *section = 0;
-	 if (isTorsion)
-	   section = new FiberSectionGJThermal(secTag, numFibers, fiber, GJ);
-	 else
-	   section = new FiberSection3dThermal(secTag, numFibers, fiber);
-
-	  // Delete fibers
-	  for (i = 0; i < numFibers; i++)
-	    delete fiber[i];
-	  if (section == 0)
-	    {
-	      opserr <<  "WARNING - cannot construct section\n";
-	      return TCL_ERROR;
-	    }
-       
-	  if (theTclModelBuilder->addSection (*section) < 0)
-	    {
-	      opserr <<  "WARNING - cannot add section\n";
-	      return TCL_ERROR;
-	    }
-	  //opserr << "section: " << *section;
+		opserr << "WARNING section invalid: can only build fiber sections\n";
+		return TCL_ERROR;
 	}
-      else
-	{
-	  opserr << "WARNING NDM = " << NDM << " is imcompatible with available frame elements\n";
-	  return TCL_ERROR;
-	}
-      // Delete fiber array
-      delete [] fiber;
-    }
-  else 
-    {
-      opserr <<  "WARNING section invalid: can only build fiber sections\n";
-      return TCL_ERROR;
-    }    
-  return TCL_OK;
+	return TCL_OK;
 }
 ///--Adding function for building FiberSectionThermal:[END] by UoE OpenSees Group --///  
+//Changes made by L.Jiang [SIF]
+
 

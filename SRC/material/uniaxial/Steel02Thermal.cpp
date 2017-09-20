@@ -42,7 +42,7 @@
 
 
 void *
-OPS_NewSteel02Thermal()
+OPS_Steel02Thermal()
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;

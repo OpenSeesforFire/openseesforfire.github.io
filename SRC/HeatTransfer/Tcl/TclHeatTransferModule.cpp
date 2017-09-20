@@ -744,7 +744,7 @@ TclHeatTransferCommand_addHTEntity(ClientData clientData, Tcl_Interp *interp, in
 
 	}
 
-	else if(strcmp(argv[1],"IsectionPro") == 0||strcmp(argv[1],"Isection2DPro") == 0||strcmp(argv[1],"Isection2dPro") == 0)
+	else if(strcmp(argv[1],"ProtectedIsection") == 0||strcmp(argv[1],"InsIsection2D") == 0||strcmp(argv[1],"ProtectedIsection2d") == 0)
   {
 	  
 		double HTI_centerX, HTI_centerY, HTI_BF, HTI_Tf, HTI_Tw, HTI_HB ,HTI_coat;
@@ -852,28 +852,29 @@ TclHeatTransferCommand_addHTEntity(ClientData clientData, Tcl_Interp *interp, in
 			opserr << " for HeatTransfer entity: " << argv[1] << endln;	    
 			return TCL_ERROR;
 			}
-    if (Tcl_GetDouble (interp, argv[6], &HTI_HB) != TCL_OK) {
-      opserr << "WARNING invalid HTI_HB" << endln;
-      opserr << " for HeatTransfer entity: " << argv[1] << endln;
-      return TCL_ERROR;
-    }
-		if (Tcl_GetDouble (interp, argv[7], &HTI_BF) != TCL_OK) {
+   if (Tcl_GetDouble (interp, argv[6], &HTI_BF) != TCL_OK) {
 			opserr << "WARNING invalid HTI_BF" << endln;
 			opserr << " for HeatTransfer entity: " << argv[1] << endln;	    
 			return TCL_ERROR;
 			}
-
-		if (Tcl_GetDouble (interp, argv[8], &HTI_Tf) != TCL_OK) {
+		if (Tcl_GetDouble (interp, argv[7], &HTI_HB) != TCL_OK) {
+      opserr << "WARNING invalid HTI_HB" << endln;
+      opserr << " for HeatTransfer entity: " << argv[1] << endln;
+      return TCL_ERROR;
+    }
+		
+		if (Tcl_GetDouble(interp, argv[8], &HTI_Tw) != TCL_OK) {
+			opserr << "WARNING invalid HTI_Tw" << endln;
+			opserr << " for HeatTransfer entity: " << argv[1] << endln;
+			return TCL_ERROR;
+		}
+		if (Tcl_GetDouble (interp, argv[9], &HTI_Tf) != TCL_OK) {
 			opserr << "WARNING invalid HTI_Tf" << endln;
 			opserr << " for HeatTransfer entity: " << argv[1] << endln;	    
 			return TCL_ERROR;
 			}
 		
-		if (Tcl_GetDouble (interp, argv[9], &HTI_Tw) != TCL_OK) {
-			opserr << "WARNING invalid HTI_Tw" << endln;
-			opserr << " for HeatTransfer entity: " << argv[1] << endln;	    
-			return TCL_ERROR;
-			}
+		
 		if (Tcl_GetDouble (interp, argv[10], &HTI_Len) != TCL_OK) {
 			opserr << "WARNING invalid HTI_Len" << endln;
 			opserr << " for HeatTransfer entity: " << argv[1] << endln;	    
@@ -900,27 +901,28 @@ TclHeatTransferCommand_addHTEntity(ClientData clientData, Tcl_Interp *interp, in
       opserr << " for HeatTransfer entity: " << argv[1] << endln;
       return TCL_ERROR;
     }
-    if (Tcl_GetDouble (interp, argv[5], &HTI_HB) != TCL_OK) {
+	if (Tcl_GetDouble(interp, argv[5], &HTI_BF) != TCL_OK) {
+		opserr << "WARNING invalid HTI_BF" << endln;
+		opserr << " for HeatTransfer entity: " << argv[1] << endln;
+		return TCL_ERROR;
+	}
+    if (Tcl_GetDouble (interp, argv[6], &HTI_HB) != TCL_OK) {
       opserr << "WARNING invalid HTI_HB" << endln;
       opserr << " for HeatTransfer entity: " << argv[1] << endln;
       return TCL_ERROR;
     }
-    if (Tcl_GetDouble (interp, argv[6], &HTI_BF) != TCL_OK) {
-      opserr << "WARNING invalid HTI_BF" << endln;
-      opserr << " for HeatTransfer entity: " << argv[1] << endln;
-      return TCL_ERROR;
-    }
+	if (Tcl_GetDouble(interp, argv[7], &HTI_Tw) != TCL_OK) {
+		opserr << "WARNING invalid HTI_Tw" << endln;
+		opserr << " for HeatTransfer entity: " << argv[1] << endln;
+		return TCL_ERROR;
+	}
     
-    if (Tcl_GetDouble (interp, argv[7], &HTI_Tf) != TCL_OK) {
+    if (Tcl_GetDouble (interp, argv[8], &HTI_Tf) != TCL_OK) {
       opserr << "WARNING invalid HTI_Tf" << endln;
       opserr << " for HeatTransfer entity: " << argv[1] << endln;
       return TCL_ERROR;
     }
-    if (Tcl_GetDouble (interp, argv[8], &HTI_Tw) != TCL_OK) {
-      opserr << "WARNING invalid HTI_Tw" << endln;
-      opserr << " for HeatTransfer entity: " << argv[1] << endln;
-      return TCL_ERROR;
-    }
+  
     if (Tcl_GetDouble (interp, argv[9], &Slab_W) != TCL_OK) {
       opserr << "WARNING invalid Slab_w" << endln;
       opserr << " for HeatTransfer entity: " << argv[1] << endln;

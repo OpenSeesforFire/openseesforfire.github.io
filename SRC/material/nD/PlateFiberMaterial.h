@@ -27,6 +27,8 @@
 // Generic Plate Fiber Material
 //
 
+#ifndef PlateFiberMaterial_h
+#define PlateFiberMaterial_h
 
 #include <stdio.h> 
 #include <stdlib.h> 
@@ -99,6 +101,9 @@ class PlateFiberMaterial: public NDMaterial{
 
     int setParameter(const char **argv, int argc, Parameter &param);
 
+    const Vector& getStressSensitivity(int gradIndex,
+                                       bool conditional);
+
   private :
 
     //out of plane strain
@@ -112,12 +117,10 @@ class PlateFiberMaterial: public NDMaterial{
     static Vector stress ;
 
     static Matrix tangent ;
-
-    int indexMap( int i ) ;
-
 } ; //end of PlateFiberMaterial declarations
 
 
 
 
 
+#endif

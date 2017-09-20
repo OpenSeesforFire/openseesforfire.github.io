@@ -66,14 +66,20 @@ class ViscousMaterial : public UniaxialMaterial
 		 FEM_ObjectBroker &theBroker);    
     
     void Print(OPS_Stream &s, int flag =0);
+
+    int setParameter(const char **argv, int argc, Parameter &param);
+    int updateParameter(int parameterID, Information &info);
     
   protected:
     
   private:
+    double trialStrain;
     double trialRate;
     double C;
     double Alpha;
     double minVel;
+    double commitStrain;
+    double commitRate;
 };
 
 

@@ -46,9 +46,10 @@ class NDFiberSection2d : public SectionForceDeformation
 {
   public:
     NDFiberSection2d(); 
-    NDFiberSection2d(int tag, int numFibers, Fiber **fibers, double a = 5.0/6);
+    NDFiberSection2d(int tag, int numFibers, Fiber **fibers, double a = 1.0);
+    NDFiberSection2d(int tag, int numFibers, double a = 1.0);
     NDFiberSection2d(int tag, int numFibers, NDMaterial **mats,
-		     SectionIntegration &si, double a = 5.0/6);
+		     SectionIntegration &si, double a = 1.0);
     ~NDFiberSection2d();
 
     const char *getClassType(void) const {return "NDFiberSection2d";};
@@ -94,13 +95,13 @@ class NDFiberSection2d : public SectionForceDeformation
   protected:
     
     //  private:
-    int numFibers;                   // number of fibers in the section
+    int numFibers,sizeFibers;        // number of fibers in the section
     NDMaterial **theMaterials; // array of pointers to materials
     double   *matData;               // data for the materials [yloc and area]
     double   kData[9];               // data for ks matrix 
     double   sData[3];               // data for s vector 
     
-    double yBar;       // Section centroid
+    double QzBar, Abar, yBar;       // Section centroid
     double alpha;      // Shear shape factor
 
     SectionIntegration *sectionIntegr;
@@ -108,9 +109,10 @@ class NDFiberSection2d : public SectionForceDeformation
     static ID code;
 
     Vector e;          // trial section deformations 
-    Vector eCommit;    // committed section deformations 
     Vector *s;         // section resisting forces  (axial force, bending moment)
     Matrix *ks;        // section stiffness
+
+    static Matrix fs;
 
 // AddingSensitivity:BEGIN //////////////////////////////////////////
     int parameterID;

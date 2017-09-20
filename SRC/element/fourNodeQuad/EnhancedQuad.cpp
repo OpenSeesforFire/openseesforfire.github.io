@@ -39,6 +39,47 @@
 #include <ElementResponse.h>
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
+
+void* OPS_EnhancedQuad()
+{
+    if (OPS_GetNDM() != 2 || OPS_GetNDF() != 2) {
+	opserr << "WARNING -- model dimensions and/or nodal DOF not compatible with quad element\n";
+	return 0;
+    }
+    
+    if (OPS_GetNumRemainingInputArgs() < 7) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element ConstantPressureVolumeQuad eleTag? iNode? jNode? kNode? lNode? type? matTag?\n";
+	return 0;
+    }
+
+    // EnhancedQuadId, iNode, jNode, kNode, lNode
+    int data[5];
+    int num = 5;
+    if (OPS_GetIntInput(&num,data) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+
+    const char* type = OPS_GetString();
+
+    int matTag;
+    num = 1;
+    if (OPS_GetIntInput(&num,&matTag) < 0) {
+	opserr<<"WARNING: invalid matTag\n";
+	return 0;
+    }
+    NDMaterial* mat = OPS_getNDMaterial(matTag);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "Material: " << matTag;
+	opserr << "\nConstantPressureVolumeQuad element: " << data[0] << endln;
+	return 0;
+    }
+
+    return new EnhancedQuad(data[0],data[1],data[2],data[3],data[4],*mat,type);
+}
 
 
 //static data
@@ -1466,7 +1507,7 @@ EnhancedQuad::setResponse(const char **argv, int argc,
     }
     
     theResponse =  new ElementResponse(this, 1, resid);
-  }   else if (strcmp(argv[0],"material") == 0 || strcmp(argv[0],"integrPoint") == 0) {
+  }  else if (strcmp(argv[0],"material") == 0 || strcmp(argv[0],"integrPoint") == 0) {
     int pointNum = atoi(argv[1]);
     if (pointNum > 0 && pointNum <= 4) {
 
@@ -1479,7 +1520,9 @@ EnhancedQuad::setResponse(const char **argv, int argc,
       
       output.endTag();
 
-  } else if (strcmp(argv[0],"stresses") ==0) {
+    } 
+  }
+  else if (strcmp(argv[0],"stresses") ==0) {
 
       for (int i=0; i<4; i++) {
 	output.tag("GaussPoint");
@@ -1500,7 +1543,29 @@ EnhancedQuad::setResponse(const char **argv, int argc,
       }
 
       theResponse =  new ElementResponse(this, 3, Vector(12));
-    }
+  }
+  
+  else if (strcmp(argv[0],"strains") ==0) {
+
+      for (int i=0; i<4; i++) {
+	output.tag("GaussPoint");
+	output.attr("number",i+1);
+	output.attr("eta",sg[i]);
+	output.attr("neta",tg[i]);
+
+	output.tag("NdMaterialOutput");
+	output.attr("classType", materialPointers[i]->getClassTag());
+	output.attr("tag", materialPointers[i]->getTag());
+
+	output.tag("ResponseType","eta11");
+	output.tag("ResponseType","eta22");
+	output.tag("ResponseType","eta12");
+
+	output.endTag(); // GaussPoint
+	output.endTag(); // NdMaterialOutput
+      }
+
+      theResponse =  new ElementResponse(this, 4, Vector(12));
   }
 	
   output.endTag(); // ElementOutput
@@ -1529,7 +1594,23 @@ EnhancedQuad::getResponse(int responseID, Information &eleInfo)
       stresses(cnt+2) = sigma(2);
       cnt += 3;
     }
-    return eleInfo.setVector(resid);
+    return eleInfo.setVector(stresses);
+
+  } else if (responseID == 4) {
+
+    // Loop over the integration points
+    static Vector stresses(12);
+    int cnt = 0;
+    for (int i = 0; i < 4; i++) {
+
+      // Get material stress response
+      const Vector &sigma = materialPointers[i]->getStrain();
+      stresses(cnt) = sigma(0);
+      stresses(cnt+1) = sigma(1);
+      stresses(cnt+2) = sigma(2);
+      cnt += 3;
+    }
+    return eleInfo.setVector(stresses);
 	
   } else
 
@@ -1713,7 +1794,7 @@ int  EnhancedQuad::recvSelf (int commitTag,
 //**************************************************************************
 
 int
-EnhancedQuad::displaySelf(Renderer &theViewer, int displayMode, float fact)
+EnhancedQuad::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
     // first set the quantity to be displayed at the nodes;
     // if displayMode is 1 through 3 we will plot material stresses otherwise 0.0

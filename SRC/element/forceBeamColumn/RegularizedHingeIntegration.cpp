@@ -224,6 +224,8 @@ RegularizedHingeIntegration::getLocationsDeriv(int numSections,
     dptsdh[2] = -oneOverL;
   }
 
+  return;
+
   if (dLdh != 0.0) {
     // STILL TO DO
     opserr << "getPointsDeriv -- to do" << endln;
@@ -319,6 +321,8 @@ RegularizedHingeIntegration::getWeightsDeriv(int numSections,
       dwtsdh[i+Nc] = dwfdh(i);    
   }
 
+  return;
+
   if (dLdh != 0.0) {
     // STILL TO DO
     opserr << "getWeightsDeriv -- to do" << endln;
@@ -371,13 +375,25 @@ RegularizedHingeIntegration::recvSelf(int cTag, Channel &theChannel,
 void
 RegularizedHingeIntegration::Print(OPS_Stream &s, int flag)
 {
-  s << "RegularizedHinge" << endln;
-  s << " lpI = " << lpI;
-  s << " lpJ = " << lpJ << endln;
-  s << " epsI = " << epsI;
-  s << " epsJ = " << epsJ << endln;
-
-  beamInt->Print(s, flag);
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "{\"type\": \"RegularizedHinge\", ";
+		s << "\"lpI\": " << lpI << ", ";
+		s << "\"lpJ\": " << lpJ << ", ";
+		s << "\"epsI\": " << epsI << ", ";
+		s << "\"epsJ\": " << epsJ << ", ";
+		s << "\"integration\": ";
+		beamInt->Print(s, flag);
+		s << "}";
+	}
+	
+	else {
+		s << "RegularizedHinge" << endln;
+		s << " lpI = " << lpI;
+		s << " lpJ = " << lpJ << endln;
+		s << " epsI = " << epsI;
+		s << " epsJ = " << epsJ << endln;
+		beamInt->Print(s, flag);
+	}
 
   return;
 }

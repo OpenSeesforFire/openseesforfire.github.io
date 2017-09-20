@@ -29,6 +29,7 @@
 /* Ref: Lu X, Lu XZ, Guan H, Ye LP, Collapse simulation of reinforced 
 concrete high-rise building induced by extreme earthquakes, 
 Earthquake Engineering & Structural Dynamics, 2013, 42(5): 705-723*/
+// Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
 
 
 #include <LayeredShellFiberSectionThermal.h>

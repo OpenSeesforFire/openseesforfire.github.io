@@ -18,6 +18,7 @@
 // $Source: /usr/local/cvs/OpenSees/SRC/material/nD/DruckerPrager3DThermal.cpp,v $
 
 // Written: K.Petek, U.Washington
+//Modified by Jian Jiang, Liming Jiang [http://openseesforfire.github.io]
 
 #include <DruckerPrager3DThermal.h>
 #include <Channel.h>
@@ -35,9 +36,9 @@ DruckerPragerThermal( )
 //full constructor
 DruckerPrager3DThermal::DruckerPrager3DThermal(int tag, double bulk, double shear, double s_y,
 							 double r, double r_bar, double Kinfinity, double Kinit, 
-							 double d1, double d2, double H, double t, double mDen,double sigT, double atm) : 
+							 double d1, double d2, double H, double t, double mDen, double atm) : 
 DruckerPragerThermal(tag, ND_TAG_DruckerPrager3DThermal, bulk, shear, s_y, r, r_bar, Kinfinity,
-	                                       Kinit, d1, d2, H, t, mDen, sigT, atm)
+	                                       Kinit, d1, d2, H, t, mDen, atm)
 {
 }
 

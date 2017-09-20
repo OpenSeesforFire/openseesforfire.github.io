@@ -39,6 +39,8 @@
 #include <HeatTransferMaterial.h>
 #include <UniaxialMaterial.h>
 #include <SteelECThermal.h>
+#include <StainlessSteelEC.h>
+#include <StainlessECThermal.h>
 #include <ConcreteECThermal.h>
 #include <ElasticMaterialThermal.h>
 
@@ -50,6 +52,18 @@ MaterialTypeTag(MaterialTypeTag),MaterialPars(2),theHTMaterial(0)
 #ifdef _DEBUG
 	opserr<<"Successfully added material "<<tag<<endln
 		<<"Material type: Steel "<<MaterialTypeTag <<" ,fy: "<<fy<<" , E0: "<<E0<<endln;
+#endif
+}
+
+SIFMaterial::SIFMaterial(int tag, int MaterialTypeTag, double fy, double fu, double E0) :TaggedObject(tag),
+MaterialTypeTag(MaterialTypeTag), MaterialPars(3), theHTMaterial(0)
+{
+	MaterialPars(0) = fy;
+	MaterialPars(1) = E0;
+	MaterialPars(2) = fu;
+#ifdef _DEBUG
+	opserr << "Successfully added material " << tag << endln
+		<< "Material type: Steel " << MaterialTypeTag << " ,fy: " << fy << " , E0: " << E0 << endln;
 #endif
 }
 
@@ -97,10 +111,15 @@ SIFMaterial::getHeatTransferMaterial()
     //Steel material, default EC thermal properties will be defined
     theHTMaterial = new CarbonSteelEC3(tag);
   }
-  else if(MaterialTypeTag==220){
-    if (MaterialPars.Size()!=8) {
-      opserr<<"WARNING:: SIFMaterial fialed to create heat transfer material, moisture doesn't exsist"<<endln;
-      return 0;
+	else if (MaterialTypeTag == 301) {
+		//Steel material, default EC thermal properties will be defined
+		//theHTMaterial = new CarbonSteelEC3(tag);
+		theHTMaterial = new StainlessSteelEC(tag);
+	}
+	else if(MaterialTypeTag==220){
+		if (MaterialPars.Size()!=8) {
+		opserr<<"WARNING:: SIFMaterial fialed to create heat transfer material, moisture doesn't exsist"<<endln;
+		return 0;
     }
     theHTMaterial = new ConcreteEC2(tag, MaterialPars(7));
   }
@@ -111,9 +130,10 @@ SIFMaterial::getHeatTransferMaterial()
 UniaxialMaterial*
 SIFMaterial::getUniaxialMaterial(bool isElastic)
 {
+	//isElastic = true;
 	int tag = this->getTag();
 	UniaxialMaterial* theuniMaterial= 0;
-	if(MaterialTypeTag==130){
+  if(MaterialTypeTag==130){
     //Steel material, default EC thermal properties will be defined
 	double fy = MaterialPars(0);
 	double E0= MaterialPars(1);
@@ -122,9 +142,22 @@ SIFMaterial::getUniaxialMaterial(bool isElastic)
 	  else 
 		theuniMaterial = new SteelECThermal(tag,3,fy, E0);
   }
+  else if (MaterialTypeTag == 301) {
+	  //StainlessECThermal(int tag, int grade, double Fy, double E, double Fu,double sigInit)
+	  double fy = MaterialPars(0);
+	  double fu = MaterialPars(2);
+	  double E0 = MaterialPars(1);
+	  if (isElastic)
+		  theuniMaterial = new ElasticMaterialThermal(tag, E0, 1.2e-5);
+	  else
+		  theuniMaterial = new StainlessECThermal(tag, 3, fy, E0, fu);
+
+	  //Grade14301:1, Grade14401:2, Grade14571:3, Grade14003:4, Grade14462:5
+  }
   else if(MaterialTypeTag==220){
    //ConcreteECThermal::ConcreteECThermal(int tag, double _fc, double _epsc0, double _fcu,
 				     //double _epscu, double _rat, double _ft, double _Ets):
+	  isElastic = true;
 	    double fc= MaterialPars(0);
 		double epsc0 = MaterialPars(1) ;
 		double fcu = MaterialPars(2) ;
@@ -134,11 +167,12 @@ SIFMaterial::getUniaxialMaterial(bool isElastic)
 		double Ets = MaterialPars(6) ;
 		double moisture =MaterialPars(7) ;
 		if(isElastic)
-		theuniMaterial = new ElasticMaterialThermal(tag,3, fc/2*epsc0,1.4e-5);
+		theuniMaterial = new ElasticMaterialThermal(tag, 3e10,1.4e-5, true);
 		else
 		theuniMaterial = new ConcreteECThermal(tag,fc, epsc0, fcu, epsc, rat, ft, Ets);
 		// ElasticMaterialThermal(int tag, double E, double alpha, double eta = 0.0);
 		//theuniMaterial = new ElasticMaterialThermal(tag,3e10, 1.4e-5);
+		
   }
 
 

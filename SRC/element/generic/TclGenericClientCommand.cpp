@@ -19,8 +19,8 @@
 ** ****************************************************************** */
 
 // $Revision: 5137 $
-// $Date: 2012-11-04 23:27:46 +0000 (Sun, 04 Nov 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/TclGenericClientCommand.cpp $
+// $Date: 2012-11-05 07:27:46 +0800 (Mon, 05 Nov 2012) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/TclGenericClientCommand.cpp $
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 11/06

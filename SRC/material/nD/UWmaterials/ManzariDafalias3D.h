@@ -21,14 +21,13 @@
 // Created: Pedro Arduino, UW, 11.2011
 //
 // Description: This file contains the class definition for ManzariDafalias3D.
+#ifndef ManzariDafalias3D_h
+#define ManzariDafalias3D_h
+
 
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <math.h> 
-
-#include <NDMaterial.h>
-#include <Vector.h>
-#include <Matrix.h>
 
 #include <ManzariDafalias.h>
 
@@ -37,11 +36,10 @@ class ManzariDafalias3D : public ManzariDafalias
   public : 
 
   //full constructor
-  ManzariDafalias3D( int tag, double Ko, double Go, double v, double b, double Patm,
-	                          double Ao, double ho, double Cm, double Me, double Mc,
-							  double kBE, double kBC, double kDE, double kDC, double ecRef,
-							  double lambda, double Pref, double m, double Fmax, double Cf,
-							  double eo, double mDen);
+  ManzariDafalias3D(int tag, double G0, double nu, double e_init, double Mc, double c, double lambda_c, double e0, double ksi,
+	double P_atm, double m, double h0, double ch, double nb, double A0, double nd, double z_max, double cz, double mDen, int integrationScheme = 2,
+	int tangentType = 2, int JacoType = 1, double TolF = 1.0e-7, double TolR = 1.0e-7);
+
   //null constructor
   ManzariDafalias3D();
 
@@ -59,14 +57,24 @@ class ManzariDafalias3D : public ManzariDafalias
     
   //send back the strain
   const Vector& getStrain();
-
+  
   //send back the stress 
   const Vector& getStress();
+  const Vector& getStressToRecord();
 
   //send back the tangent 
   const Matrix& getTangent();
   const Matrix& getInitialTangent();
 
+  //send back the state parameters
+  const Vector getState();
+
   private :
 
+  static Vector mSigma_M  ; // mSigma with continuum mechanic sign convention
+  static Vector mEpsilon_M; // mEpsilon with continuum mechanic sign convention
+
 };
+
+
+#endif

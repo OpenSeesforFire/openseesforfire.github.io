@@ -33,62 +33,81 @@
 #include <string.h>
 
 #include <classTags.h>
+#include <elementAPI.h>
 
 Vector ElasticSection3d::s(4);
 Matrix ElasticSection3d::ks(4,4);
 ID ElasticSection3d::code(4);
 
+void* OPS_ElasticSection3d()
+{
+    if(OPS_GetNumRemainingInputArgs() < 7) {
+	opserr<<"insufficient arguments for ealstic 3d section\n";
+	return 0;
+    }
+
+    // get tag
+    int tag;
+    int numData = 1;
+    if(OPS_GetIntInput(&numData,&tag) < 0) return 0;
+
+    // get data
+    numData = 6;
+    double data[6];
+    if(OPS_GetDoubleInput(&numData,&data[0]) < 0) return 0;
+
+    return new ElasticSection3d(tag,data[0],data[1],data[2],
+				data[3],data[4],data[5]);
+}
+
+
 ElasticSection3d::ElasticSection3d(void)
 :SectionForceDeformation(0, SEC_TAG_Elastic3d),
- E(0.0), A(0.0), Iz(0.0), Iy(0.0), G(0.0), J(0.0),
- e(4), eCommit(4)
+ E(0.0), A(0.0), Iz(0.0), Iy(0.0), G(0.0), J(0.0), e(4)
 {
-    if (code(0) != SECTION_RESPONSE_P)
-    {
-	code(0) = SECTION_RESPONSE_P;	// P is the first quantity
-	code(1) = SECTION_RESPONSE_MZ;	// Mz is the second
-	code(2) = SECTION_RESPONSE_MY;	// My is the third 
-	code(3) = SECTION_RESPONSE_T;	// T is the fourth
-    }
+  if (code(0) != SECTION_RESPONSE_P) {
+    code(0) = SECTION_RESPONSE_P;	// P is the first quantity
+    code(1) = SECTION_RESPONSE_MZ;	// Mz is the second
+    code(2) = SECTION_RESPONSE_MY;	// My is the third 
+    code(3) = SECTION_RESPONSE_T;	// T is the fourth
+  }
 }
 
 ElasticSection3d::ElasticSection3d
 (int tag, double E_in, double A_in, double Iz_in, double Iy_in, double G_in, double J_in)
 :SectionForceDeformation(tag, SEC_TAG_Elastic3d),
- E(E_in), A(A_in), Iz(Iz_in), Iy(Iy_in), G(G_in), J(J_in),
- e(4), eCommit(4)
+ E(E_in), A(A_in), Iz(Iz_in), Iy(Iy_in), G(G_in), J(J_in), e(4)
 {
-    if (E <= 0.0)  {
-      opserr << "ElasticSection3d::ElasticSection3d -- Input E <= 0.0\n";
-    }
-    
-    if (A <= 0.0)  {
-      opserr << "ElasticSection3d::ElasticSection3d -- Input A <= 0.0\n";
-    }
-
-    if (Iz <= 0.0)  {
-      opserr << "ElasticSection3d::ElasticSection3d -- Input Iz <= 0.0\n";
-    }
-    
-    if (Iy <= 0.0)  {
-      opserr << "ElasticSection3d::ElasticSection3d -- Input Iy <= 0.0\n";
-    }
-
-    if (G <= 0.0)  {
-      opserr << "ElasticSection3d::ElasticSection3d -- Input G <= 0.0\n";
-    }
-    
-    if (J <= 0.0)  {
-      opserr << "ElasticSection3d::ElasticSection3d -- Input J <= 0.0\n";
-    }
-    
-    if (code(0) != SECTION_RESPONSE_P)
-    {
-	code(0) = SECTION_RESPONSE_P;	// P is the first quantity
-	code(1) = SECTION_RESPONSE_MZ;	// Mz is the second
-	code(2) = SECTION_RESPONSE_MY;	// My is the third 
-	code(3) = SECTION_RESPONSE_T;	// T is the fourth
-    }
+  if (E <= 0.0)  {
+    //opserr << "ElasticSection3d::ElasticSection3d -- Input E <= 0.0\n";
+  }
+  
+  if (A <= 0.0)  {
+    //opserr << "ElasticSection3d::ElasticSection3d -- Input A <= 0.0\n";
+  }
+  
+  if (Iz <= 0.0)  {
+    //opserr << "ElasticSection3d::ElasticSection3d -- Input Iz <= 0.0\n";
+  }
+  
+  if (Iy <= 0.0)  {
+    //opserr << "ElasticSection3d::ElasticSection3d -- Input Iy <= 0.0\n";
+  }
+  
+  if (G <= 0.0)  {
+    //opserr << "ElasticSection3d::ElasticSection3d -- Input G <= 0.0\n";
+  }
+  
+  if (J <= 0.0)  {
+    //opserr << "ElasticSection3d::ElasticSection3d -- Input J <= 0.0\n";
+  }
+  
+  if (code(0) != SECTION_RESPONSE_P) {
+    code(0) = SECTION_RESPONSE_P;	// P is the first quantity
+    code(1) = SECTION_RESPONSE_MZ;	// Mz is the second
+    code(2) = SECTION_RESPONSE_MY;	// My is the third 
+    code(3) = SECTION_RESPONSE_T;	// T is the fourth
+  }
 }
 
 ElasticSection3d::~ElasticSection3d(void)
@@ -99,25 +118,19 @@ ElasticSection3d::~ElasticSection3d(void)
 int 
 ElasticSection3d::commitState(void)
 {
-	eCommit = e;
-
-    return 0;
+  return 0;
 }
 
 int 
 ElasticSection3d::revertToLastCommit(void)
 {
-	e = eCommit;
-
-    return 0;
+  return 0;
 }
 
 int 
 ElasticSection3d::revertToStart(void)
 {
-	eCommit.Zero();
-
-    return 0;
+  return 0;
 }
 
 int
@@ -196,7 +209,7 @@ ElasticSection3d::getCopy ()
     ElasticSection3d *theCopy =
 	new ElasticSection3d (this->getTag(), E, A, Iz, Iy, G, J);
 
-    theCopy->eCommit = eCommit;
+    theCopy->parameterID = parameterID;
 
     return theCopy;
 }
@@ -218,7 +231,7 @@ ElasticSection3d::sendSelf(int commitTag, Channel &theChannel)
 {
     int res = 0;
 
-    static Vector data(11);
+    static Vector data(7);
 
     int dataTag = this->getDbTag();
     
@@ -229,10 +242,6 @@ ElasticSection3d::sendSelf(int commitTag, Channel &theChannel)
     data(4) = Iy;
     data(5) = G;
     data(6) = J;
-    data(7) = eCommit(0);
-	data(8) = eCommit(1);
-	data(9) = eCommit(2);
-	data(10) = eCommit(3);
     
     res += theChannel.sendVector(dataTag, commitTag, data);
     if(res < 0) {
@@ -249,7 +258,7 @@ ElasticSection3d::recvSelf(int commitTag, Channel &theChannel,
 {
     int res = 0;
     
-	static Vector data(11);
+	static Vector data(7);
 
     int dataTag = this->getDbTag();
 
@@ -266,10 +275,6 @@ ElasticSection3d::recvSelf(int commitTag, Channel &theChannel,
     Iy = data(4);
     G = data(5);
     J = data(6);    
-    eCommit(0) = data(7);
-	eCommit(1) = data(8);
-	eCommit(2) = data(9);
-	eCommit(3) = data(10);
 
     return res;
 }
@@ -277,17 +282,27 @@ ElasticSection3d::recvSelf(int commitTag, Channel &theChannel,
 void
 ElasticSection3d::Print(OPS_Stream &s, int flag)
 {
-  if (flag == 2) {
+	if (flag == OPS_PRINT_PRINTMODEL_SECTION) {
+		s << "ElasticSection3d, tag: " << this->getTag() << endln;
+		s << "\t E: " << E << endln;
+		s << "\t A: " << A << endln;
+		s << "\tIz: " << Iz << endln;
+		s << "\tIy: " << Iy << endln;
+		s << "\t G: " << G << endln;
+		s << "\t J: " << J << endln;
+	}
 
-  } else {
-    s << "ElasticSection3d, tag: " << this->getTag() << endln;
-    s << "\t E: " << E << endln;
-    s << "\t A: " << A << endln;
-    s << "\tIz: " << Iz << endln;
-    s << "\tIy: " << Iy << endln;
-    s << "\t G: " << G << endln;
-    s << "\t J: " << J << endln;
-  }
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "\t\t\t{";
+		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"type\": \"ElasticSection3d\", ";
+		s << "\"E\": " << E << ", ";
+		s << "\"G\": " << G << ", ";
+		s << "\"A\": " << A << ", ";
+		s << "\"Jx\": " << J << ", ";
+		s << "\"Iy\": " << Iy << ", ";
+		s << "\"Iz\": " << Iz << "}";
+	}
 }
 
 int
@@ -296,24 +311,30 @@ ElasticSection3d::setParameter(const char **argv, int argc, Parameter &param)
   if (argc < 1)
     return -1;
 
-  if (strcmp(argv[0],"E") == 0)
+  if (strcmp(argv[0],"E") == 0) {
+    param.setValue(E);
     return param.addObject(1, this);
-
-  if (strcmp(argv[0],"A") == 0)
+  }
+  if (strcmp(argv[0],"A") == 0) {
+    param.setValue(A);
     return param.addObject(2, this);
-
-  if (strcmp(argv[0],"Iz") == 0)
+  }
+  if (strcmp(argv[0],"Iz") == 0) {
+    param.setValue(Iz);
     return param.addObject(3, this);
-
-  if (strcmp(argv[0],"Iy") == 0)
+  }
+  if (strcmp(argv[0],"Iy") == 0) {
+    param.setValue(Iy);
     return param.addObject(4, this);
-
-  if (strcmp(argv[0],"G") == 0)
+  }
+  if (strcmp(argv[0],"G") == 0) {
+    param.setValue(G);
     return param.addObject(5, this);
-
-  if (strcmp(argv[0],"J") == 0)
+  }
+  if (strcmp(argv[0],"J") == 0) {
+    param.setValue(J);
     return param.addObject(6, this);
-
+  }
   return -1;
 }
 

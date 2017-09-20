@@ -49,9 +49,14 @@
 #include <J2AxiSymm.h>
 #include <J2PlateFiber.h>
 #include <J2ThreeDimensional.h> 
+
+#include <Information.h>
+#include <Parameter.h>
+
 #include <string.h>
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
 
 //parameters
 const double J2Plasticity :: one3   = 1.0 / 3.0 ;
@@ -61,7 +66,42 @@ const double J2Plasticity :: root23 = sqrt( 2.0 / 3.0 ) ;
 
 double J2Plasticity::initialTangent[3][3][3][3] ;   //material tangent
 double J2Plasticity::IIdev[3][3][3][3] ; //rank 4 deviatoric 
-double J2Plasticity::IbunI[3][3][3][3] ; //rank 4 I bun I 
+double J2Plasticity::IbunI[3][3][3][3] ; //rank 4 I bun I
+
+void* OPS_J2Plasticity()
+{
+    int numdata = OPS_GetNumRemainingInputArgs();
+    if (numdata < 7) {
+	opserr << "WARNING: Insufficient arguements\n";
+	opserr << "Want: nDMaterial J2Plasticity tag? K? G? sig0? sigInf? delta? H? <eta?>\n";
+	return 0;
+    }
+
+    int tag;
+    numdata = 1;
+    if (OPS_GetIntInput(&numdata,&tag) < 0) {
+	opserr << "WARNING invalid J2Plasticity tag\n";
+	return 0;
+    }
+
+    double data[7] = {0,0,0,0,0,0,0};
+    numdata = OPS_GetNumRemainingInputArgs();
+    if (numdata > 7) {
+	numdata = 7;
+    }
+    if (OPS_GetDoubleInput(&numdata,data)) {
+	opserr << "WARNING invalid J2Plasticity double inputs\n";
+	return 0;
+    }
+
+    NDMaterial* mat = new J2Plasticity(tag,data[0],data[1],data[2],data[3],data[4],data[5],data[6]);
+    if (mat == 0) {
+	opserr << "WARNING: failed to create J2Plasticity material\n";
+	return 0;
+    }
+
+    return mat;
+}
 
 //zero internal variables
 void J2Plasticity :: zero ( ) 
@@ -83,7 +123,8 @@ NDMaterial( ),
 epsilon_p_n(3,3),
 epsilon_p_nplus1(3,3),
 stress(3,3),
-strain(3,3)
+strain(3,3),
+parameterID(0)
 { 
   bulk        = 0.0 ;
   shear       = 0.0 ;
@@ -170,7 +211,8 @@ J2Plasticity :: J2Plasticity(int    tag,
   epsilon_p_n(3,3),
   epsilon_p_nplus1(3,3),
   stress(3,3),
-  strain(3,3)
+  strain(3,3),
+  parameterID(0)
 {
   bulk        = K ;
   shear       = G ;
@@ -251,7 +293,8 @@ NDMaterial(tag, classTag),
 epsilon_p_n(3,3),
 epsilon_p_nplus1(3,3),
 stress(3,3),
-strain(3,3)
+strain(3,3),
+parameterID(0)
 {
   bulk        = K ;
   shear       = G ; 
@@ -364,6 +407,8 @@ J2Plasticity :: getCopy (const char *type)
 				 sigma_infty, delta, Hard, eta, rho) ;
 	return clone ;	
     }
+
+ 
     // Handle other cases
     else
     {
@@ -733,6 +778,48 @@ J2Plasticity::revertToStart( ) {
 	// normal call for revertToStart (not initialStateAnalysis)
     this->zero( ) ;
   }
+
+  return 0;
+}
+
+int
+J2Plasticity::setParameter(const char **argv, int argc,
+				      Parameter &param)
+{
+  if (strcmp(argv[0],"K") == 0)
+    return param.addObject(1, this);
+  
+  else if (strcmp(argv[0],"G") == 0 || strcmp(argv[0],"mu") == 0)
+    return param.addObject(2, this);
+  
+  else if (strcmp(argv[0],"rho") == 0)
+    return param.addObject(3, this);
+
+  return -1;
+}
+
+int 
+J2Plasticity::updateParameter(int parameterID, Information &info)
+{ 
+  switch(parameterID) {
+  case 1:
+    bulk = info.theDouble;
+    return 0;
+  case 2:
+    shear = info.theDouble;
+    return 0;
+  case 3:
+    rho = info.theDouble;
+    return 0;
+  default:
+    return -1;
+  }
+}
+
+int
+J2Plasticity::activateParameter(int paramID)
+{
+  parameterID = paramID;
 
   return 0;
 }

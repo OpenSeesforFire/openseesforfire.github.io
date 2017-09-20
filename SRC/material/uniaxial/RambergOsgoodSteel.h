@@ -17,20 +17,23 @@
 **   Filip C. Filippou (filippou@ce.berkeley.edu)                     **
 **                                                                    **
 ** ****************************************************************** */
-                                                                        
-// $Revision: 1.0 $
-// $Date: 
-// $Source:
-                                                                      
-// Written: R.Rahimi & R.Sepasdar & Dr. M. R. Banan
-// Created: 09/2012
-//
-// Description: This file contains the class implementation of RambergOsgood. 
-//-----------------------------------------------------------------------
-//              RAMBERG-OSGOOD STEEL MODEL
-//      written by REZA RAHIMI & REZA SEPASDAR (2012)
-//             Sopervisor: Dr. M. R. Banan
-//-----------------------------------------------------------------------
+                                                                       
+// $Revision: 1.2                                                                              
+// $Date: 03/2017                                                                              
+// $Source:                                                                                    
+
+// Written: R.Rahimi & R.Sepasdar & Dr. M. R. Banan                                            
+// Created: 09/2012                                                                            
+//                                                                                             
+//                                                                                             
+// Description: This file contains the class implementation of RambergOsgoodSteel.             
+//-----------------------------------------------------------------------                      
+//              RAMBERG-OSGOOD STEEL MODEL                                                     
+//      Developed  by REZA RAHIMI, (Reza.Rahimi@Dal.Ca)   (2012)                               
+//                                                                                             
+//      Co-Developer: REZA SEPASDAR,                                                           
+//      Supervisor: Dr. Mo. R. Banan,                                                          
+//----------------------------------------------------------------------- 
 
 
 
@@ -54,23 +57,23 @@ class RambergOsgoodSteel : public UniaxialMaterial
     double getInitialTangent(void);
     UniaxialMaterial *getCopy(void);
 
-    int setTrialStrain(double strain, double strainRate = 0.0); 
+    int setTrialStrain(double strain, double strainRate = 0.0);
     double getStrain(void);      
     double getStress(void);
     double getTangent(void);
-    
+   
     int commitState(void);
     int revertToLastCommit(void);    
     int revertToStart(void);        
-    
+   
     int sendSelf(int commitTag, Channel &theChannel);  
-    int recvSelf(int commitTag, Channel &theChannel, 
-		 FEM_ObjectBroker &theBroker);    
-    
+    int recvSelf(int commitTag, Channel &theChannel,
+                 FEM_ObjectBroker &theBroker);    
+   
     void Print(OPS_Stream &s, int flag =0);
-    
+   
  protected:
-    
+   
  private:
 
     int iii;
@@ -80,7 +83,7 @@ class RambergOsgoodSteel : public UniaxialMaterial
     double E0;  //  = matpar(2)  : initial stiffness
     double rezaAA;   //  = matpar(3)  : hardening ratio (Esh/E0)
     double rezaNN;  //  = matpar(4)  : exp transition elastic-plastic
-    double sigini; // initial 
+    double sigini; // initial
     // hstvP : STEEL HISTORY VARIABLES
     double epsminP; //  = hstvP(1) : max eps in compression
     double epsmaxP; //  = hstvP(2) : max eps in tension
@@ -90,24 +93,23 @@ class RambergOsgoodSteel : public UniaxialMaterial
     double epssrP;  //  = hstvP(6) : eps at last inversion point
     double sigsrP;  //  = hstvP(7) : sig at last inversion point
     int    konP;    //  = hstvP(8) : index for loading/unloading
-    // hstv : STEEL HISTORY VARIABLES   
+    // hstv : STEEL HISTORY VARIABLES  
     double epsP;  //  = strain at previous converged step
     double sigP;  //  = stress at previous converged step
     double eP;    //   stiffness modulus at last converged step;
 
-    double epsmin; 
-    double epsmax; 
+    double epsmin;
+    double epsmax;
     double epspl;  
     double epss0;  
-    double sigs0; 
+    double sigs0;
     double epsr;  
     double sigr;  
     int    kon;    
-    double sig;   
-    double e;     
+    double sig;  
+    double e;    
     double eps;   //  = strain at current step
 };
 
 
 #endif
-

@@ -126,18 +126,21 @@ using std::setiosflags;
 
 extern SimulationInformation simulationInfo;
 extern const char * getInterpPWD(Tcl_Interp *interp);  // commands.cpp	
-static SIFBuilderDomain* theSIFDomain = 0;     //static pointer to SIFBuilderDomain
+static SIFBuilderDomain* theSIFDomain = 0;       //static pointer to SIFBuilderDomain
 static Domain *theDomain = 0;
 //static TclSIFBuilder* theTclSIFBuilder  = 0;   //static pointer to
-static Vector* XBayVec = 0;                   //static vetor pointer for xbay
-static Vector* YBayVec = 0;                   //static vetor pointer for ybay
-static Vector* StoreyVec = 0;                   //static vetor pointer for storey
+static Vector* XBayVec = 0;                      //static vetor pointer for xbay
+static Vector* YBayVec = 0;                      //static vetor pointer for ybay
+static Vector* StoreyVec = 0;                    //static vetor pointer for storey
 static int SIFModelStatus = 0;                   //static index to detect whether the sif model beig created or not
-static int BuilderType =0;
+static int BuilderType =0;						 //static index to define the builder type (structutal model)
+static int SIFdisplayindex = 0;                  //static index to define the display need for SIFBuilder;
 static Vector* BuilderTypeVec = new Vector(3);   //static vector for indentifying the builder type
 static int SecXBeamTag = 0;
 static int SecYBeamTag = 0;
-static int theNewJtTag = 10000;                //Additional joints are tagged as 10000+;
+static int theNewJtTag = 10000;                  //Additional joints are tagged as 10000+;
+
+//Declaration of Tcl commands for SIFBuilder
 int TclSIFBuilderCommand_addMaterial(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 int TclSIFBuilderCommand_addSection(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 int TclSIFBuilderCommand_assignSection(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
@@ -160,7 +163,7 @@ int TclSIFBuilderCommand_BuildSIFModel();
 int TclSIFBuilderCommand_BuildModel(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 //int TclSIFBuilderCommand_meshSIFModel(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 
-TclSIFBuilder::TclSIFBuilder(Domain &Domain, Tcl_Interp* interp, int builderType)
+TclSIFBuilder::TclSIFBuilder(Domain &Domain, Tcl_Interp* interp, int displayindex)
 {
   // Set the interpreter (the destructor needs it to delete commands)
   theInterp = interp;
@@ -175,13 +178,7 @@ TclSIFBuilder::TclSIFBuilder(Domain &Domain, Tcl_Interp* interp, int builderType
   if(SIFModelStatus!=0)
 	  SIFModelStatus=0;
 
-  BuilderType = builderType;
-  //1:Framed structure with slab -- default
-  //2:Framed structute without slab -- frame
-  //3:Sub frame
-  //4:Bridge?
-  //11--16: plane frame or single member;
-
+  SIFdisplayindex = displayindex;
 
   theDomain= &Domain;
   theSIFDomain->SetStructureDomain(&Domain);
@@ -250,7 +247,7 @@ TclSIFBuilder::~TclSIFBuilder()
 }
 
 
-//SIFModel generation 
+//--------------------SIFModel generation------------------------------------------
 int 
 TclSIFBuilderCommand_BuildSIFModel( ){
      //Build model consists of three steps:
@@ -265,7 +262,7 @@ TclSIFBuilderCommand_BuildSIFModel( ){
 	int NumStoreys;			//number of NumStoreys in z direction
 
 	if(XBayVec!=0){
-		NumXBays = XBayVec->Size()-1;
+		NumXBays = (XBayVec->Size())-1;
 		(*BuilderTypeVec)(0) = 1;
 	}
 	else{
@@ -274,7 +271,7 @@ TclSIFBuilderCommand_BuildSIFModel( ){
 	}
 
 	if(YBayVec!=0){
-		NumYBays = YBayVec->Size()-1;
+		NumYBays = (YBayVec->Size())-1;
 		(*BuilderTypeVec)(2) = 1;
 	}
 	else{
@@ -283,15 +280,21 @@ TclSIFBuilderCommand_BuildSIFModel( ){
 	}
 
 	if(StoreyVec!=0){
-		NumStoreys = StoreyVec->Size()-1;
+		NumStoreys = (StoreyVec->Size())-1;
 		(*BuilderTypeVec)(1) = 1;
 	}
 	else{
 		(*BuilderTypeVec)(1) = 0;
 		NumStoreys = 1;     // Here the real num of storey is 0, just for conviniece of defining virtual compartment
 	}
-  
-	if( (*BuilderTypeVec)(0) == 1 && (*BuilderTypeVec)(1) == 0 && (*BuilderTypeVec)(2) == 1){
+
+	//3D full frame
+	if ((*BuilderTypeVec)(0) == 1 && (*BuilderTypeVec)(1) == 1 && (*BuilderTypeVec)(2) == 1) {
+		BuilderType = 1;		//1:L M N (X-Z Plan, Y storey-3D)
+	}
+
+    //Plane frame
+	else if( (*BuilderTypeVec)(0) == 1 && (*BuilderTypeVec)(1) == 0 && (*BuilderTypeVec)(2) == 1){
 
 			BuilderType = 11;		//11:M 0 N (X-Z grillage with out of plane displacements - 3D)
 	}
@@ -303,6 +306,8 @@ TclSIFBuilderCommand_BuildSIFModel( ){
 
 			BuilderType = 13;		//13:0 M N (Y-Z frame with in and out of plane displacements - 3D)
 	}
+	
+	//Single member or continuous member
 	else if( (*BuilderTypeVec)(0) == 0 && (*BuilderTypeVec)(1) == 1 && (*BuilderTypeVec)(2) == 0){
 
 			BuilderType = 14;		//14:0 N 0 (single storey or multi-storey column - 3D)
@@ -327,19 +332,22 @@ TclSIFBuilderCommand_BuildSIFModel( ){
 	double yBaycrd = 0.0;		//yBaycrd is the coordinate of joint in y direction;
 	double zBaycrd = 0.0;		//zBaycrd is the coordinate of joint in z direction;
 
-	// for SIFCompartment generation;
-  for	(int b = 1; b <= NumYBays; b++)
+	//-------------------------------------------for SIFCompartment generation---------------------------------------------;
+   if(SIFdisplayindex==1|| SIFdisplayindex == 2)
+	   opserr << "SIFCompartment: " << endln;
+   //begin to generate SIFCompartment;
+	for	(int b = 1; b <= NumYBays; b++)
   {
     for	(int c = 1; c <=NumStoreys; c++)
     {
       for (int a = 1; a <= NumXBays; a++)
       {
         //To set the crds for the SIFJoint, which are obtained from the vectors
-		int CompTag = 100*a+10*b +c;   //"Tag" starts in upper case
+		int CompTag = 1000*a+100*b +c;   
 		//it can be CompTag++;
         //joint tag: abc -> a th XBay, b th YBay, c th Storey
         ID CompInfo =  ID(3);
-		CompInfo(0)= a ; CompInfo(1)= b; CompInfo(2) = c;
+		CompInfo(0)= a ; CompInfo(1)= b; CompInfo(2) = c; 
 		Vector CompOrigin = Vector(3);     
         
 		if(BuilderType == 11||BuilderType ==15||BuilderType ==16){
@@ -371,13 +379,18 @@ TclSIFBuilderCommand_BuildSIFModel( ){
 
 		SIFCompartment *theComp = new SIFCompartment(CompTag, CompInfo, CompOrigin);
 		theSIFDomain->addSIFCompartment(theComp);
+		if (SIFdisplayindex == 1 || SIFdisplayindex == 2)
+			opserr << CompTag<<"   ";
 		//To get reference just add a * to get the class, which is then parsed as reference
 	  }
 	}
   }
 
 	
-	//For SIFJoint generation;
+	//-----------------------------For SIFJoint generation------------------------------------------------------------;
+	if (SIFdisplayindex == 1 || SIFdisplayindex == 2)
+		opserr <<endln<< "SIFJoint: " << endln;
+
 	//if a sub strcture, a, b start from 0
 	int aStart,bStart,cStart,aEnd,bEnd,cEnd;
 
@@ -441,10 +454,10 @@ TclSIFBuilderCommand_BuildSIFModel( ){
 
 			if(BuilderType == 11||BuilderType ==15||BuilderType ==16){							
 
-				JointTag = 100*(a+1)+10*(b+1) +c+1; 
+				JointTag = 1000*(a+1)+100*(b+1) +c+1; 
 			}
 			else {
-			JointTag = 100*(a+1)+10*(b+1) +c; 
+			JointTag = 1000*(a+1)+100*(b+1) +c; 
 			}
 
 			//"Tag" starts in upper case
@@ -452,6 +465,8 @@ TclSIFBuilderCommand_BuildSIFModel( ){
        
 			SIFJoint *joint = new SIFJoint(JointTag, xBaycrd, zBaycrd, yBaycrd);
 			theSIFDomain->addSIFJoint(joint);
+			if (SIFdisplayindex == 1 || SIFdisplayindex == 2)
+				opserr <<JointTag<< "  " ;
 			//To get reference just add a * to get the class, which is then parsed as reference
 			}
 		}
@@ -462,17 +477,20 @@ TclSIFBuilderCommand_BuildSIFModel( ){
 if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 
 	// for Generating SIF slab;
+	if (SIFdisplayindex == 1 || SIFdisplayindex == 2)
+		opserr << endln << "SIFSlab: " << endln;
+
 	for	(int b = 1; b <= NumYBays; b++)
 	{
 		for	(int c = 1; c <=NumStoreys; c++)
 		{
 			for (int a = 1; a <= NumXBays; a++)
 			{
-				int Jt1Tag = 100*a+10*b+c;
-				int Jt2Tag = 100*(a+1)+10*b+c;
-				int Jt3Tag = 100*(a+1)+10*(b+1)+c;
-				int Jt4Tag = 100*a+10*(b+1)+c;
-				int SlabTag = 100*a+10*b+c;
+				int Jt1Tag = 1000*a+100*b+c;
+				int Jt2Tag = 1000*(a+1)+100*b+c;
+				int Jt3Tag = 1000*(a+1)+100*(b+1)+c;
+				int Jt4Tag = 1000*a+100*(b+1)+c;
+				int SlabTag = 1000*a+100*b+c;
 		
 
 				ID MemberInfo =  ID(3);
@@ -489,9 +507,11 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 				}
 				theSIFDomain->addSIFSlab(theSlab);
 				//column->assignSection(theSIFDomain->getSIFSection(1));
+				if (SIFdisplayindex == 1 || SIFdisplayindex == 2)
+					opserr << SlabTag << "  ";
 
 				SIFCompartment* theComp=0;
-				int theCompTag = 100*a+10*b+c;
+				int theCompTag = 1000*a+100*b+c;
 				theComp = theSIFDomain->getSIFCompartment(theCompTag);
 				theComp->AddSlab(SlabTag);
 				//To get reference just add a * to get the class, which is then parsed as reference
@@ -500,7 +520,7 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 	}
 }
   //end of SIFSlab generation;
-
+  
 	//for SIFxbeam generation
 
 	if(BuilderType ==13||BuilderType ==14||BuilderType ==16){								
@@ -523,9 +543,9 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 		{
 			for (int a = 0; a<NumXBays; a ++)
 			{
-				int Jt1Tag = 100*(a+1) + 10*(b+1) +c;
-				int Jt2Tag = 100*(a+2) +10*(b+1) +c;
-				int xBeamTag = 100*(a+1)+ 10*(b+1)  + c ;
+				int Jt1Tag = 1000*(a+1) + 100*(b+1) +c;
+				int Jt2Tag = 1000*(a+2) +100*(b+1) +c;
+				int xBeamTag = 1000*(a+1)+ 100*(b+1)  + c ;
 				
 				ID MemberInfo =  ID(3);
 				MemberInfo(0)= a+1 ; MemberInfo(1)= b+1; MemberInfo(2) = c;
@@ -538,21 +558,21 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 
 				int theCompID =0 ; SIFCompartment* theComp=0;
 				if(b==0){
-					theCompID = (a+1)*100+(b+1)*10+c;
+					theCompID = (a+1)*1000+(b+1)*100+c;
 					theComp = theSIFDomain->getSIFCompartment(theCompID);
 					theComp->AddXBeam(xBeamTag);
 				}
 				else if(b==NumYBays){
-					theCompID = (a+1)*100+b*10+c;
+					theCompID = (a+1)*1000+b*100+c;
 					theComp = theSIFDomain->getSIFCompartment(theCompID);
 					theComp->AddXBeam(xBeamTag);
 				}
 				else{
-					theCompID = (a+1)*100+b*10+c;
+					theCompID = (a+1)*1000+b*100+c;
 					theComp = theSIFDomain->getSIFCompartment(theCompID);
 					theComp->AddXBeam(xBeamTag);
 					//Now adding the adjacent compartment
-					theCompID = (a+1)*100+(b+1)*10+c;
+					theCompID = (a+1)*1000+(b+1)*100+c;
 					theComp = theSIFDomain->getSIFCompartment(theCompID);
 					theComp->AddXBeam(xBeamTag);
 				}
@@ -591,9 +611,9 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 		{
 			for (int a=0; a<=aEnd; a++)	
 			{
-				int Jt1Tag = 100*(a+1)+10*(b+1)+c;
-				int Jt2Tag = 100*(a+1)+10*(b+2)+c;
-				int yBeamTag = 100*(a+1)+10*(b+1)+c;
+				int Jt1Tag = 1000*(a+1)+100*(b+1)+c;
+				int Jt2Tag = 1000*(a+1)+100*(b+2)+c;
+				int yBeamTag = 1000*(a+1)+100*(b+1)+c;
 
 				ID MemberInfo =  ID(3);
 				MemberInfo(0)= a+1 ; MemberInfo(1)= b+1 ;MemberInfo(2) = c;
@@ -606,21 +626,21 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 				
 				int theCompID =0 ; SIFCompartment* theComp=0;
 				if(a==0){
-					theCompID = (a+1)*100+(b+1)*10+c;
+					theCompID = (a+1)*1000+(b+1)*100+c;
 					theComp = theSIFDomain->getSIFCompartment(theCompID);
 					theComp->AddYBeam(yBeamTag);
 				}
 				else if(a==NumXBays){
-					theCompID = a*100+(b+1)*10+c;
+					theCompID = a*1000+(b+1)*100+c;
 					theComp = theSIFDomain->getSIFCompartment(theCompID);
 					theComp->AddYBeam(yBeamTag);
 				}
 				else{
-					theCompID = a*100+(b+1)*10+c;
+					theCompID = a*1000+(b+1)*100+c;
 					theComp = theSIFDomain->getSIFCompartment(theCompID);
 					theComp->AddYBeam(yBeamTag);
 					//Now adding the adjacent compartment
-					theCompID = (a+1)*100+(b+1)*10+c;
+					theCompID = (a+1)*1000+(b+1)*100+c;
 					theComp = theSIFDomain->getSIFCompartment(theCompID);
 					theComp->AddYBeam(yBeamTag);
 				}	
@@ -644,6 +664,8 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 
 
     //for SIFcolumn generation;
+	if (SIFdisplayindex == 1 || SIFdisplayindex == 2)
+		opserr << endln << "SIFColumn: " << endln;
 
 	if(BuilderType ==12){								
 		bEnd=0;
@@ -668,9 +690,9 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 		{
 			for (int a=0; a<=aEnd; a++)	
 			{
-				int Jt1Tag = 100*(a+1)+10*(b+1)+c-1;
-				int Jt2Tag = 100*(a+1)+10*(b+1)+c;
-				int columnTag = 100*(a+1)+10*(b+1)+c;
+				int Jt1Tag = 1000*(a+1)+100*(b+1)+c-1;
+				int Jt2Tag = 1000*(a+1)+100*(b+1)+c;
+				int columnTag = 1000*(a+1)+100*(b+1)+c;
 
 				ID MemberInfo =  ID(3);
 				MemberInfo(0)= a+1 ; MemberInfo(1)= b+1; MemberInfo(2) = c;
@@ -684,38 +706,38 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 				
 				if((a!=0)&&(b!=0)&&(a!=NumXBays)&&(b!=NumYBays)){
 					theCompID.resize(4);
-					theCompID(0) = a*100+b*10+c;
-					theCompID(1) = (a+1)*100+b*10+c;
-					theCompID(2) = a*100+(b+1)*10+c;
-					theCompID(3) = (a+1)*100+(b+1)*10+c;	
+					theCompID(0) = a*1000+b*100+c;
+					theCompID(1) = (a+1)*1000+b*100+c;
+					theCompID(2) = a*1000+(b+1)*100+c;
+					theCompID(3) = (a+1)*1000+(b+1)*100+c;	
 				}
 				else{
 					theCompID.resize(1);
 					if((a==0)&&(b==0))
-						theCompID(0)=  (a+1)*100+(b+1)*10+c;
+						theCompID(0)=  (a+1)*1000+(b+1)*100+c;
 					else if((a==0)&&(b==NumYBays))
-						theCompID(0)=  (a+1)*100+b*10+c;
+						theCompID(0)=  (a+1)*1000+b*100+c;
 					else if((a==NumXBays)&&(b==0))
-						theCompID(0)=  a*100+(b+1)*10+c;
+						theCompID(0)=  a*1000+(b+1)*100+c;
 					else if((a==NumXBays)&&(b==NumYBays))
-						theCompID(0)=  a*100+b*10+c;
+						theCompID(0)=  a*1000+b*100+c;
 					else{
 						theCompID.resize(2);
 						if(a==0){
-							theCompID(0)=  (a+1)*100+b*10+c;
-							theCompID(1)=  (a+1)*100+(b+1)*10+c;
+							theCompID(0)=  (a+1)*1000+b*100+c;
+							theCompID(1)=  (a+1)*1000+(b+1)*100+c;
 						}
 						else if(a==NumXBays){
-							theCompID(0)=  a*100+b*10+c;
-							theCompID(1)=  a*100+(b+1)*10+c;
+							theCompID(0)=  a*1000+b*100+c;
+							theCompID(1)=  a*1000+(b+1)*100+c;
 						}
 						else if(b==0){
-							theCompID(0)=  a*100+(b+1)*10+c;
-							theCompID(1)=  (a+1)*100+(b+1)*10+c;
+							theCompID(0)=  a*1000+(b+1)*100+c;
+							theCompID(1)=  (a+1)*1000+(b+1)*100+c;
 						}
 						else if(b==NumYBays){
-							theCompID(0)=  a*100+b*10+c;
-							theCompID(1)=  (a+1)*100+b*10+c;
+							theCompID(0)=  a*1000+b*100+c;
+							theCompID(1)=  (a+1)*1000+b*100+c;
 						}
 					}
 				}
@@ -724,6 +746,10 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 					int theCompTag = theCompID(k);
 					theComp = theSIFDomain->getSIFCompartment(theCompTag);
 					theComp->AddColumn(columnTag);
+					
+					if (SIFdisplayindex == 1 || SIFdisplayindex == 2)
+						opserr << "  "<<columnTag;
+
 				}
 
 			}
@@ -731,12 +757,12 @@ if(BuilderType ==1||BuilderType ==11||BuilderType ==12||BuilderType ==13){
 	}
   
 	//end of generating SIFModel
-	//------------------------------------------------------------------
+	opserr <<endln;
 	return TCL_OK;
 
 }
 
-//-------------------------------------------
+//-------------------------------------------Build finite element model for structure-----------------------------------------
 int 
 TclSIFBuilderCommand_BuildModel(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv){
 	
@@ -747,6 +773,7 @@ TclSIFBuilderCommand_BuildModel(ClientData clientData, Tcl_Interp *interp, int a
 
 	bool isElastic= false;
 	bool isDynamic = false;
+	bool isPinned = false;
 	int NumCtrlx, NumCtrly, NumCtrlz;
 	
 	int count;
@@ -767,56 +794,67 @@ TclSIFBuilderCommand_BuildModel(ClientData clientData, Tcl_Interp *interp, int a
 		count++;
 		}
 	}
-
+	//Here define the mesh control for structural model
 	if(isElastic){
 		NumCtrlx =2 ; NumCtrly =2 ;NumCtrlz =2 ;
 		}
 	else {
 		NumCtrlx =6 ; NumCtrly =6 ;NumCtrlz =6 ;
 		}
+	//customise mesh control
 	if(argc-count>0){
 		if (strcmp(argv[count],"MeshCtrl") == 0 ||strcmp(argv[count],"-MeshCtrl") == 0 ) {
 		count++;
 		
-		if(argc-count!=3){
+		if(argc-count<3){
 			opserr<<"WARNING TclSIFBuilderCommand expects 3 arguments for mesh control"<<endln;
 			return TCL_ERROR;
 		}
 		
 		if (Tcl_GetInt(interp, argv[count], &NumCtrlx) != TCL_OK) {
-		opserr << "WARNING:: invalid number control " << argv[count] << " for building model \n";	
-		return TCL_ERROR;
+			opserr << "WARNING:: invalid number control " << argv[count] << " for building model \n";	
+			return TCL_ERROR;
 		}
 		count++;
 		if (Tcl_GetInt(interp, argv[count], &NumCtrly) != TCL_OK) {
-		opserr << "WARNING:: invalid number control " << argv[count] << " for building model \n";	
-		return TCL_ERROR;
+			opserr << "WARNING:: invalid number control " << argv[count] << " for building model \n";	
+			return TCL_ERROR;
 		}
 		count++;
 		if (Tcl_GetInt(interp, argv[count], &NumCtrlz) != TCL_OK) {
-		opserr << "WARNING:: invalid number control " << argv[count] << " for building model \n";	
-		return TCL_ERROR;
+			opserr << "WARNING:: invalid number control " << argv[count] << " for building model \n";	
+			return TCL_ERROR;
 		}
+		count++;
 		}
-		
+		//end of recieving mesh control		
 	}
+	if (argc - count > 0) {
+		if (strcmp(argv[count], "pinned") == 0 || strcmp(argv[count], "-pinned") == 0) {
+			isPinned = true;
+			count++;
+		}
+		//end of detecting if the beams are pinned to the columns
+	}
+
 	
 	ID MeshPars = ID(3);
 	MeshPars(0)= NumCtrlx;MeshPars(1)= NumCtrly;MeshPars(2)= NumCtrlz;
-
-	if(SIFModelStatus==0){
-		if( TclSIFBuilderCommand_BuildSIFModel()==TCL_OK){
-		//for SIFxbeam mesh;
-		
-		theSIFDomain->GenStructuralModel(MeshPars,isElastic);	
-		SIFModelStatus++;
+	 
+	//Now generate structural model following the check of SIFModel
+	if (SIFModelStatus == 0) {
+		if (TclSIFBuilderCommand_BuildSIFModel() == TCL_OK) {
+			SIFModelStatus++;
 		}
-    }
-	else
-	{
-		theSIFDomain->GenStructuralModel(MeshPars, isElastic,isDynamic);	
-
+		else
+			opserr << "WARNING::SIFModel has not been built before adding secondary beams" << endln;
 	}
+	
+	if(SIFModelStatus>0){
+		//Now generate structural model
+		theSIFDomain->GenStructuralModel(MeshPars,isElastic, isDynamic, isPinned);	
+    }
+	
 
 return TCL_OK;
 
@@ -836,11 +874,10 @@ TclSIFBuilderCommand_addSecBeam(ClientData clientData, Tcl_Interp *interp, int a
 
 	if(SIFModelStatus==0){
 		if( TclSIFBuilderCommand_BuildSIFModel()==TCL_OK){
-		//for SIFxbeam mesh;
 		SIFModelStatus++;
 		}
 		else
-			opserr<<"WARNING::SIFModel has not been built before defining boundary conditions"<<endln;
+			opserr<<"WARNING::SIFModel has not been built before adding secondary beams"<<endln;
    }
 
 	int theCompTag;
@@ -1266,7 +1303,7 @@ TclSIFBuilderCommand_addSection(ClientData clientData, Tcl_Interp *interp, int a
 			opserr << "WARNING invalid mositure" << endln;
 			opserr << " for SIFBuilder to add SIFSection: " << argv[2] << endln;	    
 			return TCL_ERROR;
-			}
+		}
 		count++;
 	   }
 	   else if(argc-count==2){
@@ -1275,27 +1312,13 @@ TclSIFBuilderCommand_addSection(ClientData clientData, Tcl_Interp *interp, int a
 			opserr << " for SIFBuilder to add SIFSection: " << argv[2] << endln;	    
 			return TCL_ERROR;
 			}
-       count++;
+		count++;
 		  if (Tcl_GetDouble (interp, argv[count], &Width) != TCL_OK) {
 			opserr << "WARNING invalid slab width" << endln;
 			opserr << " for SIFBuilder to add SIFSection: " << argv[2] << endln;	    
 			return TCL_ERROR;
 			}
 		  count++;
-    }
-     else if(argc-count==2){
-       if (Tcl_GetDouble (interp, argv[count], &Thickness) != TCL_OK) {
-         opserr << "WARNING invalid slab thickness" << endln;
-         opserr << " for SIFBuilder to add SIFSection: " << argv[2] << endln;
-         return TCL_ERROR;
-       }
-       count++;
-       if (Tcl_GetDouble (interp, argv[count], &Width) != TCL_OK) {
-         opserr << "WARNING invalid slab width" << endln;
-         opserr << " for SIFBuilder to add SIFSection: " << argv[2] << endln;
-         return TCL_ERROR;
-       }
-       count++;
      }//IF INPUT ==8
 
     SIFMaterial* theSIFMaterial = theSIFDomain->getSIFMaterial(SIFSectionMatTag);
@@ -1341,44 +1364,42 @@ TclSIFBuilderCommand_assignSection(ClientData clientData, Tcl_Interp *interp, in
 		SIFModelStatus++;
 		}
 		else
-			opserr<<"WARNING::SIFModel has not been built before defining boundary conditions"<<endln;
+			opserr<<"WARNING::SIFModel has not been built before assigning sections"<<endln;
    }
+	SIFXBeam *theSIFXBeam;
+	SIFXBeamIter &theSIFXBeams = theSIFDomain->getSIFXBeams();
 
+	SIFYBeam *theSIFYBeam;
+	SIFYBeamIter &theSIFYBeams = theSIFDomain->getSIFYBeams();
 	int SIFSectionTag;
 	int count = 1; 
 	SIFSection* theSection;
-    //AddMaterial steel 1 -type EC3 fy E0;
-	if (strcmp(argv[count],"Beams") == 0 ||strcmp(argv[count],"beams") == 0 ) {
-		count++;
-		if (Tcl_GetInt(interp, argv[count], &SIFSectionTag) != TCL_OK) {
-		opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";	
+
+	if (Tcl_GetInt(interp, argv[count], &SIFSectionTag) != TCL_OK) {
+		opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";
 		return TCL_ERROR;
-		}
-		
-		theSection = theSIFDomain->getSIFSection(SIFSectionTag);
-		SIFXBeam *theSIFXBeam;
-		SIFXBeamIter &theSIFXBeams  = theSIFDomain->getSIFXBeams();
+	}
+	theSection = theSIFDomain->getSIFSection(SIFSectionTag);
+	count++;
+
+    //AddMaterial steel 1 -type EC3 fy E0;
+	if (strcmp(argv[count],"Beams") == 0 || strcmp(argv[count], "AllBeams") == 0 ||strcmp(argv[count],"beams") == 0 ) {
+		count++;
 		while((theSIFXBeam = theSIFXBeams())!=0){
 			theSIFXBeam->assignSection(theSection);
 		}
   
-		SIFYBeam *theSIFYBeam;
-		SIFYBeamIter &theSIFYBeams  =  theSIFDomain->getSIFYBeams();
+		
 		while((theSIFYBeam = theSIFYBeams())!=0){
 			theSIFYBeam->assignSection(theSection);
 		}
-	count++;
+
 	}
-	else if (strcmp(argv[count],"XBeams") == 0 ||strcmp(argv[count],"Xbeams") == 0 ) {
+	else if (strcmp(argv[count],"XBeam") == 0 ||strcmp(argv[count],"Xbeam") == 0 ) {
 		count++;
 
-		int XBayTag = 0; int ZBayTag =0;
-		if (Tcl_GetInt(interp, argv[count], &SIFSectionTag) != TCL_OK) {
-		opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";	
-		return TCL_ERROR;
-		}
-		
-		count++;
+		int XBayTag = 0; int ZBayTag = 0; int XBeamTag = 0;
+	
 		//specify bays
 		if(argc>count){
 			if (strcmp(argv[count],"-XBay") == 0 ||strcmp(argv[count],"XBay") == 0 ) {
@@ -1389,96 +1410,174 @@ TclSIFBuilderCommand_assignSection(ClientData clientData, Tcl_Interp *interp, in
 				}
 				count++;
 			}
-		}
-		//end of xBay
-		theSection = theSIFDomain->getSIFSection(SIFSectionTag);
-		SIFXBeam *theSIFXBeam;
-		SIFXBeamIter &theSIFXBeams  = theSIFDomain->getSIFXBeams();
-		while((theSIFXBeam = theSIFXBeams())!=0){
-			if(XBayTag!=0){
-				if(theSIFXBeam->getMemberInfo()(0)==XBayTag){
-					theSIFXBeam->assignSection(theSection);
-				}
-			}
-			else
-				theSIFXBeam->assignSection(theSection);
-			
-		}
-	}
-	else if (strcmp(argv[count],"ZBeams") == 0 ||strcmp(argv[count],"Zbeams") == 0 ) {
-		count++;
-
-		int XBayTag = 0; int ZBayTag =0;
-		if (Tcl_GetInt(interp, argv[count], &SIFSectionTag) != TCL_OK) {
-		opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";	
-		return TCL_ERROR;
-		}
-		
-		count++;
-		//specify bays
-		if(argc>count){
-			if (strcmp(argv[count],"-ZBay") == 0 ||strcmp(argv[count],"ZBay") == 0 ) {
+			else if (strcmp(argv[count], "-ZBay") == 0 || strcmp(argv[count], "ZBay") == 0) {
 				count++;
 				if (Tcl_GetInt(interp, argv[count], &ZBayTag) != TCL_OK) {
-					opserr << "WARNING:: invalid zBay tag for assigning section: " << argv[1] << "\n";	
+					opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";
 					return TCL_ERROR;
 				}
 				count++;
 			}
+			else if (strcmp(argv[count], "-all") == 0 || strcmp(argv[count], "-All") == 0) {
+				count++;
+				XBayTag = 0;
+				XBeamTag = 0;
+			}
+			else if (Tcl_GetInt(interp, argv[count], &XBeamTag) != TCL_OK) {
+				opserr << "WARNING:: invalid XBeam tag to assign section: " << argv[1] << "\n";
+				return TCL_ERROR;
+			}
 		}
 		//end of xBay
-		theSection = theSIFDomain->getSIFSection(SIFSectionTag);
-		SIFYBeam *theSIFZBeam;
-		SIFYBeamIter &theSIFZBeams  = theSIFDomain->getSIFYBeams();
-		while((theSIFZBeam = theSIFZBeams())!=0){
-			if(ZBayTag!=0){
-				if(theSIFZBeam->getMemberInfo()(1)==ZBayTag){
-					theSIFZBeam->assignSection(theSection);
+
+		if (XBeamTag != 0) {
+			theSIFXBeam = theSIFDomain->getSIFXBeam(XBeamTag);
+			theSIFXBeam->assignSection(theSection);
+		}
+		else {
+			while ((theSIFXBeam = theSIFXBeams()) != 0) {
+				if (XBayTag != 0) {
+					if (theSIFXBeam->getMemberInfo()(0) == XBayTag) {
+						theSIFXBeam->assignSection(theSection);
+					}
 				}
+				else if (ZBayTag != 0) {
+					if (theSIFXBeam->getMemberInfo()(1) == ZBayTag) {
+						theSIFXBeam->assignSection(theSection);
+					}
+				}
+				else
+					theSIFXBeam->assignSection(theSection);
+
 			}
-			else
-				theSIFZBeam->assignSection(theSection);
-			
 		}
 	}
-	else if (strcmp(argv[count],"Columns") == 0 ||strcmp(argv[count],"columns") == 0 ) {
+	else if (strcmp(argv[count],"-ZBeam") == 0 ||strcmp(argv[count],"Zbeam") == 0 ) {
 		count++;
-		if (Tcl_GetInt(interp, argv[count], &SIFSectionTag) != TCL_OK) {
-		opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";	
-		return TCL_ERROR;
+
+		int XBayTag = 0; int ZBayTag = 0; int ZBeamTag = 0;
+	
+		//specify bays
+		if (argc>count) {
+			if (strcmp(argv[count], "-ZBay") == 0 || strcmp(argv[count], "ZBay") == 0) {
+				count++;
+				if (Tcl_GetInt(interp, argv[count], &ZBayTag) != TCL_OK) {
+					opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";
+					return TCL_ERROR;
+				}
+				count++;
+			}
+			else if (strcmp(argv[count], "-XBay") == 0 || strcmp(argv[count], "XBay") == 0) {
+				count++;
+				if (Tcl_GetInt(interp, argv[count], &XBayTag) != TCL_OK) {
+					opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";
+					return TCL_ERROR;
+				}
+				count++;
+			}
+			else if (strcmp(argv[count], "-all") == 0 || strcmp(argv[count], "-All") == 0) {
+				count++;
+				ZBayTag = 0;
+				ZBeamTag = 0;
+			}
+			else if (Tcl_GetInt(interp, argv[count], &ZBeamTag) != TCL_OK) {
+				opserr << "WARNING:: invalid ZBeam tag to assign section: " << argv[1] << "\n";
+				return TCL_ERROR;
+			}
 		}
+		//end of xBay
 		
-		theSection = theSIFDomain->getSIFSection(SIFSectionTag);
-  
+		if (ZBeamTag != 0) {
+			theSIFYBeam = theSIFDomain->getSIFYBeam(ZBeamTag);
+			theSIFYBeam->assignSection(theSection);
+		}
+		else {
+			while ((theSIFYBeam = theSIFYBeams()) != 0) {
+				if (ZBayTag != 0) {
+					if (theSIFYBeam->getMemberInfo()(1) == ZBayTag) {
+						theSIFYBeam->assignSection(theSection);
+					}
+				}
+				else if (XBayTag != 0) {
+					if (theSIFYBeam->getMemberInfo()(1) == XBayTag) {
+						theSIFYBeam->assignSection(theSection);
+					}
+				}
+				else  
+					theSIFYBeam->assignSection(theSection);
+
+			}
+		}
+	}
+	else if (strcmp(argv[count],"Column") == 0 ||strcmp(argv[count],"column") == 0 ) {
 		SIFColumn *theSIFColumn;
-		SIFColumnIter &theSIFColumns  = theSIFDomain->getSIFColumns();
-		while((theSIFColumn = theSIFColumns())!=0){
+		SIFColumnIter &theSIFColumns = theSIFDomain->getSIFColumns();
+
+		count++;
+
+		int ColumnTag = 0;
+		
+		//specify bays
+		if (argc>count) {
+			if (strcmp(argv[count], "-all") == 0 || strcmp(argv[count], "-All") == 0) {
+				count++;
+				ColumnTag = 0;
+			}
+			else if (Tcl_GetInt(interp, argv[count], &ColumnTag) != TCL_OK) {
+				opserr << "WARNING:: invalid XBeam tag to assign section: " << argv[1] << "\n";
+				return TCL_ERROR;
+			}
+		}
+		//end of column
+
+		if (ColumnTag != 0) {
+			theSIFColumn = theSIFDomain->getSIFColumn(ColumnTag);
 			theSIFColumn->assignSection(theSection);
 		}
+		else {
+			while ((theSIFColumn = theSIFColumns()) != 0) {
 
-	    //SIFMaterial Tag recieved
-	count++;
-	}
-	else if (strcmp(argv[count],"Slabs") == 0 ||strcmp(argv[count],"slabs") == 0 ) {
-		count++;
-		if (Tcl_GetInt(interp, argv[count], &SIFSectionTag) != TCL_OK) {
-		opserr << "WARNING:: invalid Section tag for assigning section: " << argv[1] << "\n";	
-		return TCL_ERROR;
+				theSIFColumn->assignSection(theSection);
+
+			}
 		}
-		
-		theSection = theSIFDomain->getSIFSection(SIFSectionTag);
+
+	}
+	else if (strcmp(argv[count],"slab") == 0 ||strcmp(argv[count],"Slab") == 0 ) {
   
 		SIFSlab *theSIFSlab;
 		SIFSlabIter &theSIFSlabs  = theSIFDomain->getSIFSlabs();
-		while((theSIFSlab = theSIFSlabs())!=0){
+
+		count++;
+
+		int SlabTag = 0;
+
+		//specify bays
+		if (argc>count) {
+			if (strcmp(argv[count], "-all") == 0 || strcmp(argv[count], "-All") == 0) {
+				count++;
+				SlabTag = 0;
+			}
+			else if (Tcl_GetInt(interp, argv[count], &SlabTag) != TCL_OK) {
+				opserr << "WARNING:: invalid XBeam tag to assign section: " << argv[1] << "\n";
+				return TCL_ERROR;
+			}
+		}
+		//end of column
+
+		if (SlabTag != 0) {
+			theSIFSlab = theSIFDomain->getSIFSlab(SlabTag);
 			theSIFSlab->assignSection(theSection);
 		}
+		else {
+			while ((theSIFSlab = theSIFSlabs()) != 0) {
 
-	    //SIFMaterial Tag recieved
-	count++;
+				theSIFSlab->assignSection(theSection);
+
+			}
+		}
+		
 	}
-
-
 
 return 0;
 }
@@ -1562,6 +1661,61 @@ TclSIFBuilderCommand_addMaterial(ClientData clientData, Tcl_Interp *interp, int 
 	theSIFMaterial = new SIFMaterial(SIFMaterialTag,SIFMaterialTypeTag,fy, E0);
 	}
 	//End of aading steel material
+	if (strcmp(argv[count], "stainlessSteel") == 0 || strcmp(argv[count], "StainlessSteel") == 0) {
+		opserr << "adding stainless steel" << endln;
+		int gradeTag = 0;
+		double fy = 0;
+		double E0 = 0;
+		double fu = 0;
+
+		count++;
+		if (Tcl_GetInt(interp, argv[count], &SIFMaterialTag) != TCL_OK) {
+			opserr << "WARNING:: invalid material tag for Adding SIFMaterial: " << argv[1] << "\n";
+			return TCL_ERROR;
+		}
+		//SIFMaterial Tag recieved
+		count++;
+
+		if (strcmp(argv[count], "-type") == 0) {
+
+			count++;
+
+			if (strcmp(argv[count], "Grade14571") == 0) {
+				SIFMaterialTypeTag = 301;
+			}
+			
+			count++;
+		}
+		//end of recieving type tag
+		if (argc - count<2) {
+			opserr << "WARNING:fy and E0 should be speciefied for SIFBuilder::AddMaterial " << SIFMaterialTag << endln;
+		}
+		else {
+			if (Tcl_GetDouble(interp, argv[count], &fy) != TCL_OK) {
+				opserr << "WARNING invalid fy" << endln;
+				opserr << " for SIFBuilder to add material: " << SIFMaterialTag << endln;
+				return TCL_ERROR;
+			}
+			count++;
+			if (Tcl_GetDouble(interp, argv[count], &fu) != TCL_OK) {
+				opserr << "WARNING invalid fu" << endln;
+				opserr << " for SIFBuilder to add material: " << SIFMaterialTag << endln;
+				return TCL_ERROR;
+			}
+			count++;
+			if (Tcl_GetDouble(interp, argv[count], &E0) != TCL_OK) {
+				opserr << "WARNING invalid E0" << endln;
+				opserr << " for SIFBuilder to add material: " << SIFMaterialTag << endln;
+				return TCL_ERROR;
+			}
+			
+			
+		}
+
+		theSIFMaterial = new SIFMaterial(SIFMaterialTag, SIFMaterialTypeTag, fy, fu, E0);
+		opserr << "stainless steel added" << endln;
+	}
+	//end of adding stainless steel
 	else if (strcmp(argv[count],"concrete") == 0 ||strcmp(argv[count],"Concrete") == 0 ) {
 		
 		double moist = 0;
@@ -1784,11 +1938,11 @@ TclSIFBuilderCommand_SetBC(ClientData clientData, Tcl_Interp *interp, int argc,
 	int count = 1;
 
 	
-	if (strcmp(argv[count],"pinnedJoint") == 0 ||strcmp(argv[count],"-pinnedJoint") == 0||strcmp(argv[count],"-PinnedJoint") == 0 ) {
+	if (strcmp(argv[count],"pinnedJoint") == 0 ||strcmp(argv[count],"-pinnedJoint") == 0||strcmp(argv[count],"-Pinned") == 0 ) {
 		count++;
 		BCTypeTag =1;
 	}
-	else if (strcmp(argv[count],"fixedJoint") == 0 ||strcmp(argv[count],"-fixedJoint") == 0||strcmp(argv[count],"-FixedJoint") == 0 ) {
+	else if (strcmp(argv[count],"fixedJoint") == 0 ||strcmp(argv[count],"-fixedJoint") == 0||strcmp(argv[count],"-Fixed") == 0 ) {
 		count++;
 		BCTypeTag =2;
 	}
@@ -1921,7 +2075,7 @@ if(argc-count>0){
 		if(countIn ==3){
 			theSIFJoint->setBCtype(BCTypeTag);
 		#ifdef _DEBUG 
-			opserr<< "TclSIFBuilder::A joint with tag "<< theSIFJoint->getTag()<< " has been selected"<<endln;
+			//opserr<< "TclSIFBuilder::A joint with tag "<< theSIFJoint->getTag()<< " has been selected"<<endln;
 		#endif
 		}
 
@@ -1959,7 +2113,7 @@ TclSIFBuilderCommand_AddPartDamage(ClientData clientData, Tcl_Interp *interp, in
 		SIFModelStatus++;
 		}
 		else
-			opserr<<"WARNING::SIFModel has not been built before adding loads"<<endln;
+			opserr<<"WARNING::SIFModel has not been built before adding partial damage to coatings"<<endln;
    }
 
 	int count = 1;
@@ -2255,12 +2409,17 @@ TclSIFBuilderCommand_addFireAction(ClientData clientData, Tcl_Interp *interp, in
 	
 	int FireTypeTag;
 	ID CompartmentID = 0;
-    double fireDuration =0;
+    double fireStart =0;
   double fireOriginx =0;
   double fireOriginy =0;
   double fireOriginz=0;
   double fireHRR = 1e6;
   double fireDia = 0.5;
+  
+  double thi = 0;
+  double avent = 0; double hvent = 0;
+  double atotal = 0; double afire = 0;
+  double qfire = 0; double tlimt = 0;
 
 	
 	//SIFfireAction -type standard -compartment 1 - duration 3600; 
@@ -2302,18 +2461,19 @@ TclSIFBuilderCommand_addFireAction(ClientData clientData, Tcl_Interp *interp, in
       }
       // for geting uncertain number of doubel values
 	}
+	//end of getting compartment
 
 	if (strcmp(argv[count],"-type") == 0 ||strcmp(argv[count],"-Type") == 0||strcmp(argv[count],"Type") == 0 ) {
 		count++;
 		if (strcmp(argv[count],"standard") == 0 ||strcmp(argv[count],"Standard") == 0 ) {
-	      FireTypeTag=1;
+			FireTypeTag=1;
 		}
 		else if (strcmp(argv[count],"Parametric") == 0 ||strcmp(argv[count],"parametric") == 0) {
 			FireTypeTag=2;
 		}
-    else if (strcmp(argv[count],"EC1Localised") == 0 ||strcmp(argv[count],"EC1Local") == 0) {
-      FireTypeTag=3;
-    }
+		else if (strcmp(argv[count],"EC1Localised") == 0 ||strcmp(argv[count],"EC1Local") == 0) {
+			FireTypeTag=3;
+		}
 
 		else{
 			opserr<<"WARNING::TclSIFBuilderCommand_addFireAction wants fire type as "<<endln
@@ -2321,12 +2481,13 @@ TclSIFBuilderCommand_addFireAction(ClientData clientData, Tcl_Interp *interp, in
 		}
 		count++;
 	}
-    //if more arguments are detected, fire duration may be specified
+
+    //if more arguments are detected, check if it is start time
 	if(argc-count>0){
-		if (strcmp(argv[count],"-duration") == 0 ||strcmp(argv[count],"-Duration") == 0||strcmp(argv[count],"Duration") == 0 ) {
+		if (strcmp(argv[count],"-start") == 0 ||strcmp(argv[count],"Start") == 0||strcmp(argv[count],"start") == 0 ) {
 			count++;
-			if (Tcl_GetDouble (interp, argv[count], &fireDuration) != TCL_OK) {
-				opserr << "WARNING invalid fire duration" << endln;
+			if (Tcl_GetDouble (interp, argv[count], &fireStart) != TCL_OK) {
+				opserr << "WARNING invalid fire start time" << endln;
 				opserr << " for SIFBuilder to add fire action: " << argv[count-2] << endln;	    
 				return TCL_ERROR;
 			}
@@ -2334,62 +2495,71 @@ TclSIFBuilderCommand_addFireAction(ClientData clientData, Tcl_Interp *interp, in
 		}
 	}
   
-  //if more arguments are detected, fire orgin may be specified
-  if(argc-count>0){
-    if (strcmp(argv[count],"-origin") == 0 ||strcmp(argv[count],"-Origin") == 0||strcmp(argv[count],"Origin") == 0 ) {
-      count++;
-      if (Tcl_GetDouble (interp, argv[count], &fireOriginx) != TCL_OK) {
-        opserr << "WARNING invalid fireOriginx" << endln;
-        opserr << " for SIFBuilder to add fire action: "  << endln;
-        return TCL_ERROR;
-      }
-      count++;
-      
-      if (Tcl_GetDouble (interp, argv[count], &fireOriginy) != TCL_OK) {
-        opserr << "WARNING invalid fireOriginy" << endln;
-        opserr << " for SIFBuilder to add fire action: "  << endln;
-        return TCL_ERROR;
-      }
-      count++;
-      
-      if (Tcl_GetDouble (interp, argv[count], &fireOriginz) != TCL_OK) {
-        opserr << "WARNING invalid fireOriginz" << endln;
-        opserr << " for SIFBuilder to add fire action: " << endln;
-        return TCL_ERROR;
-      }
-      count++;
+  //More arguments are detected
+  
+	if (argc - count > 0) {
+		//for localised fire
+		if (FireTypeTag == 3) {
+			//information of fire origin
+			if (strcmp(argv[count], "-origin") == 0 || strcmp(argv[count], "-Origin") == 0 || strcmp(argv[count], "Origin") == 0) {
+				count++;
+				if (Tcl_GetDouble(interp, argv[count], &fireOriginx) != TCL_OK) {
+					opserr << "WARNING invalid fireOriginx" << endln;
+					opserr << " for SIFBuilder to add fire action: " << endln;
+					return TCL_ERROR;
+				}
+				count++;
 
-    }
-  }
+				if (Tcl_GetDouble(interp, argv[count], &fireOriginy) != TCL_OK) {
+					opserr << "WARNING invalid fireOriginy" << endln;
+					opserr << " for SIFBuilder to add fire action: " << endln;
+					return TCL_ERROR;
+				}
+				count++;
+
+				if (Tcl_GetDouble(interp, argv[count], &fireOriginz) != TCL_OK) {
+					opserr << "WARNING invalid fireOriginz" << endln;
+					opserr << " for SIFBuilder to add fire action: " << endln;
+					return TCL_ERROR;
+				}
+				count++;
+			}
+			//end of origin
+			if (argc - count > 0) {
+				if (strcmp(argv[count], "-HRR") == 0 || strcmp(argv[count], "HRR") == 0) {
+					count++;
+					if (Tcl_GetDouble(interp, argv[count], &fireHRR) != TCL_OK) {
+						opserr << "WARNING invalid HRR" << endln;
+						opserr << " for SIFBuilder to add fire action: " << endln;
+						return TCL_ERROR;
+					}
+					count++;
+				}
+			}
+			//end of HRR
+
+			if (argc - count > 0) {
+				if (strcmp(argv[count], "-diameter") == 0 || strcmp(argv[count], "-Diameter") == 0 || strcmp(argv[count], "-Dia") == 0) {
+					count++;
+					if (Tcl_GetDouble(interp, argv[count], &fireDia) != TCL_OK) {
+						opserr << "WARNING invalid diameter" << endln;
+						opserr << " for SIFBuilder to add fire action: " << endln;
+						return TCL_ERROR;
+					}
+					count++;
+				}
+			}
+			//end of Diameter
+		}
+		//end of localised fire
+		else if (FireTypeTag == 2) {
+
+		}
+	}
+    //end of recieving parameters
   
-  //if more arguments are detected, fire orgin may be specified
-  if(argc-count>0){
-    if (strcmp(argv[count],"-HRR") == 0 ||strcmp(argv[count],"HRR") == 0 ) {
-      count++;
-      if (Tcl_GetDouble (interp, argv[count], &fireHRR) != TCL_OK) {
-        opserr << "WARNING invalid HRR" << endln;
-        opserr << " for SIFBuilder to add fire action: "  << endln;
-        return TCL_ERROR;
-      }
-      count++;
-    }
-  }
-  
-  //if more arguments are detected, fire orgin may be specified
-  if(argc-count>0){
-    if (strcmp(argv[count],"-diameter") == 0 ||strcmp(argv[count],"-Diameter") == 0||strcmp(argv[count],"-Dia") == 0 ) {
-      count++;
-      if (Tcl_GetDouble (interp, argv[count], &fireDia) != TCL_OK) {
-        opserr << "WARNING invalid diameter" << endln;
-        opserr << " for SIFBuilder to add fire action: "  << endln;
-        return TCL_ERROR;
-      }
-      count++;
-    }
-  }
-  
-  
-// for considering members affected by fires in adjacent compartments
+
+//------------------------for considering members affected by fires in adjacent compartments
 	if(CompartmentID.Size()!=0){
 		for (int i =0; i<CompartmentID.Size();i++){
 		  int CompartmentTag = CompartmentID(i);
@@ -2402,7 +2572,11 @@ TclSIFBuilderCommand_addFireAction(ClientData clientData, Tcl_Interp *interp, in
 		  }
 		  
       SIFfireAction* theSIFfireAction = new SIFfireAction(CompartmentTag, FireTypeTag, CompartmentTag);
-      
+	  //set the start time for fire;
+	  if (fireStart != 0) {
+		  theSIFfireAction->SetStartTime(fireStart);
+	  }
+
       if(FireTypeTag==3){
         Vector fireOrigin = Vector(3);
         fireOrigin(0)= fireOriginx; fireOrigin(1)=fireOriginy;fireOrigin(2)=fireOriginz;
@@ -2427,8 +2601,9 @@ TclSIFBuilderCommand_addFireAction(ClientData clientData, Tcl_Interp *interp, in
         }
 
       }
-      
-			
+	
+
+//-----------------------Here send the fire action to each members in the compartment--------------------	
 		if(theSIFfireAction!=0){
 			ID theSecXBeams = theCompartment->getConnectedSecXBeams();
 			if(theSecXBeams!=0){
@@ -2651,10 +2826,11 @@ int TclSIFBuilderCommand_AddSIFRecorder(ClientData clientData, Tcl_Interp *inter
 {
 	ID SIFJointID = 0;
 	ID SIFXBeamID = 0;
+	ID SIFZBeamID = 0;
 	ID SIFSecXBeamID = 0;
 	ID SIFYBeamID =0;
 	ID SIFSlabID  =0;
-
+	ID SIFColumnID = 0;
 	ID* recNodes = 0;
 	ID theDofs =0;
 
@@ -2728,6 +2904,50 @@ int TclSIFBuilderCommand_AddSIFRecorder(ClientData clientData, Tcl_Interp *inter
         }
       }
 	}
+	else if (strcmp(argv[count], "-zBeam") == 0) {
+		count++;
+
+		//-----for geting uncertain number of double data.
+		int ArgStart = count;
+		int ArgEnd = 0;
+		int data;
+		while (count < argc && ArgEnd == 0) {
+			if (Tcl_GetInt(interp, argv[count], &data) != TCL_OK)
+				ArgEnd = count;
+			else
+				count++;
+		}
+		//~ detecting the remianing number of input
+		SIFZBeamID.resize(ArgEnd - ArgStart);
+		if (ArgStart != ArgEnd) {
+			for (int i = ArgStart; i<ArgEnd; i++) {
+				Tcl_GetInt(interp, argv[i], &data);
+				SIFZBeamID(i - ArgStart) = data;
+			}
+		}
+	}
+	else if (strcmp(argv[count], "-Column") == 0) {
+		count++;
+
+		//-----for geting uncertain number of double data.
+		int ArgStart = count;
+		int ArgEnd = 0;
+		int data;
+		while (count < argc && ArgEnd == 0) {
+			if (Tcl_GetInt(interp, argv[count], &data) != TCL_OK)
+				ArgEnd = count;
+			else
+				count++;
+		}
+		//~ detecting the remianing number of input
+		SIFColumnID.resize(ArgEnd - ArgStart);
+		if (ArgStart != ArgEnd) {
+			for (int i = ArgStart; i<ArgEnd; i++) {
+				Tcl_GetInt(interp, argv[i], &data);
+				SIFColumnID(i - ArgStart) = data;
+			}
+		}
+	}
 	else if (strcmp(argv[count],"-SecXBeam") == 0) {
 		count++;
 		
@@ -2787,8 +3007,8 @@ int TclSIFBuilderCommand_AddSIFRecorder(ClientData clientData, Tcl_Interp *inter
 		}
 	}
 	else if (strcmp(argv[count],"-Mideflect") == 0 ||strcmp(argv[count],"Mideflect") == 0) {
-			theDofs = ID(1);
-			theDofs(0) = 1;
+		theDofs = ID(3);
+		theDofs(0) = 0; theDofs(1) = 1; theDofs(2) = 2;
 			count++;
 			RecorderType =2;
 			if(SIFXBeamID.Size()!=0){
@@ -2801,6 +3021,33 @@ int TclSIFBuilderCommand_AddSIFRecorder(ClientData clientData, Tcl_Interp *inter
 					}
 					ID theIntNodes = theXBeam->getIntNodeTags();
 					int MidTag = (theIntNodes.Size())/2;
+					(*recNodes)(i) = theIntNodes(MidTag);
+				}
+			}
+			if (SIFZBeamID.Size() != 0) {
+				recNodes = new ID(SIFZBeamID.Size());
+				for (int i = 0; i<SIFZBeamID.Size();i++) {
+					SIFYBeam* theZBeam = theSIFDomain->getSIFYBeam(SIFZBeamID(i));
+					if (theZBeam == 0) {
+						opserr << "WARNING:: TclSIFBuilder detected XBeam " << SIFZBeamID(i) << " not existing for defining SIFRecorders" << endln;
+						return TCL_ERROR;
+					}
+					ID theIntNodes = theZBeam->getIntNodeTags();
+					int MidTag = (theIntNodes.Size()) / 2;
+					(*recNodes)(i) = theIntNodes(MidTag);
+				}
+			}
+
+			if (SIFColumnID.Size() != 0) {
+				recNodes = new ID(SIFColumnID.Size());
+				for (int i = 0; i<SIFColumnID.Size(); i++) {
+					SIFColumn* theColumn = theSIFDomain->getSIFColumn(SIFColumnID(i));
+					if (theColumn == 0) {
+						opserr << "WARNING:: TclSIFBuilder detected Column " << SIFColumnID(i) << " not existing for defining SIFRecorders" << endln;
+						return TCL_ERROR;
+					}
+					ID theIntNodes = theColumn->getIntNodeTags();
+					int MidTag = (theIntNodes.Size()) / 2;
 					(*recNodes)(i) = theIntNodes(MidTag);
 				}
 			}
@@ -2866,7 +3113,7 @@ int TclSIFBuilderCommand_AddSIFRecorder(ClientData clientData, Tcl_Interp *inter
 	 TCL_Char *responseID = 0;
 	 double dT = 0.0;
 	 bool echoTimeFlag = true;
-	 TimeSeries *theTimeSeries = 0;
+	 TimeSeries **theTimeSeries = 0;
 	 if(recNodes ==0){
 		opserr<<"WARNING:: no node defined for SIFRecorder"<<endln;
 		 return TCL_ERROR;

@@ -44,7 +44,7 @@
 
 
 void *
-OPS_NewSteelECThermal()
+OPS_SteelECThermal(void)
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
@@ -52,7 +52,7 @@ OPS_NewSteelECThermal()
 
   int    iData[2];
   double dData[6];
-  char *typeChar = new char[20];
+  const char *typeChar = new char[20];
   int numData = 1;
   
  if (OPS_GetIntInput(&numData, iData) != 0) 
@@ -63,10 +63,8 @@ OPS_NewSteelECThermal()
   
   if (OPS_GetNumRemainingInputArgs()==3 ||OPS_GetNumRemainingInputArgs()==7)
   {
-	  if (OPS_GetString(typeChar, 20) !=0 ) {
-		  opserr << "WARNING invalid typeTag for uniaxialMaterial SteelECThermal "<<iData[0]<<endln;
-		  return 0;
-		  }
+    typeChar = OPS_GetString();
+
 	  if(strcmp(typeChar,"EC3") == 0 ){
 		  iData[1]=3;
 		  }
@@ -200,7 +198,6 @@ int SteelECThermal::setTrialStrain(double strain, double FiberTemperature, doubl
 
   Ttemp = FiberTemperature;
 
-
    // Reset history variables to last converged state
    TminStrain = CminStrain;
    TmaxStrain = CmaxStrain;
@@ -309,15 +306,23 @@ void SteelECThermal::determineTrialState (double dStrain)
 	 	{
 		  Tstress = fp - CT + (BT/AT)*(pow((AT*AT - (EpsiYT- fabsTstrain)* (EpsiYT-fabsTstrain)),0.5));
 		  Ttangent = BT*(EpsiYT - fabsTstrain)/ (AT* (pow(( AT*AT - (EpsiYT - fabsTstrain)* (EpsiYT-fabsTstrain)),0.5)));
+		  if (Ttemp < 1e-8) {
+			  Tstress = fp + (fabsTstrain - EpsiPT)*(1E-2)*E0;
+			  Ttangent = (1E-2)*E0;
+		  }
 	  }
 	  else if (fabsTstrain <= EpsiT)
 		  {
-		  	Tstress = fy+(fabsTstrain-EpsiYT)*(1E-4)*E0;
-			Ttangent = (1E-4)*E0;
+		  	Tstress = fy+(fabsTstrain-EpsiYT)*(1E-2)*E0;
+			Ttangent = (1E-2)*E0;
+			if (Ttemp < 1e-8) {
+				Tstress = fy + (fabsTstrain - EpsiPT)*(1E-2)*E0;
+				Ttangent = (1E-2)*E0;
+			}
 		  }	  
 	  else if (fabsTstrain <= EpsiU)
 	 	 {
-		  double fy1 = fy+(EpsiU-EpsiYT)*(1E-4)*E0;// modeified to add hardeding and avoid cinvergence problem
+		  double fy1 = fy+(EpsiU-EpsiYT)*(1E-2)*E0;// modeified to add hardeding and avoid cinvergence problem
 		  Tstress = fy1*(1- (fabsTstrain - EpsiT)/(EpsiU -EpsiT));
           //opserr<<"Error: Stiffness of SteelECthermal is negative"<<endln;
 		  Ttangent = -fy1/(EpsiU-EpsiT);
@@ -330,7 +335,6 @@ void SteelECThermal::determineTrialState (double dStrain)
 		}
 
       
-    
 	if(Tloading == 1)
 	{
 	  Tstress = Tstress;
@@ -499,16 +503,15 @@ SteelECThermal::getElongTangent(double TempT, double &ET, double &Elong, double 
       ThermalElongation = -6.2e-3 + 2e-5*(TempT+20);
   }
   else {
-	  opserr << "the temperature is invalid\n";
+	  opserr << " SteelEC Temperature "<< TempT<<" is invalid\n";
 	  return -1;
   }
 
   //ThermalElongation = 0 ;   //debug  Liming
-  ET = E0;
+  Ttemp = TempT;
   Elong = ThermalElongation;
+  ET = E0;
   TemperautreC = TempT;
-
-
   return 0;
 }
 

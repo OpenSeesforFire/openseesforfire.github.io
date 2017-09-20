@@ -29,7 +29,8 @@
 //  using updated Lagrangian formula
 // Ref: Plate Bending Part - DKQ, thin plate element
 //      Membrane Part - GQ12, a membrane element with drilling DOF
-//
+// Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
+
 
 #include <stdio.h> 
 #include <stdlib.h> 
@@ -60,7 +61,7 @@
 static int numShellNLDKGQThermal = 0;
 
 void *
-OPS_NewShellNLDKGQThermal(void)
+OPS_ShellNLDKGQThermal(void)
 {
   if (numShellNLDKGQThermal == 0) {
 //    opserr << "Using ShellNLDKGQThermal - Developed by: Lisha Wang,Xinzheng Lu and Quan Gu\n";
@@ -1062,11 +1063,10 @@ ShellNLDKGQThermal::addLoad(ElementalLoad *theLoad, double loadFactor)
   else if (type == LOAD_TAG_NodalThermalAction) {
  
 	  //NodalLoad* theNodalThermal0,theNodalThermal1;	 
-	 NodalThermalAction* theNodalThermal0 = (NodalThermalAction*) (nodePointers[0]->getNodalLoadPtr());
-	 NodalThermalAction* theNodalThermal1 = (NodalThermalAction*) (nodePointers[1]->getNodalLoadPtr());	
-	 NodalThermalAction* theNodalThermal2 = (NodalThermalAction*) (nodePointers[2]->getNodalLoadPtr());
-	 NodalThermalAction* theNodalThermal3 = (NodalThermalAction*) (nodePointers[3]->getNodalLoadPtr());	
-
+	 NodalThermalAction* theNodalThermal0 = nodePointers[0]->getNodalThermalActionPtr();
+	 NodalThermalAction* theNodalThermal1 = nodePointers[1]->getNodalThermalActionPtr();	
+	 NodalThermalAction* theNodalThermal2 = nodePointers[2]->getNodalThermalActionPtr();
+	 NodalThermalAction* theNodalThermal3 = nodePointers[3]->getNodalThermalActionPtr();	
 
 	 int type;
 	 const Vector &data0 = theNodalThermal0->getData(type);
@@ -1581,8 +1581,9 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
 	Tmat(5,3) = g3[0];
 	Tmat(5,4) = g3[1];
 	Tmat(5,5) = g3[2];
-#ifdef _sDEBUG
-	//opserr<<"ShellNL : Disp "<<nodePointers[2]->getIncrDisp( )<<endln;
+#ifdef _SDEBUG
+	if(this->getTag()==10)
+		opserr<<"ShellNL : Disp "<<nodePointers[2]->getIncrDisp( )<<endln;
 #endif
 
    //transpose TmatTran=transpose(Tmat)
@@ -1713,7 +1714,7 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
 		}//end for q
 #ifdef _SDEBUG
 		if(this->getTag()==1&&i==3)
-			opserr<<"ShellNLDKGQ "<<this->getTag()<< " strain  "<<strain<<endln;
+			opserr<<"ShellNLDKGQ "<<i<< " strain  "<<strain<<endln;
 #endif
 				Vector newStrain = Vector(9);
 		newStrain.Zero();
@@ -1722,13 +1723,13 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
   if(this->getTag()==1&&i==1)
      newStrain(8)=111;
 	
-  if(counterTemperature !=1&&counterTemperature !=2){
+ // if(counterTemperature !=1&&counterTemperature !=2){
 #ifdef _SDEBUG
 		opserr<< "Element  "<<this->getTag()<<" Int "<<i<<endln;	  
 #endif
 		success = materialPointers[i]->setTrialSectionDeformation(newStrain);
 
-  }
+ //}
 
 		//compute the stress
 		stress = materialPointers[i]->getStressResultant( );
@@ -1745,7 +1746,7 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
 	   stress(3) = Bendstress1- residThermal[2*i+1];
 	   stress(4) = Bendstress2- residThermal[2*i+1];
 	}
-	
+
 
 		//add for geometric nonlinearity
 		//update strain in gauss points
@@ -2777,26 +2778,27 @@ int  ShellNLDKGQThermal::recvSelf (int commitTag,
 }
 //**************************************************************************
 
+
 int
-ShellNLDKGQThermal::displaySelf(Renderer &theViewer, int displayMode, float fact)
+ShellNLDKGQThermal::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 
-    // first determine the end points of the quad based on
-    // the display factor (a measure of the distorted image)
-    // store this information in 4 3d vectors v1 through v4
-    const Vector &end1Crd = nodePointers[0]->getCrds();
-    const Vector &end2Crd = nodePointers[1]->getCrds();	
-    const Vector &end3Crd = nodePointers[2]->getCrds();	
-    const Vector &end4Crd = nodePointers[3]->getCrds();	
+	// first determine the end points of the quad based on
+	// the display factor (a measure of the distorted image)
+	// store this information in 4 3d vectors v1 through v4
+	const Vector &end1Crd = nodePointers[0]->getCrds();
+	const Vector &end2Crd = nodePointers[1]->getCrds();
+	const Vector &end3Crd = nodePointers[2]->getCrds();
+	const Vector &end4Crd = nodePointers[3]->getCrds();
 
-    static Matrix coords(4,3);
-    static Vector values(4);
-    static Vector P(24) ;
+	static Matrix coords(4, 3);
+	static Vector values(4);
+	static Vector P(24);
 
-    for (int j=0; j<4; j++)
+	for (int j = 0; j<4; j++)
 		values(j) = 0.0;
 
-    if (displayMode >= 0) {
+	if (displayMode >= 0) {
 		// Display mode is positive:
 		// display mode = 0 -> plot no contour
 		// display mode = 1-8 -> plot 1-8 stress resultant
@@ -2806,23 +2808,24 @@ ShellNLDKGQThermal::displaySelf(Renderer &theViewer, int displayMode, float fact
 		const Vector &end2Disp = nodePointers[1]->getDisp();
 		const Vector &end3Disp = nodePointers[2]->getDisp();
 		const Vector &end4Disp = nodePointers[3]->getDisp();
-		
+
 		// Get stress resultants
-        if (displayMode <= 8 && displayMode > 0) {
-			for (int i=0; i<4; i++) {
+		if (displayMode <= 8 && displayMode > 0) {
+			for (int i = 0; i<4; i++) {
 				const Vector &stress = materialPointers[i]->getStressResultant();
-				values(i) = stress(displayMode-1);
+				values(i) = stress(displayMode - 1);
 			}
 		}
 
 		// Get nodal absolute position = OriginalPosition + (Displacement*factor)
 		for (int i = 0; i < 3; i++) {
-			coords(0,i) = end1Crd(i) + end1Disp(i)*fact;
-			coords(1,i) = end2Crd(i) + end2Disp(i)*fact;
-			coords(2,i) = end3Crd(i) + end3Disp(i)*fact;
-			coords(3,i) = end4Crd(i) + end4Disp(i)*fact;
+			coords(0, i) = end1Crd(i) + end1Disp(i)*fact;
+			coords(1, i) = end2Crd(i) + end2Disp(i)*fact;
+			coords(2, i) = end3Crd(i) + end3Disp(i)*fact;
+			coords(3, i) = end4Crd(i) + end4Disp(i)*fact;
 		}
-	} else {
+	}
+	else {
 		// Display mode is negative.
 		// Plot eigenvectors
 		int mode = displayMode * -1;
@@ -2832,26 +2835,27 @@ ShellNLDKGQThermal::displaySelf(Renderer &theViewer, int displayMode, float fact
 		const Matrix &eigen4 = nodePointers[3]->getEigenvectors();
 		if (eigen1.noCols() >= mode) {
 			for (int i = 0; i < 3; i++) {
-				coords(0,i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-				coords(1,i) = end2Crd(i) + eigen2(i,mode-1)*fact;
-				coords(2,i) = end3Crd(i) + eigen3(i,mode-1)*fact;
-				coords(3,i) = end4Crd(i) + eigen4(i,mode-1)*fact;
-			}    
-		} else {
+				coords(0, i) = end1Crd(i) + eigen1(i, mode - 1)*fact;
+				coords(1, i) = end2Crd(i) + eigen2(i, mode - 1)*fact;
+				coords(2, i) = end3Crd(i) + eigen3(i, mode - 1)*fact;
+				coords(3, i) = end4Crd(i) + eigen4(i, mode - 1)*fact;
+			}
+		}
+		else {
 			for (int i = 0; i < 3; i++) {
-				coords(0,i) = end1Crd(i);
-				coords(1,i) = end2Crd(i);
-				coords(2,i) = end3Crd(i);
-				coords(3,i) = end4Crd(i);
+				coords(0, i) = end1Crd(i);
+				coords(1, i) = end2Crd(i);
+				coords(2, i) = end3Crd(i);
+				coords(3, i) = end4Crd(i);
 			}
 		}
 	}
 
-    int error = 0;
-	
-	// Draw a poligon with coordinates coords and values (colors) corresponding to values vector
-    error += theViewer.drawPolygon (coords, values);
+	int error = 0;
 
-    return error;
+	// Draw a poligon with coordinates coords and values (colors) corresponding to values vector
+	error += theViewer.drawPolygon(coords, values);
+
+	return error;
 
 }

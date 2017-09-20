@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.19 $
-// $Date: 2007-10-13 00:53:04 $
-// $Source: /usr/local/cvs/OpenSees/SRC/element/dispBeamColumn/DispBeamColumn2d.h,v $
+// $Revision: 6140 $
+// $Date: 2015-11-11 03:06:02 +0800 (Wed, 11 Nov 2015) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/dispBeamColumn/DispBeamColumn2d.h $
 
 // Written: MHS
 // Created: Feb 2001
@@ -53,7 +53,7 @@ class DispBeamColumn2d : public Element
     DispBeamColumn2d(int tag, int nd1, int nd2,
 		     int numSections, SectionForceDeformation **s,
 		     BeamIntegration &bi, CrdTransf &coordTransf,
-		     double rho = 0.0);
+		     double rho = 0.0, int cMass = 0);
     DispBeamColumn2d();
     ~DispBeamColumn2d();
 
@@ -88,11 +88,13 @@ class DispBeamColumn2d : public Element
     int sendSelf(int commitTag, Channel &theChannel);
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker 
 		  &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);
+    int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **displayModes=0, int numModes=0);
     void Print(OPS_Stream &s, int flag =0);
 
     Response *setResponse(const char **argv, int argc, OPS_Stream &s);
     int getResponse(int responseID, Information &eleInfo);
+    int getResponseSensitivity(int responseID, int gradNumber,
+			       Information &eleInformation);
 
     // AddingSensitivity:BEGIN //////////////////////////////////////////
     int setParameter(const char **argv, int argc, Parameter &param);
@@ -108,6 +110,7 @@ class DispBeamColumn2d : public Element
     
   private:
     const Matrix &getInitialBasicStiff(void);
+    void getBasicStiff(Matrix &kb, int initial = 0);
 
     int numSections;
     SectionForceDeformation **theSections; // pointer to the ND material objects
@@ -122,12 +125,13 @@ class DispBeamColumn2d : public Element
     static Matrix K;		// Element stiffness, damping, and mass Matrix
     static Vector P;		// Element resisting force vector
 
-    Vector Q;		// Applied nodal loads
-    Vector q;		// Basic force
+    Vector Q;      // Applied nodal loads
+    Vector q;      // Basic force
     double q0[3];  // Fixed end forces in basic system
     double p0[3];  // Reactions in basic system
 
-    double rho;			// Mass density per unit length
+    double rho;	   // Mass density per unit length
+    int cMass;     // consistent mass flag
 
     enum {maxNumSections = 20};
 

@@ -47,6 +47,45 @@
 
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
+
+void* OPS_Brick()
+{
+    if (OPS_GetNumRemainingInputArgs() < 10) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element Brick eleTag? Node1? Node2? Node3? Node4? Node5? Node6? Node7? Node 8? matTag?\n";
+	return 0;
+    }
+
+    int idata[10];
+    int num = 10;
+    if (OPS_GetIntInput(&num,idata)<0) {
+	opserr<<"WARNING: invalid integer data\n";
+	return 0;
+    }
+
+    NDMaterial* mat = OPS_getNDMaterial(idata[9]);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "material tag: " << idata[9];
+	opserr << "\nBrick element: " << idata[0] << endln;
+    }
+
+    double data[3] = {0,0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 3) {
+	num = 3;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,data) < 0) {
+	    opserr<<"WARNING: invalid double data\n";
+	    return 0;
+	}	
+    }
+
+    return new Brick(idata[0],idata[1],idata[2],idata[3],idata[4],idata[5],idata[6],idata[7],
+		     idata[8],*mat,data[0],data[1],data[2]);
+}
 
 //static data
 double  Brick::xl[3][8] ;
@@ -305,6 +344,7 @@ void  Brick::Print( OPS_Stream &s, int flag )
 	  << " " <<connectedExternalNodes(7)
       << endln ;
 
+    s << "Body Forces: " << b[0] << " " << b[1] << " " << b[2] << endln;
     s << "Resisting Force (no inertia): " << this->getResistingForce();
   }
 }
@@ -499,13 +539,19 @@ Brick::addLoad(ElementalLoad *theLoad, double loadFactor)
   int type;
   const Vector &data = theLoad->getData(type, loadFactor);
 
-  if ((type == LOAD_TAG_BrickSelfWeight) || (type == LOAD_TAG_SelfWeight)) {
-	  // added compatability with selfWeight class implemented for all continuum elements, C.McGann, U.W.
-    applyLoad = 1;
-    appliedB[0] += loadFactor * b[0];
-    appliedB[1] += loadFactor * b[1];
-    appliedB[2] += loadFactor * b[2];
+  if (type == LOAD_TAG_BrickSelfWeight) {
+      applyLoad = 1;
+      appliedB[0] += loadFactor * b[0];
+      appliedB[1] += loadFactor * b[1];
+      appliedB[2] += loadFactor * b[2];
     return 0;
+  } else if (type == LOAD_TAG_SelfWeight) {
+      // added compatability with selfWeight class implemented for all continuum elements, C.McGann, U.W.
+      applyLoad = 1;
+      appliedB[0] += loadFactor*data(0)*b[0];
+      appliedB[1] += loadFactor*data(1)*b[1];
+      appliedB[2] += loadFactor*data(2)*b[2];
+      return 0;
   } else {
     opserr << "Brick::addLoad() - ele with tag: " << this->getTag() << " does not deal with load type: " << type << "\n";
     return -1;
@@ -923,8 +969,7 @@ void  Brick::formResidAndTangent( int tang_flag )
 
   int i, j, k, p, q ;
 
-  int success ;
-  
+
   static double volume ;
 
   static double xsj ;  // determinant jacaobian matrix 
@@ -1374,9 +1419,8 @@ int  Brick::recvSelf (int commitTag,
 //**************************************************************************
 
 int
-Brick::displaySelf(Renderer &theViewer, int displayMode, float fact)
+Brick::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
-
     const Vector &end1Crd = nodePointers[0]->getCrds();
     const Vector &end2Crd = nodePointers[1]->getCrds();	
     const Vector &end3Crd = nodePointers[2]->getCrds();	
@@ -1387,18 +1431,15 @@ Brick::displaySelf(Renderer &theViewer, int displayMode, float fact)
     const Vector &end7Crd = nodePointers[6]->getCrds();	
     const Vector &end8Crd = nodePointers[7]->getCrds();	
 
-    static Matrix coords(4,3);
-    static Vector values(4);
+    static Matrix coords(8,3);
+    static Vector values(8);
     static Vector P(24) ;
-
-    values(0) = 1 ;
-    values(1) = 1 ;
-    values(2) = 1 ;
-    values(3) = 1 ;
+    
+    for (int i=0; i<8; i++)
+      values(i) = 1.0;
 
     int error = 0;
     int i;
-
 
     if (displayMode >= 0) {
 
@@ -1419,8 +1460,7 @@ Brick::displaySelf(Renderer &theViewer, int displayMode, float fact)
       const Vector &stress6 = materialPointers[5]->getStress();
       const Vector &stress7 = materialPointers[6]->getStress();
       const Vector &stress8 = materialPointers[7]->getStress();
-      
- 
+       
       // for each face of the brick we:
       //   1) determine the coordinates of the displaced point
       //   2) determine the value to be drawn, the stress at nearest gauss point in displayMode dirn
@@ -1431,6 +1471,10 @@ Brick::displaySelf(Renderer &theViewer, int displayMode, float fact)
 	coords(1,i) = end2Crd(i) + end2Disp(i)*fact;    
 	coords(2,i) = end3Crd(i) + end3Disp(i)*fact;    
 	coords(3,i) = end4Crd(i) + end4Disp(i)*fact;
+	coords(4,i) = end5Crd(i) + end5Disp(i)*fact;
+	coords(5,i) = end6Crd(i) + end6Disp(i)*fact;    
+	coords(6,i) = end7Crd(i) + end7Disp(i)*fact;    
+	coords(7,i) = end8Crd(i) + end8Disp(i)*fact;
       }
       
       if (displayMode < 3 && displayMode > 0) {
@@ -1439,94 +1483,13 @@ Brick::displaySelf(Renderer &theViewer, int displayMode, float fact)
 	values(1) = stress2(index);
 	values(2) = stress3(index);
 	values(3) = stress4(index);
-      }
-      
-      error += theViewer.drawPolygon (coords, values);
-      
-      for (i = 0; i < 3; i++) {
-	coords(0,i) = end5Crd(i) + end5Disp(i)*fact;
-	coords(1,i) = end6Crd(i) + end6Disp(i)*fact;
-	coords(2,i) = end7Crd(i) + end7Disp(i)*fact;
-	coords(3,i) = end8Crd(i) + end8Disp(i)*fact;
-      }
-      
-      if (displayMode < 3 && displayMode > 0) {
-	int index = displayMode - 1;
-	values(0) = stress5(index);
-	values(1) = stress6(index);
-	values(2) = stress7(index);
-	values(3) = stress8(index);
-      }
-      
-      error += theViewer.drawPolygon (coords, values);
-      
-      for (i = 0; i < 3; i++) {
-	coords(0,i) = end1Crd(i) + end1Disp(i)*fact;
-	coords(1,i) = end4Crd(i) + end4Disp(i)*fact;
-	coords(2,i) = end8Crd(i) + end8Disp(i)*fact;
-	coords(3,i) = end5Crd(i) + end5Disp(i)*fact;
-      }
-      
-      if (displayMode < 3 && displayMode > 0) {
-	int index = displayMode - 1;
-	values(0) = stress1(index);
-	values(1) = stress4(index);
-	values(2) = stress8(index);
-	values(3) = stress5(index);
-      }
-      
-      error += theViewer.drawPolygon (coords, values);
-      
-      for (i = 0; i < 3; i++) {
-	coords(0,i) = end2Crd(i) + end2Disp(i)*fact;
-	coords(1,i) = end3Crd(i) + end3Disp(i)*fact;
-	coords(2,i) = end7Crd(i) + end7Disp(i)*fact;
-	coords(3,i) = end6Crd(i) + end6Disp(i)*fact;
-      }
-      if (displayMode < 3 && displayMode > 0) {
-	int index = displayMode - 1;
-	values(0) = stress2(index);
-	values(1) = stress3(index);
-	values(2) = stress7(index);
-	values(3) = stress6(index);
-      }
-      
-      error += theViewer.drawPolygon (coords, values);
-      
-      
-      for (i = 0; i < 3; i++) {
-	coords(0,i) = end1Crd(i) + end1Disp(i)*fact;
-	coords(1,i) = end2Crd(i) + end2Disp(i)*fact;
-	coords(2,i) = end6Crd(i) + end6Disp(i)*fact;
-	coords(3,i) = end5Crd(i) + end5Disp(i)*fact;
-      }
-      
-      if (displayMode < 3 && displayMode > 0) {
-	int index = displayMode - 1;
-	values(0) = stress1(index);
-	values(1) = stress2(index);
-	values(2) = stress6(index);
-	values(3) = stress5(index);
-      }
-      
-      error += theViewer.drawPolygon (coords, values);
-      
-      for (i = 0; i < 3; i++) {
-	coords(0,i) = end4Crd(i) + end4Disp(i)*fact;
-	coords(1,i) = end3Crd(i) + end3Disp(i)*fact;
-	coords(2,i) = end7Crd(i) + end7Disp(i)*fact;
-	coords(3,i) = end8Crd(i) + end8Disp(i)*fact;
-      }
-      
-      if (displayMode < 3 && displayMode > 0) {
-	int index = displayMode - 1;
-	values(0) = stress3(index);
-	values(1) = stress4(index);
-	values(2) = stress7(index);
-	values(3) = stress8(index);
+	values(4) = stress5(index);
+	values(5) = stress6(index);
+	values(6) = stress7(index);
+	values(7) = stress8(index);
       }
 
-      error += theViewer.drawPolygon (coords, values);
+      error = theViewer.drawCube(coords, values, this->getTag());
 
     } else {
 
@@ -1542,119 +1505,47 @@ Brick::displaySelf(Renderer &theViewer, int displayMode, float fact)
       const Matrix &eigen8 = nodePointers[7]->getEigenvectors();
       
       if (eigen1.noCols() >= mode) {
-
+	
 	for (i = 0; i < 3; i++) {
 	  coords(0,i) = end1Crd(i) + eigen1(i,mode-1)*fact;
 	  coords(1,i) = end2Crd(i) + eigen2(i,mode-1)*fact;    
 	  coords(2,i) = end3Crd(i) + eigen3(i,mode-1)*fact;    
 	  coords(3,i) = end4Crd(i) + eigen4(i,mode-1)*fact;
+	  coords(4,i) = end5Crd(i) + eigen5(i,mode-1)*fact;
+	  coords(5,i) = end6Crd(i) + eigen6(i,mode-1)*fact;    
+	  coords(6,i) = end7Crd(i) + eigen7(i,mode-1)*fact;    
+	  coords(7,i) = end8Crd(i) + eigen8(i,mode-1)*fact;
 	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end5Crd(i) + eigen5(i,mode-1)*fact;
-	  coords(1,i) = end6Crd(i) + eigen6(i,mode-1)*fact;
-	  coords(2,i) = end7Crd(i) + eigen7(i,mode-1)*fact;
-	  coords(3,i) = end8Crd(i) + eigen8(i,mode-1)*fact;
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-	  coords(1,i) = end4Crd(i) + eigen4(i,mode-1)*fact;
-	  coords(2,i) = end8Crd(i) + eigen8(i,mode-1)*fact;
-	  coords(3,i) = end5Crd(i) + eigen5(i,mode-1)*fact;
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end2Crd(i) + eigen2(i,mode-1)*fact;
-	  coords(1,i) = end3Crd(i) + eigen3(i,mode-1)*fact;
-	  coords(2,i) = end7Crd(i) + eigen7(i,mode-1)*fact;
-	  coords(3,i) = end6Crd(i) + eigen6(i,mode-1)*fact;
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-	  coords(1,i) = end2Crd(i) + eigen2(i,mode-1)*fact;
-	  coords(2,i) = end6Crd(i) + eigen6(i,mode-1)*fact;
-	  coords(3,i) = end5Crd(i) + eigen5(i,mode-1)*fact;
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end4Crd(i) + eigen4(i,mode-1)*fact;
-	  coords(1,i) = end3Crd(i) + eigen3(i,mode-1)*fact;
-	  coords(2,i) = end7Crd(i) + eigen7(i,mode-1)*fact;
-	  coords(3,i) = end8Crd(i) + eigen8(i,mode-1)*fact;
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-      } else {
+
+	for (int i=0; i<8; i++)
+	  values(i) = 0.0;
+
+	error = theViewer.drawCube(coords, values, this->getTag());
+	opserr << "\n tag: " << this->getTag() << endln;
+	opserr << coords;
+	opserr << values;
+
+      }
+    }
+
+      /*
+    } else {
 	values.Zero();
 	for (i = 0; i < 3; i++) {
 	  coords(0,i) = end1Crd(i); 
 	  coords(1,i) = end2Crd(i); 
 	  coords(2,i) = end3Crd(i); 
 	  coords(3,i) = end4Crd(i); 
+	  coords(4,i) = end5Crd(i); 
+	  coords(5,i) = end6Crd(i); 
+	  coords(6,i) = end7Crd(i); 
+	  coords(7,i) = end8Crd(i); 
 	}
 	
-	error += theViewer.drawPolygon (coords, values);
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end5Crd(i); 
-	  coords(1,i) = end6Crd(i); 
-	  coords(2,i) = end7Crd(i); 
-	  coords(3,i) = end8Crd(i); 
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end1Crd(i); 
-	  coords(1,i) = end4Crd(i); 
-	  coords(2,i) = end8Crd(i); 
-	  coords(3,i) = end5Crd(i); 
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end2Crd(i); 
-	  coords(1,i) = end3Crd(i); 
-	  coords(2,i) = end7Crd(i); 
-	  coords(3,i) = end6Crd(i); 
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end1Crd(i); 
-	  coords(1,i) = end2Crd(i); 
-	  coords(2,i) = end6Crd(i); 
-	  coords(3,i) = end5Crd(i); 
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-	
-	for (i = 0; i < 3; i++) {
-	  coords(0,i) = end4Crd(i); 
-	  coords(1,i) = end3Crd(i); 
-	  coords(2,i) = end7Crd(i); 
-	  coords(3,i) = end8Crd(i); 
-	}
-	
-	error += theViewer.drawPolygon (coords, values);
-      }      
+	error = theViewer.drawCube(coords, values, this->getTag());
+      }
     }
+      */
 
 
     return error;
@@ -1716,8 +1607,8 @@ Brick::setResponse(const char **argv, int argc, OPS_Stream &output)
       output.tag("ResponseType","sigma22");
       output.tag("ResponseType","sigma33");
       output.tag("ResponseType","sigma12");
-      output.tag("ResponseType","sigma13");
-      output.tag("ResponseType","sigma23");      
+      output.tag("ResponseType","sigma23");
+      output.tag("ResponseType","sigma13");      
 
       output.endTag(); // NdMaterialOutput
       output.endTag(); // GaussPoint
@@ -1737,8 +1628,8 @@ Brick::setResponse(const char **argv, int argc, OPS_Stream &output)
       output.tag("ResponseType","eps22");
       output.tag("ResponseType","eps33");
       output.tag("ResponseType","eps12");
-      output.tag("ResponseType","eps13");
-      output.tag("ResponseType","eps23");      
+      output.tag("ResponseType","eps23");
+      output.tag("ResponseType","eps13");      
 
       output.endTag(); // NdMaterialOutput
       output.endTag(); // GaussPoint
@@ -1809,32 +1700,7 @@ Brick::setParameter(const char **argv, int argc, Parameter &param)
 
   int res = -1;
 
-  // material state (elastic/plastic) for UW soil materials
-  if (strcmp(argv[0],"materialState") == 0) {
-      return param.addObject(5,this);
-  }
-  // frictional strength parameter for UW soil materials
-  if (strcmp(argv[0],"frictionalStrength") == 0) {
-      return param.addObject(7,this);
-  }
-  // non-associative parameter for UW soil materials
-  if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-      return param.addObject(8,this);
-  }
-  // cohesion parameter for UW soil materials
-  if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-      return param.addObject(9,this);
-  }
-  // shear moduluse parameter for UW soil materials
-  if (strcmp(argv[0],"shearModulus") == 0) {
-      return param.addObject(10,this);
-  }
-  // bulk modulus parameter for UW soil materials
-  if (strcmp(argv[0],"bulkModulus") == 0) {
-      return param.addObject(11,this);
-  }
-
-  if (strstr(argv[0],"material") != 0) {
+  if ((strstr(argv[0],"material") != 0) && (strcmp(argv[0],"materialState") != 0)) {
 
     if (argc < 3)
       return -1;
@@ -1862,7 +1728,6 @@ Brick::setParameter(const char **argv, int argc, Parameter &param)
 int
 Brick::updateParameter(int parameterID, Information &info)
 {
-	// added: C.McGann, U.Washington
     int res = -1;
 	int matRes = res;
 

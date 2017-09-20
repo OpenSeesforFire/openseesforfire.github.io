@@ -53,7 +53,7 @@ Matrix FiberSectionGJ::ks(4,4);
 FiberSectionGJ::FiberSectionGJ(int tag, int num, Fiber **fibers, double gj): 
   SectionForceDeformation(tag, SEC_TAG_FiberSectionGJ),
   numFibers(num), theMaterials(0), matData(0),
-  yBar(0.0), zBar(0.0), e(4), eCommit(4), GJ(gj)
+  yBar(0.0), zBar(0.0), e(4), GJ(gj)
 {
   if (numFibers != 0) {
     theMaterials = new UniaxialMaterial *[numFibers];
@@ -116,7 +116,7 @@ FiberSectionGJ::FiberSectionGJ(int tag, int num, Fiber **fibers, double gj):
 FiberSectionGJ::FiberSectionGJ():
   SectionForceDeformation(0, SEC_TAG_FiberSectionGJ),
   numFibers(0), theMaterials(0), matData(0),
-  yBar(0.0), zBar(0.0), e(4), eCommit(4), GJ(1.0)
+  yBar(0.0), zBar(0.0), e(4), GJ(1.0)
 {
   sData[0] = 0.0;
   sData[1] = 0.0;
@@ -188,9 +188,9 @@ FiberSectionGJ::addFiber(Fiber &newFiber)
 
   // Recompute centroid
   for (i = 0; i < numFibers; i++) {
-    yLoc = -matData[2*i];
-    zLoc = matData[2*i+1];
-    Area = matData[2*i+2];
+    yLoc = -matData[3*i];
+    zLoc = matData[3*i+1];
+    Area = matData[3*i+2];
     A  += Area;
     Qz += yLoc*Area;
     Qy += zLoc*Area;
@@ -381,7 +381,6 @@ FiberSectionGJ::getCopy(void)
     }    
   }
 
-  theCopy->eCommit = eCommit;
   theCopy->e = e;
   theCopy->yBar = yBar;
   theCopy->zBar = zBar;
@@ -418,8 +417,6 @@ FiberSectionGJ::commitState(void)
   for (int i = 0; i < numFibers; i++)
     err += theMaterials[i]->commitState();
 
-  eCommit = e;
-
   return err;
 }
 
@@ -427,9 +424,6 @@ int
 FiberSectionGJ::revertToLastCommit(void)
 {
   int err = 0;
-
-  // Last committed section deformations
-  e = eCommit;
 
   kData[0] = 0.0; kData[1] = 0.0; kData[2] = 0.0;
   kData[3] = 0.0; kData[4] = 0.0; kData[5] = 0.0;
@@ -696,20 +690,40 @@ FiberSectionGJ::recvSelf(int commitTag, Channel &theChannel,
 void
 FiberSectionGJ::Print(OPS_Stream &s, int flag)
 {
-  s << "\nFiberSectionGJ, tag: " << this->getTag() << endln;
-  s << "\tSection code: " << code;
-  s << "\tNumber of Fibers: " << numFibers << endln;
-  s << "\tCentroid: (" << -yBar << ", " << zBar << ')' << endln;
-  s << "\tTorsional Stiffness: " << GJ << endln;
-
-  if (flag == 1) {
-    int loc = 0;
-    for (int i = 0; i < numFibers; i++) {
-      s << "\nLocation (y, z) = (" << -matData[loc] << ", " << matData[loc+1] << ")";
-      s << "\nArea = " << matData[loc+2] << endln;
-      theMaterials[i]->Print(s, flag);
-      loc+= 3;
+  if (flag == OPS_PRINT_PRINTMODEL_SECTION || flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+    s << "\nFiberSectionGJ, tag: " << this->getTag() << endln;
+    s << "\tSection code: " << code;
+    s << "\tNumber of Fibers: " << numFibers << endln;
+    s << "\tCentroid: (" << -yBar << ", " << zBar << ')' << endln;
+    s << "\tTorsional Stiffness: " << GJ << endln;
+    
+    if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+      int loc = 0;
+      for (int i = 0; i < numFibers; i++) {
+	s << "\nLocation (y, z) = (" << -matData[loc] << ", " << matData[loc+1] << ")";
+	s << "\nArea = " << matData[loc+2] << endln;
+	theMaterials[i]->Print(s, flag);
+	loc+= 3;
+      }
     }
+  }
+
+  if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+      s << "\t\t\t{";
+      s << "\"name\": \"" << this->getTag() << "\", ";
+      s << "\"type\": \"FiberSectionGJ\", ";
+      s << "\"GJ\": " << GJ << ", ";
+      s << "\"fibers\": [\n";
+      for (int i = 0; i < numFibers; i++) {
+          s << "\t\t\t\t{\"coord\": [" << matData[3 * i] << ", " << matData[3 * i + 1] << "], ";
+          s << "\"area\": " << matData[3 * i + 2] << ", ";
+          s << "\"material\": \"" << theMaterials[i]->getTag() << "\"";
+          if (i < numFibers - 1)
+              s << "},\n";
+          else
+              s << "}\n";
+      }
+      s << "\t\t\t]}";
   }
 }
 

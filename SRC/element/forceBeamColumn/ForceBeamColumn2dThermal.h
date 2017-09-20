@@ -58,6 +58,8 @@ Journal of Structural Engineering, Approved for publication, February 2007.
  *
  */
 
+// Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
+
 #ifndef ForceBeamColumn2dThermal_h
 #define ForceBeamColumn2dThermal_h
 
@@ -112,7 +114,7 @@ class ForceBeamColumn2dThermal: public Element
   
   int sendSelf(int cTag, Channel &theChannel);
   int recvSelf(int cTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
-  int displaySelf(Renderer &theViewer, int displayMode, float fact);        
+  int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **displayModes, int numModes);
   
   friend OPS_Stream &operator<<(OPS_Stream &s, ForceBeamColumn2dThermal &E);        
   void Print(OPS_Stream &s, int flag =0);    

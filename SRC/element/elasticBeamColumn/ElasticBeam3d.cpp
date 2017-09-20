@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.20 $
-// $Date: 2008-09-23 22:50:33 $
-// $Source: /usr/local/cvs/OpenSees/SRC/element/elasticBeamColumn/ElasticBeam3d.cpp,v $
+// $Revision: 6607 $
+// $Date: 2017-07-27 12:48:46 +0800 (Thu, 27 Jul 2017) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elasticBeamColumn/ElasticBeam3d.cpp $
                                                                         
                                                                         
 // File: ~/model/ElasticBeam3d.C
@@ -47,14 +47,91 @@
 #include <ID.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string>
+#include <elementAPI.h>
 
 Matrix ElasticBeam3d::K(12,12);
 Vector ElasticBeam3d::P(12);
 Matrix ElasticBeam3d::kb(6,6);
 
+void* OPS_ElasticBeam3d(void)
+{
+    int numArgs = OPS_GetNumRemainingInputArgs();
+    if(numArgs < 10 && numArgs != 5) {
+	opserr<<"insufficient arguments:eleTag,iNode,jNode,A,E,G,J,Iy,Iz,transfTag\n";
+	return 0;
+    }
+
+    int ndm = OPS_GetNDM();
+    int ndf = OPS_GetNDF();
+    if(ndm != 3 || ndf != 6) {
+	opserr<<"ndm must be 3 and ndf must be 6\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[3];
+    int numData = 3;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) return 0;
+
+    SectionForceDeformation* theSection = 0;
+    CrdTransf* theTrans = 0;
+    double data[6];
+    int transfTag, secTag;
+
+    if(numArgs == 5) {
+	numData = 1;
+	if(OPS_GetIntInput(&numData,&secTag) < 0) return 0;
+	if(OPS_GetIntInput(&numData,&transfTag) < 0) return 0;
+
+	theSection = OPS_getSectionForceDeformation(secTag);
+	if(theSection == 0) {
+	    opserr<<"no section is found\n";
+	    return 0;
+	}
+	theTrans = OPS_GetCrdTransf(transfTag);
+	if(theTrans == 0) {
+	    opserr<<"no CrdTransf is found\n";
+	    return 0;
+	}
+    } else {
+	numData = 6;
+	if(OPS_GetDoubleInput(&numData,&data[0]) < 0) return 0;
+	numData = 1;
+	if(OPS_GetIntInput(&numData,&transfTag) < 0) return 0;
+	theTrans = OPS_GetCrdTransf(transfTag);
+	if(theTrans == 0) {
+	    opserr<<"no CrdTransf is found\n";
+	    return 0;
+	}
+    }
+    
+    // options
+    double mass = 0.0;
+    int cMass = 0;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	std::string theType = OPS_GetString();
+	if (theType == "-mass") {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) return 0;
+	    }
+	} else if (theType == "-cMass") {
+	    cMass = 1;
+	}
+    }
+
+    if (theSection != 0) {
+	return new ElasticBeam3d(iData[0],iData[1],iData[2],theSection,*theTrans,mass,cMass); 
+    } else {
+	return new ElasticBeam3d(iData[0],data[0],data[1],data[2],data[3],data[4],
+				 data[5],iData[1],iData[2],*theTrans, mass,cMass);
+    }
+}
+
+
 ElasticBeam3d::ElasticBeam3d()
   :Element(0,ELE_TAG_ElasticBeam3d), 
-  A(0), E(0), G(0), Jx(0), Iy(0), Iz(0), rho(0.0),
+  A(0.0), E(0.0), G(0.0), Jx(0.0), Iy(0.0), Iz(0.0), rho(0.0), cMass(0),
   Q(12), q(6), connectedExternalNodes(2), theCoordTransf(0)
 {
   // does nothing
@@ -77,9 +154,9 @@ ElasticBeam3d::ElasticBeam3d()
 
 ElasticBeam3d::ElasticBeam3d(int tag, double a, double e, double g, 
 			     double jx, double iy, double iz, int Nd1, int Nd2, 
-			     CrdTransf &coordTransf, double r, int sectTag)
+			     CrdTransf &coordTransf, double r, int cm, int sectTag)
   :Element(tag,ELE_TAG_ElasticBeam3d), 
-   A(a), E(e), G(g), Jx(jx), Iy(iy), Iz(iz), rho(r), sectionTag(sectTag),
+  A(a), E(e), G(g), Jx(jx), Iy(iy), Iz(iz), rho(r), cMass(cm), sectionTag(sectTag),
   Q(12), q(6), connectedExternalNodes(2), theCoordTransf(0)
 {
   connectedExternalNodes(0) = Nd1;
@@ -110,7 +187,7 @@ ElasticBeam3d::ElasticBeam3d(int tag, double a, double e, double g,
 }
 
 ElasticBeam3d::ElasticBeam3d(int tag, int Nd1, int Nd2, SectionForceDeformation *section,  
-			     CrdTransf &coordTransf, double r)
+			     CrdTransf &coordTransf, double r, int cm)
   :Element(tag,ELE_TAG_ElasticBeam3d), 
   Q(12), q(6), connectedExternalNodes(2), theCoordTransf(0)
 {
@@ -120,6 +197,7 @@ ElasticBeam3d::ElasticBeam3d(int tag, int Nd1, int Nd2, SectionForceDeformation 
     G = 1.0;
     Jx = 0.0;
     rho = r;
+    cMass = cm;
 
     const Matrix &sectTangent = section->getSectionTangent();
     const ID &sectCode = section->getType();
@@ -219,12 +297,12 @@ ElasticBeam3d::setDomain(Domain *theDomain)
     
 
     if (theNodes[0] == 0) {
-      opserr << "ElasticBeam3d::setDomain -- Node 1: " << connectedExternalNodes(0) << " does not exist\n";
+      opserr << "ElasticBeam3d::setDomain  tag: " << this->getTag() << " -- Node 1: " << connectedExternalNodes(0) << " does not exist\n";
       exit(-1);
     }
 			      
     if (theNodes[1] == 0) {
-      opserr << "ElasticBeam3d::setDomain -- Node 2: " << connectedExternalNodes(1) << " does not exist\n";
+      opserr << "ElasticBeam3d::setDomain  tag: " << this->getTag() << " -- Node 2: " << connectedExternalNodes(1) << " does not exist\n";
       exit(-1);
     }
 
@@ -232,13 +310,13 @@ ElasticBeam3d::setDomain(Domain *theDomain)
     int dofNd2 = theNodes[1]->getNumberDOF();    
     
     if (dofNd1 != 6) {
-      opserr << "ElasticBeam3d::setDomain -- Node 1: " << connectedExternalNodes(0) 
+      opserr << "ElasticBeam3d::setDomain  tag: " << this->getTag() << " -- Node 1: " << connectedExternalNodes(0) 
 	     << " has incorrect number of DOF\n";
       exit(-1);
     }
     
     if (dofNd2 != 6) {
-      opserr << "ElasticBeam3d::setDomain -- Node 2: " << connectedExternalNodes(1) 
+      opserr << "ElasticBeam3d::setDomain  tag: " << this->getTag() << " -- Node 2: " << connectedExternalNodes(1) 
 	     << " has incorrect number of DOF\n";
       exit(-1);
     }
@@ -246,14 +324,14 @@ ElasticBeam3d::setDomain(Domain *theDomain)
     this->DomainComponent::setDomain(theDomain);
     
     if (theCoordTransf->initialize(theNodes[0], theNodes[1]) != 0) {
-	opserr << "ElasticBeam3d::setDomain -- Error initializing coordinate transformation\n";
+	opserr << "ElasticBeam3d::setDomain  tag: " << this->getTag() << " -- Error initializing coordinate transformation\n";
 	exit(-1);
     }
     
     double L = theCoordTransf->getInitialLength();
 
     if (L == 0.0) {
-      opserr << "ElasticBeam3d::setDomain -- Element has zero length\n";
+      opserr << "ElasticBeam3d::setDomain  tag: " << this->getTag() << " -- Element has zero length\n";
       exit(-1);
     }
 }
@@ -355,22 +433,53 @@ ElasticBeam3d::getInitialStiff(void)
 const Matrix &
 ElasticBeam3d::getMass(void)
 { 
-  K.Zero();
+    K.Zero();
+    
+    if (rho > 0.0) {
+        // get initial element length
+        double L = theCoordTransf->getInitialLength();
+        if (cMass == 0)  {
+            // lumped mass matrix
+            double m = 0.5*rho*L;
+            K(0,0) = m;
+            K(1,1) = m;
+            K(2,2) = m;
+            K(6,6) = m;
+            K(7,7) = m;
+            K(8,8) = m;
+        } else  {
+            // consistent mass matrix
+            static Matrix ml(12,12);
+            double m = rho*L/420.0;
+            ml(0,0) = ml(6,6) = m*140.0;
+            ml(0,6) = ml(6,0) = m*70.0;
+            ml(3,3) = ml(9,9) = m*(Jx/A)*140.0;
+            ml(3,9) = ml(9,3) = m*(Jx/A)*70.0;
 
-  if (rho > 0.0) {
-    double L = theCoordTransf->getInitialLength();
-    double m = 0.5*rho*L;
+            ml(2,2) = ml(8,8) = m*156.0;
+            ml(2,8) = ml(8,2) = m*54.0;
+            ml(4,4) = ml(10,10) = m*4.0*L*L;
+            ml(4,10) = ml(10,4) = -m*3.0*L*L;
+            ml(2,4) = ml(4,2) = -m*22.0*L;
+            ml(8,10) = ml(10,8) = -ml(2,4);
+            ml(2,10) = ml(10,2) = m*13.0*L;
+            ml(4,8) = ml(8,4) = -ml(2,10);
+
+            ml(1,1) = ml(7,7) = m*156.0;
+            ml(1,7) = ml(7,1) = m*54.0;
+            ml(5,5) = ml(11,11) = m*4.0*L*L;
+            ml(5,11) = ml(11,5) = -m*3.0*L*L;
+            ml(1,5) = ml(5,1) = m*22.0*L;
+            ml(7,11) = ml(11,7) = -ml(1,5);
+            ml(1,11) = ml(11,1) = -m*13.0*L;
+            ml(5,7) = ml(7,5) = -ml(1,11);
+            
+            // transform local mass matrix to global system
+            K = theCoordTransf->getGlobalMatrixFromLocal(ml);
+        }
+    }
     
-    K(0,0) = m;
-    K(1,1) = m;
-    K(2,2) = m;
-    
-    K(6,6) = m;
-    K(7,7) = m;
-    K(8,8) = m;
-  }
-  
-  return K;
+    return K;
 }
 
 void 
@@ -480,7 +589,7 @@ ElasticBeam3d::addInertiaLoadToUnbalance(const Vector &accel)
   if (rho == 0.0)
     return 0;
 
-  // Get R * accel from the nodes
+  // get R * accel from the nodes
   const Vector &Raccel1 = theNodes[0]->getRV(accel);
   const Vector &Raccel2 = theNodes[1]->getRV(accel);
 	
@@ -489,18 +598,28 @@ ElasticBeam3d::addInertiaLoadToUnbalance(const Vector &accel)
     return -1;
   }
 
-  // Want to add ( - fact * M R * accel ) to unbalance
-  // Take advantage of lumped mass matrix
-  double L = theCoordTransf->getInitialLength();
-  double m = 0.5*rho*L;
-  
-  Q(0) -= m * Raccel1(0);
-  Q(1) -= m * Raccel1(1);
-  Q(2) -= m * Raccel1(2);
+  // want to add ( - fact * M R * accel ) to unbalance
+  if (cMass == 0)  {
+    // take advantage of lumped mass matrix
+    double L = theCoordTransf->getInitialLength();
+    double m = 0.5*rho*L;
+
+    Q(0) -= m * Raccel1(0);
+    Q(1) -= m * Raccel1(1);
+    Q(2) -= m * Raccel1(2);
     
-  Q(6) -= m * Raccel2(0);    
-  Q(7) -= m * Raccel2(1);
-  Q(8) -= m * Raccel2(2);    
+    Q(6) -= m * Raccel2(0);
+    Q(7) -= m * Raccel2(1);
+    Q(8) -= m * Raccel2(2);
+  } else  {
+    // use matrix vector multip. for consistent mass matrix
+    static Vector Raccel(12);
+    for (int i=0; i<6; i++)  {
+      Raccel(i)   = Raccel1(i);
+      Raccel(i+6) = Raccel2(i);
+    }
+    Q.addMatrixVector(1.0, this->getMass(), Raccel, -1.0);
+  }
   
   return 0;
 }
@@ -510,19 +629,23 @@ ElasticBeam3d::addInertiaLoadToUnbalance(const Vector &accel)
 const Vector &
 ElasticBeam3d::getResistingForceIncInertia()
 {	
-  P = this->getResistingForce();
-
+  P = this->getResistingForce(); 
+  // subtract external load P = P - Q
+  P.addVector(1.0, Q, -1.0);
+  
   // add the damping forces if rayleigh damping
   if (alphaM != 0.0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0)
-    P += this->getRayleighDampingForces();
+    P.addVector(1.0, this->getRayleighDampingForces(), 1.0);
     
   if (rho == 0.0)
     return P;
 
-  else{
-    const Vector &accel1 = theNodes[0]->getTrialAccel();
-    const Vector &accel2 = theNodes[1]->getTrialAccel();    
+  // add inertia forces from element mass
+  const Vector &accel1 = theNodes[0]->getTrialAccel();
+  const Vector &accel2 = theNodes[1]->getTrialAccel();    
     
+  if (cMass == 0)  {
+    // take advantage of lumped mass matrix
     double L = theCoordTransf->getInitialLength();
     double m = 0.5*rho*L;
     
@@ -530,12 +653,20 @@ ElasticBeam3d::getResistingForceIncInertia()
     P(1) += m * accel1(1);
     P(2) += m * accel1(2);
     
-    P(6) += m * accel2(0);    
+    P(6) += m * accel2(0);
     P(7) += m * accel2(1);
-    P(8) += m * accel2(2);    
-    
-    return P;
+    P(8) += m * accel2(2);
+  } else  {
+    // use matrix vector multip. for consistent mass matrix
+    static Vector accel(12);
+    for (int i=0; i<6; i++)  {
+      accel(i)   = accel1(i);
+      accel(i+6) = accel2(i);
+    }
+    P.addMatrixVector(1.0, this->getMass(), accel, 1.0);
   }
+  
+  return P;
 }
 
 
@@ -575,9 +706,6 @@ ElasticBeam3d::getResistingForce()
 
   // opserr << P;
   
-  // P = P - Q;
-  P.addVector(1.0, Q, -1.0);
-  
   return P;
 }
 
@@ -586,7 +714,7 @@ ElasticBeam3d::sendSelf(int cTag, Channel &theChannel)
 {
     int res = 0;
 
-    static Vector data(16);
+    static Vector data(17);
     
     data(0) = A;
     data(1) = E; 
@@ -595,10 +723,11 @@ ElasticBeam3d::sendSelf(int cTag, Channel &theChannel)
     data(4) = Iy; 
     data(5) = Iz;     
     data(6) = rho;
-    data(7) = this->getTag();
-    data(8) = connectedExternalNodes(0);
-    data(9) = connectedExternalNodes(1);
-    data(10) = theCoordTransf->getClassTag();    	
+    data(7) = cMass;
+    data(8) = this->getTag();
+    data(9) = connectedExternalNodes(0);
+    data(10) = connectedExternalNodes(1);
+    data(11) = theCoordTransf->getClassTag();    	
 
     int dbTag = theCoordTransf->getDbTag();
     
@@ -608,12 +737,12 @@ ElasticBeam3d::sendSelf(int cTag, Channel &theChannel)
 	theCoordTransf->setDbTag(dbTag);
     }
     
-    data(11) = dbTag;
+    data(12) = dbTag;
     
-    data(12) = alphaM;
-    data(13) = betaK;
-    data(14) = betaK0;
-    data(15) = betaKc;
+    data(13) = alphaM;
+    data(14) = betaK;
+    data(15) = betaK0;
+    data(16) = betaKc;
     
     // Send the data vector
     res += theChannel.sendVector(this->getDbTag(), cTag, data);
@@ -636,7 +765,7 @@ int
 ElasticBeam3d::recvSelf(int cTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
 {
   int res = 0;
-  static Vector data(16);
+  static Vector data(17);
 
   res += theChannel.recvVector(this->getDbTag(), cTag, data);
   if (res < 0) {
@@ -651,17 +780,18 @@ ElasticBeam3d::recvSelf(int cTag, Channel &theChannel, FEM_ObjectBroker &theBrok
   Iy = data(4); 
   Iz = data(5);     
   rho = data(6);
-  this->setTag((int)data(7));
-  connectedExternalNodes(0) = (int)data(8);
-  connectedExternalNodes(1) = (int)data(9);
+  cMass = (int)data(7);
+  this->setTag((int)data(8));
+  connectedExternalNodes(0) = (int)data(9);
+  connectedExternalNodes(1) = (int)data(10);
   
-  alphaM = data(12);
-  betaK = data(13);
-  betaK0 = data(14);
-  betaKc = data(15);
+  alphaM = data(13);
+  betaK = data(14);
+  betaK0 = data(15);
+  betaKc = data(16);
   
   // Check if the CoordTransf is null; if so, get a new one
-  int crdTag = (int)data(10);
+  int crdTag = (int)data(11);
   if (theCoordTransf == 0) {
     theCoordTransf = theBroker.getNewCrdTransf(crdTag);
     if (theCoordTransf == 0) {
@@ -682,15 +812,12 @@ ElasticBeam3d::recvSelf(int cTag, Channel &theChannel, FEM_ObjectBroker &theBrok
   }
   
   // Now, receive the CoordTransf
-  theCoordTransf->setDbTag((int)data(11));
+  theCoordTransf->setDbTag((int)data(12));
   res += theCoordTransf->recvSelf(cTag, theChannel, theBroker);
   if (res < 0) {
     opserr << "ElasticBeam3d::recvSelf -- could not receive CoordTransf\n";
     return res;
   }
-  
-  // Revert the crdtrasf to its last committed state
-  theCoordTransf->revertToLastCommit();
   
   return res;
 }
@@ -698,151 +825,193 @@ ElasticBeam3d::recvSelf(int cTag, Channel &theChannel, FEM_ObjectBroker &theBrok
 void
 ElasticBeam3d::Print(OPS_Stream &s, int flag)
 {
-   if (flag == -1) { 
-    int eleTag = this->getTag();
-    s << "EL_BEAM\t" << eleTag << "\t";
-    s << sectionTag << "\t" << sectionTag; 
-    s  << "\t" << connectedExternalNodes(0) << "\t" << connectedExternalNodes(1);
-    s << "\t0\t0.0000000\n";
-   }  else if (flag < -1) {
-     int counter = (flag + 1) * -1;
-     int eleTag = this->getTag();
-     const Vector &force = this->getResistingForce();
-
-    double P, MZ1, MZ2, VY, MY1, MY2, VZ, T;
-    double L = theCoordTransf->getInitialLength();
-    double oneOverL = 1.0/L;
+	this->getResistingForce(); 
+	
+	if (flag == -1) {
+		int eleTag = this->getTag();
+		s << "EL_BEAM\t" << eleTag << "\t";
+		s << sectionTag << "\t" << sectionTag;
+		s << "\t" << connectedExternalNodes(0) << "\t" << connectedExternalNodes(1);
+		s << "\t0\t0.0000000\n";
+	}
     
-    P   = q(0);
-    MZ1 = q(1);
-    MZ2 = q(2);
-    VY  = (MZ1+MZ2)*oneOverL;
-    MY1 = q(3);
-    MY2 = q(4);
-    VZ  = (MY1+MY2)*oneOverL;
-    T   = q(5);
+	else if (flag < -1) {
+		int counter = (flag + 1) * -1;
+		int eleTag = this->getTag();
+		const Vector &force = this->getResistingForce();
 
-    s << "FORCE\t" << eleTag << "\t" << counter << "\t0";
-    s << "\t" << -P+p0[0] << "\t"  <<  VY+p0[1] << "\t"  << -VZ+p0[3]  << endln;
-    s << "FORCE\t" << eleTag << "\t" << counter << "\t1";
-    s << "\t"  << P  << ' '  << -VY+p0[2] << ' ' << VZ+p0[4] << endln;
-    s << "MOMENT\t" << eleTag << "\t" << counter << "\t0";
-    s << "\t" << -T << "\t"  << MY1 << "\t" << MZ1 << endln;
-    s << "MOMENT\t" << eleTag << "\t" << counter << "\t1";
-    s << "\t" << T << ' ' << MY2 << ' '  <<  MZ2 << endln;
-    
-   }
+		double P, MZ1, MZ2, VY, MY1, MY2, VZ, T;
+		double L = theCoordTransf->getInitialLength();
+		double oneOverL = 1.0 / L;
 
-   else if (flag == 2){
-     this->getResistingForce(); // in case linear algo
+		P = q(0);
+		MZ1 = q(1);
+		MZ2 = q(2);
+		VY = (MZ1 + MZ2)*oneOverL;
+		MY1 = q(3);
+		MY2 = q(4);
+		VZ = (MY1 + MY2)*oneOverL;
+		T = q(5);
 
-     static Vector xAxis(3);
-     static Vector yAxis(3);
-     static Vector zAxis(3);
-     
-     theCoordTransf->getLocalAxes(xAxis, yAxis, zAxis);
-                        
-     s << "#ElasticBeamColumn3D\n";
-     s << "#LocalAxis " << xAxis(0) << " " << xAxis(1) << " " << xAxis(2);
-     s << " " << yAxis(0) << " " << yAxis(1) << " " << yAxis(2) << " ";
-     s << zAxis(0) << " " << zAxis(1) << " " << zAxis(2) << endln;
+		s << "FORCE\t" << eleTag << "\t" << counter << "\t0";
+		s << "\t" << -P + p0[0] << "\t" << VY + p0[1] << "\t" << -VZ + p0[3] << endln;
+		s << "FORCE\t" << eleTag << "\t" << counter << "\t1";
+		s << "\t" << P << ' ' << -VY + p0[2] << ' ' << VZ + p0[4] << endln;
+		s << "MOMENT\t" << eleTag << "\t" << counter << "\t0";
+		s << "\t" << -T << "\t" << MY1 << "\t" << MZ1 << endln;
+		s << "MOMENT\t" << eleTag << "\t" << counter << "\t1";
+		s << "\t" << T << ' ' << MY2 << ' ' << MZ2 << endln;
+	}
+	
+	else if (flag == 2) {
+		this->getResistingForce(); // in case linear algo
 
-     const Vector &node1Crd = theNodes[0]->getCrds();
-     const Vector &node2Crd = theNodes[1]->getCrds();	
-     const Vector &node1Disp = theNodes[0]->getDisp();
-     const Vector &node2Disp = theNodes[1]->getDisp();    
-     
-     s << "#NODE " << node1Crd(0) << " " << node1Crd(1) << " " << node1Crd(2)
-       << " " << node1Disp(0) << " " << node1Disp(1) << " " << node1Disp(2)
-       << " " << node1Disp(3) << " " << node1Disp(4) << " " << node1Disp(5) << endln;
-     
-     s << "#NODE " << node2Crd(0) << " " << node2Crd(1) << " " << node2Crd(2)
-       << " " << node2Disp(0) << " " << node2Disp(1) << " " << node2Disp(2)
-       << " " << node2Disp(3) << " " << node2Disp(4) << " " << node2Disp(5) << endln;
+		static Vector xAxis(3);
+		static Vector yAxis(3);
+		static Vector zAxis(3);
 
-    double N, Mz1, Mz2, Vy, My1, My2, Vz, T;
-    double L = theCoordTransf->getInitialLength();
-    double oneOverL = 1.0/L;
-    
-    N   = q(0);
-    Mz1 = q(1);
-    Mz2 = q(2);
-    Vy  = (Mz1+Mz2)*oneOverL;
-    My1 = q(3);
-    My2 = q(4);
-    Vz  = -(My1+My2)*oneOverL;
-    T   = q(5);
-    
-    s << "#END_FORCES " << -N+p0[0] << ' ' <<  Vy+p0[1] << ' ' << Vz+p0[3] << ' ' 
-      << -T << ' ' << My1 << ' ' <<  Mz1 << endln;
-    s << "#END_FORCES " <<  N << ' ' << -Vy+p0[2] << ' ' << -Vz+p0[4] << ' ' 
-      << T << ' ' << My2 << ' ' << Mz2 << endln;
-   }
-   else {
+		theCoordTransf->getLocalAxes(xAxis, yAxis, zAxis);
 
-     this->getResistingForce(); // in case linear algo
+		s << "#ElasticBeamColumn3D\n";
+		s << "#LocalAxis " << xAxis(0) << " " << xAxis(1) << " " << xAxis(2);
+		s << " " << yAxis(0) << " " << yAxis(1) << " " << yAxis(2) << " ";
+		s << zAxis(0) << " " << zAxis(1) << " " << zAxis(2) << endln;
 
-    s << "\nElasticBeam3d: " << this->getTag() << endln;
-    s << "\tConnected Nodes: " << connectedExternalNodes ;
-    s << "\tCoordTransf: " << theCoordTransf->getTag() << endln;
-    
-    double N, Mz1, Mz2, Vy, My1, My2, Vz, T;
-    double L = theCoordTransf->getInitialLength();
-    double oneOverL = 1.0/L;
-    
-    N   = q(0);
-    Mz1 = q(1);
-    Mz2 = q(2);
-    Vy  = (Mz1+Mz2)*oneOverL;
-    My1 = q(3);
-    My2 = q(4);
-    Vz  = -(My1+My2)*oneOverL;
-    T   = q(5);
-    
-    s << "\tEnd 1 Forces (P Mz Vy My Vz T): "
-      << -N+p0[0] << ' ' << Mz1 << ' ' <<  Vy+p0[1] << ' ' << My1 << ' ' <<  Vz+p0[3] << ' ' << -T << endln;
-    s << "\tEnd 2 Forces (P Mz Vy My Vz T): "
-      <<  N << ' ' << Mz2 << ' ' << -Vy+p0[2] << ' ' << My2 << ' ' << -Vz+p0[4] << ' ' <<  T << endln;
-  }
+		const Vector &node1Crd = theNodes[0]->getCrds();
+		const Vector &node2Crd = theNodes[1]->getCrds();
+		const Vector &node1Disp = theNodes[0]->getDisp();
+		const Vector &node2Disp = theNodes[1]->getDisp();
+
+		s << "#NODE " << node1Crd(0) << " " << node1Crd(1) << " " << node1Crd(2)
+			<< " " << node1Disp(0) << " " << node1Disp(1) << " " << node1Disp(2)
+			<< " " << node1Disp(3) << " " << node1Disp(4) << " " << node1Disp(5) << endln;
+
+		s << "#NODE " << node2Crd(0) << " " << node2Crd(1) << " " << node2Crd(2)
+			<< " " << node2Disp(0) << " " << node2Disp(1) << " " << node2Disp(2)
+			<< " " << node2Disp(3) << " " << node2Disp(4) << " " << node2Disp(5) << endln;
+
+		double N, Mz1, Mz2, Vy, My1, My2, Vz, T;
+		double L = theCoordTransf->getInitialLength();
+		double oneOverL = 1.0 / L;
+
+		N = q(0);
+		Mz1 = q(1);
+		Mz2 = q(2);
+		Vy = (Mz1 + Mz2)*oneOverL;
+		My1 = q(3);
+		My2 = q(4);
+		Vz = -(My1 + My2)*oneOverL;
+		T = q(5);
+
+		s << "#END_FORCES " << -N + p0[0] << ' ' << Vy + p0[1] << ' ' << Vz + p0[3] << ' '
+			<< -T << ' ' << My1 << ' ' << Mz1 << endln;
+		s << "#END_FORCES " << N << ' ' << -Vy + p0[2] << ' ' << -Vz + p0[4] << ' '
+			<< T << ' ' << My2 << ' ' << Mz2 << endln;
+	}
+	
+	if (flag == OPS_PRINT_CURRENTSTATE) {
+
+		this->getResistingForce(); // in case linear algo
+
+		s << "\nElasticBeam3d: " << this->getTag() << endln;
+		s << "\tConnected Nodes: " << connectedExternalNodes;
+		s << "\tCoordTransf: " << theCoordTransf->getTag() << endln;
+		s << "\tmass density:  " << rho << ", cMass: " << cMass << endln;
+
+		double N, Mz1, Mz2, Vy, My1, My2, Vz, T;
+		double L = theCoordTransf->getInitialLength();
+		double oneOverL = 1.0 / L;
+
+		N = q(0);
+		Mz1 = q(1);
+		Mz2 = q(2);
+		Vy = (Mz1 + Mz2)*oneOverL;
+		My1 = q(3);
+		My2 = q(4);
+		Vz = -(My1 + My2)*oneOverL;
+		T = q(5);
+
+		s << "\tEnd 1 Forces (P Mz Vy My Vz T): "
+			<< -N + p0[0] << ' ' << Mz1 << ' ' << Vy + p0[1] << ' ' << My1 << ' ' << Vz + p0[3] << ' ' << -T << endln;
+		s << "\tEnd 2 Forces (P Mz Vy My Vz T): "
+			<< N << ' ' << Mz2 << ' ' << -Vy + p0[2] << ' ' << My2 << ' ' << -Vz + p0[4] << ' ' << T << endln;
+	}
+	
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "\t\t\t{";
+		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"type\": \"ElasticBeam3d\", ";
+		s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+		s << "\"E\": " << E << ", ";
+		s << "\"G\": " << G << ", ";
+		s << "\"A\": " << A << ", ";
+		s << "\"Jx\": " << Jx << ", ";
+		s << "\"Iy\": " << Iy << ", ";
+		s << "\"Iz\": " << Iz << ", ";
+		s << "\"rho\": " << rho << ", ";
+		s << "\"crdTransformation\": \"" << theCoordTransf->getTag() << "\"}";
+	}
 }
 
 int
-ElasticBeam3d::displaySelf(Renderer &theViewer, int displayMode, float fact)
+ElasticBeam3d::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
-    // first determine the end points of the quad based on
-    // the display factor (a measure of the distorted image)
-    const Vector &end1Crd = theNodes[0]->getCrds();
-    const Vector &end2Crd = theNodes[1]->getCrds();	
-
     static Vector v1(3);
     static Vector v2(3);
 
-    if (displayMode >= 0) {
-      const Vector &end1Disp = theNodes[0]->getDisp();
-      const Vector &end2Disp = theNodes[1]->getDisp();
-      
-      for (int i = 0; i < 3; i++) {
-	v1(i) = end1Crd(i) + end1Disp(i)*fact;
-	v2(i) = end2Crd(i) + end2Disp(i)*fact;    
-      }
-    } else {
+    theNodes[0]->getDisplayCrds(v1, fact);
+    theNodes[1]->getDisplayCrds(v2, fact);
+    float d1 = 0.0;
+    float d2 = 0.0;
+    int res = 0;
+  
+    if (displayMode > 0) {
+
+      res += theViewer.drawLine(v1, v2, d1, d1, this->getTag(), 0);
+
+    } else if (displayMode < 0) {
+
+      theNodes[0]->getDisplayCrds(v1, 0.);
+      theNodes[1]->getDisplayCrds(v2, 0.);
+
+      // add eigenvector values
       int mode = displayMode * -1;
       const Matrix &eigen1 = theNodes[0]->getEigenvectors();
       const Matrix &eigen2 = theNodes[1]->getEigenvectors();
       if (eigen1.noCols() >= mode) {
 	for (int i = 0; i < 3; i++) {
-	  v1(i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-	  v2(i) = end2Crd(i) + eigen2(i,mode-1)*fact;    
-	}    
-      } else {
-	for (int i = 0; i < 3; i++) {
-	  v1(i) = end1Crd(i);
-	  v2(i) = end2Crd(i);
+	  v1(i) += eigen1(i,mode-1)*fact;
+	  v2(i) += eigen2(i,mode-1)*fact;    
 	}    
       }
+      return theViewer.drawLine (v1, v2, 0.0, 0.0, this->getTag(), 0);
     }
-    
-    return theViewer.drawLine (v1, v2, 1.0, 1.0);
+
+    if (numMode > 0) {
+      // calculate q for potential need below
+      this->getResistingForce();
+    }
+
+  for (int i=0; i<numMode; i++) {
+
+    const char *theMode = modes[i];
+    if (strcmp(theMode, "axialForce") == 0) {
+      d1 = q(0); 
+      d2 = q(0);;
+
+      res +=theViewer.drawLine(v1, v2, d1, d1, this->getTag(), i);
+      
+    } else if (strcmp(theMode, "endMoments") == 0) {
+      d1 = q(1);
+      d2 = q(2);
+      static Vector delta(3); delta = v2-v1; delta/=10;
+      res += theViewer.drawPoint(v1+delta, d1, this->getTag(), i);
+      res += theViewer.drawPoint(v2-delta, d2, this->getTag(), i);
+      
+    }
+  }    
+
+  return res;
 }
 
 Response*
@@ -880,15 +1049,15 @@ ElasticBeam3d::setResponse(const char **argv, int argc, OPS_Stream &output)
 	// local forces
   } else if (strcmp(argv[0],"localForce") == 0 || strcmp(argv[0],"localForces") == 0) {
 
-    output.tag("ResponseType","N_ 1");
+    output.tag("ResponseType","N_1");
     output.tag("ResponseType","Vy_1");
     output.tag("ResponseType","Vz_1");
     output.tag("ResponseType","T_1");
     output.tag("ResponseType","My_1");
-    output.tag("ResponseType","Tz_1");
+    output.tag("ResponseType","Mz_1");
     output.tag("ResponseType","N_2");
-    output.tag("ResponseType","Py_2");
-    output.tag("ResponseType","Pz_2");
+    output.tag("ResponseType","Vy_2");
+    output.tag("ResponseType","Vz_2");
     output.tag("ResponseType","T_2");
     output.tag("ResponseType","My_2");
     output.tag("ResponseType","Mz_2");
@@ -906,8 +1075,18 @@ ElasticBeam3d::setResponse(const char **argv, int argc, OPS_Stream &output)
     output.tag("ResponseType","T");
     
     theResponse = new ElementResponse(this, 4, Vector(6));
-  }  
 
+  }  else if (strcmp(argv[0],"deformations") == 0 || 
+	      strcmp(argv[0],"basicDeformations") == 0) {
+    
+    output.tag("ResponseType","eps");
+    output.tag("ResponseType","theta11");
+    output.tag("ResponseType","theta12");
+    output.tag("ResponseType","theta21");
+    output.tag("ResponseType","theta22");
+    output.tag("ResponseType","phi");
+    theResponse = new ElementResponse(this, 5, Vector(6));
+  }  
   output.endTag(); // ElementOutput
 
   return theResponse;
@@ -954,7 +1133,7 @@ ElasticBeam3d::getResponse (int responseID, Information &eleInfo)
     M2 = q(4);
     P(4)  = M1;
     P(10) = M2;
-    V = -(M1+M2)*oneOverL;
+    V = (M1+M2)*oneOverL;
     P(2) = -V+p0[3];
     P(8) =  V+p0[4];
 
@@ -963,6 +1142,9 @@ ElasticBeam3d::getResponse (int responseID, Information &eleInfo)
   case 4: // basic forces
 
     return eleInfo.setVector(q);
+
+  case 5:
+    return eleInfo.setVector(theCoordTransf->getBasicTrialDisp());
 
   default:
     return -1;

@@ -867,14 +867,14 @@ const char*
 ConcreteMcftNonLinear7 ::getType (void) const
 {
   //////////opserr << " check16 " << endln;
-  return 0;
+  return "BeamFiber2d";
 }
 
 int 
 ConcreteMcftNonLinear7 ::getOrder(void) const
 {
   //////////opserr << " check17 " << endln;
-  return 0;
+  return 2;
 }
 
 void
@@ -1544,7 +1544,7 @@ ConcreteMcftNonLinear7 ::getInitialTangentSensitivity(int gradNumber)
 }
 
 int
-ConcreteMcftNonLinear7 ::commitSensitivity(Vector &strainGradient, int gradNumber, int numGrads)
+ConcreteMcftNonLinear7 ::commitSensitivity(const Vector &strainGradient, int gradNumber, int numGrads)
 {
 
 	//  sensitivity parameter sensitivity initiate

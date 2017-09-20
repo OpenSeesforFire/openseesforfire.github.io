@@ -335,6 +335,7 @@ DispBeamColumn3dThermal::update(void)
   // Get basic deformations
   const Vector &v = crdTransf->getBasicTrialDisp();
  #ifdef _DEBUG
+  if(this->getTag()==601|| this->getTag() == 602)
 opserr<<"disp3d Tag: "<<this->getTag()<<" , Displacement: "<<v<<endln;
 #endif
 
@@ -377,8 +378,10 @@ opserr<<"disp3d Tag: "<<this->getTag()<<" , Displacement: "<<v<<endln;
     }
     
     // Set the section deformations
-#ifdef _BDEBUG
-	//opserr<<"disp3d Tag: "<<this->getTag()<<" , deformation: "<<e<<endln;
+#ifdef _DEBUG
+	if (this->getTag() == 601 || this->getTag() == 602) {
+		opserr << "disp3d Tag: " << this->getTag() << " SECTION "<<i<<"  deformation: " << e << endln;
+	}
 #endif
     err += theSections[i]->setTrialSectionDeformation(e);    
   }
@@ -411,23 +414,26 @@ DispBeamColumn3dThermal::getTangentStiff()
 
   // Loop over the integration points
   for (int i = 0; i < numSections; i++) {
-    
-    int order = theSections[i]->getOrder();
-    const ID &code = theSections[i]->getType();
 
-    Matrix ka(workArea, order, 6);
-    ka.Zero();
+	  int order = theSections[i]->getOrder();
+	  const ID &code = theSections[i]->getType();
 
-    double xi6 = 6.0*xi[i];
+	  Matrix ka(workArea, order, 6);
+	  ka.Zero();
 
-    // Get the section tangent stiffness and stress resultant
-    const Matrix &ks = theSections[i]->getSectionTangent();
-    const Vector &s = theSections[i]->getStressResultant();
-      
+	  double xi6 = 6.0*xi[i];
 
-	#ifdef _BDEBUG
-	//opserr<<"DispBeam3d: " <<this->getTag()<<" Tangent stiff: "<<ks<<endln;
-#endif
+	  // Get the section tangent stiffness and stress resultant
+	  const Matrix &ks = theSections[i]->getSectionTangent();
+	  const Vector &s = theSections[i]->getStressResultant();
+
+
+#ifdef _DEBUG
+	  if (this->getTag() == 601 || this->getTag() == 602) {
+	  opserr << "DispBeam3d: " << this->getTag() << " Tangent stiff: " << ks << endln;
+	  opserr << "DispBeam3d: " << this->getTag() << " Section Stress: " << s << endln;
+  }
+    #endif
     // Perform numerical integration
     //kb.addMatrixTripleProduct(1.0, *B, ks, wts(i)/L);
     double wti = wt[i]*oneOverL;
@@ -524,9 +530,9 @@ DispBeamColumn3dThermal::getTangentStiff()
   // Transform to global stiffness
   K = crdTransf->getGlobalStiffMatrix(kb, q);
 
-  #ifdef _BDEBUG
-  if(this->getTag()==1){
-  opserr<<"DispBeam3d "<<this->getTag()<<" Tangent stiff: "<<K<<endln;
+  #ifdef _bDEBUG
+  if(this->getTag() == 601 || this->getTag() == 602){
+  opserr<<"DispBeam3d "<<this->getTag()<<" q afer tangent: "<<q<<endln;
 	  }
   #endif
 
@@ -826,8 +832,8 @@ else if (type == LOAD_TAG_NodalThermalAction) {
 		residThermal[i]=0;
 		}
 
-	NodalThermalAction* theNodalThermal0 = (NodalThermalAction*) (theNodes[0])->getNodalLoadPtr();
-	NodalThermalAction* theNodalThermal1 = (NodalThermalAction*) (theNodes[1])->getNodalLoadPtr();
+	NodalThermalAction* theNodalThermal0 = theNodes[0]->getNodalThermalActionPtr();
+	NodalThermalAction* theNodalThermal1 = theNodes[1]->getNodalThermalActionPtr();
 	int type;
 	const Vector &data0 = theNodalThermal0->getData(type);
 	const Vector &data1 = theNodalThermal1->getData(type);
@@ -1077,9 +1083,9 @@ DispBeamColumn3dThermal::getResistingForce()
     
     // Get section stress resultant
     const Vector &s = theSections[i]->getStressResultant();
-#ifdef _BDEBUG
-	if(this->getTag()==1){
-		opserr<<"s "<<s<<endln;
+#ifdef _DEBUG
+	if(this->getTag()==601){
+		opserr<<"Resisting force s "<<s<<endln;
 		}
 #endif
     // Perform numerical integration on internal force
@@ -1123,9 +1129,13 @@ DispBeamColumn3dThermal::getResistingForce()
   q(3) += q0[3];
   q(4) += q0[4];
 
-#ifdef _BDEBUG
-  if(this->getTag()==1)
-opserr<<"Tag: "<<this->getTag()<<" DispBeam3d::q  "<<q<<endln;
+#ifdef _DEBUG
+  if (this->getTag() == 601 || this->getTag() == 602) {
+	  opserr << "Tag: " << this->getTag() << " DispBeam3d::q  " << q << endln;
+	  opserr << " ResidThermal  " << residThermal[0]<<" , "<< residThermal[1]<<" ," << residThermal[2] << endln;
+  }
+
+
 #endif
   // Transform forces
   Vector p0Vec(p0, 5);
@@ -1496,42 +1506,34 @@ DispBeamColumn3dThermal::Print(OPS_Stream &s, int flag)
 
 
 int
-DispBeamColumn3dThermal::displaySelf(Renderer &theViewer, int displayMode, float fact)
+DispBeamColumn3dThermal::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numModes)
 {
-  // first determine the end points of the quad based on
-  // the display factor (a measure of the distorted image)
-  const Vector &end1Crd = theNodes[0]->getCrds();
-  const Vector &end2Crd = theNodes[1]->getCrds();	
-  
-  static Vector v1(3);
-  static Vector v2(3);
+	static Vector v1(3);
+	static Vector v2(3);
 
-  if (displayMode >= 0) {
-    const Vector &end1Disp = theNodes[0]->getDisp();
-    const Vector &end2Disp = theNodes[1]->getDisp();
+	if (displayMode >= 0) {
 
-    for (int i = 0; i < 3; i++) {
-      v1(i) = end1Crd(i) + end1Disp(i)*fact;
-      v2(i) = end2Crd(i) + end2Disp(i)*fact;    
-    }
-  } else {
-    int mode = displayMode * -1;
-    const Matrix &eigen1 = theNodes[0]->getEigenvectors();
-    const Matrix &eigen2 = theNodes[1]->getEigenvectors();
-    if (eigen1.noCols() >= mode) {
-      for (int i = 0; i < 3; i++) {
-	v1(i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-	v2(i) = end2Crd(i) + eigen2(i,mode-1)*fact;    
-      }    
+		theNodes[0]->getDisplayCrds(v1, fact);
+		theNodes[1]->getDisplayCrds(v2, fact);
 
-    } else {
-      for (int i = 0; i < 3; i++) {
-	v1(i) = end1Crd(i);
-	v2(i) = end2Crd(i);
-      }    
-    }
-  }
-  return theViewer.drawLine (v1, v2, 1.0, 1.0);
+	}
+	else {
+
+		theNodes[0]->getDisplayCrds(v1, 0.);
+		theNodes[1]->getDisplayCrds(v2, 0.);
+
+		// add eigenvector values
+		int mode = displayMode * -1;
+		const Matrix &eigen1 = theNodes[0]->getEigenvectors();
+		const Matrix &eigen2 = theNodes[1]->getEigenvectors();
+		if (eigen1.noCols() >= mode) {
+			for (int i = 0; i < 3; i++) {
+				v1(i) += eigen1(i, mode - 1)*fact;
+				v2(i) += eigen2(i, mode - 1)*fact;
+			}
+		}
+	}
+	return theViewer.drawLine(v1, v2, 1.0, 1.0, this->getTag());
 }
 
 Response*
@@ -1573,15 +1575,15 @@ DispBeamColumn3dThermal::setResponse(const char **argv, int argc, OPS_Stream &ou
     // local force -
     }  else if (strcmp(argv[0],"localForce") == 0 || strcmp(argv[0],"localForces") == 0) {
 
-      output.tag("ResponseType","N_ 1");
+      output.tag("ResponseType","N_1");
       output.tag("ResponseType","Vy_1");
       output.tag("ResponseType","Vz_1");
       output.tag("ResponseType","T_1");
       output.tag("ResponseType","My_1");
-      output.tag("ResponseType","Tz_1");
+      output.tag("ResponseType","Mz_1");
       output.tag("ResponseType","N_2");
-      output.tag("ResponseType","Py_2");
-      output.tag("ResponseType","Pz_2");
+      output.tag("ResponseType","Vy_2");
+      output.tag("ResponseType","Vz_2");
       output.tag("ResponseType","T_2");
       output.tag("ResponseType","My_2");
       output.tag("ResponseType","Mz_2");

@@ -48,7 +48,7 @@ static int numContactMaterial2DMaterials = 0;
 int ContactMaterial2D::mFrictFlag = 1;
 
 void *
-OPS_NewContactMaterial2DMaterial(void)
+OPS_ContactMaterial2DMaterial(void)
 {
   if (numContactMaterial2DMaterials == 0) {
     numContactMaterial2DMaterials++;
@@ -498,4 +498,26 @@ int ContactMaterial2D::updateParameter(int responseID, Information &info)
 	}
 
   return 0;
+}
+
+double ContactMaterial2D::getcohesion(void)
+{
+    return cohesion;
+}
+
+void ContactMaterial2D::ScaleCohesion(const double len) 
+{
+    cohesion *= len;
+    //return 0;
+}
+
+double ContactMaterial2D::getTensileStrength(void)
+{
+    return tensileStrength;
+}
+
+void ContactMaterial2D::ScaleTensileStrength(const double len)
+{
+    tensileStrength *= len;
+    //return 0;
 }

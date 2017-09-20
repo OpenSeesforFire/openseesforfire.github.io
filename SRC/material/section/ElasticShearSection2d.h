@@ -71,8 +71,11 @@ class ElasticShearSection2d: public SectionForceDeformation
   int activateParameter(int parameterID);
   const Vector& getStressResultantSensitivity(int gradIndex,
 					      bool conditional);
+  const Matrix& getSectionTangentSensitivity(int gradIndex);
   const Matrix& getInitialTangentSensitivity(int gradIndex);
-  
+  const Matrix& getSectionFlexibilitySensitivity(int gradIndex);  
+  const Matrix& getInitialFlexibilitySensitivity(int gradIndex);  
+
  protected:
   
  private:
@@ -80,7 +83,6 @@ class ElasticShearSection2d: public SectionForceDeformation
   double E, A, I, G, alpha;
   
   Vector e;			// section trial deformations
-  Vector eCommit;
   
   static Vector s;
   static Matrix ks;

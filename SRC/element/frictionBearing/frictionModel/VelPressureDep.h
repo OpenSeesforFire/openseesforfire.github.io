@@ -19,8 +19,8 @@
 ** ****************************************************************** */
 
 // $Revision: 4952 $
-// $Date: 2012-08-09 06:56:05 +0100 (Thu, 09 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/frictionModel/VelPressureDep.h $
+// $Date: 2012-08-09 13:56:05 +0800 (Thu, 09 Aug 2012) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/frictionModel/VelPressureDep.h $
 
 #ifndef VelPressureDep_h
 #define VelPressureDep_h

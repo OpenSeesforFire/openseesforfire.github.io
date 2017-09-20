@@ -1,12 +1,15 @@
 include ../../../Makefile.def
 
 OBJS       = ShellMITC4.o \
+	ShellMITC9.o \
+	ShellDKGQ.o \
+	ShellNLDKGQ.o \
+	ShellDKGT.o \
+	ShellNLDKGT.o \
 	ShellMITC4Thermal.o \
-	ShellNLDKGQThermal.o\
-	ShellNLDKGQ.o\
-	ShellMITC4GNLThermal.o\
-	ShellNL.o \
-	R3vectors.o
+	ShellNLDKGQThermal.o \
+	R3vectors.o \
+	ShellANDeS.o
 
 all:         $(OBJS)
 

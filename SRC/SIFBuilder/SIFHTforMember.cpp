@@ -365,10 +365,12 @@ SIFHTforMember::applyFire(const Vector& fireOrigin, Matrix* crdMat)
 			(*crdMat)(i,1) = SecCentroids(2);
 			(*crdMat)(i,2) = -SecCentroids(0);
 		}
-		else if(theMember->getMemberTypeTag()==10){
+		else if(theMember->getMemberTypeTag()==10|| theMember->getMemberTypeTag() == 11){
 			//Slab
+			//opserr << FireOrigin << endln;
 			double dist =0; double MaxDist =0; int MaxDistJtTag =0;
 			for(int k=0;k<4;k++){
+				//opserr << *(jtCrds[k]) << endln;
 				double dist = ((*(jtCrds[k]))(0)-FireOrigin(0))*((*(jtCrds[k]))(0)-FireOrigin(0));
 				dist += ((*(jtCrds[k]))(2)-FireOrigin(2))*((*(jtCrds[k]))(2)-FireOrigin(2));
 				dist = sqrt(dist);
@@ -809,7 +811,7 @@ SIFHTforMember::BuildHTModel2D(const Vector& SecCentroids, int SecTag)
 
 			if(theMember->getMemberTypeTag()==21){
 				ID theCompInfo = theMember->getMemberInfo();
-				Rtag = theCompInfo(0)*100+theCompInfo(1)*10+theCompInfo(2);
+				Rtag = theCompInfo(0)*1000+theCompInfo(1)*100+theCompInfo(2);
 			}
 
 			std::string section = "-Sec";
@@ -1078,7 +1080,7 @@ SIFHTforMember::RunHTAnalysis(double fireDuration, double timeStep)
 	 theHTModel = new HT_AnalysisModel();
 
   if (theHTTest ==0) 
-	theHTTest  = new CTestNormTempIncr(1e-3, 100,0);
+	theHTTest  = new CTestNormTempIncr(1e-3, 200,0);
 
   if (theHTSolnAlgo ==0) 
 	theHTSolnAlgo = new NewtonMethod(*theHTTest);

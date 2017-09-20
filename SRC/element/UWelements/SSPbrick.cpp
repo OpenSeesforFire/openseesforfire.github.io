@@ -51,11 +51,11 @@ static int num_SSPbrick = 0;
 OPS_Export void *
 OPS_SSPbrick(void)
 {
-	if (num_SSPbrick == 0) {
-    	num_SSPbrick++;
-    	OPS_Error("SSPbrick element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n", 1);
-  	}
-
+  if (num_SSPbrick == 0) {
+    num_SSPbrick++;
+    opserr << "SSPbrick element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n";
+  }
+  
   	// Pointer to an element that will be returned
   	Element *theElement = 0;
 
@@ -79,7 +79,7 @@ OPS_SSPbrick(void)
   	}
 
   	int matID = iData[9];
-  	NDMaterial *theMaterial = OPS_GetNDMaterial(matID);
+  	NDMaterial *theMaterial = OPS_getNDMaterial(matID);
   	if (theMaterial == 0) {
     	opserr << "WARNING element SSPbrick " << iData[0] << endln;
 		opserr << " Material: " << matID << "not found\n";
@@ -360,6 +360,17 @@ SSPbrick::setDomain(Domain *theDomain)
 
 	// call the base-class method
 	this->DomainComponent::setDomain(theDomain);
+
+	/*
+	this->update();
+	const Matrix &t = this->getTangentStiff();
+	for (int i=0; i<t.noRows(); i++) {
+	  if (t(i,i) < 0.) {
+	    opserr << "ERROR SSP_Brick bad tangent from element: " << this->getTag() << " ";
+	    i = 100;
+	  }
+	}
+	*/
 }
 
 int
@@ -487,33 +498,42 @@ SSPbrick::getMass(void)
 void
 SSPbrick::zeroLoad(void)
 {
-	applyLoad = 0;
-	appliedB[0] = 0.0;
-	appliedB[1] = 0.0;
-	appliedB[2] = 0.0;
-
-	return;
+  applyLoad = 0;
+  appliedB[0] = 0.0;
+  appliedB[1] = 0.0;
+  appliedB[2] = 0.0;
+  
+  Q.Zero();
+  
+  return;
 }
 
 int
 SSPbrick::addLoad(ElementalLoad *theLoad, double loadFactor)
 {
-	// body forces can be applied in a load pattern
-	int type;
-	const Vector &data = theLoad->getData(type, loadFactor);
+  // body forces can be applied in a load pattern
+  int type;
+  const Vector &data = theLoad->getData(type, loadFactor);
+  
+  if (type == LOAD_TAG_SelfWeight) {
+    
+    if (data.Size() != 3) {
+      opserr << "SSPbrick::addLoad - too few SelfWeight data points, need 3 for ele " << this->getTag() << endln;
+      return -1;
+    }
+    
+    applyLoad = 1;
+    appliedB[0] += loadFactor*data(0)*b[0];
+    appliedB[1] += loadFactor*data(1)*b[1];
+    appliedB[2] += loadFactor*data(2)*b[2];
+    return 0;
 
-	if (type == LOAD_TAG_SelfWeight) {
-		applyLoad = 1;
-		appliedB[0] += loadFactor*b[0];
-		appliedB[1] += loadFactor*b[1];
-		appliedB[2] += loadFactor*b[2];
-		return 0;
-	} else {
-		opserr << "SSPbrick::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
-		return -1;
-	} 
-
-	return -1;
+  } else {
+    opserr << "SSPbrick::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
+    return -1;
+  } 
+  
+  return -1;
 }
 
 int
@@ -656,72 +676,73 @@ SSPbrick::getResistingForce(void)
 const Vector &
 SSPbrick::getResistingForceIncInertia()
 {
-	// get mass density from the material
-	double density = theMaterial->getRho();
+  // get mass density from the material
+  double density = theMaterial->getRho();
+  
 
-	// if density is zero only add damping terms
-	if (density == 0.0) {
-		this->getResistingForce();
-
-		// add the damping forces if rayleigh damping
-		if (betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0) {
-			mInternalForces += this->getRayleighDampingForces();
-		}
-
-		return mInternalForces;
-	}
-
-	const Vector &accel1 = theNodes[0]->getTrialAccel();
-	const Vector &accel2 = theNodes[1]->getTrialAccel();
-	const Vector &accel3 = theNodes[2]->getTrialAccel();
-	const Vector &accel4 = theNodes[3]->getTrialAccel();
-	const Vector &accel5 = theNodes[4]->getTrialAccel();
-	const Vector &accel6 = theNodes[5]->getTrialAccel();
-	const Vector &accel7 = theNodes[6]->getTrialAccel();
-	const Vector &accel8 = theNodes[7]->getTrialAccel();
-
-	static double a[24];
-	a[0] =  accel1(0);
-	a[1] =  accel1(1);
-	a[2] =  accel1(2);
-	a[3] =  accel2(0);
-	a[4] =  accel2(1);
-	a[5] =  accel2(2);
-	a[6] =  accel3(0);
-	a[7] =  accel3(1);
-	a[8] =  accel3(2);
-	a[9] =  accel4(0);
-	a[10] = accel4(1);
-	a[11] = accel4(2);
-	a[12] = accel5(0);
-	a[13] = accel5(1);
-	a[14] = accel5(2);
-	a[15] = accel6(0);
-	a[16] = accel6(1);
-	a[17] = accel6(2);
-	a[18] = accel7(0);
-	a[19] = accel7(1);
-	a[20] = accel7(2);
-	a[21] = accel8(0);
-	a[22] = accel8(1);
-	a[23] = accel8(2);
-	
-	// compute current resisting force
-	this->getResistingForce();
-
-	// compute mass matrix
-	this->getMass();
-
-	for (int i = 0; i < 24; i++) {
-		mInternalForces(i) += mMass(i,i)*a[i];
-	}
-
-	// add the damping forces if rayleigh damping
-	if (betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0) {
-		mInternalForces += this->getRayleighDampingForces();
-	}
-
-	return mInternalForces;
+  // if density is zero only add damping terms
+  if (density == 0.0) {
+    this->getResistingForce();
+    
+    // add the damping forces if rayleigh damping
+    if (betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0) {
+      mInternalForces += this->getRayleighDampingForces();
+    }
+    
+    return mInternalForces;
+  }
+  
+  const Vector &accel1 = theNodes[0]->getTrialAccel();
+  const Vector &accel2 = theNodes[1]->getTrialAccel();
+  const Vector &accel3 = theNodes[2]->getTrialAccel();
+  const Vector &accel4 = theNodes[3]->getTrialAccel();
+  const Vector &accel5 = theNodes[4]->getTrialAccel();
+  const Vector &accel6 = theNodes[5]->getTrialAccel();
+  const Vector &accel7 = theNodes[6]->getTrialAccel();
+  const Vector &accel8 = theNodes[7]->getTrialAccel();
+  
+  static double a[24];
+  a[0] =  accel1(0);
+  a[1] =  accel1(1);
+  a[2] =  accel1(2);
+  a[3] =  accel2(0);
+  a[4] =  accel2(1);
+  a[5] =  accel2(2);
+  a[6] =  accel3(0);
+  a[7] =  accel3(1);
+  a[8] =  accel3(2);
+  a[9] =  accel4(0);
+  a[10] = accel4(1);
+  a[11] = accel4(2);
+  a[12] = accel5(0);
+  a[13] = accel5(1);
+  a[14] = accel5(2);
+  a[15] = accel6(0);
+  a[16] = accel6(1);
+  a[17] = accel6(2);
+  a[18] = accel7(0);
+  a[19] = accel7(1);
+  a[20] = accel7(2);
+  a[21] = accel8(0);
+  a[22] = accel8(1);
+  a[23] = accel8(2);
+  
+  // compute current resisting force
+  this->getResistingForce();
+  
+  // compute mass matrix
+  this->getMass();
+  
+  for (int i = 0; i < 24; i++) {
+    mInternalForces(i) += mMass(i,i)*a[i];
+  }
+  
+  // add the damping forces if rayleigh damping
+  if (alphaM != 0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0) {
+    mInternalForces += this->getRayleighDampingForces(); //FMK - this would add mass contribution again!
+  }
+  
+  return mInternalForces;
 }
 
 int
@@ -736,7 +757,7 @@ SSPbrick::sendSelf(int commitTag, Channel &theChannel)
   
   // SSPbrick packs its data into a Vector and sends this to theChannel
   // along with its dbTag and the commitTag passed in the arguments
-  static Vector data(747);
+  static Vector data(751);
   data(0) = this->getTag();
   data(1) = b[0];
   data(2) = b[1];
@@ -753,25 +774,30 @@ SSPbrick::sendSelf(int commitTag, Channel &theChannel)
   }
   data(6) = matDbTag;
 
-  int cnt = 7;
+  data(7) = alphaM;
+  data(8) = betaK;
+  data(9) = betaK0;
+  data(10) = betaKc;
+ 
+  int cnt = 11;
   for (int i = 0; i < 20; i++) {
-      data(cnt+i) = J[i];
+    data(cnt+i) = J[i];
   }
   
-  cnt = 27;
+  cnt = 31;
   for (int i = 0; i < 6; i++) {
-	  for (int j = 0; j < 24; j++) {
-		  data(cnt+j) = Bnot(i,j);
-	  }
-	  cnt = cnt+24;
+    for (int j = 0; j < 24; j++) {
+      data(cnt+j) = Bnot(i,j);
+    }
+    cnt = cnt+24;
   }
-
-  cnt = 171;
+  
+  cnt = 175;
   for (int i = 0; i < 24; i++) {
-	  for (int j = 0; j < 24; j++) {
-		  data(cnt+j) = Kstab(i,j);
-	  }
-	  cnt = cnt+24;
+    for (int j = 0; j < 24; j++) {
+      data(cnt+j) = Kstab(i,j);
+    }
+    cnt = cnt+24;
   }
   
   res = theChannel.sendVector(dataTag, commitTag, data);
@@ -800,90 +826,158 @@ SSPbrick::sendSelf(int commitTag, Channel &theChannel)
 int
 SSPbrick::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
 {
-  	int res = 0;
-  	int dataTag = this->getDbTag();
-
-  	// SSPbrick creates a Vector, receives the Vector and then sets the 
-  	// internal data with the data in the Vector
-  	static Vector data(747);
-  	res = theChannel.recvVector(dataTag, commitTag, data);
-  	if (res < 0) {
-    	opserr << "WARNING SSPbrick::recvSelf() - failed to receive Vector\n";
-    	return res;
-  	}
+  int res = 0;
+  int dataTag = this->getDbTag();
   
-  	this->setTag((int)data(0));
-  	b[0] = data(1);
-  	b[1] = data(2);
-	b[2] = data(3);
-	mVol = data(4);
-
-	int cnt = 7;
-    for (int i = 0; i < 20; i++) {
-        J[i] = data(cnt+i);
-    }
+  // SSPbrick creates a Vector, receives the Vector and then sets the 
+  // internal data with the data in the Vector
+  static Vector data(751);
+  res = theChannel.recvVector(dataTag, commitTag, data);
+  if (res < 0) {
+    opserr << "WARNING SSPbrick::recvSelf() - failed to receive Vector\n";
+    return res;
+  }
   
-    cnt = 27;
-    for (int i = 0; i < 6; i++) {
-	    for (int j = 0; j < 24; j++) {
-	  	    Bnot(i,j) = data(cnt+j);
-	    }
-	    cnt = cnt+24;
+  this->setTag((int)data(0));
+  b[0] = data(1);
+  b[1] = data(2);
+  b[2] = data(3);
+  mVol = data(4);
+ 
+  alphaM = data(7);
+  betaK = data(8);
+  betaK0 = data(9);
+  betaKc = data(10);
+ 
+  int cnt = 11;
+  for (int i = 0; i < 20; i++) {
+    J[i] = data(cnt+i);
+  }
+  
+  cnt = 31;
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 24; j++) {
+      Bnot(i,j) = data(cnt+j);
     }
-
-    cnt = 171;
-    for (int i = 0; i < 24; i++) {
-	    for (int j = 0; j < 24; j++) {
-		    Kstab(i,j) = data(cnt+j);
-	    }
-	    cnt = cnt+24;
+    cnt = cnt+24;
+  }
+  
+  cnt = 175;
+  for (int i = 0; i < 24; i++) {
+    for (int j = 0; j < 24; j++) {
+      Kstab(i,j) = data(cnt+j);
     }
-
-  	// SSPbrick now receives the tags of its four external nodes
-  	res = theChannel.recvID(dataTag, commitTag, mExternalNodes);
-  	if (res < 0) {
-    	opserr << "WARNING SSPbrick::recvSelf() - " << this->getTag() << " failed to receive ID\n";
-    	return res;
-  	}
-
-	// finally, SSPbrick creates a material object of the correct type, sets its
-	// database tag, and asks this new object to receive itself
-	int matClass = (int)data(5);
-	int matDb    = (int)data(6);
-
-	// check if material object exists and that it is the right type
-	if ((theMaterial == 0) || (theMaterial->getClassTag() != matClass)) {
-
-		// if old one, delete it
-		if (theMaterial != 0)
-			delete theMaterial;
-
-		// create new material object
-		NDMaterial *theMatCopy = theBroker.getNewNDMaterial(matClass);
-		theMaterial = (NDMaterial *)theMatCopy;
-
-		if (theMaterial == 0) {
-			opserr << "WARNING SSPbrick::recvSelf() - " << this->getTag() 
-			  << " failed to get a blank Material of type " << matClass << endln;
-			return -3;
-		}
-	}
-
-	// NOTE: we set the dbTag before we receive the material
-	theMaterial->setDbTag(matDb);
-	res = theMaterial->recvSelf(commitTag, theChannel, theBroker);
-	if (res < 0) {
-		opserr << "WARNING SSPbrick::recvSelf() - " << this->getTag() << " failed to receive its Material\n";
-		return -3;
-	}
-
-	return 0; 
+    cnt = cnt+24;
+  }
+  
+  // SSPbrick now receives the tags of its four external nodes
+  res = theChannel.recvID(dataTag, commitTag, mExternalNodes);
+  if (res < 0) {
+    opserr << "WARNING SSPbrick::recvSelf() - " << this->getTag() << " failed to receive ID\n";
+    return res;
+  }
+  
+  // finally, SSPbrick creates a material object of the correct type, sets its
+  // database tag, and asks this new object to receive itself
+  int matClass = (int)data(5);
+  int matDb    = (int)data(6);
+  
+  // check if material object exists and that it is the right type
+  if ((theMaterial == 0) || (theMaterial->getClassTag() != matClass)) {
+    
+    // if old one, delete it
+    if (theMaterial != 0)
+      delete theMaterial;
+    
+    // create new material object
+    NDMaterial *theMatCopy = theBroker.getNewNDMaterial(matClass);
+    theMaterial = (NDMaterial *)theMatCopy;
+    
+    if (theMaterial == 0) {
+      opserr << "WARNING SSPbrick::recvSelf() - " << this->getTag() 
+	     << " failed to get a blank Material of type " << matClass << endln;
+      return -3;
+    }
+  }
+  
+  // NOTE: we set the dbTag before we receive the material
+  theMaterial->setDbTag(matDb);
+  res = theMaterial->recvSelf(commitTag, theChannel, theBroker);
+  if (res < 0) {
+    opserr << "WARNING SSPbrick::recvSelf() - " << this->getTag() << " failed to receive its Material\n";
+    return -3;
+  }
+  
+  return 0; 
 }
 
 int
-SSPbrick::displaySelf(Renderer &theViewer, int displayMode, float fact)
+SSPbrick::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
-	return 0;
+    const Vector &end1Crd = theNodes[0]->getCrds();
+    const Vector &end2Crd = theNodes[1]->getCrds();	
+    const Vector &end3Crd = theNodes[2]->getCrds();	
+    const Vector &end4Crd = theNodes[3]->getCrds();	
+
+    const Vector &end5Crd = theNodes[4]->getCrds();
+    const Vector &end6Crd = theNodes[5]->getCrds();	
+    const Vector &end7Crd = theNodes[6]->getCrds();	
+    const Vector &end8Crd = theNodes[7]->getCrds();	
+
+    static Matrix coords(8,3);
+    static Vector values(8);
+    static Vector P(24) ;
+    
+    for (int i=0; i<8; i++)
+      values(i) = 1.0;
+
+    int error = 0;
+    int i;
+
+    const Vector &end1Disp = theNodes[0]->getDisp();
+    const Vector &end2Disp = theNodes[1]->getDisp();
+    const Vector &end3Disp = theNodes[2]->getDisp();
+    const Vector &end4Disp = theNodes[3]->getDisp();
+    const Vector &end5Disp = theNodes[4]->getDisp();
+    const Vector &end6Disp = theNodes[5]->getDisp();
+    const Vector &end7Disp = theNodes[6]->getDisp();
+    const Vector &end8Disp = theNodes[7]->getDisp();
+    
+    for (i = 0; i < 3; i++) {
+      coords(0,i) = end1Crd(i) + end1Disp(i)*fact;
+      coords(1,i) = end2Crd(i) + end2Disp(i)*fact;    
+      coords(2,i) = end3Crd(i) + end3Disp(i)*fact;    
+      coords(3,i) = end4Crd(i) + end4Disp(i)*fact;
+      coords(4,i) = end5Crd(i) + end5Disp(i)*fact;
+      coords(5,i) = end6Crd(i) + end6Disp(i)*fact;    
+      coords(6,i) = end7Crd(i) + end7Disp(i)*fact;    
+      coords(7,i) = end8Crd(i) + end8Disp(i)*fact;
+    }
+    values(0) = 1.;
+    values(1) = 1.;
+    values(2) = 1.;
+    values(3) = 1.;
+    values(4) = -1.;
+    values(5) = -1.;
+    values(6) = -1.;
+    values(7) = -1.;
+
+    theViewer.drawLine(end1Crd, end2Crd, 1., 1., this->getTag());
+    theViewer.drawLine(end2Crd, end3Crd, 1., 1., this->getTag());
+    theViewer.drawLine(end3Crd, end4Crd, 1., 1., this->getTag());
+    theViewer.drawLine(end4Crd, end1Crd, 1., 1., this->getTag());
+
+    theViewer.drawLine(end5Crd, end6Crd, -1., -1., this->getTag());
+    theViewer.drawLine(end6Crd, end7Crd, -1., -1., this->getTag());
+    theViewer.drawLine(end7Crd, end8Crd, -1., -1., this->getTag());
+    theViewer.drawLine(end8Crd, end5Crd, -1., -1., this->getTag());
+
+    theViewer.drawLine(end1Crd, end5Crd, 1., -1., this->getTag());
+    theViewer.drawLine(end2Crd, end6Crd, 1., -1., this->getTag());
+    theViewer.drawLine(end3Crd, end7Crd, 1., -1., this->getTag());
+    theViewer.drawLine(end4Crd, end8Crd, 1., -1., this->getTag());
+    return 0;
+    //    return theViewer.drawCube(coords, values, this->getTag());    
 }
 
 void
@@ -922,57 +1016,15 @@ SSPbrick::setParameter(const char **argv, int argc, Parameter &param)
 		return -1;
 	}
 
-	int res = -1;
+    int res = -1;
 
-	// material state (elastic/plastic) for UW soil materials
-	if (strcmp(argv[0],"materialState") == 0) {
-		return param.addObject(5,this);
-	}
-	// frictional strength parameter for UW soil materials
-	else if (strcmp(argv[0],"frictionalStrength") == 0) {
-		return param.addObject(7,this);
-	}
-	// non-associative parameter for UW soil materials
-	else if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-		return param.addObject(8,this);
-	}
-	// cohesion parameter for UW soil materials
-	else if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-		return param.addObject(9,this);
-	}
-    // shear modulus parameter for UW soil materials
-	else if (strcmp(argv[0],"shearModulus") == 0) {
-		return param.addObject(10,this);
-	}
-    // bulk modulus parameter for UW soil materials
-	else if (strcmp(argv[0],"bulkModulus") == 0) {
-		return param.addObject(11,this);
-	}
-  	// a material parameter
-  	if (strstr(argv[0],"material") != 0) {
+    // no element parameters, call setParameter in the material
+    int matRes;
+    matRes = theMaterial->setParameter(argv, argc, param);
 
-    	if (argc < 3) {
-      		return -1;
-		}
-
-    	int pointNum = atoi(argv[1]);
-    	if (pointNum > 0 && pointNum <= 4) {
-      		return theMaterial->setParameter(&argv[2], argc-2, param);
-    	} else {
-      		return -1;
-		}
-  	}
-
-  	// otherwise it could be just a forall material parameter
-  	else {
-
-    	int matRes = res;
-      	matRes =  theMaterial->setParameter(argv, argc, param);
-
-      	if (matRes != -1) {
-			res = matRes;
-		}
-  	}
+    if (matRes != -1) {
+		res = matRes;
+	}
   
   return res;
 }
@@ -998,7 +1050,7 @@ void
 SSPbrick::GetStab(void)
 // this function computes the stabilization stiffness matrix for the element
 {
-	Matrix Mben(12,24);
+    Matrix Mben(12,24);
 	Matrix FCF(12,12);
 	Matrix dNloc(8,3);
 	Matrix dNmod(8,3);

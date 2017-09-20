@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4967 $
-// $Date: 2012-08-13 06:39:44 +0100 (Mon, 13 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/twoNodeLink/TwoNodeLink.h $
+// $Revision: 6488 $
+// $Date: 2016-11-02 10:44:41 +0800 (Wed, 02 Nov 2016) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/twoNodeLink/TwoNodeLink.h $
 
 #ifndef TwoNodeLink_h
 #define TwoNodeLink_h
@@ -95,12 +95,14 @@ public:
     // public methods for element output
     int sendSelf(int commitTag, Channel &theChannel);
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);
+    int displaySelf(Renderer &, int mode, float fact, const char **displayModes=0, int numModes=0);
     void Print(OPS_Stream &s, int flag = 0);
     
     // public methods for element recorder
     Response *setResponse(const char **argv, int argc, OPS_Stream &s);
     int getResponse(int responseID, Information &eleInfo);
+
+    int setParameter(const char **argv, int argc, Parameter &param);
 
 private:
     Etype elemType;
@@ -130,6 +132,7 @@ private:
     int addRayleigh;    // flag to add Rayleigh damping
     double mass;        // total mass
     double L;           // element length
+    bool onP0;          // flag to indicate if the element is on P0
     
     Vector ub;          // trial displacements in basic system
     Vector ubdot;       // trial velocities in basic system

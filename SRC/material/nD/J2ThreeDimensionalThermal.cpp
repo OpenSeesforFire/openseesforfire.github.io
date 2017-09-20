@@ -51,7 +51,7 @@
 //		      2 eps_20    }   <--- note the 2
 // 
 //  set eta := 0 for rate independent case
-//
+//Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io]
 
 #include <J2ThreeDimensionalThermal.h>
 #include <Channel.h>
@@ -205,7 +205,7 @@ const Vector& J2ThreeDimensionalThermal :: getStress( )
   stress_vec(4) = stress(1,2) ;
   
   stress_vec(5) = stress(2,0) ;
-
+  //opserr << stress_vec(0) << " " << stress_vec(1) << endln;
   return stress_vec ;
 }
 

@@ -179,6 +179,7 @@ void Simple_Boundary::GeneratingHeatFluxBC(const ID& ElesRange, int eleFaceTag, 
 	else if(HeatFluxTypeTag ==3)
 	{
 		int NumNPF = (theHTDomain->getElement(ElesRange(0)))->getNumNodesperFace();
+
 		for(int i= 0;i<NumHeatFluxBCs; i++){
 			PrescribedSurfFlux* PreSurfFlux_BC = new PrescribedSurfFlux(ExistingHeatFluxBCs+i,ElesRange(i),eleFaceTag,NumNPF,FireType);
 			theHTDomain->addHeatFluxBC(PreSurfFlux_BC,PatternTag);

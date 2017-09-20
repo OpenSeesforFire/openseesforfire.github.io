@@ -54,7 +54,10 @@ NorminalFireEC1::getGasTemperature(double time)
 {
     static double T;
 	static double Ta = 20;
-	time = (time-StartTime)/60.0;
+	
+	if (time < StartTime)
+		return Ta;
+	time = (time - StartTime) / 60.0;
 
 	if (type_tag == 1) {
 		static double a1 = 345.0;

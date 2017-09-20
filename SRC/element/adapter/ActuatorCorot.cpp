@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4967 $
-// $Date: 2012-08-13 06:39:44 +0100 (Mon, 13 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/adapter/ActuatorCorot.cpp $
+// $Revision: 6501 $
+// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/adapter/ActuatorCorot.cpp $
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 09/07
@@ -42,6 +42,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <elementAPI.h>
 
 
 // initialize the class wide variables
@@ -53,6 +54,68 @@ Vector ActuatorCorot::ActuatorCorotV2(2);
 Vector ActuatorCorot::ActuatorCorotV4(4);
 Vector ActuatorCorot::ActuatorCorotV6(6);
 Vector ActuatorCorot::ActuatorCorotV12(12);
+
+void* OPS_ActuatorCorot()
+{
+    // check the number of arguments is correct
+    if (OPS_GetNumRemainingInputArgs() < 5) {
+        opserr << "WARNING insufficient arguments\n";
+        opserr << "Want: element actuator eleTag iNode jNode EA ipPort <-doRayleigh> <-rho rho>\n";
+        return 0;
+    }
+    
+    int ndm = OPS_GetNDM();
+    
+    // get the id and end nodes
+    int idata[3];
+    int numdata = 3;
+    if (OPS_GetIntInput(&numdata, idata) < 0) {
+	opserr << "WARNING invalid actuator int inputs" << endln;
+	return 0;
+    }
+    
+    int tag = idata[0];
+    int iNode = idata[1];
+    int jNode = idata[2];
+
+    double EA;
+    numdata = 1;
+    if (OPS_GetDoubleInput(&numdata, &EA) < 0) {
+	opserr << "WARNING invalid actuator EA" << endln;
+	return 0;
+    }
+    
+    int ipPort;
+    numdata = 1;
+    if (OPS_GetIntInput(&numdata, &ipPort) < 0) {
+	opserr << "WARNING invalid actuator ipPort" << endln;
+	return 0;
+    }
+    
+    int doRayleigh = 0;
+    double rho = 0.0;
+    
+    while (OPS_GetNumRemainingInputArgs() > 0) {
+	const char* flag = OPS_GetString();
+	if (strcmp(flag, "-doRayleigh") == 0) {
+	    doRayleigh = 1;
+	} else if (strcmp(flag, "-rho") == 0) {
+	    if (OPS_GetNumRemainingInputArgs() > 0) {
+		numdata = 1;
+		if (OPS_GetDoubleInput(&numdata, &rho) < 0) {
+		    opserr << "WARNING invalid rho\n";
+		    opserr << "actuator element: " << tag << endln;
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // now create the actuator and add it to the Domain
+    return new ActuatorCorot(tag, ndm, iNode, jNode, EA, ipPort,
+			     doRayleigh, rho);
+    
+}
 
 
 // responsible for allocating the necessary space needed
@@ -401,6 +464,7 @@ const Matrix& ActuatorCorot::getTangentStiff()
     
     // material stiffness portion
     int i,j;
+    kl.Zero();
     double EAoverL3 = EA/(Ln*Ln*L);
     for (i=0; i<3; i++)
         for (j=0; j<3; j++)
@@ -612,9 +676,6 @@ const Vector& ActuatorCorot::getResistingForce()
         (*theVector)(i+numDOF2) = qg(i);
     }
     
-    // subtract external load
-    (*theVector) -= *theLoad;
-    
     return *theVector;
 }
 
@@ -623,10 +684,13 @@ const Vector& ActuatorCorot::getResistingForceIncInertia()
 {
     this->getResistingForce();
     
+    // subtract external load
+    (*theVector) -= *theLoad;
+    
     // add the damping forces from rayleigh damping
     if (addRayleigh == 1)  {
         if (alphaM != 0.0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0)
-            (*theVector) += this->getRayleighDampingForces();
+            theVector->addVector(1.0, this->getRayleighDampingForces(), 1.0);
     }
     
     // add inertia forces from element mass
@@ -649,7 +713,7 @@ const Vector& ActuatorCorot::getResistingForceIncInertia()
 int ActuatorCorot::sendSelf(int commitTag, Channel &sChannel)
 {
     // send element parameters
-    static Vector data(7);
+    static Vector data(11);
     data(0) = this->getTag();
     data(1) = numDIM;
     data(2) = numDOF;
@@ -657,6 +721,10 @@ int ActuatorCorot::sendSelf(int commitTag, Channel &sChannel)
     data(4) = ipPort;
     data(5) = addRayleigh;
     data(6) = rho;
+    data(7) = alphaM;
+    data(8) = betaK;
+    data(9) = betaK0;
+    data(10) = betaKc;
     sChannel.sendVector(0, commitTag, data);
     
     // send the two end nodes
@@ -670,15 +738,19 @@ int ActuatorCorot::recvSelf(int commitTag, Channel &rChannel,
     FEM_ObjectBroker &theBroker)
 {
     // receive element parameters
-    static Vector data(7);
+    static Vector data(11);
     rChannel.recvVector(0, commitTag, data);
     this->setTag((int)data(0));
     numDIM = (int)data(1);
     numDOF = (int)data(2);
-    EA     = data(3);
+    EA = data(3);
     ipPort = (int)data(4);
     addRayleigh = (int)data(5);
-    rho    = data(6);
+    rho = data(6);
+    alphaM = data(7);
+    betaK = data(8);
+    betaK0 = data(9);
+    betaKc = data(10);
     
     // receive the two end nodes
     rChannel.recvID(0, commitTag, connectedExternalNodes);
@@ -688,7 +760,7 @@ int ActuatorCorot::recvSelf(int commitTag, Channel &rChannel,
 
 
 int ActuatorCorot::displaySelf(Renderer &theViewer,
-    int displayMode, float fact)
+    int displayMode, float fact, const char **modes, int numMode)
 {
     // first determine the end points of the element based on
     // the display factor (a measure of the distorted image)
@@ -724,7 +796,7 @@ int ActuatorCorot::displaySelf(Renderer &theViewer,
         }
     }
     
-    return theViewer.drawLine (v1, v2, 1.0, 1.0);
+    return theViewer.drawLine (v1, v2, 1.0, 1.0, this->getTag(), 0);
 }
 
 

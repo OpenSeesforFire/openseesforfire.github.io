@@ -1,5 +1,6 @@
 ////J.Z. 01/2010 Concrete02Thermal.cpp   **for Siliceous aggregates
 // this is the second edition of Concrete02Thermal,the interface of it is same with concrete02.
+// Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
 
 
 #include <stdlib.h>
@@ -13,7 +14,7 @@
 #include <OPS_Globals.h>
 
 void *
-OPS_NewConcrete02Thermal()
+OPS_Concrete02Thermal()
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;

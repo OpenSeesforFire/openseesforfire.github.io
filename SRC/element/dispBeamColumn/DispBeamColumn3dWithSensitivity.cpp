@@ -44,7 +44,7 @@
 #include <ElementResponse.h>
 #include <ElementalLoad.h>
 #include <BeamIntegration.h>
-
+#include <elementAPI.h>
 
 # define ELE_TAG_DispBeamColumn3dWithSensitivity 1110000
 
@@ -52,6 +52,72 @@ Matrix DispBeamColumn3dWithSensitivity::K(12,12);
 Vector DispBeamColumn3dWithSensitivity::P(12);
 double DispBeamColumn3dWithSensitivity::workArea[200];
 //GaussQuadRule1d01 DispBeamColumn3dWithSensitivity::quadRule;
+
+void* OPS_DispBeamColumn3dWithSensitivity()
+{
+    if(OPS_GetNumRemainingInputArgs() < 5) {
+	opserr<<"insufficient arguments:eleTag,iNode,jNode,transfTag,integrationTag <-mass mass> <-cmass>\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[5];
+    int numData = 5;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	opserr<<"WARNING: invalid integer inputs\n";
+	return 0;
+    }
+
+    // options
+    double mass = 0.0;
+    numData = 1;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	const char* type = OPS_GetString();
+	if(strcmp(type,"-mass") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) {
+		    opserr<<"WARNING: invalid mass\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return 0;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[4]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return 0;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return 0;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+		delete [] sections;
+	    return 0;
+	}
+    }
+    
+    Element *theEle =  new DispBeamColumn3dWithSensitivity(iData[0],iData[1],iData[2],secTags.Size(),sections,*bi,*theTransf,mass);
+    delete [] sections;
+    return theEle;
+}
 
 DispBeamColumn3dWithSensitivity::DispBeamColumn3dWithSensitivity(int tag, int nd1, int nd2,
 				   int numSec, SectionForceDeformation **s,
@@ -799,16 +865,16 @@ DispBeamColumn3dWithSensitivity::getResistingForce()
   Vector p0Vec(p0, 5);
   P = crdTransf->getGlobalResistingForce(q, p0Vec);
   
-  // Subtract other external nodal loads ... P_res = P_int - P_ext
-  P.addVector(1.0, Q, -1.0);
-  
   return P;
 }
 
 const Vector&
 DispBeamColumn3dWithSensitivity::getResistingForceIncInertia()
 {
-  this->getResistingForce();
+  P = this->getResistingForce();
+  
+  // Subtract other external nodal loads ... P_res = P_int - P_ext
+  P.addVector(1.0, Q, -1.0);
   
   if (rho != 0.0) {
     const Vector &accel1 = theNodes[0]->getTrialAccel();
@@ -829,13 +895,13 @@ DispBeamColumn3dWithSensitivity::getResistingForceIncInertia()
 
     // add the damping forces if rayleigh damping
     if (alphaM != 0.0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0)
-      P += this->getRayleighDampingForces();
+      P.addVector(1.0, this->getRayleighDampingForces(), 1.0);
 
   } else {
 
     // add the damping forces if rayleigh damping
     if (betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0)
-      P += this->getRayleighDampingForces();
+      P.addVector(1.0, this->getRayleighDampingForces(), 1.0);
   }
   
   return P;
@@ -1119,7 +1185,7 @@ DispBeamColumn3dWithSensitivity::Print(OPS_Stream &s, int flag)
 
 
 int
-DispBeamColumn3dWithSensitivity::displaySelf(Renderer &theViewer, int displayMode, float fact)
+DispBeamColumn3dWithSensitivity::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
   // first determine the end points of the quad based on
   // the display factor (a measure of the distorted image)
@@ -1196,15 +1262,15 @@ DispBeamColumn3dWithSensitivity::setResponse(const char **argv, int argc, OPS_St
     // local force -
     }  else if (strcmp(argv[0],"localForce") == 0 || strcmp(argv[0],"localForces") == 0) {
 
-      output.tag("ResponseType","N_ 1");
+      output.tag("ResponseType","N_1");
       output.tag("ResponseType","Vy_1");
       output.tag("ResponseType","Vz_1");
       output.tag("ResponseType","T_1");
       output.tag("ResponseType","My_1");
-      output.tag("ResponseType","Tz_1");
+      output.tag("ResponseType","Mz_1");
       output.tag("ResponseType","N_2");
-      output.tag("ResponseType","Py_2");
-      output.tag("ResponseType","Pz_2");
+      output.tag("ResponseType","Vy_2");
+      output.tag("ResponseType","Vz_2");
       output.tag("ResponseType","T_2");
       output.tag("ResponseType","My_2");
       output.tag("ResponseType","Mz_2");

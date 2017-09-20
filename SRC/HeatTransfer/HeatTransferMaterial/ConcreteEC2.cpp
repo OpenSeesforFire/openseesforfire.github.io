@@ -160,12 +160,12 @@ ConcreteEC2::getEnthalpy()
 		double c2 = 41400000.0;
 		enthalpy = c1 * trial_temp - c2;
 	} else if ((100.0 < trial_temp) && (trial_temp <= 200.0)) {
-			if (moist == 0.0) {
+			if (fabs(moist)<1e-5) {
 				double c01 = 1150.0;
 				double c02 = 1840000.0;
 				double c03 = -29900000.0;
 				enthalpy = c01 * trial_temp * trial_temp + c02 * trial_temp + c03;
-			} else if (moist == 0.015) {
+			} else if (fabs(moist-0.015)<1e-5) {
 					if ((100.0 < trial_temp) && (trial_temp <= 115.0)) {
 						double c11 = 3381000.0;
 						double c12 = -172500000.0;
@@ -177,7 +177,7 @@ ConcreteEC2::getEnthalpy()
 							enthalpy = c13 * trial_temp * trial_temp + c14 * trial_temp
 								+ c15;
 					}
-			} else if (moist == 0.03) {
+			} else if (fabs(moist - 0.03)<1e-5) {
 					if ((100.0 < trial_temp) && (trial_temp <= 115.0)) {
 						double c31 = 4646000.0;
 						double c32 = -299000000.0;
@@ -194,18 +194,18 @@ ConcreteEC2::getEnthalpy()
 							exit(-1);
 					}
 			}
-		} else if ((200.0 < trial_temp) && (trial_temp <= 400.0)) {
+		} else if ((trial_temp>200) && (trial_temp <= 400.0)) {
 			double cc0 = 575.0;
 			double cc1 = 2070000.0;
-			if (moist == 0.0) {
+			if (fabs(moist)<1e-5) {
 				double c4 = -52900000.0;
 				enthalpy = cc0 * trial_temp * trial_temp + cc1 * trial_temp + c4;
 				} 
-			else if (moist == 0.015) {
+			else if (fabs(moist - 0.015)<1e-5) {
 					double c5 = 20757500.0;
 					enthalpy = cc0 * trial_temp * trial_temp + cc1 * trial_temp + c5;
 				} 
-			else if (moist == 0.03) {
+			else if (fabs(moist - 0.03)<1e-5) {
 					double c6 = 93495000.0;
 					enthalpy = cc0 * trial_temp * trial_temp + cc1 * trial_temp + c6;
 					} 
@@ -214,17 +214,17 @@ ConcreteEC2::getEnthalpy()
 							<< "are not available for moisture level " << moist << " .\n";
 						exit(-1);
 					}
-			} else if (400.0 < trial_temp) {
+			} else if (trial_temp>400) {
 				double cc2 = 2530000.0;
-				if (moist == 0.0) {
+				if (fabs(moist)<1e-5) {
 					double c7 = -144900000.0;
 					enthalpy = cc2 * trial_temp + c7;
 					} 
-				else if (moist == 0.015) {
+				else if (fabs(moist - 0.015)<1e-5) {
 						double c8 = -71242500.0;
 						enthalpy = cc2 * trial_temp + c8;
 					} 
-				else if (moist == 0.03) {
+				else if (fabs(moist - 0.03)<1e-5) {
 						double c9 = 1495000.0;
 						enthalpy = cc2 * trial_temp + c9;
 						} 
@@ -262,7 +262,7 @@ ConcreteEC2::getEnthalpy(double temp)
 				double c03 = -29900000.0;
 				enthp = c01 * nod_temp * nod_temp + c02 * nod_temp + c03;
 			} 
-			else if ( moist - 0.015<1e-5&&moist-0.015>-1e-5) {
+			else if (fabs(moist - 0.015)<1e-5) {
 					if ((100.0 < nod_temp) && (nod_temp <= 115.0)) {
 						double c11 = 3381000.0;
 						double c12 = -172500000.0;
@@ -276,7 +276,7 @@ ConcreteEC2::getEnthalpy(double temp)
 								+ c15;
 					}
 			} 
-			else if (moist - 0.03<1e-5&&moist-0.03>-1e-5) {
+			else if (fabs(moist - 0.03)<1e-5) {
 					if ((100.0 < nod_temp) && (nod_temp <= 115.0)) {
 						double c31 = 4646000.0;
 						double c32 = -299000000.0;
@@ -296,15 +296,15 @@ ConcreteEC2::getEnthalpy(double temp)
 	} else if ((200.0 < nod_temp) && (nod_temp <= 400.0)) {
 			double cc0 = 575.0;
 			double cc1 = 2070000.0;
-			if (moist <1e-5&&moist>-1e-5) {
+			if (fabs(moist)<1e-5) {
 				double c4 = -52900000.0;
 				enthp = cc0 * nod_temp * nod_temp + cc1 * nod_temp + c4;
 			} 
-			else if (moist - 0.015<1e-5&&moist-0.015>-1e-5) {
+			else if (fabs(moist - 0.015)<1e-5) {
 					double c5 = 20757500.0;
 					enthp = cc0 * nod_temp * nod_temp + cc1 * nod_temp + c5;
 			} 
-			else if (moist - 0.03<1e-5&&moist-0.03>-1e-5) {
+			else if (fabs(moist - 0.03)<1e-5) {
 					double c6 = 93495000.0;
 					enthp = cc0 * nod_temp * nod_temp + cc1 * nod_temp + c6;
 					} 
@@ -315,15 +315,15 @@ ConcreteEC2::getEnthalpy(double temp)
 				//} else if ((400.0 < nod_temp) && (nod_temp <= 1200.0)) {
 	} else if (400.0 < nod_temp) {
 				double cc2 = 2530000.0;
-				if (moist<1e-5&&moist>-1e-5) {
+				if (fabs(moist )<1e-5) {
 					double c7 = -144900000.0;
 					enthp = cc2 * nod_temp + c7;
 					} 
-				else if (moist - 0.015<1e-5&&moist-0.015>-1e-5) {
+				else if (fabs(moist - 0.015)<1e-5) {
 						double c8 = -71242500.0;
 						enthp = cc2 * nod_temp + c8;
 					} 
-				else if (moist - 0.03<1e-5&&moist-0.03>-1e-5) {
+				else if (fabs(moist - 0.03)<1e-5) {
 						double c9 = 1495000.0;
 						enthp = cc2 * nod_temp + c9;
 						} 
@@ -332,7 +332,7 @@ ConcreteEC2::getEnthalpy(double temp)
 								<< "are not available for moisture level " << moist << " .\n";
 						}
 	}
-
+	//opserr << enthp<<"     ";
 		return enthp;	
 }
 

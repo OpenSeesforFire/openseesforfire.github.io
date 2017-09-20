@@ -65,6 +65,24 @@ void OPS_clearAllUniaxialMaterial(void) {
   theUniaxialMaterialObjects.clearAll();
 }
 
+void OPS_printUniaxialMaterial(OPS_Stream &s, int flag) {
+  if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+    s << "\t\t\"uniaxialMaterials\": [\n";        
+    MapOfTaggedObjectsIter theObjects = theUniaxialMaterialObjects.getIter();
+    theObjects.reset();
+    TaggedObject *theObject;
+    int count = 0;
+    int numComponents = theUniaxialMaterialObjects.getNumComponents();    
+    while ((theObject = theObjects()) != 0) {
+      UniaxialMaterial *theMaterial = (UniaxialMaterial *)theObject;
+      theMaterial->Print(s, flag);
+      if (count < numComponents-1)
+	s << ",\n";
+      count++;      
+    }
+    s << "\n\t\t]";
+  }
+}
 
 UniaxialMaterial::UniaxialMaterial(int tag, int clasTag)
 :Material(tag,clasTag)
@@ -72,11 +90,18 @@ UniaxialMaterial::UniaxialMaterial(int tag, int clasTag)
 
 }
 
+
+UniaxialMaterial::UniaxialMaterial()
+    :Material(0, 0)
+{
+
+}
+
+
 UniaxialMaterial::~UniaxialMaterial()
 {
 	// does nothing
 }
-
 
 
 int
@@ -118,10 +143,6 @@ UniaxialMaterial::setTrial(double strain, double temperature, double &stress, do
     tangent = this->getTangent();
     this->getVariable(thermalPointer, info);
     thermalElongation = info.theDouble;
-#ifdef _DEBUG
-	//opserr<<"stress,"<<stress<<",strain,"<<strain<< ", tangent,"<<tangent<<endln
-		//<<"Temp,"<<temperature<<",Elon,"<<thermalElongation<<endln;
-#endif
 
   } else {
     opserr << "UniaxialMaterial::setTrial() - material failed in setTrialStrain()\n"; 
@@ -180,71 +201,92 @@ UniaxialMaterial::setResponse(const char **argv, int argc,
 {
   Response *theResponse = 0;
 
-  theOutput.tag("UniaxialMaterialOutput");
-  theOutput.attr("matType", this->getClassType());
-  theOutput.attr("matTag", this->getTag());
+  if ( (strcmp(argv[0],"stress") == 0) ||
+       (strcmp(argv[0],"tangent") == 0)||
+       (strcmp(argv[0],"strain") == 0) ||
+       (strcmp(argv[0],"stressStrain") == 0) ||
+       (strcmp(argv[0],"stressANDstrain") == 0) || 
+       (strcmp(argv[0],"stressAndStrain") == 0) ||
+       (strcmp(argv[0],"stressStrain") == 0) || 
+       (strcmp(argv[0],"stressANDstrain") == 0) ||
+       (strcmp(argv[0],"stressAndStrain") == 0) ||
+       (strcmp(argv[0],"stressStrainTangent") == 0) || 
+       (strcmp(argv[0],"stressANDstrainANDtangent") == 0) ||
+       (strstr(argv[0],"stressSensitivity") != 0) ||
+       (strstr(argv[0],"strainSensitivity") != 0)||
+	  (strstr(argv[0], "TempElong") != 0)) {
+    
+    theOutput.tag("UniaxialMaterialOutput");
+    theOutput.attr("matType", this->getClassType());
+    theOutput.attr("matTag", this->getTag());
+    
+    // stress
+    if (strcmp(argv[0],"stress") == 0) {
+      theOutput.tag("ResponseType", "sigma11");
+      theResponse =  new MaterialResponse(this, 1, this->getStress());
+    }  
+    // tangent
+    else if (strcmp(argv[0],"tangent") == 0) {
+      theOutput.tag("ResponseType", "C11");
+      theResponse =  new MaterialResponse(this, 2, this->getTangent());
+    }
+    
+    // strain
+    else if (strcmp(argv[0],"strain") == 0) {
+      theOutput.tag("ResponseType", "eps11");
+      theResponse =  new MaterialResponse(this, 3, this->getStrain());
+    }
 
-  // stress
-  if (strcmp(argv[0],"stress") == 0) {
-    theOutput.tag("ResponseType", "sigma11");
-    theResponse =  new MaterialResponse(this, 1, this->getStress());
-  }  
-  // tangent
-  else if (strcmp(argv[0],"tangent") == 0) {
-    theOutput.tag("ResponseType", "C11");
-    theResponse =  new MaterialResponse(this, 2, this->getTangent());
-  }
+    else if (strcmp(argv[0],"plasticStrain") == 0) {
+      theOutput.tag("ResponseType", "eps11");
+      theResponse =  new MaterialResponse(this, 6, this->getStrain());
+    }
+    
+    // strain
+    else if ((strcmp(argv[0],"stressStrain") == 0) || 
+	     (strcmp(argv[0],"stressANDstrain") == 0) ||
+	     (strcmp(argv[0],"stressAndStrain") == 0)) {
+      theOutput.tag("ResponseType", "sig11");
+      theOutput.tag("ResponseType", "eps11");
+      theResponse =  new MaterialResponse(this, 4, Vector(2));
+    }
+    
+    else if ((strcmp(argv[0],"stressStrainTangent") == 0) || 
+	     (strcmp(argv[0],"stressANDstrainANDtangent") == 0)) {
+      theOutput.tag("ResponseType", "sig11");
+      theOutput.tag("ResponseType", "eps11");
+      theOutput.tag("ResponseType", "C11");
+      theResponse =  new MaterialResponse(this, 5, Vector(3));
+    }
 
-  // strain
-  else if (strcmp(argv[0],"strain") == 0) {
-    theOutput.tag("ResponseType", "eps11");
-    theResponse =  new MaterialResponse(this, 3, this->getStrain());
+    // stress sensitivity for local sensitivity recorder purpose.  Quan 2009
+    // limit:  no more than 10000 random variables/sensitivity parameters
+    else if (strstr(argv[0],"stressSensitivity") != 0) {
+      char *token = strtok((char *) argv[0], " ");
+      if (token != NULL) token = strtok(NULL, " ");
+      int gradient = atoi(token);
+      theOutput.tag("ResponseType", "sigsens11");
+      theResponse =  new MaterialResponse(this, gradient+10000, this->getStress());
+    }
+    // strain sensivitiy
+    else if (strstr(argv[0],"strainSensitivity") != 0) {
+      char *token = strtok((char *) argv[0], " ");
+      if (token != NULL) token = strtok(NULL, " ");
+      int gradient = atoi(token);
+      theOutput.tag("ResponseType", "epssens11");
+      theResponse =  new MaterialResponse(this, gradient+20000, this->getStrain());
+    }
+	//Added by Liming, UoE, for temperature and elongation output,[SIF]2017
+	else if ((strcmp(argv[0], "TempElong") == 0) ||
+		(strcmp(argv[0], "tempANDelong") == 0)) {
+		theOutput.tag("ResponseType", "temp11");
+		theOutput.tag("ResponseType", "Elong11");
+		theResponse = new MaterialResponse(this, 7, Vector(2));
+	}
+    
+    theOutput.endTag();
   }
-
-  // strain
-  else if ((strcmp(argv[0],"stressStrain") == 0) || 
-	   (strcmp(argv[0],"stressANDstrain") == 0) ||
-	   (strcmp(argv[0],"stressAndStrain") == 0)) {
-    theOutput.tag("ResponseType", "sig11");
-    theOutput.tag("ResponseType", "eps11");
-    theResponse =  new MaterialResponse(this, 4, Vector(2));
-  }
-	    
-  else if ((strcmp(argv[0],"stressStrainTangent") == 0) || 
-	   (strcmp(argv[0],"stressANDstrainANDtangent") == 0)) {
-    theOutput.tag("ResponseType", "sig11");
-    theOutput.tag("ResponseType", "eps11");
-    theOutput.tag("ResponseType", "C11");
-    theResponse =  new MaterialResponse(this, 5, Vector(3));
-  }
-//Added by Liming, UoE, for temperature and elongation output
-  else if ((strcmp(argv[0],"TempElong") == 0) || 
-	   (strcmp(argv[0],"tempANDelong") == 0) ) {
-    theOutput.tag("ResponseType", "temp11");
-    theOutput.tag("ResponseType", "Elong11");
-    theResponse =  new MaterialResponse(this, 6, Vector(2));
-  }
-
-  // stress sensitivity for local sensitivity recorder purpose.  Quan 2009
-  // limit:  no more than 10000 random variables/sensitivity parameters
-  else if (strstr(argv[0],"stressSensitivity") != 0) {
-    char *token = strtok((char *) argv[0], " ");
-    if (token != NULL) token = strtok(NULL, " ");
-    int gradient = atoi(token);
-    theOutput.tag("ResponseType", "sigsens11");
-    theResponse =  new MaterialResponse(this, gradient+10000, this->getStress());
-  }
-  // strain sensivitiy
-  else if (strstr(argv[0],"strainSensitivity") != 0) {
-    char *token = strtok((char *) argv[0], " ");
-    if (token != NULL) token = strtok(NULL, " ");
-    int gradient = atoi(token);
-    theOutput.tag("ResponseType", "epssens11");
-    theResponse =  new MaterialResponse(this, gradient+20000, this->getStrain());
-  }
-
-
-  theOutput.endTag();
+  
   return theResponse;
 
 }
@@ -254,9 +296,10 @@ UniaxialMaterial::getResponse(int responseID, Information &matInfo)
 {
   static Vector stressStrain(2);
   static Vector stressStrainTangent(3);
-  static Vector tempData(2);
-  static Information infoData(tempData);
-  //static Vector TempElong(2);
+
+  static Vector tempData(2);  //L.jiang [SIF]
+  static Information infoData(tempData);  //L.jiang [SIF]
+
   // each subclass must implement its own stuff   
 
   // added for sensitivity recorder. Quan 2009
@@ -268,6 +311,10 @@ UniaxialMaterial::getResponse(int responseID, Information &matInfo)
       matInfo.setDouble(this->getStrainSensitivity(responseID-20000));
       return 0;
   }
+
+  double kInit;
+  double stress;
+  double strain;
 
   switch (responseID) {
     case 1:
@@ -281,29 +328,37 @@ UniaxialMaterial::getResponse(int responseID, Information &matInfo)
     case 3:
       matInfo.setDouble(this->getStrain());
       return 0;      
+
+  case 6: // an approx to plastic strain
+      strain = this->getStrain();
+      stress = this->getStress();
+      kInit = this->getTangent();
+      strain = strain-stress/kInit;
+      matInfo.setDouble(strain);
+      return 0;      
     
     case 4:
       stressStrain(0) = this->getStress();
       stressStrain(1) = this->getStrain();
       matInfo.setVector(stressStrain);
       return 0;
-
-	case 5:
+      
+	  case 5:
       stressStrainTangent(0) = this->getStress();
       stressStrainTangent(1) = this->getStrain();
-	  stressStrainTangent(2) = this->getTangent();
+      stressStrainTangent(2) = this->getTangent();
       matInfo.setVector(stressStrainTangent);
-	  return 0;
-
-	 case 6:
-		 if((this->getVariable("TempAndElong", infoData))!=0){
-			 opserr<<"Warning: invalid tag in uniaxialMaterial:getVariable"<<endln;
-			 return -1;
-		 }
-      tempData = infoData.getData();
-      matInfo.setVector(tempData);
       return 0;
-
+	 
+	  //Added by Liming, UoE, for temperature and elongation output,[SIF]2017
+	  case 7:
+		  if ((this->getVariable("TempAndElong", infoData)) != 0) {
+			  opserr << "Warning: invalid tag in uniaxialMaterial:getVariable" << endln;
+			  return -1;
+		  }
+		  tempData = infoData.getData();
+		  matInfo.setVector(tempData);
+		  return 0;
   default:      
     return -1;
   }
@@ -319,6 +374,12 @@ UniaxialMaterial::getStressSensitivity(int gradIndex, bool conditional)
 
 double
 UniaxialMaterial::getStrainSensitivity(int gradIndex)
+{
+    return 0.0;
+}
+
+double
+UniaxialMaterial::getTangentSensitivity(int gradIndex)
 {
     return 0.0;
 }

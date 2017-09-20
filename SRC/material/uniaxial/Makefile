@@ -1,27 +1,40 @@
 include ../../../Makefile.def
 
- OBJS       = UniaxialMaterial.o \
+OBJS       = UniaxialMaterial.o \
 	ElasticMaterial.o \
-        ElasticMaterialThermal.o \
 	Elastic2Material.o \
+	Steel2.o \
+	OriginCentered.o \
+	ConcretewBeta.o \
+	ConcreteD.o \
+	ConcreteSakaiKawashima.o \
+	ConcreteCM.o \
+	SteelMPF.o \
+	c14-SK-M.o \
 	ElasticMultiLinear.o \
         ElasticPPMaterial.o \
         ElasticBilin.o \
 	ParallelMaterial.o \
+	ResilienceLow.o \
+	AxialSp.o \
+	BWBN.o \
+	AxialSpHD.o \
+	AxialSp.o \
 	Neoprene.o \
 	Maxwell.o \
+	ViscousDamper.o \
+	BilinearOilDamper.o \
 	Cast.o \
         HardeningMaterial.o \
 	Concrete01.o \
 	Concrete02Thermal.o \
 	Steel02Thermal.o \
 	Steel01Thermal.o \
-	Steel01PThermal.o \
-	SteelECThermal.o \
-        ConcreteECThermal.o \
 	Concrete04.o \
 	Concrete06.o \
 	Concrete07.o \
+	ResilienceMaterialHR.o \
+	RambergOsgoodSteel.o \
 	Steel01.o \
         HystereticMaterial.o \
 	EPPGapMaterial.o \
@@ -29,6 +42,7 @@ include ../../../Makefile.def
 	SeriesMaterial.o \
 	InitStrainMaterial.o \
 	InitStressMaterial.o \
+	SimpleFractureMaterial.o \
 	MinMaxMaterial.o \
         PathIndependentMaterial.o \
 	CableMaterial.o \
@@ -51,20 +65,21 @@ include ../../../Makefile.def
 	Bond_SP01.o \
 	UniaxialJ2Plasticity.o \
 	HyperbolicGapMaterial.o \
-	TclHyperbolicGapMaterial.o \
 	ImpactMaterial.o \
-	TclImpactMaterial.o \
 	KinematicHardening.o \
-	TclKinematicHardening.o \
 	NewUniaxialMaterial.o \
 	TclNewUnixialMaterial.o \
 	ReinforcingSteel.o \
-	TclReinforcingSteel.o \
 	PenaltyMaterial.o \
 	ContinuumUniaxial.o \
 	WrappedMaterial.o \
 	SecantMaterial.o \
 	Concrete01WithSITC.o \
+	ConcretewBeta.o \
+	FRPConfinedConcrete.o \
+	FRPConfinedConcrete02.o \
+	KikuchiAikenHDR.o \
+	KikuchiAikenLRB.o \
 	Concrete05.o \
 	ECC01.o \
 	PrestressedSteelMaterial.o \
@@ -77,9 +92,22 @@ include ../../../Makefile.def
 	ConfinedConcrete01.o \
 	ConfinedConcrete02.o \
 	ModIMKPeakOriented.o \
+	ModIMKPeakOriented02.o \
 	ModIMKPinching.o \
+	ModIMKPinching02.o \
 	pyUCLA.o \
 	Dodd_Restrepo.o DoddRestrepo.o \
+	STEELDR.o DoddRestr.o \
+	SteelBRB.o \
+	CubicSpline.o \
+	TriMatrix.o \
+	CFSSSWP.o \
+	CFSWSWP.o \
+	Steel4.o \
+	ConcreteECThermal.o \
+	ElasticMaterialThermal.o \
+	StainlessECThermal.o \
+	SteelECThermal.o \
         TclModelBuilderUniaxialMaterialCommand.o
 
 all:         $(OBJS)

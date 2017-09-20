@@ -307,6 +307,8 @@ FiberSectionGJThermal::setTrialSectionDeformation (const Vector &deforms)
     kData[4] += vas1as2;
     
     kData[5] += vas2 * zi; 
+	//if (FiberTemperature> 450)
+		//opserr << "Trial strain: " << strain << "   tangent: " << tangent << "   Tstress: " << stress << "Thelong: " << ThermalElongation <<"added s"<< sData[0]<< endln;
 
     double fs0 = stress * A;
     sData[0] += fs0;
@@ -1012,7 +1014,7 @@ FiberSectionGJThermal::determineFiberTemperature(const Vector& DataMixed, double
 
 		if (  fiberLocy <= dataTempe[1])
 		{
-			opserr <<"FiberSectionGJThermal::setTrialSectionDeformationTemperature -- fiber locy "<< fiberLocy <<" is out of the section";
+			opserr <<"FiberSectionGJThermal "<<this->getTag()<<":: fiber locy "<< fiberLocy <<" is out of the section below "<< dataTempe[1]<<endln;
 		}
 		else if (fiberLocy <= dataTempe[3])
 		{
@@ -1048,7 +1050,7 @@ FiberSectionGJThermal::determineFiberTemperature(const Vector& DataMixed, double
 		}
 		else 
 		{
-			opserr <<"FiberSectionGJThermal::setTrialSectionDeformation -- fiber loc " <<fiberLocy<<" is out of the section"<<endln;
+			opserr <<"FiberSectionGJThermal " << this->getTag() << " :: fiber loc " <<fiberLocy<<" is out of the section over" << dataTempe[17] << endln;
 		}
 	}
 	else if(DataMixed.Size()==25){

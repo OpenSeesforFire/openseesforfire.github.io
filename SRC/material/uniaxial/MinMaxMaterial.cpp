@@ -43,7 +43,7 @@
 #define OPS_Export 
 
 OPS_Export void *
-OPS_NewMinMaxMaterial(void)
+OPS_MinMaxMaterial(void)
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
@@ -72,12 +72,13 @@ OPS_NewMinMaxMaterial(void)
 
   argc = OPS_GetNumRemainingInputArgs();  
   while (argc > 1) {
-    char argvLoc[10];
-    if (OPS_GetString(argvLoc, 10) != 0) {
+    //char argvLoc[10];
+    const char *argvLoc = OPS_GetString();
+    /*    if (OPS_GetString(argvLoc, 10) != 0) {
       opserr << "WARNING invalid string option uniaxialMaterial MinMax tag: " << iData[0] << endln;
       return 0;
     }
-
+    */
     numData = 1;
 
     if ((strcmp(argvLoc, "-min") == 0) || (strcmp(argvLoc, "-Min") == 0) || (strcmp(argvLoc, "-MIN") == 0)) {
@@ -150,6 +151,24 @@ MinMaxMaterial::setTrialStrain(double strain, double strainRate)
     return theMaterial->setTrialStrain(strain, strainRate);
   }
 }
+
+
+int 
+MinMaxMaterial::setTrialStrain(double strain, double temp, double strainRate)
+{
+  if (Cfailed)
+    return 0;
+  
+  if (strain >= maxStrain || strain <= minStrain) {
+    Tfailed = true;
+    return 0;
+  }
+  else {
+    Tfailed = false;
+    return theMaterial->setTrialStrain(strain, temp, strainRate);
+  }
+}
+
 
 double 
 MinMaxMaterial::getStress(void)

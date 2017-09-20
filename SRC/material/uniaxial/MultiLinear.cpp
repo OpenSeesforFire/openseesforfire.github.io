@@ -34,11 +34,12 @@
 #include <Channel.h>
 #include <math.h>
 #include <float.h>
+#include <stdlib.h>
 
 #include <elementAPI.h>
 
 void *
-OPS_New_MultiLinear(void)
+OPS_MultiLinear(void)
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
@@ -383,8 +384,8 @@ MultiLinear::Print(OPS_Stream &s, int flag)
 {
     s << "MultiLinear tag: " << this->getTag() << endln;
     s << "  stress: " << tStress << " tangent: " << tTangent << endln;
-  opserr << "tSlope: " << tSlope << "numSlope: " << numSlope << endln;
-  opserr << data;
+    s << "tSlope: " << tSlope << "numSlope: " << numSlope << endln;
+    s << data;
 }
 
 

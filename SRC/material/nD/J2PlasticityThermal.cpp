@@ -41,10 +41,12 @@
 //  Yield condition enforced at time n+1 
 //
 //  set eta := 0 for rate independent case
+
+//Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io]
 //
 
 #include <J2PlasticityThermal.h>
-#include <J2PlaneStress.h>
+#include <J2PlaneStressThermal.h>
 #include <J2PlaneStrain.h>
 #include <J2AxiSymm.h>
 #include <J2PlateFiber.h>
@@ -65,6 +67,7 @@ double J2PlasticityThermal::initialTangent[3][3][3][3] ;   //material tangent
 double J2PlasticityThermal::IIdev[3][3][3][3] ; //rank 4 deviatoric 
 double J2PlasticityThermal::IbunI[3][3][3][3] ; //rank 4 I bun I 
 
+int J2PlasticityThermal::MaterialTag = 1000;
 //zero internal variables
 void J2PlasticityThermal :: zero ( ) 
 {
@@ -159,6 +162,7 @@ TempAndElong(2)
 
   ThermalElongation = 0.0;
   plastic_integrator();
+  Tchange = 0;
 }
 
 
@@ -181,6 +185,7 @@ J2PlasticityThermal :: J2PlasticityThermal(int    tag,
   strain(3,3),
 	TempAndElong(2)
 {
+	MaterialTag++;
   bulk        = K ;
   shear       = G ;
   sigma_y     = yield0 ;
@@ -252,6 +257,7 @@ J2PlasticityThermal :: J2PlasticityThermal(int    tag,
 
   ThermalElongation = 0;
   plastic_integrator();
+  Tchange = 0;
 }
 
 
@@ -348,14 +354,7 @@ J2PlasticityThermal :: ~J2PlasticityThermal( )
 NDMaterial*
 J2PlasticityThermal :: getCopy (const char *type)
 {
-    if (strcmp(type,"PlaneStress2D") == 0 || strcmp(type,"PlaneStress") == 0)
-    {
-	J2PlaneStress  *clone ;
-	clone = new J2PlaneStress(this->getTag(), bulk, shear, sigma_y,
-				  sigma_infty, delta, Hard, eta, rho) ;
-	return clone ;
-    }
-    else if ((strcmp(type,"ThreeDimensional") == 0) ||
+	if ((strcmp(type,"ThreeDimensional") == 0) ||
 	     (strcmp(type,"3D") == 0))
     {
 	J2ThreeDimensional  *clone ;
@@ -408,6 +407,7 @@ void J2PlasticityThermal :: plastic_integrator( )
   static Matrix dev_strain(3,3) ; //deviatoric strain
 
   static Matrix dev_stress(3,3) ; //deviatoric stress
+  Matrix els_stress(3, 3);
  
   static Matrix normal(3,3) ;     //normal to yield surface
 
@@ -452,7 +452,7 @@ void J2PlasticityThermal :: plastic_integrator( )
   dev_stress = dev_strain;
   dev_stress -= epsilon_p_n;
   dev_stress *= 2.0 * shear;
-
+  els_stress = dev_stress;
   //compute norm of deviatoric stress
 
   norm_tau = 0.0 ;
@@ -473,12 +473,12 @@ void J2PlasticityThermal :: plastic_integrator( )
   } //end if 
 
   //compute trial value of yield function
-
+  double yield = q(xi_n);
   phi = norm_tau -  root23 * q(xi_n) ;
 
   // check if phi > 0 
   
-  if ( phi > 0.0 ) { //plastic
+  if ( phi > 0.0&&Tchange==0 ) { //plastic
 
      //solve for gamma 
      gamma = 0.0 ;
@@ -506,6 +506,7 @@ void J2PlasticityThermal :: plastic_integrator( )
 	} //end if 
 	
      } //end while resid
+	 //opserr << resid << "  ";
 
      gamma *= (1.0 - 1e-08) ;
 
@@ -548,9 +549,16 @@ void J2PlasticityThermal :: plastic_integrator( )
   //add on bulk part of stress
 
   stress = dev_stress ;
-  for ( i = 0; i < 3; i++ )
-     stress(i,i) += bulk*trace ;
-
+  for (i = 0; i < 3; i++) {
+	  stress(i, i) += bulk*trace;
+	  els_stress(i,i)+= bulk*trace;
+  }
+    
+  if (Tchange == 1 || Tchange == 2) {
+	  stress(2, 2) = 0;
+	  if(Tchange==2)
+		Tchange = 0;
+  }
   //compute the tangent
 
   c1 = -4.0 * shear * shear ;
@@ -571,9 +579,9 @@ void J2PlasticityThermal :: plastic_integrator( )
           tangent[i][j][k][l] += (2.0*shear) * IIdev[i][j][k][l] ;
 
           //plastic terms 
-          tangent[i][j][k][l] += c2 * NbunN ;
+         // tangent[i][j][k][l] += c2 * NbunN ;
 
-	  tangent[i][j][k][l] += c3 * (  IIdev[i][j][k][l] - NbunN ) ;
+	 // tangent[i][j][k][l] += c3 * (  IIdev[i][j][k][l] - NbunN ) ;
 
           //minor symmetries 
           tangent [j][i][k][l] = tangent[i][j][k][l] ;
@@ -582,7 +590,7 @@ void J2PlasticityThermal :: plastic_integrator( )
 
     } // end for jj
   } // end for ii
-
+ // opserr << els_stress(0,0) << " " << els_stress(1, 1) <<" "<< els_stress(2, 2) <<", "<< stress(0,0) << " " << stress(1,1) << " " << stress(2, 2) << " sig "<< sigma_y <<" '"<<phi<< endln;
   return ;
 } 
 
@@ -701,8 +709,8 @@ J2PlasticityThermal::setThermalTangentAndElongation(double &tempT, double&ET, do
 		opserr << "the temperature is invalid\n";
 	}
 	
-	//ThermalElongation = 12e-6*(tempT);
-	TempAndElong(0) = TempT - 20;
+	//ThermalElongation = 0;
+	TempAndElong(0) = MaterialTag;
 	TempAndElong(1) = ThermalElongation;
 	//bulk = bulk_0;
 	//shear = shear_0;
@@ -712,7 +720,8 @@ J2PlasticityThermal::setThermalTangentAndElongation(double &tempT, double&ET, do
 	//ET = E;  
 	//ET = 3.84e10;
 	Elong = ThermalElongation;
-	this->plastic_integrator();
+	//this->plastic_integrator();
+	Tchange++;
 	return 0;
 }
 

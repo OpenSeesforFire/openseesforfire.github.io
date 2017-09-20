@@ -26,6 +26,8 @@
 // Created: 04/04
 //
 // Description: This file contains the class implementation of FiberSection2d.
+// Modified for SIF modelling by Jian Jiang,Liming Jiang [http://openseesforfire.github.io] 
+
 
 #include <stdlib.h>
 

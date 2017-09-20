@@ -29,6 +29,9 @@
 //      element for general nonlinear analysis,
 //      Eng.Comput.,1,77-88,1984
 
+#ifndef ShellMITC4_h
+#define ShellMITC4_h
+
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <math.h> 
@@ -50,16 +53,16 @@ class ShellMITC4 : public Element {
   
   //full constructor
   ShellMITC4( int tag, 
-	          int node1,
-	          int node2,
-			  int node3,
-			  int node4,
-			  SectionForceDeformation &theMaterial ) ;
+	      int node1,
+	      int node2,
+	      int node3,
+	      int node4,
+	      SectionForceDeformation &theMaterial,
+	      bool updateBasis=false) ;
   
   //destructor 
   virtual ~ShellMITC4( ) ;
 
-  //set domain because frank is a dumb ass 
   void setDomain( Domain *theDomain ) ;
   
   //get the number of external nodes
@@ -110,7 +113,7 @@ class ShellMITC4 : public Element {
     int getResponse( int responseID, Information &eleInfo );
       
     //plotting 
-    int displaySelf( Renderer &theViewer, int displayMode, float fact );
+    int displaySelf(Renderer &, int mode, float fact, const char **displayModes=0, int numModes=0);
 
   private : 
 
@@ -148,6 +151,10 @@ class ShellMITC4 : public Element {
 
     //compute local coordinates and basis
     void computeBasis( ) ;
+    //start Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
+    bool doUpdateBasis;
+    void updateBasis( ) ;
+    //end Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
         
     //inertia terms
     void formInertiaTerms( int tangFlag ) ;
@@ -185,7 +192,4 @@ class ShellMITC4 : public Element {
 
 
 
-
-
-
-
+#endif

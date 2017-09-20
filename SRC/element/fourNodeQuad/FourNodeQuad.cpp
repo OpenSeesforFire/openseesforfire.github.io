@@ -43,6 +43,72 @@
 #include <FEM_ObjectBroker.h>
 #include <ElementResponse.h>
 #include <ElementalLoad.h>
+#include <elementAPI.h>
+
+void* OPS_FourNodeQuad()
+{
+    int ndm = OPS_GetNDM();
+    int ndf = OPS_GetNDF();
+
+    if (ndm != 2 || ndf != 2) {
+	opserr << "WARNING -- model dimensions and/or nodal DOF not compatible with quad element\n";
+	return 0;
+    }
+    
+    if (OPS_GetNumRemainingInputArgs() < 8) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element FourNodeQuad eleTag? iNode? jNode? kNode? lNode? thk? type? matTag? <pressure? rho? b1? b2?>\n";
+	return 0;
+    }
+
+    // FourNodeQuadId, iNode, jNode, kNode, lNode
+    int idata[5];
+    int num = 5;
+    if (OPS_GetIntInput(&num,idata) < 0) {
+	opserr<<"WARNING: invalid integer inputs\n";
+	return 0;
+    }
+
+    double thk = 0.0;
+    num = 1;
+    if (OPS_GetDoubleInput(&num,&thk) < 0) {
+	opserr<<"WARNING: invalid double inputs\n";
+	return 0;
+    }
+
+    const char* type = OPS_GetString();
+
+    int matTag;
+    num = 1;
+    if (OPS_GetIntInput(&num,&matTag) < 0) {
+	opserr<<"WARNING: invalid matTag\n";
+	return 0;
+    }
+
+    NDMaterial* mat = OPS_getNDMaterial(matTag);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "Material: " << matTag;
+	opserr << "\nFourNodeQuad element: " << idata[0] << endln;
+	return 0;
+    }
+
+    // p, rho, b1, b2
+    double data[4] = {0,0,0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 4) {
+	num = 4;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,data) < 0) {
+	    opserr<<"WARNING: invalid integer data\n";
+	    return 0;
+	}	
+    }
+
+    return new FourNodeQuad(idata[0],idata[1],idata[2],idata[3],idata[4],
+			    *mat,type,thk,data[0],data[1],data[2],data[3]);
+}
 
 
 double FourNodeQuad::matrixData[64];
@@ -218,6 +284,7 @@ FourNodeQuad::setDomain(Domain *theDomain)
 	return;
     }
     this->DomainComponent::setDomain(theDomain);
+
     // Compute consistent nodal loads due to pressure
     this->setPressureLoadAtNodes();
 }
@@ -486,8 +553,8 @@ FourNodeQuad::addLoad(ElementalLoad *theLoad, double loadFactor)
 
 	if (type == LOAD_TAG_SelfWeight) {
 		applyLoad = 1;
-		appliedB[0] += loadFactor*b[0];
-		appliedB[1] += loadFactor*b[1];
+		appliedB[0] += loadFactor*data(0)*b[0];
+		appliedB[1] += loadFactor*data(1)*b[1];
 		return 0;
 	} else {
 		opserr << "FourNodeQuad::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
@@ -877,7 +944,7 @@ FourNodeQuad::Print(OPS_Stream &s, int flag)
 }
 
 int
-FourNodeQuad::displaySelf(Renderer &theViewer, int displayMode, float fact)
+FourNodeQuad::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 
     // first set the quantity to be displayed at the nodes;
@@ -943,8 +1010,8 @@ FourNodeQuad::displaySelf(Renderer &theViewer, int displayMode, float fact)
     
     int error = 0;
 
-    // finally we draw the element using drawPolygon
-    error += theViewer.drawPolygon (coords, values);
+    // finally we  the element using drawPolygon
+    error += theViewer.drawPolygon (coords, values, this->getTag());
 
     return error;
 }
@@ -1013,6 +1080,27 @@ FourNodeQuad::setResponse(const char **argv, int argc,
     theResponse =  new ElementResponse(this, 3, Vector(12));
   }
 
+  else if ((strcmp(argv[0],"strain") ==0) || (strcmp(argv[0],"strains") ==0)) {
+    for (int i=0; i<4; i++) {
+      output.tag("GaussPoint");
+      output.attr("number",i+1);
+      output.attr("eta",pts[i][0]);
+      output.attr("neta",pts[i][1]);
+
+      output.tag("NdMaterialOutput");
+      output.attr("classType", theMaterial[i]->getClassTag());
+      output.attr("tag", theMaterial[i]->getTag());
+      
+      output.tag("ResponseType","eta11");
+      output.tag("ResponseType","eta22");
+      output.tag("ResponseType","eta12");
+      
+      output.endTag(); // GaussPoint
+      output.endTag(); // NdMaterialOutput
+      }
+    theResponse =  new ElementResponse(this, 4, Vector(12));
+  }
+
   output.endTag(); // ElementOutput
 
   return theResponse;
@@ -1039,6 +1127,24 @@ FourNodeQuad::getResponse(int responseID, Information &eleInfo)
       stresses(cnt+2) = sigma(2);
       cnt += 3;
     }
+    
+    return eleInfo.setVector(stresses);
+      
+  } else if (responseID == 4) {
+
+    // Loop over the integration points
+    static Vector stresses(12);
+    int cnt = 0;
+    for (int i = 0; i < 4; i++) {
+
+      // Get material stress response
+      const Vector &sigma = theMaterial[i]->getStrain();
+      stresses(cnt) = sigma(0);
+      stresses(cnt+1) = sigma(1);
+      stresses(cnt+2) = sigma(2);
+      cnt += 3;
+    }
+
     return eleInfo.setVector(stresses);
 	
   } else
@@ -1054,29 +1160,12 @@ FourNodeQuad::setParameter(const char **argv, int argc, Parameter &param)
 
   int res = -1;
 
-  // material state (elastic/plastic) for UW soil materials
-  if (strcmp(argv[0],"materialState") == 0) {
-      return param.addObject(5,this);
-  }
-  // frictional strength parameter for UW soil materials
-  if (strcmp(argv[0],"frictionalStrength") == 0) {
-      return param.addObject(7,this);
-  }
-  // non-associative parameter for UW soil materials
-  if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-      return param.addObject(8,this);
-  }
-  // cohesion parameter for UW soil materials
-  if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-      return param.addObject(9,this);
-  }
-
   // quad pressure loading
-  if (strcmp(argv[0],"pressure") == 0)
+  if (strcmp(argv[0],"pressure") == 0) {
     return param.addObject(2, this);
-
+  }
   // a material parameter
-  else if (strstr(argv[0],"material") != 0) {
+  else if ((strstr(argv[0],"material") != 0) && (strcmp(argv[0],"materialState") != 0)) {
 
     if (argc < 3)
       return -1;
@@ -1127,41 +1216,6 @@ FourNodeQuad::updateParameter(int parameterID, Information &info)
 		pressure = info.theDouble;
 		this->setPressureLoadAtNodes();	// update consistent nodal loads
 		return 0;
-
-	case 5:
-		// added: C.McGann, U.Washington
-		for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 7:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 8:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 9:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-		
 
 	default: 
 	  /*	  

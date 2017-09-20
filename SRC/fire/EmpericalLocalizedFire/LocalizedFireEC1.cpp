@@ -68,7 +68,7 @@ LocalizedFireEC1::getFlux(HeatTransferNode* node, double time)
     double Lf = 0.0148 * pow(q,0.4) - 1.02 * d;
 	if (Lf < h) {
 		opserr << "LocalizedFireEC1::getFlux() - flame is not impinging ceiling, method has not implemented.\n";
-		exit(-1);
+		return -1;
 		}
 	double constant = 1.11 * 1e6 * pow(d,2.5);
 	double Qd_ast = q / constant;

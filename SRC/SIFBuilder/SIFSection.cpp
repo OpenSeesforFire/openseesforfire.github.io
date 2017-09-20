@@ -43,7 +43,8 @@
 #include <QuadCell.h> 
 #include <UniaxialFiber3d.h> 
 #include <UniaxialMaterial.h>
-#include <ConcreteSThermal.h>
+//#include <ConcreteSThermal.h>
+#include <PlasticDamageConcretePlaneStressThermal.h>
 #include <SteelECThermal.h>
 #include <PlateRebarMaterialThermal.h>
 #include <PlateFromPlaneStressMaterialThermal.h>
@@ -63,9 +64,9 @@
 SIFSection::SIFSection(int tag, int SectionTypeTag, SIFMaterial *theSifMaterial):TaggedObject(tag), 
 SectionTypeTag(SectionTypeTag) 
 {
-	//Section type:  Rectangular section (1), I section(2),protected Isection(22);
+	//Section type:  Rectangular section (1), I section(2),Composite section (3), protected Isection(22);
   //Section type can also be section for slab, because slab is also defined with sifmember,then we call it a slab section.
-  //Section type: Slab section (10),
+  //Section type: Slab section (10)
   
 
 	if (theSifMaterial!=0) {
@@ -224,7 +225,7 @@ SIFSection::DefineBeamSection(bool isElastic)
     UniaxialMaterial* theUniMaterial = SIFMaterialPtr->getUniaxialMaterial();
 	UniaxialMaterial* theUniMaterial1 = SIFMaterialPtr->getUniaxialMaterial(isElastic);
 	int matTag = theUniMaterial->getTag();
-
+	//-------------------------------------Rectangular Section--------------------------------
 	if(SectionTypeTag==1||SectionTypeTag==10){		// which means this is a rectangular section;
 		if(isElastic){
 			double E0= SIFMaterialPtr->getInitialModulus();
@@ -241,8 +242,8 @@ SIFSection::DefineBeamSection(bool isElastic)
 		
 		double Breadth = theSectionPars(0);
 		double Height = theSectionPars(1);
-		int numSubdivY = 8;				// number of subdivisions (fibers) in the local y direction;
-		int numSubdivZ = 16;				// number of subdivisions (fibers) in the local z direction;
+		int numSubdivY = 4;				// number of subdivisions (fibers) in the local y direction;
+		int numSubdivZ = 4;				// number of subdivisions (fibers) in the local z direction;
 		if(SectionTypeTag==10){
 			Breadth = theSectionPars(1);
 			Height = theSectionPars(0);
@@ -277,13 +278,13 @@ SIFSection::DefineBeamSection(bool isElastic)
 		Cell **cell = patch->getCells();			// get all the cells from the rectangular patch
     	if (cell == 0){
 			opserr <<  "WARNING out of run to create fibers\n";
-            return false;
+            return 0;
         }    
 
 		Fiber **fiber = new Fiber *[numFibers];
 		if (fiber == 0) {
 		opserr <<  "WARNING unable to allocate fibers \n";
-		return false;
+		return 0;
 		}
       
 
@@ -308,6 +309,7 @@ SIFSection::DefineBeamSection(bool isElastic)
 	    // Delete fiber array
 		delete [] fiber;
 	 }
+	//-----------------------------Isection---------------------------------------------------
 	 else if(SectionTypeTag==2||SectionTypeTag==22){		// which means this is an I section;
 		
 		double d = theSectionPars(0);
@@ -468,7 +470,7 @@ SIFSection::DefineBeamSection(bool isElastic)
 		delete []fiber;
 
 	 }
-	//end of defining Isection
+	//---------------------------------end of defining Isection-----------------------------------
 	  else if(SectionTypeTag==3){		// which means this is an composite section;
 		
 		double d = theSectionPars(0);
@@ -712,12 +714,21 @@ SIFSection::DefineShellSection(bool isElastic)
 		double thick = theSectionPars(0);
 		
 		//ConcreteSThermal::ConcreteSThermal(int tag, double rE, double rnu, double rfc, double rft, double rEs) :
-		NDMaterial* theNDConcrete = new ConcreteSThermal (11, 1.92e10,0.3,30e6, 3e6, 1.92e9);
+		//NDMaterial* theNDConcrete = new ConcreteSThermal (11, 1.92e10,0.3,30e6, 3e6, 1.92e9);
+		double ft = 3e6;
+		double fc = 30e6;
+		double E = 1.92e10;
+		double gt = ft*ft / E*4.0;
+		double gc = fc*fc / E * 6;
 
+		NDMaterial* theNDConcrete = new  PlasticDamageConcretePlaneStressThermal(11, E, 0.2, ft, fc,gt,gc,0.4, 4.0, 0.4,0.1);
 		//PlateFromPlaneStressMaterialThermal::PlateFromPlaneStressMaterialThermal(    
 				   //int tag, NDMaterial &ndMat, double g )
 		PlateFromPlaneStressMaterialThermal* thePlateMatCon = new PlateFromPlaneStressMaterialThermal (12, *theNDConcrete, 1.2e10);
-	  //SteelECThermal(int tag, int TypeTag , double FY, double E)
+		//ElasticIsotropic3DThermal* theMaterial3D = new ElasticIsotropic3DThermal(11, 1.92e10, 0.3, 0, 1.45e-5, 2);
+		//PlateFiberMaterialThermal(   int    tag, NDMaterial &the3DMaterial ) ;
+		//PlateFiberMaterialThermal* thePlateMatCon = new PlateFiberMaterialThermal(12, *theMaterial3D);
+		//SteelECThermal(int tag, int TypeTag , double FY, double E)
 		UniaxialMaterial* theRebarMat = new SteelECThermal(13, 22, 450e6, 2.06e11);
 		
 		//PlateRebarMaterialThermal(int tag, UniaxialMaterial &uniMat, double ang)
@@ -734,19 +745,20 @@ SIFSection::DefineShellSection(bool isElastic)
         
 	    theMats   = new NDMaterial*[nLayers];
         thickness = new double[nLayers];
-		
+		double rebarT0 = 1.98e-4;
+		double rebarT90 = 1.98e-4*2;
 		for(int i=0; i<nLayers; i++){
 			if(i==2||i==nLayers-3){
 				theMats[i] = thePlateRebar0;
-				thickness[i]= 1.98e-4;
+				thickness[i]= rebarT0;
 			}
 			else if(i==3||i==nLayers-4){
 				theMats[i] = thePlateRebar90;
-				thickness[i]= 1.98e-4;
+				thickness[i]= rebarT90;
 			}
 			else if(i==4||i==nLayers-5){
 				theMats[i] = thePlateMatCon;
-				thickness[i]= thick/(nLayers-4) - (1.98e-4)*2;			
+				thickness[i]= thick/(nLayers-4) - rebarT0- rebarT90;
 			}
 			else {
 				theMats[i] = thePlateMatCon;

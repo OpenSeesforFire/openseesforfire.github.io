@@ -50,8 +50,8 @@ static int numZeroLengthContactNTS2D = 0;
 
 #define PI 3.141592653589793238462643383279502884197169399
 
-Element * 
-OPS_NewZeroLengthContactNTS2D(void) {
+void * 
+OPS_ZeroLengthContactNTS2D(void) {
 
   if (numZeroLengthContactNTS2D == 0) {
     numZeroLengthContactNTS2D++;
@@ -70,13 +70,7 @@ OPS_NewZeroLengthContactNTS2D(void) {
     return 0;
   }
 
-  char nextString[10];
-  numData = 10;
-  if (OPS_GetString(nextString, numData) != 0) {
-    opserr << "ZeroLengthContactNTS2D::WARNING invalied -sNdNum string\n";
-    return 0;
-  }
-
+  const char *nextString = OPS_GetString();
   if (strcmp(nextString,"-sNdNum") != 0) {
     opserr << "ZeroLengthContactNTS2D:: expecting "<<
       "- element ZeroLengthContactNTS2D eleTag? -sNdNum sNode? -mNdNum mNode? -Nodes Nodes? Kn? Kt? phi? \n" ;
@@ -91,10 +85,7 @@ OPS_NewZeroLengthContactNTS2D(void) {
   }
 
   numData = 10;
-  if (OPS_GetString(nextString, numData) != 0) {
-    opserr << "ZeroLengthContactNTS2D::WARNING invalied -mNdNum string\n";
-    return 0;
-  }
+  nextString = OPS_GetString();
 
   if (strcmp(nextString,"-mNdNum") != 0) {
     opserr << "ZeroLengthContactNTS2D:: expecting "<<
@@ -117,10 +108,8 @@ OPS_NewZeroLengthContactNTS2D(void) {
   }
 
   numData = 10;
-  if (OPS_GetString(nextString, numData) != 0) {
-    opserr << "ZeroLengthContactNTS2D::WARNING invalied -Nodes string\n";
-    return 0;
-  }
+  nextString = OPS_GetString();
+
   if (strcmp(nextString,"-Nodes") != 0) {
     opserr << "ZeroLengthContactNTS2D:: expecting "<<
       "- element ZeroLengthContactNTS2D eleTag? -sNdNum sNode? -mNdNum mNode? -Nodes Nodes? Kn? Kt? phi? \n" ;
@@ -470,7 +459,7 @@ ZeroLengthContactNTS2D::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectB
 }
 
 int
-ZeroLengthContactNTS2D::displaySelf(Renderer &theViewer, int displayMode, float fact)
+ZeroLengthContactNTS2D::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 { 
  // nothing to display
     return 0;

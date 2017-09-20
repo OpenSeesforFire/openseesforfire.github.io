@@ -2,47 +2,86 @@ include ../../../Makefile.def
 
 #	ElasticCrossAnisotropic.o \
 
+ifdef DAMAGE2P_FLAG
+	DAMAGE_2P = Damage2p.o Damage2p3D.o Damage2ppstress.o 
+else
+	DAMAGE_2P =
+endif
+
+ifdef PLAINCONCRETE_FLAG
+	PLAINCONCRETE = PlainConcrete.o forumat.o
+else
+	PLAINCONCRETE =
+endif
+
+#	PlasticDamageConcretePlaneStress.o \
+
 OBJS       = NDMaterial.o \
-	BeamFiberMaterial.o \
+	$(DAMAGE_2P) $(PLAINCONCRETE) BeamFiberMaterial.o \
+	PlasticDamageConcretePlaneStress.o \
 	BeamFiberMaterial2d.o \
+	PlasticDamageConcrete3d.o \
+	LinearCap.o \
+	eig3.o \
+	FSAM.o \
+	AcousticMedium.o \
 	ElasticIsotropicAxiSymm.o\
 	ElasticIsotropicBeamFiber2d.o \
 	ElasticIsotropicBeamFiber.o \
 	ElasticIsotropicMaterial.o \
-	ElasticIsotropic3DThermal.o \
 	ElasticIsotropicPlaneStrain2D.o \
 	ElasticIsotropicPlaneStress2D.o \
 	ElasticIsotropicPlateFiber.o \
 	ElasticIsotropicThreeDimensional.o \
- 	PressureDependentElastic3D.o \
+	ElasticOrthotropicMaterial.o \
+	ElasticOrthotropicThreeDimensional.o \
+	PressureDependentElastic3D.o \
 	FeapMaterial.o \
 	J2AxiSymm.o \
 	J2PlaneStrain.o \
 	J2PlaneStress.o \
 	J2Plasticity.o \
 	J2PlateFiber.o \
+	J2PlateFibre.o \
+	J2BeamFiber2d.o \
+	J2BeamFiber3d.o \
 	J2ThreeDimensional.o \
 	PlaneStrainMaterial.o \
 	PlaneStressMaterial.o \
+	PlaneStressUserMaterial.o \
 	PlateFiberMaterial.o \
-	PlateFiberMaterialThermal.o \
+	PlateFromPlaneStressMaterial.o \
+	PlaneStressLayeredMaterial.o \
+	PlateRebarMaterial.o \
+	PlaneStressRebarMaterial.o \
 	CycLiqCP.o \
 	CycLiqCP3D.o \
 	CycLiqCPPlaneStrain.o \
+	CycLiqCPSP.o \
+	CycLiqCPSP3D.o \
+	CycLiqCPSPPlaneStrain.o \
 	TclModelBuilderNDMaterialCommand.o \
 	WrapperNDMaterial.o \
+	InitStressNDMaterial.o \
 	ConcreteMcftNonLinear5.o \
 	ConcreteMcftNonLinear7.o \
+	CapPlasticity.o \
+	ConcreteS.o \
+	SimplifiedJ2.o \
+	LinearCap.o \
+	AcousticMedium.o \
+	PlaneStressSimplifiedJ2.o \
 	DruckerPrager3DThermal.o \
 	DruckerPragerThermal.o \
-	DruckerPrager3DSteelThermal.o \
-	DruckerPragerSteelThermal.o \
-  PlateRebarMaterialThermal.o \
-  PlateFromPlaneStressMaterialThermal.o \
-  CapPlasticityThermal.o \
-  ConcreteSThermal.o
-  
-  
+	ElasticIsotropic3DThermal.o \
+	ElasticIsotropicMaterialThermal.o \
+	J2PlasticityThermal.o \
+	J2ThreeDimensionalThermal.o \
+	PlasticDamageConcretePlaneStressThermal.o \
+	PlateFiberMaterialThermal.o \
+	PlateFromPlaneStressMaterialThermal.o \
+	PlateRebarMaterialThermal.o 
+
 
 all: $(OBJS) 
 	@$(CD) $(FE)/material/nD/soil; $(MAKE);
@@ -50,6 +89,8 @@ all: $(OBJS)
 	@$(CD) $(FE)/material/nD/cyclicSoil; $(MAKE);
 	@$(CD) $(FE)/material/nD/reinforcedConcretePlaneStress; $(MAKE); 
 	@$(CD) $(FE)/material/nD/UWmaterials; $(MAKE);
+	@$(CD) $(FE)/material/nD/matCMM; $(MAKE);
+	@$(CD) $(FE)/material/nD/stressDensityModel; $(MAKE);
 
 # Miscellaneous
 
@@ -67,6 +108,8 @@ spotless: clean
 	@$(CD) $(FE)/material/nD/cyclicSoil; $(MAKE) wipe;
 	@$(CD) $(FE)/material/nD/reinforcedConcretePlaneStress; $(MAKE) wipe; 
 	@$(CD) $(FE)/material/nD/UWmaterials; $(MAKE) wipe;
+	@$(CD) $(FE)/material/nD/matCMM; $(MAKE) wipe;
+	@$(CD) $(FE)/material/nD/stressDensityModel; $(MAKE) wipe;
 
 wipe: spotless
 

@@ -30,6 +30,47 @@
 #include <FEM_ObjectBroker.h>
 #include <Information.h>
 #include <math.h>
+#include <elementAPI.h>
+#include <ID.h>
+
+void* OPS_FixedLocationBeamIntegration(int& integrationTag, ID& secTags)
+{
+    if(OPS_GetNumRemainingInputArgs() < 4) {
+	opserr<<"insufficient arguments:integrationTag,N,secTags,locations\n";
+	return 0;
+    }
+
+    // inputs: integrationTag,N
+    int iData[2];
+    int numData = 2;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) return 0;
+
+    integrationTag = iData[0];
+    int N = iData[1];
+    if(N > 0) {
+	secTags.resize(N);
+    } else {
+	secTags.resize(1);
+	N = 1;
+    }
+
+    // check argumments
+    Vector pt(N);
+    if(OPS_GetNumRemainingInputArgs() < 2*N) {
+	opserr<<"There must be "<<N<<"secTags and locations\n";
+	return 0;
+    }
+
+    // secTags
+    int *secptr = &secTags(0);
+    if(OPS_GetIntInput(&N,secptr) < 0) return 0;
+
+    // locations
+    double *locptr = &pt(0);
+    if(OPS_GetDoubleInput(&N,locptr) < 0) return 0;
+
+    return new FixedLocationBeamIntegration(N,pt);
+}
 
 FixedLocationBeamIntegration::FixedLocationBeamIntegration(int nIP,
 							   const Vector &pt):
@@ -140,14 +181,34 @@ FixedLocationBeamIntegration::activateParameter(int paramID)
 void
 FixedLocationBeamIntegration::Print(OPS_Stream &s, int flag)
 {
-  s << "FixedLocation" << endln;
-  s << " Points: " << pts;
-  s << " Weights: " << wts;
-  double sum = 0.0;
-  int N = wts.Size();
-  for (int i = 0; i < N; i++)
-    sum += fabs(wts(i));
-  s << " Condition Number: " << sum << endln;
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "{\"type\": \"FixedLocation\", ";
+		s << "\"points\": [";
+		int nIP = pts.Size();
+		for (int i = 0; i < nIP-1; i++)
+			s << pts(i) << ", ";
+		s << pts(nIP - 1) << "], ";
+		s << "\"weights\": [";
+		double sum = 0.0;
+		nIP = wts.Size();
+		for (int i = 0; i < nIP-1; i++) {
+			s << wts(i) << ", ";
+			sum += fabs(wts(i));
+		}
+		s << wts(nIP - 1) << "], ";
+		s << "\"conditionNumber\": " << sum << "}";
+	}
+
+	else {
+		s << "FixedLocation" << endln;
+		s << " Points: " << pts;
+		s << " Weights: " << wts;
+		double sum = 0.0;
+		int N = wts.Size();
+		for (int i = 0; i < N; i++)
+			sum += fabs(wts(i));
+		s << " Condition Number: " << sum << endln;
+	}
 }
 
 void 

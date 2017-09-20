@@ -23,6 +23,33 @@
 // $Source: /usr/local/cvs/OpenSees/SRC/element/forceBeamColumn/NewtonCotesBeamIntegration.cpp,v $
 
 #include <NewtonCotesBeamIntegration.h>
+#include <elementAPI.h>
+#include <ID.h>
+
+void* OPS_NewtonCotesBeamIntegration(int& integrationTag, ID& secTags)
+{
+    if(OPS_GetNumRemainingInputArgs() < 3) {
+	opserr<<"insufficient arguments:integrationTag,secTag,N\n";
+	return 0;
+    }
+
+    // inputs: integrationTag,secTag,N
+    int iData[3];
+    int numData = 3;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) return 0;
+
+    integrationTag = iData[0];
+    if(iData[2] > 0) {
+	secTags.resize(iData[2]);
+    } else {
+	secTags = ID();
+    }
+    for(int i=0; i<secTags.Size(); i++) {
+	secTags(i) = iData[1];
+    }
+
+    return new NewtonCotesBeamIntegration;
+}
 
 NewtonCotesBeamIntegration::NewtonCotesBeamIntegration():
   BeamIntegration(BEAM_INTEGRATION_TAG_NewtonCotes)
@@ -228,5 +255,11 @@ NewtonCotesBeamIntegration::getSectionWeights(int numSections, double L,
 void
 NewtonCotesBeamIntegration::Print(OPS_Stream &s, int flag)
 {
-  s << "NewtonCotes" << endln;
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "{\"type\": \"NewtonCotes\"}";
+	}
+	
+	else {
+		s << "NewtonCotes" << endln;
+	}
 }

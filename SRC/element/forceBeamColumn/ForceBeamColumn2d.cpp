@@ -72,10 +72,12 @@ Journal of Structural Engineering, Approved for publication, February 2007.
 #include <FEM_ObjectBroker.h>
 #include <Renderer.h>
 #include <math.h>
-
+#include <elementAPI.h>
+#include <string>
 #include <ElementResponse.h>
 #include <CompositeResponse.h>
 #include <ElementalLoad.h>
+#include <ElementIter.h>
 
 Matrix ForceBeamColumn2d::theMatrix(6,6);
 Vector ForceBeamColumn2d::theVector(6);
@@ -84,6 +86,180 @@ double ForceBeamColumn2d::workArea[200];
 Vector *ForceBeamColumn2d::vsSubdivide = 0;
 Matrix *ForceBeamColumn2d::fsSubdivide = 0;
 Vector *ForceBeamColumn2d::SsrSubdivide = 0;
+
+void* OPS_ForceBeamColumn2d()
+{
+    if(OPS_GetNumRemainingInputArgs() < 5) {
+	opserr<<"insufficient arguments:eleTag,iNode,jNode,transfTag,integrationTag\n";
+	return 0;
+    }
+
+    int ndm = OPS_GetNDM();
+    int ndf = OPS_GetNDF();
+    if(ndm != 2 || ndf != 3) {
+	opserr<<"ndm must be 2 and ndf must be 3\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[5];
+    int numData = 5;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	opserr << "WARNING invalid int inputs\n";
+	return 0;
+    }
+
+    // options
+    double mass = 0.0, tol=1e-12;
+    int maxIter = 10;
+    numData = 1;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	const char* type = OPS_GetString();
+	if(strcmp(type,"-iter") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 1) {
+		if(OPS_GetIntInput(&numData,&maxIter) < 0) {
+		    opserr << "WARNING invalid maxIter\n";
+		    return 0;
+		}
+		if(OPS_GetDoubleInput(&numData,&tol) < 0) {
+		    opserr << "WARNING invalid tol\n";
+		    return 0;
+		}
+	    }
+	} else if(strcmp(type,"-mass") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) {
+		    opserr << "WARNING invalid mass\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return 0;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[4]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return 0;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return 0;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+	    delete [] sections;
+	    return 0;
+	}
+    }
+
+    Element *theEle =  new ForceBeamColumn2d(iData[0],iData[1],iData[2],secTags.Size(),sections,
+					     *bi,*theTransf,mass,maxIter,tol);
+    delete [] sections;
+    return theEle;
+}
+
+int OPS_ForceBeamColumn2d(Domain& theDomain, const ID& elenodes, ID& eletags)
+{
+    if(OPS_GetNumRemainingInputArgs() < 2) {
+	opserr<<"insufficient arguments:transfTag,integrationTag\n";
+	return -1;
+    }
+
+    // inputs: 
+    int iData[2];
+    int numData = 2;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) return -1;
+
+    // options
+    double mass = 0.0, tol=1e-12;
+    int maxIter = 10;
+    numData = 1;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	const char* type = OPS_GetString();
+	if(strcmp(type,"-iter") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 1) {
+		if(OPS_GetIntInput(&numData,&maxIter) < 0) return -1;
+		if(OPS_GetDoubleInput(&numData,&tol) < 0) return -1;
+	    }
+	} else if(strcmp(type,"-mass") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) return -1;
+	    }
+	}
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_GetCrdTransf(iData[0]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return -1;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[1]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return -1;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return -1;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+		delete [] sections;
+	    return -1;
+	}
+    }
+
+    // create elements
+    ElementIter& theEles = theDomain.getElements();
+    Element* theEle = theEles();
+    int currTag = 0;
+    if (theEle != 0) {
+	currTag = theEle->getTag();
+    }
+    eletags.resize(elenodes.Size()/2);
+    for (int i=0; i<elenodes.Size()/2; i++) {
+	theEle = new ForceBeamColumn2d(--currTag,elenodes(2*i),elenodes(2*i+1),secTags.Size(),
+				       sections,*bi,*theTransf,mass,maxIter,tol);
+	if (theEle == 0) {
+	    opserr<<"WARING: run out of memory for creating element\n";
+	    return -1;
+	}
+	if (theDomain.addElement(theEle) == false) {
+	    opserr<<"WARNING: failed to add element to domain\n";
+	    delete theEle;
+	    return -1;
+	}
+	eletags(i) = currTag;
+    }
+    
+    delete [] sections;
+    return 0;
+}
 
 // constructor:
 // invoked by a FEM_ObjectBroker, recvSelf() needs to be invoked on this object.
@@ -114,7 +290,7 @@ ForceBeamColumn2d::ForceBeamColumn2d():
 }
 
 // constructor which takes the unique element tag, sections,
-// and the node ID's of it's nodal end points. 
+// and the node ID's of its nodal end points. 
 // allocates the necessary space needed by each object
 ForceBeamColumn2d::ForceBeamColumn2d (int tag, int nodeI, int nodeJ,
 				      int numSec, SectionForceDeformation **sec,
@@ -425,7 +601,6 @@ ForceBeamColumn2d::getInitialStiff(void)
   static Matrix kvInit(NEBD, NEBD);
   f.Invert(kvInit);
   Ki = new Matrix(crdTransf->getInitialGlobalStiffMatrix(kvInit));
-
   return *Ki;
 }
 
@@ -455,6 +630,18 @@ ForceBeamColumn2d::computeReactions(double *p0)
       double V = 0.5*wy*L;
       p0[1] -= V;
       p0[2] -= V;
+    }
+    else if (type == LOAD_TAG_Beam2dPartialUniformLoad) {
+      double wa = data(1)*loadFactor;  // Axial
+      double wy = data(0)*loadFactor;  // Transverse
+      double a = data(2)*L;
+      double b = data(3)*L;
+
+      p0[0] -= wa*(b-a);
+      double Fy = wy*(b-a);
+      double c = a + 0.5*(b-a);
+      p0[1] -= Fy*(1-c/L);
+      p0[2] -= Fy*c/L;
     }
     else if (type == LOAD_TAG_Beam2dPointLoad) {
       double P = data(0)*loadFactor;
@@ -493,7 +680,7 @@ ForceBeamColumn2d::computeReactionSensitivity(double *dp0dh, int gradNumber)
       const Vector &sens = eleLoads[i]->getSensitivityData(gradNumber);
       double dwydh = sens(0);
       double dwadh = sens(1);
-      
+
       //p0[0] -= wa*L;
       dp0dh[0] -= wa*dLdh + dwadh*L;
 
@@ -576,7 +763,7 @@ ForceBeamColumn2d::update()
 
   // update the transformation
   crdTransf->update();
-       
+
   // get basic displacements and increments
   const Vector &v = crdTransf->getBasicTrialDisp();    
 
@@ -687,10 +874,10 @@ ForceBeamColumn2d::update()
 	  vr(2) += v0[2];
 	  
 	  for (i=0; i<numSections; i++) {
-	    
+
 	    int order      = sections[i]->getOrder();
 	    const ID &code = sections[i]->getType();
-	    
+
 	    static Vector Ss;
 	    static Vector dSs;
 	    static Vector dvs;
@@ -725,7 +912,7 @@ ForceBeamColumn2d::update()
 		break;
 	      }
 	    }
-	    
+
 	    // Add the effects of element loads, if present
 	    // s = b*q + sp
 	    if (numEleLoads > 0)
@@ -764,16 +951,16 @@ ForceBeamColumn2d::update()
 	      const Matrix &fs0 = sections[i]->getInitialFlexibility();
 	      dvs.addMatrixVector(0.0, fs0, dSs, 1.0);
 	    }
-
+	    
 	    // set section deformations
 	    if (initialFlag != 0)
 	      vsSubdivide[i] += dvs;
-	    
+
 	    if (sections[i]->setTrialSectionDeformation(vsSubdivide[i]) < 0) {
 	      opserr << "ForceBeamColumn2d::update() - section failed in setTrial\n";
 	      return -1;
 	    }
-	    
+
 	    // get section resisting forces
 	    SsrSubdivide[i] = sections[i]->getStressResultant();
 
@@ -1086,6 +1273,64 @@ ForceBeamColumn2d::computeSectionForces(Vector &sp, int isec)
 	}
       }
     }
+    else if (type == LOAD_TAG_Beam2dPartialUniformLoad) {
+      double wa = data(1)*loadFactor;  // Axial
+      double wy = data(0)*loadFactor;  // Transverse
+      double a = data(2)*L;
+      double b = data(3)*L;
+
+      double Fa = wa*(b-a); // resultant axial load
+      double Fy = wy*(b-a); // resultant transverse load
+      double c = a + 0.5*(b-a);
+      double VI = Fy*(1-c/L);
+      double VJ = Fy*c/L;
+
+      for (int ii = 0; ii < order; ii++) {
+	
+	if (x <= a) {
+	  switch(code(ii)) {
+	  case SECTION_RESPONSE_P:
+	    sp(ii) += Fa;
+	    break;
+	  case SECTION_RESPONSE_MZ:
+	    sp(ii) -= VI*x;
+	    break;
+	  case SECTION_RESPONSE_VY:
+	    sp(ii) -= VI;
+	    break;
+	  default:
+	    break;
+	  }
+	}
+	else if (x >= b) {
+	  switch(code(ii)) {
+	  case SECTION_RESPONSE_MZ:
+	    sp(ii) += VJ*(x-L);
+	    break;
+	  case SECTION_RESPONSE_VY:
+	    sp(ii) += VJ;
+	    break;
+	  default:
+	    break;
+	  }
+	}
+	else {
+	  switch(code(ii)) {
+	  case SECTION_RESPONSE_P:
+	    sp(ii) += Fa-wa*(x-a);
+	    break;
+	  case SECTION_RESPONSE_MZ:
+	    sp(ii) += -VI*x + 0.5*wy*x*x + wy*a*(0.5*a-x);
+	    break;
+	  case SECTION_RESPONSE_VY:
+	    sp(ii) += -VI + wy*(x-a);
+	    break;
+	  default:
+	    break;
+	  }
+	}
+      }
+    }
     else if (type == LOAD_TAG_Beam2dPointLoad) {
       double P = data(0)*loadFactor;
       double N = data(1)*loadFactor;
@@ -1295,7 +1540,7 @@ ForceBeamColumn2d::getResistingForceIncInertia()
     
     double L = crdTransf->getInitialLength();
     double m = 0.5*rho*L;
-    
+
     theVector(0) += m*accel1(0);
     theVector(1) += m*accel1(1);
     theVector(3) += m*accel2(0);
@@ -1982,52 +2227,9 @@ ForceBeamColumn2d::Print(OPS_Stream &s, int flag)
     vp = crdTransf->getBasicTrialDisp();
     vp.addMatrixVector(1.0, fe, Se, -1.0);
     s << "#PLASTIC_HINGE_ROTATION " << vp[1] << " " << vp[2] << " " << 0.1*L << " " << 0.1*L << endln;
-/*
-    // allocate array of vectors to store section coordinates and displacements
-    static int maxNumSections = 0;
-    static Vector *coords = 0;
-    static Vector *displs = 0;
-    if (maxNumSections < numSections) {
-      if (coords != 0) 
-	delete [] coords;
-      if (displs != 0)
-	delete [] displs;
-      
-      coords = new Vector [numSections];
-      displs = new Vector [numSections];
-      
-      if (!coords) {
-	opserr << "NLBeamColumn3d::Print() -- failed to allocate coords array";   
-	exit(-1);
-      }
-      
-      int i;
-      for (i = 0; i < numSections; i++)
-	coords[i] = Vector(NDM);
-      
-      if (!displs) {
-	opserr << "NLBeamColumn3d::Print() -- failed to allocate coords array";   
-	exit(-1);
-      }
-      
-      for (i = 0; i < numSections; i++)
-	displs[i] = Vector(NDM);
-      
-      
-      maxNumSections = numSections;
-    }
-    
-    // compute section location & displacements
-    this->compSectionDisplacements(coords, displs);
-    
-    // spit out the section location & invoke print on the scetion
-    for (int i=0; i<numSections; i++) {
-      s << "#SECTION " << (coords[i])(0) << " " << (coords[i])(1);       
-      s << " " << (displs[i])(0) << " " << (displs[i])(1) << endln;
-      sections[i]->Print(s, flag); 
-    }
-    */
-  } else {
+  }
+
+  if (flag == OPS_PRINT_CURRENTSTATE) {
 
     s << "\nElement: " << this->getTag() << " Type: ForceBeamColumn2d ";
     s << "\tConnected Nodes: " << connectedExternalNodes ;
@@ -2053,6 +2255,21 @@ ForceBeamColumn2d::Print(OPS_Stream &s, int flag)
 	s << "\nSection "<<i<<" :" << *sections[i];
     }
   }
+
+  if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+    s << "\t\t\t{";
+	s << "\"name\": \"" << this->getTag() << "\", ";
+	s << "\"type\": \"ForceBeamColumn2d\", ";
+    s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+    s << "\"sections\": [";
+    for (int i = 0; i < numSections-1; i++)
+      s << "\"" << sections[i]->getTag() << "\", ";
+    s << "\"" << sections[numSections-1]->getTag() << "\"], ";
+    s << "\"integration\": ";
+    beamIntegr->Print(s, flag);
+	s << ", \"rho\": " << rho << ", ";
+	s << "\"crdTransformation\": \"" << crdTransf->getTag() << "\"}";
+  }  
 }
 
 OPS_Stream &operator<<(OPS_Stream &s, ForceBeamColumn2d &E)
@@ -2117,42 +2334,36 @@ ForceBeamColumn2d::setSectionPointers(int numSec, SectionForceDeformation **secP
 }
 
 int
-ForceBeamColumn2d::displaySelf(Renderer &theViewer, int displayMode, float fact)
+ForceBeamColumn2d::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **displayModes, int numModes)
 {
-  // first determine the end points of the beam based on
-  // the display factor (a measure of the distorted image)
-  const Vector &end1Crd = theNodes[0]->getCrds();
-  const Vector &end2Crd = theNodes[1]->getCrds();	
-
   static Vector v1(3);
   static Vector v2(3);
 
   if (displayMode >= 0) {
-    const Vector &end1Disp = theNodes[0]->getDisp();
-    const Vector &end2Disp = theNodes[1]->getDisp();
-    
-    for (int i = 0; i < 2; i++) {
-      v1(i) = end1Crd(i) + end1Disp(i)*fact;
-      v2(i) = end2Crd(i) + end2Disp(i)*fact;    
-    }
+
+    theNodes[0]->getDisplayCrds(v1, fact);
+    theNodes[1]->getDisplayCrds(v2, fact);
+
   } else {
+
+    theNodes[0]->getDisplayCrds(v1, 0.);
+    theNodes[1]->getDisplayCrds(v2, 0.);
+
+    // add eigenvector values
     int mode = displayMode  *  -1;
     const Matrix &eigen1 = theNodes[0]->getEigenvectors();
     const Matrix &eigen2 = theNodes[1]->getEigenvectors();
     if (eigen1.noCols() >= mode) {
       for (int i = 0; i < 2; i++) {
-	v1(i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-	v2(i) = end2Crd(i) + eigen2(i,mode-1)*fact;    
+	v1(i) += eigen1(i,mode-1)*fact;
+	v2(i) += eigen2(i,mode-1)*fact;    
       }    
-    } else {
-      for (int i = 0; i < 2; i++) {
-	v1(i) = end1Crd(i);
-	v2(i) = end2Crd(i);
-      }    
-    }
+    } 
   }
+
+
   
-  return theViewer.drawLine (v1, v2, 1.0, 1.0);
+  return theViewer.drawLine (v1, v2, 1.0, 1.0, this->getTag());
 }
 
 Response*
@@ -2179,7 +2390,6 @@ ForceBeamColumn2d::setResponse(const char **argv, int argc, OPS_Stream &output)
 
     theResponse =  new ElementResponse(this, 1, theVector);
   
-  
   // local force -
   } else if (strcmp(argv[0],"localForce") == 0 || strcmp(argv[0],"localForces") == 0) {
 
@@ -2191,7 +2401,6 @@ ForceBeamColumn2d::setResponse(const char **argv, int argc, OPS_Stream &output)
     output.tag("ResponseType","M_2");
 
     theResponse =  new ElementResponse(this, 2, theVector);
-  
 
   // basic force -
   } else if (strcmp(argv[0],"basicForce") == 0 || strcmp(argv[0],"basicForces") == 0) {
@@ -2201,6 +2410,15 @@ ForceBeamColumn2d::setResponse(const char **argv, int argc, OPS_Stream &output)
     output.tag("ResponseType","M_2");
 
     theResponse =  new ElementResponse(this, 7, Vector(3));
+
+  // basic stiffness -
+  } else if (strcmp(argv[0],"basicStiffness") == 0) {
+
+    output.tag("ResponseType","N");
+    output.tag("ResponseType","M1");
+    output.tag("ResponseType","M2");
+
+    theResponse =  new ElementResponse(this, 19, Matrix(3,3));
 
   // chord rotation -
   } else if (strcmp(argv[0],"chordRotation") == 0 || strcmp(argv[0],"chordDeformation") == 0 
@@ -2260,11 +2478,17 @@ ForceBeamColumn2d::setResponse(const char **argv, int argc, OPS_Stream &output)
   else if (strcmp(argv[0],"integrationWeights") == 0)
     theResponse = new ElementResponse(this, 11, Vector(numSections));
 
-  else if (strcmp(argv[0],"RayleighForces") == 0 || strcmp(argv[0],"rayleighForces") == 0) {
+  else if (strcmp(argv[0],"RayleighForces") == 0 || strcmp(argv[0],"rayleighForces") ==0 || strcmp(argv[0],"dampingForces") == 0) { 
 
-    theResponse =  new ElementResponse(this, 12, theVector);
+    output.tag("ResponseType","Px_1");
+    output.tag("ResponseType","Py_1");
+    output.tag("ResponseType","Mz_1");
+    output.tag("ResponseType","Px_2");
+    output.tag("ResponseType","Py_2");
+    output.tag("ResponseType","Mz_2");
 
-
+    theResponse =  new ElementResponse(this, 13, theVector);
+  
     // section response -
   } else if (strstr(argv[0],"sectionX") != 0) {
     if (argc > 2) {
@@ -2375,7 +2599,7 @@ ForceBeamColumn2d::getResponse(int responseID, Information &eleInfo)
   if (responseID == 1)
     return eleInfo.setVector(this->getResistingForce());
 
-  else if (responseID == 12)
+  else if (responseID == 13)
     return eleInfo.setVector(this->getRayleighDampingForces());
   
   else if (responseID == 2) {
@@ -2390,11 +2614,6 @@ ForceBeamColumn2d::getResponse(int responseID, Information &eleInfo)
     theVector(1) =  V+p0[1];
     theVector(4) = -V+p0[2];
     return eleInfo.setVector(theVector);
-  }
-
-  // Chord rotation
-  else if (responseID == 7) {
-    return eleInfo.setVector(Se);
   }
       
   // Chord rotation
@@ -2487,6 +2706,10 @@ ForceBeamColumn2d::getResponse(int responseID, Information &eleInfo)
 
   else if (responseID == 7)
     return eleInfo.setVector(Se);
+
+  else if (responseID == 19)
+    return eleInfo.setMatrix(kv);
+
 
   /*
   // Curvature sensitivity
@@ -2608,12 +2831,13 @@ ForceBeamColumn2d::getResponseSensitivity(int responseID, int gradNumber,
     
     double dptsdh[maxNumSections];
     beamIntegr->getLocationsDeriv(numSections, L, dLdh, dptsdh);
-    double dxLdh = dptsdh[sectionNum-1];
+    double dxLdh = dptsdh[sectionNum-1];// - xL/L*dLdh;
 
     for (int j = 0; j < order; j++) {
       switch (code(j)) {
       case SECTION_RESPONSE_MZ:
 	dsdh(j) += dxLdh*(Se(1)+Se(2));
+	//dsdh(j) -= dLdh*xL/L*(Se(1)+Se(2));
 	break;
       case SECTION_RESPONSE_VY:
 	dsdh(j) += d1oLdh*(Se(1)+Se(2));
@@ -2687,11 +2911,13 @@ ForceBeamColumn2d::setParameter(const char **argv, int argc, Parameter &param)
 
   int result = -1;
 
-  if (strcmp(argv[0],"rho") == 0)
+  if (strcmp(argv[0],"rho") == 0) {
+    param.setValue(rho);
     return param.addObject(1, this);
+  }
   
   // section response -
-  else if (strstr(argv[0],"sectionX") != 0) {
+  if (strstr(argv[0],"sectionX") != 0) {
     if (argc > 2) {
       float sectionLoc = atof(argv[1]);
 
@@ -2715,7 +2941,7 @@ ForceBeamColumn2d::setParameter(const char **argv, int argc, Parameter &param)
   }
 
   // If the parameter belongs to a section or lower
-  else if (strstr(argv[0],"section") != 0) {
+  if (strstr(argv[0],"section") != 0) {
     
     if (argc < 3)
       return -1;
@@ -2740,7 +2966,7 @@ ForceBeamColumn2d::setParameter(const char **argv, int argc, Parameter &param)
     */
   }
   
-  else if (strstr(argv[0],"integration") != 0) {
+  if (strstr(argv[0],"integration") != 0) {
     
     if (argc < 2)
       return -1;
@@ -2796,6 +3022,11 @@ const Matrix&
 ForceBeamColumn2d::getMassSensitivity(int gradNumber)
 {
   theMatrix.Zero();
+  
+  double L = crdTransf->getInitialLength();
+  if (rho != 0.0 && parameterID == 1)
+    theMatrix(0,0) = theMatrix(1,1) = theMatrix(3,3) = theMatrix(4,4) = 0.5*L;
+  
   return theMatrix;
 }
 
@@ -2960,7 +3191,7 @@ ForceBeamColumn2d::computedqdh(int gradNumber)
     double xL1 = xL-1.0;
     double wtL = wts[i]*L;
     
-    double dxLdh  = dptsdh[i];
+    double dxLdh  = dptsdh[i];// - xL/L*dLdh;
     double dwtLdh = wts[i]*dLdh + dwtsdh[i]*L;
 
     //opserr << dptsdh[i] << ' ' << dwtsdh[i] << endln;

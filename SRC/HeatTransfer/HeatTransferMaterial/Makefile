@@ -1,7 +1,7 @@
 include ../../../Makefile.def
 
 OBJS       =  CarbonSteelEC3.o ConcreteEC2.o HeatTransferMaterial.o SimpleMaterial.o \
-             SteelASCE.o TestMaterial.o TestMaterial2.o SFRMCoating.o
+             SteelASCE.o TestMaterial.o TestMaterial2.o SFRMCoating.o StainlessSteelEC.o
 
 all:         $(OBJS)
 	@$(CD) $(FE)/HeatTransfer/HeatTransferMaterial/AnisotropicMaterial; $(MAKE);

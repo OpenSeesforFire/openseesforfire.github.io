@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 5137 $
-// $Date: 2012-11-04 23:27:46 +0000 (Sun, 04 Nov 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/GenericClient.h $
+// $Revision: 6049 $
+// $Date: 2015-07-17 12:56:36 +0800 (Fri, 17 Jul 2015) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/GenericClient.h $
 
 #ifndef GenericClient_h
 #define GenericClient_h
@@ -110,7 +110,7 @@ public:
     // public methods for element output
     int sendSelf(int commitTag, Channel &sChannel);
     int recvSelf(int commitTag, Channel &rChannel, FEM_ObjectBroker &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);
+    int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode);
     void Print(OPS_Stream &s, int flag = 0);
     
     // public methods for element recorder
@@ -121,9 +121,9 @@ protected:
     
 private:
     // private attributes - a copy for each object of the class
-    ID connectedExternalNodes;      // contains the tags of the end nodes
-    ID *theDOF;                     // array with the dof of the end nodes
-    ID basicDOF;                    // contains the basic dof
+    ID connectedExternalNodes;  // contains the tags of the end nodes
+    ID *theDOF;                 // array with the dof of the end nodes
+    ID basicDOF;                // contains the basic dof
     
     int numExternalNodes;       // number of external nodes
     int numDOF;                 // number of total DOF
@@ -136,11 +136,11 @@ private:
     int dataSize;               // data size of send/recv vectors
     int addRayleigh;            // flag to add Rayleigh damping
     
-    static Matrix theMatrix;        // objects matrix
-    static Matrix theInitStiff;     // initial stiffness matrix
-    static Matrix theMass;          // mass matrix
-    static Vector theVector;        // objects vector
-    static Vector theLoad;          // load vector
+    Matrix theMatrix;           // objects matrix
+    Vector theVector;           // objects vector
+    Vector theLoad;             // load vector
+    Matrix theInitStiff;        // initial stiffness matrix
+    Matrix theMass;             // mass matrix
     
     Channel *theChannel;        // channel
     double *sData;              // send data array
@@ -148,17 +148,17 @@ private:
     double *rData;              // receive data array
     Vector *recvData;           // receive vector
     
-    Vector *db;         // trial displacements in basic system
-    Vector *vb;         // trial velocities in basic system
-    Vector *ab;         // trial accelerations in basic system
-    Vector *t;          // trial time
+    Vector *db;                 // trial displacements in basic system
+    Vector *vb;                 // trial velocities in basic system
+    Vector *ab;                 // trial accelerations in basic system
+    Vector *t;                  // trial time
     
-    Vector *qDaq;       // daq forces in basic system
-    Matrix *rMatrix;    // receive matrix
+    Vector *qDaq;               // daq forces in basic system
+    Matrix *rMatrix;            // receive matrix
     
-    Vector dbCtrl;      // ctrl displacements in basic system
-    Vector vbCtrl;      // ctrl velocities in basic system
-    Vector abCtrl;      // ctrl accelerations in basic system
+    Vector dbCtrl;              // ctrl displacements in basic system
+    Vector vbCtrl;              // ctrl velocities in basic system
+    Vector abCtrl;              // ctrl accelerations in basic system
     
     bool initStiffFlag;
     bool massFlag;

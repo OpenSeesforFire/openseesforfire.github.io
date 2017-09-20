@@ -50,7 +50,7 @@
 
 
 void *
-OPS_NewSteel01()
+OPS_Steel01()
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
@@ -525,14 +525,30 @@ int Steel01::recvSelf (int commitTag, Channel& theChannel,
 
 void Steel01::Print (OPS_Stream& s, int flag)
 {
-   s << "Steel01 tag: " << this->getTag() << endln;
-   s << "  fy: " << fy << " ";
-   s << "  E0: " << E0 << " ";
-   s << "  b:  " << b << " ";
-   s << "  a1: " << a1 << " ";
-   s << "  a2: " << a2 << " ";
-   s << "  a3: " << a3 << " ";
-   s << "  a4: " << a4 << " ";
+  if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {    
+    s << "Steel01 tag: " << this->getTag() << endln;
+    s << "  fy: " << fy << " ";
+    s << "  E0: " << E0 << " ";
+    s << "   b: " << b << " ";
+    s << "  a1: " << a1 << " ";
+    s << "  a2: " << a2 << " ";
+    s << "  a3: " << a3 << " ";
+    s << "  a4: " << a4 << " ";
+  }
+
+  if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+    s << "\t\t\t{";
+	s << "\"name\": \"" << this->getTag() << "\", ";
+	s << "\"type\": \"Steel01\", ";
+	s << "\"E\": " << E0 << ", ";
+	s << "\"fy\": " << fy << ", ";
+    s << "\"b\": " << b << ", ";
+    s << "\"a1\": " << a1 << ", ";
+    s << "\"a2\": " << a2 << ", ";
+    s << "\"a3\": " << a3 << ", ";
+    s << "\"a4\": " << a4 << "}";
+  }
+  
 }
 
 
@@ -543,26 +559,34 @@ int
 Steel01::setParameter(const char **argv, int argc, Parameter &param)
 {
 
-  if (strcmp(argv[0],"sigmaY") == 0 || strcmp(argv[0],"fy") == 0 || strcmp(argv[0],"Fy") == 0)
+  if (strcmp(argv[0],"sigmaY") == 0 || strcmp(argv[0],"fy") == 0 || strcmp(argv[0],"Fy") == 0) {
+    param.setValue(fy);
     return param.addObject(1, this);
-  
-  if (strcmp(argv[0],"E") == 0)
+  }
+  if (strcmp(argv[0],"E") == 0) {
+    param.setValue(E0);
     return param.addObject(2, this);
-  
-  if (strcmp(argv[0],"b") == 0)
+  }
+  if (strcmp(argv[0],"b") == 0) {
+    param.setValue(b);
     return param.addObject(3, this);
-  
-  if (strcmp(argv[0],"a1") == 0)
+  }
+  if (strcmp(argv[0],"a1") == 0) {
+    param.setValue(a1);
     return param.addObject(4, this);
-  
-  if (strcmp(argv[0],"a2") == 0)
+  }
+  if (strcmp(argv[0],"a2") == 0) {
+    param.setValue(a2);
     return param.addObject(5, this);
-  
-  if (strcmp(argv[0],"a3") == 0)
+  }
+  if (strcmp(argv[0],"a3") == 0) {
+    param.setValue(a3);
     return param.addObject(6, this);
-  
-  if (strcmp(argv[0],"a4") == 0)
+  }
+  if (strcmp(argv[0],"a4") == 0) {
+    param.setValue(a4);
     return param.addObject(7, this);
+  }
 
   return -1;
 }

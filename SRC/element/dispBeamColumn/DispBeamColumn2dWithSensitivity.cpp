@@ -1,4 +1,3 @@
-
 /* ****************************************************************** **
 **    OpenSees - Open System for Earthquake Engineering Simulation    **
 **          Pacific Earthquake Engineering Research Center            **
@@ -44,6 +43,7 @@
 #include <FEM_ObjectBroker.h>
 #include <ElementResponse.h>
 #include <ElementalLoad.h>
+#include <elementAPI.h>
 
 #define ELE_TAG_DispBeamColumn2dWithSensitivity 102030
 
@@ -51,6 +51,71 @@ Matrix DispBeamColumn2dWithSensitivity::K(6,6);
 Vector DispBeamColumn2dWithSensitivity::P(6);
 double DispBeamColumn2dWithSensitivity::workArea[100];
 
+void* OPS_DispBeamColumn2dWithSensitivity()
+{
+    if(OPS_GetNumRemainingInputArgs() < 5) {
+	opserr<<"insufficient arguments:eleTag,iNode,jNode,transfTag,integrationTag <-mass mass> <-cmass>\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[5];
+    int numData = 5;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	opserr<<"WARNING: invalid integer inputs\n";
+	return 0;
+    }
+
+    // options
+    double mass = 0.0;
+    numData = 1;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	const char* type = OPS_GetString();
+	if(strcmp(type,"-mass") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) {
+		    opserr<<"WARNING: invalid mass\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return 0;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[4]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return 0;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return 0;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+		delete [] sections;
+	    return 0;
+	}
+    }
+    
+    Element *theEle =  new DispBeamColumn2dWithSensitivity(iData[0],iData[1],iData[2],secTags.Size(),sections,*bi,*theTransf,mass);
+    delete [] sections;
+    return theEle;
+}
 
 DispBeamColumn2dWithSensitivity::DispBeamColumn2dWithSensitivity(int tag, int nd1, int nd2,
 				   int numSec, SectionForceDeformation **s,
@@ -710,24 +775,17 @@ DispBeamColumn2dWithSensitivity::getResistingForce()
 
   P = crdTransf->getGlobalResistingForce(q, p0Vec);
 
-  // Subtract other external nodal loads ... P_res = P_int - P_ext
-  //P.addVector(1.0, Q, -1.0);
-  P(0) -= Q(0);
-  P(1) -= Q(1);
-  P(2) -= Q(2);
-  P(3) -= Q(3);
-  P(4) -= Q(4);
-  P(5) -= Q(5);
-
   return P;
 }
 
 const Vector&
 DispBeamColumn2dWithSensitivity::getResistingForceIncInertia()
 {
-
-  this->getResistingForce();
-
+  P = this->getResistingForce();
+  
+  // Subtract other external nodal loads ... P_res = P_int - P_ext
+  P.addVector(1.0, Q, -1.0);
+  
   if (rho != 0.0) {
     const Vector &accel1 = theNodes[0]->getTrialAccel();
     const Vector &accel2 = theNodes[1]->getTrialAccel();
@@ -745,13 +803,13 @@ DispBeamColumn2dWithSensitivity::getResistingForceIncInertia()
 
     // add the damping forces if rayleigh damping
     if (alphaM != 0.0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0)
-      P += this->getRayleighDampingForces();
+      P.addVector(1.0, this->getRayleighDampingForces(), 1.0);
 
   } else {
 
     // add the damping forces if rayleigh damping
     if (betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0)
-      P += this->getRayleighDampingForces();
+      P.addVector(1.0, this->getRayleighDampingForces(), 1.0);
   }
 
   return P;
@@ -1029,7 +1087,7 @@ DispBeamColumn2dWithSensitivity::Print(OPS_Stream &s, int flag)
 
 
 int
-DispBeamColumn2dWithSensitivity::displaySelf(Renderer &theViewer, int displayMode, float fact)
+DispBeamColumn2dWithSensitivity::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
     // first determine the end points of the quad based on
     // the display factor (a measure of the distorted image)

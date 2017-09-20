@@ -3,7 +3,9 @@ include ../../../../../Makefile.def
 OBJS       = LimitCurve.o \
 	AxialCurve.o \
 	ShearCurve.o \
-	ThreePointCurve.o
+	RotationShearCurve.o \
+	ThreePointCurve.o \
+	WrapperLimitCurve.o
 
 
 all:         $(OBJS)

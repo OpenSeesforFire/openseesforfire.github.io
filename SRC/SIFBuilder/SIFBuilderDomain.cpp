@@ -52,7 +52,8 @@
 #include <PDeltaCrdTransf3d.h>
 #include <CorotCrdTransf2d.h>
 #include <CorotCrdTransf3d.h>
-
+#include <Node.h>
+#include <NodeIter.h>
 #include <Element.h>
 #include <DispBeamColumn3d.h>
 #include <DispBeamColumn3dThermal.h>
@@ -187,6 +188,8 @@ SIFBuilderDomain::SIFBuilderDomain()
   theHTdir = 0;
   SIFBuilderInfo = 0;
   offset =0;
+
+  fireFloorTag = 0;
 
   	theNodalLoadTag=0;
 	theEleLoadTag=0;
@@ -675,6 +678,12 @@ SIFBuilderDomain::addSIFfireAction(SIFfireAction *theSIFfireAction)
     
     return false;
   }
+
+ ID CompId = (this->getSIFCompartment(tag))->getCompartmentInfo();
+  if (fireFloorTag == 0)
+	  fireFloorTag = Vector(10);
+  fireFloorTag(0) = CompId(2);
+
   
   // now we add the load pattern to the container for load pattrens
   bool result = theSIFfireActions->addComponent(theSIFfireAction);
@@ -713,13 +722,16 @@ SIFBuilderDomain::getSIFfireActions()
 
 ////////////--------------Building Strucutral Model-------------------------------//////
 int
-SIFBuilderDomain::GenStructuralModel(const ID& MeshCtrlPars, bool isElasticModel, bool isDynamicModel)
+SIFBuilderDomain::GenStructuralModel(const ID& MeshCtrlPars, bool isElasticModel, bool isDynamicModel, bool isPinnedModel)
 {
   isElastic = isElasticModel;
+  isPinned = isPinnedModel;
   LoadApplied = 0;
   //Mesh Number control
   int NumElesX; int NumElesY; int NumElesZ;
   NumElesX =MeshCtrlPars(0); NumElesY =MeshCtrlPars(1); NumElesZ = MeshCtrlPars(2);
+
+
 
   //First: To generate nodes on SIFJoints
   SIFJoint *theSIFJoint;
@@ -756,50 +768,65 @@ SIFBuilderDomain::GenStructuralModel(const ID& MeshCtrlPars, bool isElasticModel
   SIFXBeam *theSIFXBeam;
   SIFXBeamIter &theSIFXBeams  = this->getSIFXBeams();
   while((theSIFXBeam = theSIFXBeams())!=0){
-	this->MeshSIFMember(theSIFXBeam,NumElesPerXBeam,isElastic);
+	this->MeshSIFMember(theSIFXBeam,NumElesPerXBeam);
   }
   
   SIFYBeam *theSIFYBeam;
   SIFYBeamIter &theSIFYBeams  = this->getSIFYBeams();
   while((theSIFYBeam = theSIFYBeams())!=0){
-    this->MeshSIFMember(theSIFYBeam,NumElesPerYBeam,isElastic);
+    this->MeshSIFMember(theSIFYBeam,NumElesPerYBeam);
   }
   
   SIFColumn *theSIFColumn;
   SIFColumnIter &theSIFColumns  = this->getSIFColumns();
   while((theSIFColumn = theSIFColumns())!=0){
-    this->MeshSIFMember(theSIFColumn,NumElesPerColumn,isElastic);
+    this->MeshSIFMember(theSIFColumn,NumElesPerColumn);
   }
 
 SIFXBeamSec *theSIFXBeamSec;
   SIFSecXBeamIter &theSIFSecXBeams  = this->getSIFSecXBeams();
   while((theSIFXBeamSec = theSIFSecXBeams())!=0){
-	this->MeshSIFMember(theSIFXBeamSec,NumElesPerXBeam,isElastic);
+	this->MeshSIFMember(theSIFXBeamSec,NumElesPerXBeam);
   }
 
-
+ 
    SIFSlab *theSIFSlab;
   SIFSlabIter &theSIFSlabs  = this->getSIFSlabs();
   while((theSIFSlab = theSIFSlabs())!=0){
 	  if(this->getSIFBuilderInfo()(0)==12)
-		this->MeshSIFMember(theSIFSlab,NumElesPerXBeam,isElastic);
+		this->MeshSIFMember(theSIFSlab,NumElesPerXBeam);
 	  else if(this->getSIFBuilderInfo()(0)==13)
-		this->MeshSIFMember(theSIFSlab,NumElesPerYBeam,isElastic);
+		this->MeshSIFMember(theSIFSlab,NumElesPerYBeam);
 	  else{
-		  if(theSIFSlab->getMemberInfo()(2)==1)
-			this->MeshSIFSlab(theSIFSlab,NumElesPerXBeam,NumElesPerYBeam,isElastic);
-		  else
-			this->MeshSIFSlab(theSIFSlab,NumElesPerXBeam,NumElesPerYBeam,true);
-
+		  if(theSIFSlab->getMemberInfo()(2)==fireFloorTag(0))
+			this->MeshSIFSlab(theSIFSlab,NumElesPerXBeam,NumElesPerYBeam);
 	  }
   }
-
   
-   opserr<< "There are "<<theDomain->getNumNodes()<<" Nodes, "<<theDomain->getNumElements()<< " elements being created"<<endln;
+   opserr<<theDomain->getNumNodes()<<" Nodes, "<<theDomain->getNumElements()<< " elements being created"<<endln;
   
   
   //Third: To generate shell element for the slab
+   //------------------------------------SP constraints for frame model------------------------------
+   if (this->getSIFBuilderInfo()(0) == 11 || this->getSIFBuilderInfo()(0) == 12) {
+	   NodeIter &theNodes = theDomain->getNodes();
+	   Node *theNode;
 
+	   int SPdofTag = 0;
+	   if (this->getSIFBuilderInfo()(0) == 11)
+		   SPdofTag = 0;
+	   else if (this->getSIFBuilderInfo()(0) == 12)
+		   SPdofTag = 2;
+
+	   while ((theNode = theNodes()) != 0) {
+		   SP_Constraint *theSP1 = new SP_Constraint(theNode->getTag(), SPdofTag, 0.0, true);
+		   SP_Constraint *theSP2 = new SP_Constraint(theNode->getTag(), 3, 0.0, true);
+		   SP_Constraint *theSP3 = new SP_Constraint(theNode->getTag(), 4, 0.0, true);
+		   theDomain->addSP_Constraint(theSP1);
+		   theDomain->addSP_Constraint(theSP2);
+		   theDomain->addSP_Constraint(theSP3);
+	   }
+   }
   return 0;    
 }
 
@@ -847,8 +874,13 @@ SIFBuilderDomain::defineBC(){
 
 	SIFJoint *theSIFJoint;
     SIFJointIter &theSIFJoints  = this->getSIFJoints();
+	
+	//loop over every joint to define the contraints
 	while((theSIFJoint = theSIFJoints())!=0){
+	//always choose the first node on this SIFJoint
+	//The other nodes are defined for multi-point connection
 	int theJointNodeTag = (theSIFJoint->getNodeTag())(0);
+	
 	if(theSIFJoint->getBCtype()==1){
 		//pinned connection
 		for(int i =0; i<3; i++){
@@ -875,9 +907,11 @@ SIFBuilderDomain::defineBC(){
 ////////////////----------------------MeshSIFMember--(FramBeamColumn)------------------//////////
 
 int
-SIFBuilderDomain::MeshSIFMember(SIFMember* theSIFMember, int NumEles,  bool isEls)
+SIFBuilderDomain::MeshSIFMember(SIFMember* theSIFMember, int NumEles)
 {
-    int nIP =5;//Number fo integration points
+    //SIFMemberType:   //1:xBeam,2:YBeam,3:Column,4:Slab, 21 xSecBeam, 11: slab modelled as plane frame
+	
+	int nIP =5;//Number fo integration points
 	ID theJoints = theSIFMember->getConnectedJoints();
 
 	int Jt1Tag = theJoints(0);
@@ -956,29 +990,90 @@ SIFBuilderDomain::MeshSIFMember(SIFMember* theSIFMember, int NumEles,  bool isEl
     intNodes(i-1) = theNodeTag;
     
   }
-  ///////////////////////////////Mesh member in nodes///////////////////////////////////
 
-// beams and slabs should have extra nodes
-  if(theSIFMember->getMemberTypeTag()==11 ){
+
+// For compiste beam, pinned beam, extra nodes are needed
+  int NodeJt1Tag = 0; int NodeJt2Tag = 0;
+  NodeJt1Tag = Jt1->getNodeTag()(0);
+  NodeJt2Tag = Jt2->getNodeTag()(0);
+
+  //---------------Extra nodes and connections for Secondary Xbeam---------------------------------------//
+  if (theSIFMember->getMemberTypeTag() == 21) {
+	  ID theCompInfo = theSIFMember->getMemberInfo();
+	  SIFCompartment* theComp = this->getSIFCompartment(theCompInfo(0) * 1000 + theCompInfo(1) * 100 + theCompInfo(2));
+	  ID theZBeams = theComp->getConnectedYBeams();
+	  SIFYBeam* SIFZBeam1 = this->getSIFYBeam(theZBeams(0));
+	  SIFYBeam* SIFZBeam2 = this->getSIFYBeam(theZBeams(1));
+	  ID IntNodes1 = SIFZBeam1->getIntNodeTags();
+	  ID IntNodes2 = SIFZBeam2->getIntNodeTags();
+	  double xCrd1, xCrd2, zCrd;
+	  xCrd1 = Jt1->getCrds()(0);
+	  xCrd2 = Jt2->getCrds()(0);
+	  zCrd = Jt1->getCrds()(2);
+
+	  for (int j = 0; j<IntNodes1.Size(); j++) {
+		  int NodeTag1 = IntNodes1(j);
+		  int NodeTag2 = IntNodes2(j);
+		  Node* theNode1 = theDomain->getNode(NodeTag1);
+		  Node* theNode2 = theDomain->getNode(NodeTag2);
+		  if ((fabs(theNode1->getCrds()(0) - xCrd1)<1e-4) && (fabs(theNode1->getCrds()(2) - zCrd)<1e-4))
+			  NodeJt1Tag = NodeTag1;
+		  else if ((fabs(theNode2->getCrds()(0) - xCrd1)<1e-4) && (fabs(theNode2->getCrds()(2) - zCrd)<1e-4))
+			  NodeJt1Tag = NodeTag2;
+
+		  if ((fabs(theNode1->getCrds()(0) - xCrd2)<1e-4) && (fabs(theNode1->getCrds()(2) - zCrd)<1e-4))
+			  NodeJt2Tag = NodeTag1;
+		  else if ((fabs(theNode2->getCrds()(0) - xCrd2)<1e-4) && (fabs(theNode2->getCrds()(2) - zCrd)<1e-4))
+			  NodeJt2Tag = NodeTag2;
+	  }
+
+	  int theDOFid[] = { 0,1,2,3,4,5 };
+	  ID theConDOF = ID(theDOFid, 6);
+	  ID theRetDOF = ID(theDOFid, 6);
+	  Matrix Ccr(6, 6);
+	  Ccr.Zero();
+	  Ccr(0, 0) = 1;
+	  Ccr(1, 1) = 1; Ccr(2, 2) = 1;
+	  Ccr(3, 3) = 1;
+	  Ccr(4, 4) = 1; Ccr(5, 5) = 1;
+
+	  MP_Constraint* theMP = new MP_Constraint(Jt1->getNodeTag()(0), NodeJt1Tag, Ccr, theConDOF, theRetDOF);
+	  theDomain->addMP_Constraint(theMP);
+
+	  theMP = new MP_Constraint(Jt2->getNodeTag()(0), NodeJt2Tag, Ccr, theConDOF, theRetDOF);
+	  theDomain->addMP_Constraint(theMP);
+  }
+  //----------------------end of secXbeam--------------------------------
+  else if((theSIFMember->getMemberTypeTag()==11)|| ((theSIFMember->getMemberTypeTag()==1)&(isPinned))){
 	  
 	  theNodeTag++;
+	  
 	  NdCrdx = Jt1xCrd ;
-	 
+	  if(theSIFMember->getMemberTypeTag()==11)
 	  NdCrdy = Jt1yCrd+offset ;
+	  else if(theSIFMember->getMemberTypeTag()==21)
+	  NdCrdy = Jt1yCrd;
+	  else if((theSIFMember->getMemberTypeTag()==1)&(isPinned))
+	  NdCrdy = Jt1yCrd;
+	  
+	  NdCrdz = Jt1zCrd;
+	  
 	  intNodes.resize(NumEles+1);
 
-	  NdCrdz = Jt1zCrd ;
 	  Node *theNode = new Node(theNodeTag, nDoF, NdCrdx, NdCrdy, NdCrdz);	
 	   theDomain -> addNode(theNode);
 	
 		intNodes(NumEles-1)= theNodeTag;
 	   
 	  theNodeTag++;
-  NdCrdx = Jt2xCrd ;
+  	  NdCrdx = Jt2xCrd ;
 	  if(theSIFMember->getMemberTypeTag()==11)
-	  NdCrdy = Jt1yCrd+offset ;
-	  if(theSIFMember->getMemberTypeTag()==21)
-	  NdCrdy = Jt1yCrd;
+	  NdCrdy = Jt2yCrd+offset ;
+	  else if(theSIFMember->getMemberTypeTag()==21)
+	  NdCrdy = Jt2yCrd;
+	  else if((theSIFMember->getMemberTypeTag()==1)&(isPinned))
+	  NdCrdy = Jt2yCrd;
+	  
 
 	  NdCrdz = Jt2zCrd ;
 	  theNode = new Node(theNodeTag, nDoF, NdCrdx, NdCrdy, NdCrdz);	  
@@ -987,14 +1082,87 @@ SIFBuilderDomain::MeshSIFMember(SIFMember* theSIFMember, int NumEles,  bool isEl
 	  intNodes(NumEles)= theNodeTag;
 	 
    }
-
-
-  
-  
+   //SIFMember stores the nodes
   theSIFMember->setIntNodeTags(intNodes );
-  
-  //--------------------------------------------------------------------------------------
-  //---------------------Now adding eles for frame beam elements--------------------------
+
+  ///-------------------------Adding rigidbeam connections for Slab in plane frame--------------------------------//
+  //slab modelled as beam elements
+  if (theSIFMember->getMemberTypeTag() == 11) {
+	  //add muilti point constraints
+	  //----------------Connecting joints------------------
+	  //MP_Constraint::MP_Constraint(int nodeRetain, int nodeConstr, 
+	  // ID &constrainedDOF, 
+	  // ID &retainedDOF, int clasTag)
+	
+	  ID theCompInfo = theSIFMember->getMemberInfo();
+	  SIFCompartment* theSIFComp = this->getSIFCompartment(theCompInfo);
+	  ID XBeams = theSIFComp->getConnectedXBeams();
+	  ID YBeams = theSIFComp->getConnectedYBeams();
+	  //rigidLink for connecting beam and slab;
+	  SIFXBeam* theXBeam = 0;
+	  SIFYBeam* theYBeam = 0;
+	  ID theBIntNodes;
+	  if (XBeams != 0) {
+		  theXBeam = this->getSIFXBeam(XBeams(0));
+		  theBIntNodes = theXBeam->getIntNodeTags();
+	  }
+	  if (YBeams != 0) {
+		  theYBeam = this->getSIFYBeam(YBeams(0));
+		  theBIntNodes = theYBeam->getIntNodeTags();
+	  }
+
+	  int theBeamNodeTag = 0; int theSlabNodeTag=0;
+	  for (int i = 0; i<intNodes.Size(); i++) {
+
+			  if (i == intNodes.Size() - 2) {
+				  if (isPinned)
+					  theBeamNodeTag = theBIntNodes(i);
+				  else
+					  theBeamNodeTag = NodeJt1Tag;
+			  }
+			  else if (i == intNodes.Size() - 1) {
+				  if (isPinned)
+					  theBeamNodeTag = theBIntNodes(i);
+				  else
+					  theBeamNodeTag = NodeJt2Tag;
+			  }
+
+			 else
+				theBeamNodeTag = theBIntNodes(i);
+		  
+
+		  theSlabNodeTag = intNodes(i);
+
+		  //const Vector crds1 = (theDomain->getNode(theBeamNodeTag))->getCrds();
+		  //const Vector crds2 = (theDomain->getNode(theSlabNodeTag))->getCrds();
+		  //if(crds1(0)!=crds2(0)||crds1(2)!=crds2(2))
+		  //opserr<<"WARNING:: incompatiable nodes for defining rigidlink--Node1 "<<crds1<<"Node2  "<<crds2<<endln;
+		  if(theBeamNodeTag!=0&& theSlabNodeTag!=0)
+		  RigidBeam theLink(*theDomain, theBeamNodeTag, theSlabNodeTag);
+	  }
+
+	  //end of adding  rigidlink to connect XBeam 
+  }
+  // primary beams with pinned connections
+  else if ((theSIFMember->getMemberTypeTag() == 1)&(isPinned)){
+	int theDOFid[] = { 0,1,2 };
+	ID theConDOF = ID(theDOFid, 3);
+	ID theRetDOF = ID(theDOFid, 3);
+	Matrix Ccr(3, 3);
+	Ccr.Zero();
+	Ccr(0, 0) = 1;
+	Ccr(1, 1) = 1; Ccr(2, 2) = 1;
+	
+	MP_Constraint* theMP1= new MP_Constraint(Jt1->getNodeTag()(0), intNodes(NumEles-1), Ccr, theConDOF, theRetDOF);
+	theDomain->addMP_Constraint(theMP1);
+	MP_Constraint* theMP2 = new MP_Constraint(Jt2->getNodeTag()(0), intNodes(NumEles), Ccr, theConDOF, theRetDOF);
+	theDomain->addMP_Constraint(theMP2);
+	//Pinned Connections
+  }
+
+  ///////////////////////////////Mesh member in nodes///////////////////////////////////
+
+  //---------------------Now adding eles for frame beam and columns--------------------------
   SectionForceDeformation* theSection =0;
   SIFSection* theSIFSection = 0;
   BeamIntegration* beamIntegr = 0;
@@ -1003,63 +1171,15 @@ SIFBuilderDomain::MeshSIFMember(SIFMember* theSIFMember, int NumEles,  bool isEl
   
   ID eles = ID(NumEles);
 
-  int NodeJt1Tag=0; int NodeJt2Tag=0;
-  if(theSIFMember->getMemberTypeTag()==21){
-	  ID theCompInfo = theSIFMember->getMemberInfo();
-	SIFCompartment* theComp = this->getSIFCompartment(theCompInfo(0)*100+theCompInfo(1)*10+theCompInfo(2));
-	ID theZBeams = theComp->getConnectedYBeams();
-	SIFYBeam* SIFZBeam1 =  this->getSIFYBeam(theZBeams(0));
-	SIFYBeam* SIFZBeam2 = this->getSIFYBeam(theZBeams(1));
-	ID IntNodes1 = SIFZBeam1->getIntNodeTags();
-	ID IntNodes2 = SIFZBeam2->getIntNodeTags();
-	double xCrd1, xCrd2, zCrd;
-	xCrd1 = Jt1->getCrds()(0);
-	xCrd2 = Jt2->getCrds()(0);
-	zCrd = Jt1->getCrds()(2);
-
-	for(int j=0; j<IntNodes1.Size(); j++){
-		int NodeTag1 = IntNodes1(j);
-		int NodeTag2 = IntNodes2(j);
-		Node* theNode1 = theDomain->getNode(NodeTag1);
-		Node* theNode2 = theDomain->getNode(NodeTag2);
-		if((fabs(theNode1->getCrds()(0)-xCrd1)<1e-4)&&(fabs(theNode1->getCrds()(2)-zCrd)<1e-4))
-			NodeJt1Tag = NodeTag1;
-		else if((fabs(theNode2->getCrds()(0)-xCrd1)<1e-4)&&(fabs(theNode2->getCrds()(2)-zCrd)<1e-4))
-			NodeJt1Tag = NodeTag2;
-		
-		if((fabs(theNode1->getCrds()(0)-xCrd2)<1e-4)&&(fabs(theNode1->getCrds()(2)-zCrd)<1e-4))
-			NodeJt2Tag = NodeTag1;
-		else if((fabs(theNode2->getCrds()(0)-xCrd2)<1e-4)&&(fabs(theNode2->getCrds()(2)-zCrd)<1e-4))
-			NodeJt2Tag = NodeTag2;
-	}
-	
-	int theDOFid[] = {0,1,2,3,4,5};
-	ID theConDOF = ID(theDOFid,6);
-	ID theRetDOF = ID(theDOFid,6);
-	Matrix Ccr (6, 6);
-	Ccr.Zero();
-	Ccr(0,0)=1;
-	Ccr(1,1)=1;Ccr(2,2)=1;
-	Ccr(3,3) =1;
-	Ccr(4,4) =1; Ccr(5,5) =1;
-
-	MP_Constraint* theMP= new MP_Constraint(Jt1->getNodeTag()(0), NodeJt1Tag, Ccr, theConDOF, theRetDOF);
-	theDomain->addMP_Constraint(theMP);
-
-	theMP= new MP_Constraint(Jt2->getNodeTag()(0), NodeJt2Tag, Ccr, theConDOF, theRetDOF);
-	theDomain->addMP_Constraint(theMP);
-
-
-  }
-  //end of secXbeam
+ 
   
-  NodeJt1Tag = Jt1->getNodeTag()(0);
-  NodeJt2Tag = Jt2->getNodeTag()(0);
+ 
 
   int theNodeTag1, theNodeTag2;
   for (int i = 0; i < NumEles; i++)
   {
-	if(theSIFMember->getMemberTypeTag()==11){
+	  //slab modelled as beam elements, or beams are pinned to column
+	if((theSIFMember->getMemberTypeTag()==11)||((theSIFMember->getMemberTypeTag()==1)&isPinned)){
 		if(i==0){
 		theNodeTag1 = intNodes(NumEles-1);
 		theNodeTag2 = intNodes(0);
@@ -1074,6 +1194,7 @@ SIFBuilderDomain::MeshSIFMember(SIFMember* theSIFMember, int NumEles,  bool isEl
 		}
 
 	}
+	//other normal beams&columns
 	else{
 		if(i==0){
 		theNodeTag1 = NodeJt1Tag;
@@ -1124,55 +1245,16 @@ SIFBuilderDomain::MeshSIFMember(SIFMember* theSIFMember, int NumEles,  bool isEl
 #ifdef _DEBUG
    opserr<< intNodes <<eles<<endln;
 #endif
-   if(theSIFMember->getMemberTypeTag()==3&&theSIFMember->getMemberInfo()(2)==1)
-	   opserr<<"Column:"<< theSIFMember->getTag()<<intNodes <<eles<<endln;
-///////////////////////////////////////Slab in plane frame///////////////////////////////////////////
-   if(theSIFMember->getMemberTypeTag()==11){
-		//add muilti point constraints
-	//----------------Connecting joints------------------
-   //MP_Constraint::MP_Constraint(int nodeRetain, int nodeConstr, 
-			    // ID &constrainedDOF, 
-			    // ID &retainedDOF, int clasTag)
-	int theDOFid[] = {1,2,3};
-	ID theConDOF = ID(theDOFid,3);
-	ID theRetDOF = ID(theDOFid,3);
-	ID theCompInfo = theSIFMember->getMemberInfo();
-	SIFCompartment* theSIFComp = this->getSIFCompartment(theCompInfo);
-	ID XBeams = theSIFComp->getConnectedXBeams();
-	ID YBeams = theSIFComp->getConnectedYBeams();
-	//rigidLink for connecting beam and slab;
-	SIFXBeam* theXBeam =0;
-	SIFYBeam* theYBeam =0;
-	ID theBIntNodes;
-	if(XBeams!=0){
-		theXBeam = this->getSIFXBeam(XBeams(0));
-		theBIntNodes = theXBeam->getIntNodeTags();
-	}
-	if(YBeams!=0){
-		theYBeam = this->getSIFYBeam(YBeams(0));
-		theBIntNodes = theYBeam->getIntNodeTags();
-	}
 
-	int theBeamNodeTag,theSlabNodeTag;
-	for(int i=0; i<intNodes.Size(); i++){
-		 if(i==intNodes.Size()-2)
-			 theBeamNodeTag = NodeJt1Tag;
-		 else if(i==intNodes.Size()-1)
-			theBeamNodeTag = NodeJt2Tag;
-		 else
-			theBeamNodeTag = theBIntNodes(i);
-				
-		 theSlabNodeTag = intNodes(i);
+   if (theSIFMember->getMemberTypeTag() == 2 && theSIFMember->getTag() == 3302)
+	   opserr << "Beam:" << theSIFMember->getTag() << eles << endln;
+   if(theSIFMember->getMemberTypeTag()==3&&theSIFMember->getTag()==3301)
+	   opserr<<"Column:"<< theSIFMember->getTag() <<eles<<endln;
 
-			//const Vector crds1 = (theDomain->getNode(theBeamNodeTag))->getCrds();
-			//const Vector crds2 = (theDomain->getNode(theSlabNodeTag))->getCrds();
-			//if(crds1(0)!=crds2(0)||crds1(2)!=crds2(2))
-				//opserr<<"WARNING:: incompatiable nodes for defining rigidlink--Node1 "<<crds1<<"Node2  "<<crds2<<endln;
-		RigidBeam theLink(*theDomain, theBeamNodeTag, theSlabNodeTag);
-	 }
-	
-  //end of adding  rigidlink to connect XBeam
-   }
+// If it is a x-y plane frame of model type 12;
+// and the slab is defined, the slab should be meshed as beamColumn elements
+
+
 ///////////////////////////////////////Slab in plane frame///////////////////////////////////////////
 
 
@@ -1182,7 +1264,7 @@ SIFBuilderDomain::MeshSIFMember(SIFMember* theSIFMember, int NumEles,  bool isEl
 
 ////////////////----------------------MeshSIFSlab-----------------------------//////////
 int
-SIFBuilderDomain::MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ,  bool isEls)
+SIFBuilderDomain::MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ)
 {
 	int OriginNodeTag = theNodeTag;
 	// obtain the connected joints
@@ -1236,7 +1318,8 @@ SIFBuilderDomain::MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ, 
 	//MembranePlateFiberSectionThermal::MembranePlateFiberSectionThermal( int tag,  double thickness, NDMaterial &Afiber ) 
 	//ElasticIsotropic3DThermal(int tag, double e, double nu, double rho=0,double alpha=0.0);
 	SIFSection* theSIFSection = theSIFMember->getSIFSectionPtr();
-	theShellSection = theSIFSection->DefineShellSection(isEls);
+	//isElastic = true;
+	theShellSection = theSIFSection->DefineShellSection(isElastic);
 	Element* theElement =0;
 	ID eles = ID(NumEleX*NumEleZ);
 	int NodeTag1,NodeTag2,NodeTag3,NodeTag4;
@@ -1299,7 +1382,7 @@ SIFBuilderDomain::MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ, 
 	ID YBeams = theSIFComp->getConnectedYBeams();
 	ID XSecBeams = theSIFComp->getConnectedSecXBeams();
 	//rigidLink for connecting beam and slab;
-	 ///////////////////////////////XBeams ///////////////////////////////////
+	 ///////////////////////////////Connections betweem XBeams and slab ///////////////////////////////////
 	for(int k=0; k<XBeams.Size();k++){
 		int XBeamTag = XBeams(k);
 		SIFXBeam* theXBeam = this->getSIFXBeam(XBeamTag);	
@@ -1324,7 +1407,7 @@ SIFBuilderDomain::MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ, 
 		}
 
 	}
-	 ///////////////////////////////YBeams ///////////////////////////////////
+	 ///////////////////////////////Connections between YBeams and slab///////////////////////////////////
 	for(int k=0; k<YBeams.Size();k++){
 		int YBeamTag = YBeams(k);
 		SIFYBeam* theYBeam = this->getSIFYBeam(YBeamTag);	
@@ -1350,7 +1433,7 @@ SIFBuilderDomain::MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ, 
 	}
 
 
- ///////////////////////////////Secondary Beam ///////////////////////////////////
+ ///////////////////////////////Connections between Secondary Beam and slabs///////////////////////////////////
 	if(XSecBeams!=0){
 		
 	for(int k=0; k<XSecBeams.Size();k++){
@@ -1395,10 +1478,6 @@ SIFBuilderDomain::MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ, 
 	}
 	//for SecXBeam is not 0
 
-
-
-
-
 	return 0;
 
 }
@@ -1438,7 +1517,7 @@ SIFBuilderDomain::getCrdTransf(int MemberType, int TransfType)
 		opserr<<"WARNING:Invalid member type "<<MemberType<<" to sepcify the geometrical transformation"<<endln;
 	}
 
-	CrdTransf* theTransf3d = new PDeltaCrdTransf3d(0, vecxzPlane, jntOffsetI, jntOffsetJ);
+	CrdTransf* theTransf3d = new  CorotCrdTransf3d(0, vecxzPlane, jntOffsetI, jntOffsetJ);
 
 	return theTransf3d;
 
@@ -1649,6 +1728,7 @@ SIFBuilderDomain::applyMiscLoad(int thePatternTag, double dt)
     theDomain->addLoadPattern(theLoadPattern);
 
 	NodalLoad *theLoad = 0;
+	ElementalLoad *theEleLoad = 0;
 	
 	SIFJoint *theSIFJoint;
     SIFJointIter &theSIFJoints  = this->getSIFJoints();
@@ -1668,27 +1748,28 @@ SIFBuilderDomain::applyMiscLoad(int thePatternTag, double dt)
 		theNodalLoadTag++;
 	 }
 	}
-	ElementalLoad* theEleLoad =0;
+	
 //Applying Misc load for xBeams
 	SIFXBeam *theSIFXBeam;
 	SIFXBeamIter &theSIFXBeams  = this->getSIFXBeams();
 	while((theSIFXBeam = theSIFXBeams())!=0){
 		Vector theXBeamLoad = theSIFXBeam->getLoad();
 		if(theXBeamLoad!=0){
-		ID theIntEles = theSIFXBeam->getIntEleTags();
-		int NumEles = theIntEles.Size(); 
-		for (int i = 0; i < NumEles; i++){
-				theEleLoad = new Beam3dUniformLoad(theEleLoadTag, theXBeamLoad(1), theXBeamLoad(0), theXBeamLoad(2), theIntEles(i));
+		//ID theIntEles = theSIFXBeam->getIntEleTags();
+			ID theIntNodes = theSIFXBeam->getIntNodeTags();
+		int NumNodes = theIntNodes.Size(); 
+		for (int i = 0; i < NumNodes; i++){
+			theLoad = new NodalLoad(theNodalLoadTag, theIntNodes(i), theXBeamLoad, false);
 #ifdef _DEBUG
 				//opserr<<"Miscload applied at SIFYBeam "<<theSIFYBeam->getTag()<<" with Element "<<EleTags(i) <<endln;
 #endif
-				if (theDomain->addElementalLoad(theEleLoad, loadPatternTag) == false) {
-				opserr << "WARNING TclModelBuilder - could not add gravity to domain\n";
-				delete theEleLoad;
+			if (theDomain->addNodalLoad(theLoad, loadPatternTag) == false) {
+				opserr << "WARNING TclModelBuilder - could not add load to domain\n";
+				delete theLoad;
 				return -2;
-				}
+			}
 
-				theEleLoadTag++;
+				theNodalLoadTag++;
 		}
 	 }
 		
@@ -1798,24 +1879,38 @@ SIFBuilderDomain::applyMiscLoad(int thePatternTag, double dt)
 	}
 	
 	if(theTest == 0)
-		theTest =  new CTestNormDispIncr(1e-3, 1000, 0);
+		theTest =  new CTestNormDispIncr(1e-3, 500, 1);
 
 	if(theAlgorithm==0)
 		theAlgorithm = new NewtonRaphson(*theTest);
     
 	if(theHandler==0)
 		//theHandler = new PlainHandler(); 
-		theHandler  = new PenaltyConstraintHandler( 1.0e15, 1.0e15);
+		theHandler  = new PenaltyConstraintHandler( 1.0e10, 1.0e10);
     
 	if(theNumberer==0){
 		RCM *theRCM = new RCM(false);
 		theNumberer = new DOF_Numberer(*theRCM);  
 	}
 
-	if(theSOE ==0){
-		ProfileSPDLinDirectSolver* theSolver = new ProfileSPDLinDirectSolver();
-		theSOE = new ProfileSPDLinSOE(*theSolver);   
-	}
+	//if(theSOE ==0){
+	//ProfileSPDLinDirectSolver* theSolver = new ProfileSPDLinDirectSolver();
+	//theSOE = new ProfileSPDLinSOE(*theSolver);   
+	//}
+	double thresh = 0.0;
+	int npRow = 1;
+	int npCol = 1;
+	int np = 1;
+	int permSpec = 0;
+	int panelSize = 6;
+	int relax = 6;
+	char symmetric = 'N';
+	double drop_tol = 0.0;
+	
+	SparseGenColLinSolver* theSolver = new SuperLU(permSpec, drop_tol, panelSize, relax, symmetric);
+	theSOE = new SparseGenColLinSOE(*theSolver);
+	
+
 
 
     theStaticAnalysis = new StaticAnalysis(*theDomain,
@@ -1839,67 +1934,86 @@ SIFBuilderDomain::applyMiscLoad(int thePatternTag, double dt)
 int
 SIFBuilderDomain::applyFireAction(int thePatternTag, double timeStep, double fireDuration)
 {
-   //if there was load applied
-  if(LoadApplied != 0){
-	  theDomain->setCurrentTime(0.0);
-	  theDomain->setCommittedTime(0.0); 
-	  theDomain->setLoadConstant();
-     }
+	//if there was load applied
+	if (LoadApplied != 0) {
+		theDomain->setCurrentTime(0.0);
+		theDomain->setCommittedTime(0.0);
+		theDomain->setLoadConstant();
+	}
 
-  int loadPatternTag = thePatternTag;
-  double FireDuration = fireDuration;
-  double TimeStep = timeStep;
+	int loadPatternTag = thePatternTag;
+	double FireDuration = fireDuration;
+	double TimeStep = timeStep;
 
-  LoadPattern *theLoadPattern = new LoadPattern(loadPatternTag);
+	LoadPattern *theLoadPattern = new LoadPattern(loadPatternTag);
 	TimeSeries *theSeries = new LinearSeries();
-    theLoadPattern->setTimeSeries(theSeries);
-    theDomain->addLoadPattern(theLoadPattern);
- 
-  //Apply SIFfireAction
- opserr<<"SIFBuilder;:Now analyzing the heat transfer to the structural members..."<<endln;
-  SIFfireAction *theSIFfireAction;
-  SIFfireActionIter &theSIFfireActions  = this->getSIFfireActions();
-  while((theSIFfireAction = theSIFfireActions())!=0){
-    theSIFfireAction->Apply(loadPatternTag, timeStep,fireDuration);  
-  }
+	theLoadPattern->setTimeSeries(theSeries);
+	theDomain->addLoadPattern(theLoadPattern);
 
-   
-  
-//---------------------------------------Analysis for Fire Action----------------------
-	int numSteps = FireDuration/TimeStep;
+	//Apply SIFfireAction
+	opserr << "SIFBuilder;:Now analyzing the heat transfer to the structural members..." << endln;
+	SIFfireAction *theSIFfireAction;
+	SIFfireActionIter &theSIFfireActions = this->getSIFfireActions();
+	while ((theSIFfireAction = theSIFfireActions()) != 0) {
+		theSIFfireAction->Apply(loadPatternTag, timeStep, fireDuration);
+	}
 
-	opserr<<"SIFBuilder;:Now applying fire action in " << numSteps <<" steps"<<endln;
-    if(theAnalysisModel== 0)
-	  theAnalysisModel = new AnalysisModel();
 
-	if(theStaticIntegrator == 0){
+
+	//---------------------------------------Analysis for Fire Action----------------------
+	int numSteps = FireDuration / TimeStep;
+
+	opserr << "SIFBuilder;:Now applying fire action in " << numSteps << " steps" << endln;
+	if (theAnalysisModel == 0)
+		theAnalysisModel = new AnalysisModel();
+
+	if (theStaticIntegrator == 0) {
 		theStaticIntegrator = new LoadControl(TimeStep, numSteps, TimeStep, TimeStep);
 		//(double dLambda, int numIncr, double min, double max)
-	} 
+	}
 	else {
 		delete theStaticIntegrator;
 		theStaticIntegrator = new LoadControl(TimeStep, numSteps, TimeStep, TimeStep);
 	}
-	
+
 	//if(theTest == 0)
-		theTest =  new CTestNormDispIncr(1e-3, 100, 1);
-		
+	theTest = new CTestNormDispIncr(1e-3, 500, 1);
+	//theTest = new CTestNormUnbalance(1e-3, 200, 1, 2);
 
-	if(theAlgorithm==0)
+
+	if (theAlgorithm == 0)
 		theAlgorithm = new NewtonRaphson(*theTest);
-    
-	if(theHandler==0)
-		//theHandler  = new PlainHandler();
-		theHandler  = new PenaltyConstraintHandler( 1.0e15, 1.0e15);
-    
-	if(theNumberer==0){
-		RCM *theRCM = new RCM(false);
-		theNumberer = new DOF_Numberer(*theRCM);  
-	}	
 
-	if(theSOE ==0){
-		ProfileSPDLinDirectSolver* theSolver = new ProfileSPDLinDirectSolver();
-		theSOE = new ProfileSPDLinSOE(*theSolver);   
+	if (theHandler == 0)
+		//theHandler  = new PlainHandler();
+		theHandler = new PenaltyConstraintHandler(1.0e12, 1.0e12);
+
+	if (theNumberer == 0) {
+		RCM *theRCM = new RCM(false);
+		theNumberer = new DOF_Numberer(*theRCM);
+	}
+
+	//if(theSOE ==0){
+		//ProfileSPDLinDirectSolver* theSolver = new ProfileSPDLinDirectSolver();
+		//theSOE = new ProfileSPDLinSOE(*theSolver);   
+	//}
+	double thresh = 0.0;
+	int npRow = 1;
+	int npCol = 1;
+	int np = 1;
+	int permSpec = 0;
+	int panelSize = 6;
+	int relax = 6;
+	char symmetric = 'N';
+	double drop_tol = 0.0;
+	if (theSOE == 0) {
+		SparseGenColLinSolver* theSolver = new SuperLU(permSpec, drop_tol, panelSize, relax, symmetric);
+		theSOE = new SparseGenColLinSOE(*theSolver);
+	}
+	else {
+		delete theSOE;
+		SparseGenColLinSolver* theSolver = new SuperLU(permSpec, drop_tol, panelSize, relax, symmetric);
+		theSOE = new SparseGenColLinSOE(*theSolver);
 	}
 
 
@@ -1915,9 +2029,6 @@ SIFBuilderDomain::applyFireAction(int thePatternTag, double timeStep, double fir
     // perform the analysis & print out the results for the domain
     int result= theStaticAnalysis->analyze(numSteps);
 	
-
-
-
     //opserr << *theDomain;
 
   LoadApplied++;

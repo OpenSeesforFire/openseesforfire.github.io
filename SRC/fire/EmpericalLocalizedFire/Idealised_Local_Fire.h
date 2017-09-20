@@ -29,6 +29,7 @@
 #ifndef Idealised_Local_Fire_h
 #define Idealised_Local_Fire_h
 #include <FireModel.h>
+#include <PathTimeSeriesThermal.h>
 
 class Vector;
 class HeatTransferNode;
@@ -43,11 +44,14 @@ class Idealised_Local_Fire : public FireModel
 	  Idealised_Local_Fire(int tag, double crd1, double crd2, double crd3,
 	  					double Q, double D1, double D2, int centerLineTag = 3);
 	
-	Idealised_Local_Fire(int tag, double crd1, double crd2, double crd3, 
+	  Idealised_Local_Fire(int tag, double crd1, double crd2, double crd3, 
 				  	  	double Q, double D1, double D2, double K1, double K2, int centerLineTag = 3);
   
-  Idealised_Local_Fire(int tag, double crd1, double crd2, double crd3,
+	  Idealised_Local_Fire(int tag, double crd1, double crd2, double crd3,
                        double Q, double D1, double D2, double factor, int centerLineTag = 3);
+
+	  Idealised_Local_Fire(int tag, PathTimeSeriesThermal* fireLocPath,
+		  double Q, double D1, double D2, double factor, int centerLineTag = 3);
 						
 
 	  //Idealised_Local_Fire(double crd1, double crd2, double crd3, const Vector& time,
@@ -61,7 +65,7 @@ class Idealised_Local_Fire : public FireModel
 	protected:
 
     private:
-	  
+	  PathTimeSeriesThermal* FireLocPath;
 	  double x1, x2, x3, d1, d2,k1, k2, q, Factor;
 	  //x1,x2,x2: Cordinates of fire origin
 	  // d1,d2: length of constant zone, length of the whole zone

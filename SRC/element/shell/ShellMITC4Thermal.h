@@ -60,7 +60,6 @@ class ShellMITC4Thermal : public Element {
   //destructor 
   virtual ~ShellMITC4Thermal( ) ;
 
-  //set domain because frank is a dumb ass 
   void setDomain( Domain *theDomain ) ;
   
   //get the number of external nodes
@@ -111,7 +110,7 @@ class ShellMITC4Thermal : public Element {
     int getResponse( int responseID, Information &eleInfo );
       
     //plotting 
-    int displaySelf( Renderer &theViewer, int displayMode, float fact );
+	int displaySelf(Renderer &, int mode, float fact, const char **displayModes = 0, int numModes = 0);
 
   private : 
 
@@ -149,6 +148,9 @@ class ShellMITC4Thermal : public Element {
 
     //compute local coordinates and basis
     void computeBasis( ) ;
+//start Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
+    void updateBasis( ) ;
+//end Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
         
     //inertia terms
     void formInertiaTerms( int tangFlag ) ;
@@ -183,6 +185,7 @@ class ShellMITC4Thermal : public Element {
     // vector for applying loads
     Vector *load;
     Matrix *Ki;
+	bool Geolinear;
 	
 	double *dataMix; //J.Jiang
 	int counterTemperature;//J.Jiang

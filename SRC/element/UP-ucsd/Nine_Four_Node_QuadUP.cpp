@@ -1,33 +1,14 @@
 ///////////////////////////////////////////////////////////////////////////////
-
 // Description: This file contains the class definition for                  //
-
 // NineFourNodeQuadUP, a 9-4-node (9 node for solid and 4 node for fluid) //
-
 // plane strain element for solid-fluid fully coupled analysis. This         //
-
 // implementation is a simplified u-p formulation of Biot theory             //
-
 // (u - solid displacement, p - fluid pressure). Each element node has two   //
-
 // DOFs for u and 1 DOF for p.                                               //
-
 //                                                                           //
-
 // Written by Zhaohui Yang	(March 2004)                                     //
-
 //                                                                           //
-
 ///////////////////////////////////////////////////////////////////////////////
-
-
-
-// $Revision: 1.8 $
-
-// $Date: 2008-07-08 00:01:54 $
-
-// $Source: /usr/local/cvs/OpenSees/SRC/element/UP-ucsd/Nine_Four_Node_QuadUP.cpp,v $
-
 
 
 #include <Nine_Four_Node_QuadUP.h>
@@ -47,6 +28,73 @@
 #include <ElementalLoad.h>
 
 #include <math.h>
+#include <elementAPI.h>
+
+void* OPS_NineFourNodeQuadUP()
+{
+    if (OPS_GetNDM() != 2) {
+	opserr << "WARNING -- model dimensions not compatible with 9-4-NodeQuadUP element\n";
+	return 0;
+    }
+    if (OPS_GetNumRemainingInputArgs() < 16) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element FourNodeQuadUP eleTag? Node1? ... Node9? thk? type? matTag? bulk? rho? perm_x? perm_y? <b1? b2? pressure? dM? dK?>\n";
+	return 0;
+    }
+
+    // NineFourNodeQuadUPId, Node[9]
+    int tags[10];
+    int num = 10;
+    if (OPS_GetIntInput(&num,tags) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+
+    double thk;
+    num = 1;
+    if (OPS_GetDoubleInput(&num,&thk) < 0) {
+	opserr<<"WARNING: invalid double input\n";
+	return 0;
+    }
+
+    int matTag;
+    if (OPS_GetIntInput(&num,&matTag) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+    NDMaterial* mat = OPS_getNDMaterial(matTag);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "material tag: " << matTag;
+	opserr << "\nQuad element: " << tags[0] << endln;
+    }
+
+    // bk, r, perm1, perm2
+    double data[4];
+    num = 4;
+    if (OPS_GetDoubleInput(&num,data) < 0) {
+	opserr<<"WARNING: invalid double input\n";
+	return 0;
+    }
+
+    // b1, b2
+    double opt[2] = {0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 2) {
+	num = 2;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,opt) < 0) {
+	    opserr<<"WARNING: invalid double input\n";
+	    return 0;
+	}
+    }
+
+    return new NineFourNodeQuadUP(tags[0],tags[1],tags[2],tags[3],tags[4],
+				  tags[5],tags[6],tags[7],tags[8],tags[9],
+				  *mat,"PlainStrain",thk,data[0],data[1],data[2],data[3],
+				  opt[0],opt[1]);
+}
 
 
 Matrix NineFourNodeQuadUP::K(22,22);
@@ -86,19 +134,13 @@ const int NineFourNodeQuadUP::nenp=4;
 
 
 NineFourNodeQuadUP::NineFourNodeQuadUP(int tag,
-
 	int nd1, int nd2, int nd3, int nd4,int nd5, int nd6, int nd7, int nd8,int nd9,
-
 	NDMaterial &m, const char *type, double t, double bulk, double r,
-
 		  double p1, double p2, double b1, double b2)
-
 :Element (tag, ELE_TAG_Nine_Four_Node_QuadUP),
-
   theMaterial(0), connectedExternalNodes(9),
-
-  Ki(0), Q(22), applyLoad(0), thickness(t), kc(bulk), rho(r)
-
+ Ki(0), Q(22), applyLoad(0), thickness(t), kc(bulk), rho(r),
+ initNodeDispl(0)
 {
 
     this->shapeFunction(wu, nintu, nenu, 0);
@@ -211,8 +253,8 @@ NineFourNodeQuadUP::NineFourNodeQuadUP()
 
   theMaterial(0), connectedExternalNodes(9),
 
-  Ki(0), Q(22), applyLoad(0), thickness(0.0), kc(0.0), rho(0.0)
-
+ Ki(0), Q(22), applyLoad(0), thickness(0.0), kc(0.0), rho(0.0),
+ initNodeDispl(0)
 {
 
     this->shapeFunction(wu, nintu, nenu, 0);
@@ -346,27 +388,32 @@ NineFourNodeQuadUP::setDomain(Domain *theDomain)
 
 
   int dof;
-
+  bool allZero = true;
   for (i=0; i<nenu; i++) {
 
     dof = theNodes[i]->getNumberDOF();
 
     if ((i<nenp && dof != 3) || (i>=nenp && dof != 2)) {
-
       opserr << "FATAL ERROR NineFourNodeQuadUP, has wrong number of DOFs at its nodes "
-
 	     << this->getTag();
 
       return;
-
-		 }
-
+    }
+    const Vector &disp = theNodes[i]->getDisp();
+    if (disp.Norm() != 0)
+      allZero = false;
   }
 
-
+  if (allZero == false) {
+    initNodeDispl = new double[nenu*2];
+    for (i=0; i<nenu; i++) {
+      const Vector &disp = theNodes[i]->getDisp();    
+      initNodeDispl[i*2] = disp(0);
+      initNodeDispl[i*2+1] = disp(1);
+    }
+  }
 
   this->DomainComponent::setDomain(theDomain);
-
 }
 
 
@@ -468,10 +515,14 @@ NineFourNodeQuadUP::update()
   for (i = 0; i < nenu; i++) {
 
     const Vector &disp = theNodes[i]->getTrialDisp();
-
-    u[0][i] = disp(0);
-
-    u[1][i] = disp(1);
+    
+    if (initNodeDispl == 0) {
+      u[0][i] = disp(0);
+      u[1][i] = disp(1);
+    } else {
+      u[0][i] = disp(0)-initNodeDispl[i*2];
+      u[1][i] = disp(1)-initNodeDispl[i*2+1];
+    }
 
   }
 
@@ -518,7 +569,6 @@ NineFourNodeQuadUP::update()
 
 
     // Set the material strain
-
     ret += theMaterial[i]->setTrialStrain(eps);
 
   }
@@ -1038,8 +1088,8 @@ NineFourNodeQuadUP::addLoad(ElementalLoad *theLoad, double loadFactor)
 
 	if (type == LOAD_TAG_SelfWeight) {
 		applyLoad = 1;
-		appliedB[0] += loadFactor*b[0];
-		appliedB[1] += loadFactor*b[1];
+		appliedB[0] += loadFactor*data(0)*b[0];
+		appliedB[1] += loadFactor*data(1)*b[1];
 		return 0;
 	} else {
 		opserr << "NineFourNodeQuadUP::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
@@ -1576,7 +1626,7 @@ NineFourNodeQuadUP::Print(OPS_Stream &s, int flag)
 
 int
 
-NineFourNodeQuadUP::displaySelf(Renderer &theViewer, int displayMode, float fact)
+NineFourNodeQuadUP::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 
 {
 
@@ -1792,56 +1842,44 @@ NineFourNodeQuadUP::setParameter(const char **argv, int argc, Parameter &param)
   int res = -1;
 
   // quad mass density per unit volume
-  if (strcmp(argv[0],"rho") == 0)
+  if (strcmp(argv[0],"rho") == 0) {
     return param.addObject(1, this);
 
+  // quad pressure loading
+  } else if (strcmp(argv[0],"pressure") == 0) {
+    return param.addObject(2, this);
+
   // permeability in horizontal direction
-  if (strcmp(argv[0],"hPerm") == 0)
+  } else if (strcmp(argv[0],"hPerm") == 0) {
     return param.addObject(3, this);
 
   // permeability in vertical direction
-  if (strcmp(argv[0],"vPerm") == 0)
+  } else if (strcmp(argv[0],"vPerm") == 0) {
     return param.addObject(4, this);
-
-  // material state (elastic/plastic) for UW soil materials
-  if (strcmp(argv[0],"materialState") == 0) {
-      return param.addObject(5,this);
   }
-  // frictional strength parameter for UW soil materials
-  if (strcmp(argv[0],"frictionalStrength") == 0) {
-      return param.addObject(7,this);
-  }
-  // non-associative parameter for UW soil materials
-  if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-      return param.addObject(8,this);
-  }
-  // cohesion parameter for UW soil materials
-  if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-      return param.addObject(9,this);
-  }
-
-  // a material parameter
-  if (strstr(argv[0],"material") != 0) {
+  // check for material parameters
+  if ((strstr(argv[0],"material") != 0) && (strcmp(argv[0],"materialState") != 0)) {
 
     if (argc < 3)
       return -1;
 
     int pointNum = atoi(argv[1]);
-    if (pointNum > 0 && pointNum <= nenu)
+    if (pointNum > 0 && pointNum <= 9)
       return theMaterial[pointNum-1]->setParameter(&argv[2], argc-2, param);
     else
       return -1;
   }
 
-  // otherwise it could be just a forall material parameter
+  // otherwise it could be a for all material pointer
   else {
     int matRes = res;
-    for (int i=0; i<nenu; i++) {
+    for (int i=0; i<9; i++) {
       matRes =  theMaterial[i]->setParameter(argv, argc, param);
       if (matRes != -1)
 	res = matRes;
     }
   }
+
   return res;
 }
 
@@ -1863,41 +1901,8 @@ NineFourNodeQuadUP::updateParameter(int parameterID, Information &info)
 	  perm[1] = info.theDouble;
 	  this->getDamp();	// update mass matrix
 	  return 0;
-	case 5:
-	  // added: C.McGann, U.Washington
-	  for (int i = 0; i<4; i++) {
-	      matRes = theMaterial[i]->updateParameter(parameterID, info);
-	  }
-	  if (matRes != -1) {
-		  res = matRes;
-	  }
-	  return res;
-	case 7:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 8:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 9:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-  default:
-    return -1;
+    default:
+      return -1;
   }
 }
 

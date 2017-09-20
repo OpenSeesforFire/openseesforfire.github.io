@@ -28,6 +28,72 @@
 #include <FEM_ObjectBroker.h>
 #include <ElementResponse.h>
 #include <ElementalLoad.h>
+#include <elementAPI.h>
+
+void* OPS_FourNodeQuadUP()
+{
+    if (OPS_GetNDM() != 2 || OPS_GetNDF() != 3) {
+	opserr << "WARNING -- model dimensions and/or nodal DOF not compatible with QuadUP element\n";
+	return 0;
+    }
+    if (OPS_GetNumRemainingInputArgs() < 11) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element FourNodeQuadUP eleTag? iNode? jNode? kNode? lNode? thk? type? matTag? bulk? rho? perm_x? perm_y? <b1? b2? pressure? dM? dK?>\n";
+	return 0;
+    }
+
+    // FourNodeQuadUPId, iNode, jNode, kNode, lNode
+    int tags[5];
+    int num = 5;
+    if (OPS_GetIntInput(&num,tags) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+
+    double thk;
+    num = 1;
+    if (OPS_GetDoubleInput(&num,&thk) < 0) {
+	opserr<<"WARNING: invalid double input\n";
+	return 0;
+    }
+
+    int matTag;
+    if (OPS_GetIntInput(&num,&matTag) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+    NDMaterial* mat = OPS_getNDMaterial(matTag);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "material tag: " << matTag;
+	opserr << "\nquad element: " << tags[0] << endln;
+    }
+
+    // bk, r, perm1, perm2
+    double data[4];
+    num = 4;
+    if (OPS_GetDoubleInput(&num,data) < 0) {
+	opserr<<"WARNING: invalid double input\n";
+	return 0;
+    }
+
+    // b1, b2, p
+    double opt[3] = {0,0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 3) {
+	num = 3;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,opt) < 0) {
+	    opserr<<"WARNING: invalid double input\n";
+	    return 0;
+	}
+    }
+
+    return new FourNodeQuadUP(tags[0],tags[1],tags[2],tags[3],tags[4],
+			      *mat,"PlainStrain",thk,data[0],data[1],data[2],data[3],
+			      opt[0],opt[1],opt[2]);
+}
 
 Matrix FourNodeQuadUP::K(12,12);
 Vector FourNodeQuadUP::P(12);
@@ -40,12 +106,13 @@ Node *FourNodeQuadUP::theNodes[4];
 
 
 FourNodeQuadUP::FourNodeQuadUP(int tag, int nd1, int nd2, int nd3, int nd4,
-	NDMaterial &m, const char *type, double t, double bulk, double r,
-		  double p1, double p2, double b1, double b2, double p)
+			       NDMaterial &m, const char *type, double t, double bulk, 
+			       double r, double p1, double p2, double b1, double b2, double p)
 :Element (tag, ELE_TAG_FourNodeQuadUP),
   theMaterial(0), connectedExternalNodes(4),
   nd1Ptr(0), nd2Ptr(0), nd3Ptr(0), nd4Ptr(0), Ki(0),
-  Q(12), pressureLoad(12), applyLoad(0), thickness(t), kc(bulk), rho(r), pressure(p)
+ Q(12), pressureLoad(12), applyLoad(0), thickness(t), kc(bulk), rho(r), pressure(p),
+ end1InitDisp(0),end2InitDisp(0),end3InitDisp(0),end4InitDisp(0)
 {
 	pts[0][0] = -0.5773502691896258;
 	pts[0][1] = -0.5773502691896258;
@@ -99,7 +166,8 @@ FourNodeQuadUP::FourNodeQuadUP()
 :Element (0,ELE_TAG_FourNodeQuadUP),
   theMaterial(0), connectedExternalNodes(4),
  nd1Ptr(0), nd2Ptr(0), nd3Ptr(0), nd4Ptr(0), Ki(0),
-  Q(12), pressureLoad(12), applyLoad(0), thickness(0.0), kc(0.0), rho(0.0), pressure(0.0)
+ Q(12), pressureLoad(12), applyLoad(0), thickness(0.0), kc(0.0), rho(0.0), pressure(0.0),
+ end1InitDisp(0),end2InitDisp(0),end3InitDisp(0),end4InitDisp(0)
 {
 	pts[0][0] = -0.577350269189626;
 	pts[0][1] = -0.577350269189626;
@@ -129,6 +197,14 @@ FourNodeQuadUP::~FourNodeQuadUP()
 
     if (Ki != 0)
       delete Ki;
+    if (end1InitDisp != 0)
+      delete [] end1InitDisp;
+    if (end2InitDisp != 0)
+      delete [] end2InitDisp;
+    if (end3InitDisp != 0)
+      delete [] end3InitDisp;
+    if (end4InitDisp != 0)
+      delete [] end4InitDisp;
 }
 
 int
@@ -163,52 +239,84 @@ FourNodeQuadUP::getNumDOF()
 void
 FourNodeQuadUP::setDomain(Domain *theDomain)
 {
-	// Check Domain is not null - invoked when object removed from a domain
-    if (theDomain == 0) {
-	nd1Ptr = 0;
-	nd2Ptr = 0;
-	nd3Ptr = 0;
-	nd4Ptr = 0;
-	return;
+  // Check Domain is not null - invoked when object removed from a domain
+  if (theDomain == 0) {
+    nd1Ptr = 0;
+    nd2Ptr = 0;
+    nd3Ptr = 0;
+    nd4Ptr = 0;
+    return;
+  }
+  
+  int Nd1 = connectedExternalNodes(0);
+  int Nd2 = connectedExternalNodes(1);
+  int Nd3 = connectedExternalNodes(2);
+  int Nd4 = connectedExternalNodes(3);
+  
+  nd1Ptr = theDomain->getNode(Nd1);
+  nd2Ptr = theDomain->getNode(Nd2);
+  nd3Ptr = theDomain->getNode(Nd3);
+  nd4Ptr = theDomain->getNode(Nd4);
+  
+  if (nd1Ptr == 0 || nd2Ptr == 0 || nd3Ptr == 0 || nd4Ptr == 0) {
+    //opserr << "FATAL ERROR FourNodeQuadUP (tag: %d), node not found in domain",
+    //	this->getTag());
+    
+    return;
+  }
+  
+  int dofNd1 = nd1Ptr->getNumberDOF();
+  int dofNd2 = nd2Ptr->getNumberDOF();
+  int dofNd3 = nd3Ptr->getNumberDOF();
+  int dofNd4 = nd4Ptr->getNumberDOF();
+  
+  if (dofNd1 != 3 || dofNd2 != 3 || dofNd3 != 3 || dofNd4 != 3) {
+    //opserr << "FATAL ERROR FourNodeQuadUP (tag: %d), has differing number of DOFs at its nodes",
+    //	this->getTag());
+    
+    return;
+  }
+  this->DomainComponent::setDomain(theDomain);
+  
+  // Compute consistent nodal loads due to pressure
+  this->setPressureLoadAtNodes();
+  
+  const Vector &disp1 = nd1Ptr->getDisp();
+  if (disp1.Norm() != 0.0) {
+    end1InitDisp = new double[2];
+    for (int i=0; i<2; i++) {
+      end1InitDisp[0] = disp1(i);
     }
-
-    int Nd1 = connectedExternalNodes(0);
-    int Nd2 = connectedExternalNodes(1);
-    int Nd3 = connectedExternalNodes(2);
-    int Nd4 = connectedExternalNodes(3);
-
-    nd1Ptr = theDomain->getNode(Nd1);
-    nd2Ptr = theDomain->getNode(Nd2);
-    nd3Ptr = theDomain->getNode(Nd3);
-    nd4Ptr = theDomain->getNode(Nd4);
-
-    if (nd1Ptr == 0 || nd2Ptr == 0 || nd3Ptr == 0 || nd4Ptr == 0) {
-	//opserr << "FATAL ERROR FourNodeQuadUP (tag: %d), node not found in domain",
-	//	this->getTag());
-
-	return;
+  }
+    
+  const Vector &disp2 = nd2Ptr->getDisp();
+  if (disp2.Norm() != 0.0) {
+    end2InitDisp = new double[2];
+    for (int i=0; i<2; i++) {
+      end2InitDisp[0] = disp2(i);
     }
+  }
 
-    int dofNd1 = nd1Ptr->getNumberDOF();
-    int dofNd2 = nd2Ptr->getNumberDOF();
-    int dofNd3 = nd3Ptr->getNumberDOF();
-    int dofNd4 = nd4Ptr->getNumberDOF();
-
-    if (dofNd1 != 3 || dofNd2 != 3 || dofNd3 != 3 || dofNd4 != 3) {
-	//opserr << "FATAL ERROR FourNodeQuadUP (tag: %d), has differing number of DOFs at its nodes",
-	//	this->getTag());
-
-	return;
+  const Vector &disp3 = nd3Ptr->getDisp();
+  if (disp3.Norm() != 0.0) {
+    end3InitDisp = new double[2];
+    for (int i=0; i<2; i++) {
+      end3InitDisp[0] = disp3(i);
     }
-    this->DomainComponent::setDomain(theDomain);
+  }
 
-	// Compute consistent nodal loads due to pressure
-	this->setPressureLoadAtNodes();
+  const Vector &disp4 = nd4Ptr->getDisp();
+  if (disp4.Norm() != 0.0) {
+    end4InitDisp = new double[2];
+    for (int i=0; i<2; i++) {
+      end4InitDisp[0] = disp4(i);
+    }
+  }
+
 }
 
 int
-FourNodeQuadUP::commitState()
-{
+FourNodeQuadUP::commitState() {
     int retVal = 0;
 
     // call element commitState to do any base class stuff
@@ -250,50 +358,71 @@ FourNodeQuadUP::revertToStart()
 int
 FourNodeQuadUP::update()
 {
-	const Vector &disp1 = nd1Ptr->getTrialDisp();
-	const Vector &disp2 = nd2Ptr->getTrialDisp();
-	const Vector &disp3 = nd3Ptr->getTrialDisp();
-	const Vector &disp4 = nd4Ptr->getTrialDisp();
+  const Vector &disp1 = nd1Ptr->getTrialDisp();
+  const Vector &disp2 = nd2Ptr->getTrialDisp();
+  const Vector &disp3 = nd3Ptr->getTrialDisp();
+  const Vector &disp4 = nd4Ptr->getTrialDisp();
+  
+  static double u[2][4];
+  if (end1InitDisp == 0) {
+    u[0][0] = disp1(0);
+    u[1][0] = disp1(1);
+  } else {
+    u[0][0] = disp1(0) - end1InitDisp[0];
+    u[1][0] = disp1(1) - end1InitDisp[1];
+  }
+  if (end2InitDisp == 0) {
+    u[0][1] = disp2(0);
+    u[1][1] = disp2(1);
+  } else {
+    u[0][1] = disp2(0) - end2InitDisp[0];
+    u[1][1] = disp2(1) - end2InitDisp[1];
+  }
 
-	static double u[2][4];
+  if (end3InitDisp == 0) {
+    u[0][2] = disp3(0);
+    u[1][2] = disp3(1);
+  } else {
+    u[0][2] = disp3(0) - end3InitDisp[0];
+    u[1][2] = disp3(1) - end3InitDisp[1];
+  }
 
-	u[0][0] = disp1(0);
-	u[1][0] = disp1(1);
-	u[0][1] = disp2(0);
-	u[1][1] = disp2(1);
-	u[0][2] = disp3(0);
-	u[1][2] = disp3(1);
-	u[0][3] = disp4(0);
-	u[1][3] = disp4(1);
+  if (end3InitDisp == 0) {
+    u[0][3] = disp4(0);
+    u[1][3] = disp4(1);
+  } else {
+    u[0][3] = disp4(0) - end4InitDisp[0];
+    u[1][3] = disp4(1) - end4InitDisp[1];;
+  }
 
-	static Vector eps(3);
+  static Vector eps(3);
 
-	int ret = 0;
-
-	// Determine Jacobian for this integration point
-	this->shapeFunction();
-
-	// Loop over the integration points
-	for (int i = 0; i < 4; i++) {
-
-		// Interpolate strains
-		//eps = B*u;
-		//eps.addMatrixVector(0.0, B, u, 1.0);
-		eps.Zero();
-		for (int beta = 0; beta < 4; beta++) {
-			eps(0) += shp[0][beta][i]*u[0][beta];
-			eps(1) += shp[1][beta][i]*u[1][beta];
-			eps(2) += shp[0][beta][i]*u[1][beta] + shp[1][beta][i]*u[0][beta];
-		}
-
-		// Set the material strain
-		ret += theMaterial[i]->setTrialStrain(eps);
-	}
-
-	return ret;
+  int ret = 0;
+  
+  // Determine Jacobian for this integration point
+  this->shapeFunction();
+  
+  // Loop over the integration points
+  for (int i = 0; i < 4; i++) {
+    
+    // Interpolate strains
+    //eps = B*u;
+    //eps.addMatrixVector(0.0, B, u, 1.0);
+    eps.Zero();
+    for (int beta = 0; beta < 4; beta++) {
+      eps(0) += shp[0][beta][i]*u[0][beta];
+      eps(1) += shp[1][beta][i]*u[1][beta];
+      eps(2) += shp[0][beta][i]*u[1][beta] + shp[1][beta][i]*u[0][beta];
+    }
+    
+    // Set the material strain
+    ret += theMaterial[i]->setTrialStrain(eps);
+  }
+  
+  return ret;
 }
-
-
+ 
+ 
 const Matrix&
 FourNodeQuadUP::getTangentStiff()
 {
@@ -529,8 +658,8 @@ FourNodeQuadUP::addLoad(ElementalLoad *theLoad, double loadFactor)
 
 	if (type == LOAD_TAG_SelfWeight) {
 		applyLoad = 1;
-		appliedB[0] += loadFactor*b[0];
-		appliedB[1] += loadFactor*b[1];
+		appliedB[0] += loadFactor*data(0)*b[0];
+		appliedB[1] += loadFactor*data(1)*b[1];
 		return 0;
 	} else {
 		opserr << "FourNodeQuadUP::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
@@ -926,7 +1055,7 @@ FourNodeQuadUP::Print(OPS_Stream &s, int flag)
 }
 
 int
-FourNodeQuadUP::displaySelf(Renderer &theViewer, int displayMode, float fact)
+FourNodeQuadUP::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **argv, int numModes)
 {
     // first set the quantity to be displayed at the nodes;
     // if displayMode is 1 through 3 we will plot material stresses otherwise 0.0
@@ -1047,42 +1176,24 @@ FourNodeQuadUP::setParameter(const char **argv, int argc, Parameter &param)
 
   int res = -1;
 
-
   // quad mass density per unit volume
-  if (strcmp(argv[0],"rho") == 0)
+  if (strcmp(argv[0],"rho") == 0) {
     return param.addObject(1, this);
 
   // quad pressure loading
-  if (strcmp(argv[0],"pressure") == 0)
+  } else if (strcmp(argv[0],"pressure") == 0) {
     return param.addObject(2, this);
 
   // permeability in horizontal direction
-  if (strcmp(argv[0],"hPerm") == 0)
+  } else if (strcmp(argv[0],"hPerm") == 0) {
     return param.addObject(3, this);
 
   // permeability in vertical direction
-  if (strcmp(argv[0],"vPerm") == 0)
+  } else if (strcmp(argv[0],"vPerm") == 0) {
     return param.addObject(4, this);
-
-  // material state (elastic/plastic) for UW soil materials
-  if (strcmp(argv[0],"materialState") == 0) {
-      return param.addObject(5,this);
   }
-  // frictional strength parameter for UW soil materials
-  if (strcmp(argv[0],"frictionalStrength") == 0) {
-      return param.addObject(7,this);
-  }
-  // non-associative parameter for UW soil materials
-  if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-      return param.addObject(8,this);
-  }
-  // cohesion parameter for UW soil materials
-  if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-      return param.addObject(9,this);
-  }
-
-  // a material parameter
-  if (strstr(argv[0],"material") != 0) {
+  // check for material parameters
+  if ((strstr(argv[0],"material") != 0) && (strcmp(argv[0],"materialState") != 0)) {
 
     if (argc < 3)
       return -1;
@@ -1094,7 +1205,7 @@ FourNodeQuadUP::setParameter(const char **argv, int argc, Parameter &param)
       return -1;
   }
 
-  // otherwise it could be a forall material pointer
+  // otherwise it could be a for all material pointer
   else {
     int matRes = res;
     for (int i=0; i<4; i++) {
@@ -1132,39 +1243,6 @@ FourNodeQuadUP::updateParameter(int parameterID, Information &info)
 		perm[1] = info.theDouble;
 		this->getDamp();	// update mass matrix
 		return 0;
-	case 5:
-	    // added: C.McGann, U.Washington
-		for (int i = 0; i<4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 7:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 8:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 9:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
 	default:
 		if (parameterID >= 100) { // material parameter
 			int pointNum = parameterID/100;

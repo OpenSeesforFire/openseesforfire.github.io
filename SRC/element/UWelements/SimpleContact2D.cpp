@@ -62,7 +62,8 @@ OPS_SimpleContact2D(void)
 {
   if (num_SimpleContact2D == 0) {
     num_SimpleContact2D++;
-    OPS_Error("SimpleContact2D element - Written: K.Petek, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n", 1);
+    //OPS_Error("SimpleContact2D element - Written: K.Petek, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n", 1);
+    opserr << "SimpleContact2D element - Written: K.Petek, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n";
   }
 
   // Pointer to a uniaxial material that will be returned
@@ -89,7 +90,7 @@ OPS_SimpleContact2D(void)
   }
 
   int matID = iData[5];
-  NDMaterial *theMaterial = OPS_GetNDMaterial(matID);
+  NDMaterial *theMaterial = OPS_getNDMaterial(matID);
   if (theMaterial == 0) {
     opserr << "WARNING element SimpleContact2D " << iData[0] << endln;
     opserr << " Material: " << matID << "not found\n";
@@ -756,7 +757,7 @@ SimpleContact2D::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &
 
 
 int
-SimpleContact2D::displaySelf(Renderer &theViewer, int displayMode, float fact)
+SimpleContact2D::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
   return 0;
 }

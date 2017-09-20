@@ -42,12 +42,68 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <elementAPI.h>
 
 Matrix ZeroLengthSection::K6(6,6);
 Matrix ZeroLengthSection::K12(12,12);
 
 Vector ZeroLengthSection::P6(6);
 Vector ZeroLengthSection::P12(12);
+
+void* OPS_ZeroLengthSection()
+{
+    int ndm = OPS_GetNDM();
+    
+    if(OPS_GetNumRemainingInputArgs() < 4) {
+	opserr<<"insufficient arguments for ZeroLengthSection\n";
+	return 0;
+    }
+
+    // get eleTag,iNode,jNode,secTag
+    int iData[4];
+    int numData = 4;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	opserr<<"WARNING: invalid integer inputs\n";
+	return 0;
+    }
+
+    // options
+    Vector x(3); x(0) = 1.0; x(1) = 0.0; x(2) = 0.0;
+    Vector y(3); y(0) = 0.0; y(1) = 1.0; y(2) = 0.0;
+    double *x_ptr=&x(0), *y_ptr=&y(0);
+    int doRayleighDamping = 1;
+    while(OPS_GetNumRemainingInputArgs() > 1) {
+	const char* type = OPS_GetString();
+	if(strcmp(type, "-orient") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 5) {
+		numData = 3;
+		if(OPS_GetDoubleInput(&numData,x_ptr) < 0) {
+		    opserr<<"WARNING: invalid double inputs\n";
+		    return 0;
+		}
+		if(OPS_GetDoubleInput(&numData,y_ptr) < 0) {
+		    opserr<<"WARNING: invalid double inputs\n";
+		    return 0;
+		}
+	    }
+	} else if(strcmp(type, "-doRayleigh") == 0) {
+	    numData = 1;
+	    if(OPS_GetIntInput(&numData,&doRayleighDamping) < 0) {
+		opserr<<"WARNING: invalid integer inputs\n";
+		return 0;
+	    }
+	}
+    }
+
+    // get section
+    SectionForceDeformation* theSection = OPS_getSectionForceDeformation(iData[3]);
+    if(theSection == 0) {
+	opserr << "zeroLengthSection -- no section with tag " << iData[0] << " exists in Domain\n";
+	return 0;
+    }
+
+    return new ZeroLengthSection(iData[0],ndm,iData[1],iData[2],x,y,*theSection,doRayleighDamping);
+}
 
 //  Constructor:
 //  responsible for allocating the necessary space needed by each object
@@ -188,7 +244,7 @@ ZeroLengthSection::setDomain(Domain *theDomain)
     // Check that length is zero within tolerance
     const Vector &end1Crd = theNodes[0]->getCrds();
     const Vector &end2Crd = theNodes[1]->getCrds();	
-    const Vector     diff = end1Crd - end2Crd;
+    Vector diff = end1Crd - end2Crd;
     double L  = diff.Norm();
     double v1 = end1Crd.Norm();
     double v2 = end2Crd.Norm();
@@ -486,7 +542,7 @@ ZeroLengthSection::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker
 }
 
 int
-ZeroLengthSection::displaySelf(Renderer &theViewer, int displayMode, float fact)
+ZeroLengthSection::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
     // ensure setDomain() worked
     if (theNodes[0] == 0 || theNodes[1] == 0)
@@ -517,9 +573,31 @@ ZeroLengthSection::displaySelf(Renderer &theViewer, int displayMode, float fact)
 void
 ZeroLengthSection::Print(OPS_Stream &s, int flag)
 {
-	s << "ZeroLengthSection, tag: " << this->getTag() << endln;
-	s << "\tConnected Nodes: " << connectedExternalNodes << endln;
-	s << "\tSection, tag: " << theSection->getTag() << endln;
+    if (flag == OPS_PRINT_CURRENTSTATE) {
+        s << "ZeroLengthSection, tag: " << this->getTag() << endln;
+        s << "\tConnected Nodes: " << connectedExternalNodes << endln;
+        s << "\tSection, tag: " << theSection->getTag() << endln;
+        theSection->Print(s, flag);
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"type\": \"ZeroLengthSection\", ";
+        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+        s << "\"section\": \"" << theSection->getTag() << "\", ";
+        s << "\"transMatrix\": [[";
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (j < 2)
+                    s << transformation(i, j) << ", ";
+                else if (j == 2 && i < 2)
+                    s << transformation(i, j) << "], [";
+                else if (j == 2 && i == 2)
+                    s << transformation(i, j) << "]]}";
+            }
+        }
+    }
 }
 
 Response*
@@ -673,7 +751,7 @@ ZeroLengthSection::setTransformation(void)
 
 	// Get the section code
 	const ID &code = theSection->getType();
-		
+
 	// Set a reference to make the syntax nicer
 	Matrix &tran = *A;
 	
@@ -763,7 +841,7 @@ ZeroLengthSection::computeSectionDefs(void)
 	const Vector &u2 = theNodes[1]->getTrialDisp();
 
 	// Compute differential displacements
-	const Vector diff = u2 - u1;
+	Vector diff = u2 - u1;
 
 	// Set some references to make the syntax nicer
 	Vector &def = *v;

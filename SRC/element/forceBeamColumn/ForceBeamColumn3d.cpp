@@ -72,7 +72,8 @@ Journal of Structural Engineering, Approved for publication, February 2007.
 #include <FEM_ObjectBroker.h>
 #include <Renderer.h>
 #include <math.h>
-
+#include <elementAPI.h>
+#include <string>
 #include <fstream>
 using std::ifstream;
 #include <fstream>
@@ -97,6 +98,92 @@ Vector *ForceBeamColumn3d::vsSubdivide = 0;
 Matrix *ForceBeamColumn3d::fsSubdivide = 0;
 Vector *ForceBeamColumn3d::SsrSubdivide = 0;
 
+void* OPS_ForceBeamColumn3d()
+{
+    if (OPS_GetNumRemainingInputArgs() < 5) {
+	opserr<<"insufficient arguments:eleTag,iNode,jNode,transfTag,integrationTag\n";
+	return 0;
+    }
+
+    int ndm = OPS_GetNDM();
+    int ndf = OPS_GetNDF();
+    if(ndm != 3 || ndf != 6) {
+	opserr<<"ndm must be 3 and ndf must be 6\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[5];
+    int numData = 5;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	opserr << "WARNING invalid int inputs\n";
+	return 0;
+    }
+
+    // options
+    double mass = 0.0, tol=1e-12;
+    int maxIter = 10;
+    numData = 1;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	const char* type = OPS_GetString();
+	if(strcmp(type,"-iter") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 1) {
+		if(OPS_GetIntInput(&numData,&maxIter) < 0) {
+		    opserr << "WARNING invalid maxIter\n";
+		    return 0;
+		}
+		if(OPS_GetDoubleInput(&numData,&tol) < 0) {
+		    opserr << "WARNING invalid tol\n";
+		    return 0;
+		}
+	    }
+	} else if(strcmp(type,"-mass") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) {
+		    opserr << "WARNING invalid mass\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return 0;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[4]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return 0;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return 0;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+	    return 0;
+	}
+    }
+
+    Element *theEle =  new ForceBeamColumn3d(iData[0],iData[1],iData[2],secTags.Size(),sections,
+					     *bi,*theTransf,mass,maxIter,tol);
+    delete [] sections;
+    return theEle;
+}
+
+
 // constructor:
 // invoked by a FEM_ObjectBroker, recvSelf() needs to be invoked on this object.
 ForceBeamColumn3d::ForceBeamColumn3d(): 
@@ -106,7 +193,9 @@ ForceBeamColumn3d::ForceBeamColumn3d():
   initialFlag(0),
   kv(NEBD,NEBD), Se(NEBD),
   kvcommit(NEBD,NEBD), Secommit(NEBD),
-  fs(0), vs(0), Ssr(0), vscommit(0), sp(0), Ki(0), isTorsion(false)
+  fs(0), vs(0), Ssr(0), vscommit(0), sp(0),
+  numEleLoads(0), sizeEleLoads(0), eleLoads(0), eleLoadFactors(0),
+  Ki(0), isTorsion(false), parameterID(0)
 {
   theNodes[0] = 0;  
   theNodes[1] = 0;
@@ -136,7 +225,7 @@ ForceBeamColumn3d::ForceBeamColumn3d():
 }
 
 // constructor which takes the unique element tag, sections,
-// and the node ID's of it's nodal end points. 
+// and the node ID's of its nodal end points. 
 // allocates the necessary space needed by each object
 ForceBeamColumn3d::ForceBeamColumn3d (int tag, int nodeI, int nodeJ,
 				      int numSec, SectionForceDeformation **sec,
@@ -149,7 +238,9 @@ ForceBeamColumn3d::ForceBeamColumn3d (int tag, int nodeI, int nodeJ,
   initialFlag(0),
   kv(NEBD,NEBD), Se(NEBD), 
   kvcommit(NEBD,NEBD), Secommit(NEBD),
-  fs(0), vs(0),Ssr(0), vscommit(0), sp(0), Ki(0), isTorsion(false)
+  fs(0), vs(0),Ssr(0), vscommit(0), sp(0), 
+  numEleLoads(0), sizeEleLoads(0), eleLoads(0), eleLoadFactors(0), 
+  Ki(0), isTorsion(false), parameterID(0)
 {
   theNodes[0] = 0;
   theNodes[1] = 0;
@@ -453,6 +544,124 @@ ForceBeamColumn3d::getInitialStiff(void)
     crdTransf->update();	// Will remove once we clean up the corotational 3d transformation -- MHS
     return crdTransf->getGlobalStiffMatrix(kv, Se);
   }
+
+void
+ForceBeamColumn3d::computeReactions(double *p0)
+{
+  int type;
+  double L = crdTransf->getInitialLength();
+  
+  for (int i = 0; i < numEleLoads; i++) {
+    
+    double loadFactor = eleLoadFactors[i];
+    const Vector &data = eleLoads[i]->getData(type, loadFactor);
+
+    if (type == LOAD_TAG_Beam3dUniformLoad) {
+      double wa = data(2)*loadFactor;  // Axial
+      double wy = data(0)*loadFactor;  // Transverse
+      double wz = data(1)*loadFactor;
+      
+      p0[0] -= wa*L;
+      double V = 0.5*wy*L;
+      p0[1] -= V;
+      p0[2] -= V;
+      V = 0.5*wz*L;
+      p0[3] -= V;
+      p0[4] -= V;
+    }
+    else if (type == LOAD_TAG_Beam3dPointLoad) {
+      double Py = data(0)*loadFactor;
+      double Pz = data(1)*loadFactor;
+      double N  = data(2)*loadFactor;
+      double aOverL = data(3);
+      
+      if (aOverL < 0.0 || aOverL > 1.0)
+	continue;
+      
+      double V1 = Py*(1.0-aOverL);
+      double V2 = Py*aOverL;
+      p0[0] -= N;
+      p0[1] -= V1;
+      p0[2] -= V2;
+      V1 = Pz*(1.0-aOverL);
+      V2 = Pz*aOverL;
+      p0[3] -= V1;
+      p0[4] -= V2;
+    }
+  }
+}
+
+void
+ForceBeamColumn3d::computeReactionSensitivity(double *dp0dh, int gradNumber)
+{
+  int type;
+  double L = crdTransf->getInitialLength();
+  
+  double dLdh = crdTransf->getdLdh();
+
+  for (int i = 0; i < numEleLoads; i++) {
+    
+    const Vector &data = eleLoads[i]->getData(type, 1.0);
+
+    if (type == LOAD_TAG_Beam3dUniformLoad) {
+      double wy = data(0)*1.0;  // Transverse
+      double wz = data(1)*1.0;
+      double wa = data(2)*1.0;  // Axial
+
+      const Vector &sens = eleLoads[i]->getSensitivityData(gradNumber);
+      double dwydh = sens(0);
+      double dwadh = sens(1);
+      double dwzdh = 0.0;
+      
+      //p0[0] -= wa*L;
+      dp0dh[0] -= wa*dLdh + dwadh*L;
+
+      //double V = 0.5*wy*L;
+      //p0[1] -= V;
+      //p0[2] -= V;
+      double dVdh = 0.5*(wy*dLdh + dwydh*L);
+      dp0dh[1] -= dVdh;
+      dp0dh[2] -= dVdh;
+      dVdh = 0.5*(wz*L + dwzdh*L);
+      dp0dh[3] -= dVdh;
+      dp0dh[4] -= dVdh;
+    }
+    else if (type == LOAD_TAG_Beam3dPointLoad) {
+      double Py = data(0)*1.0;
+      double Pz = data(1)*1.0;
+      double N  = data(2)*1.0;
+      double aOverL = data(3);
+
+      if (aOverL < 0.0 || aOverL > 1.0)
+	continue;
+      
+      const Vector &sens = eleLoads[i]->getSensitivityData(gradNumber);
+      double dPydh = sens(0);
+      double dPzdh = sens(1);
+      double dNdh  = sens(2);
+      double daLdh = sens(3);
+
+      //double a = aOverL*L;
+      
+      //double V1 = P*(1.0-aOverL);
+      //double V2 = P*aOverL;
+      double dV1dh = Py*(0.0-daLdh) + dPydh*(1.0-aOverL);
+      double dV2dh = Py*daLdh + dPydh*aOverL;
+      
+      //p0[0] -= N;
+      //p0[1] -= V1;
+      //p0[2] -= V2;
+      dp0dh[0] -= dNdh;
+      dp0dh[1] -= dV1dh;
+      dp0dh[2] -= dV2dh;
+
+      dV1dh = Pz*(0.0-daLdh) + dPzdh*(1.0-aOverL);
+      dV2dh = Pz*daLdh + dPzdh*aOverL;
+      dp0dh[3] -= dV1dh;
+      dp0dh[4] -= dV2dh;
+    }
+  }
+}
 
   const Vector &
   ForceBeamColumn3d::getResistingForce(void)
@@ -1065,6 +1274,7 @@ ForceBeamColumn3d::getInitialStiff(void)
     v0[4] = 0.0;
   }
 
+/*
   int
   ForceBeamColumn3d::addLoad(ElementalLoad *theLoad, double loadFactor)
   {
@@ -1173,6 +1383,272 @@ ForceBeamColumn3d::getInitialStiff(void)
 
     return 0;
   }
+*/
+
+int
+ForceBeamColumn3d::addLoad(ElementalLoad *theLoad, double loadFactor)
+{
+  if (numEleLoads == sizeEleLoads) {
+
+    //
+    // create larger arrays, copy old, delete old & set as new
+    //
+
+    ElementalLoad ** theNextEleLoads = new ElementalLoad *[sizeEleLoads+1];
+    double *theNextEleLoadFactors = new double[sizeEleLoads+1];
+    for (int i=0; i<numEleLoads; i++) {
+      theNextEleLoads[i] = eleLoads[i];
+      theNextEleLoadFactors[i] = eleLoadFactors[i];
+    }
+    delete [] eleLoads;
+    delete [] eleLoadFactors;
+    eleLoads = theNextEleLoads;
+    eleLoadFactors = theNextEleLoadFactors;  
+
+    // increment array size
+    sizeEleLoads+=1;
+  }
+
+  eleLoadFactors[numEleLoads] = loadFactor;
+  eleLoads[numEleLoads] = theLoad;
+  numEleLoads++;
+
+  return 0;
+}
+
+void
+ForceBeamColumn3d::computeSectionForces(Vector &sp, int isec)
+{
+  int type;
+
+  double L = crdTransf->getInitialLength();
+
+  double xi[maxNumSections];
+  beamIntegr->getSectionLocations(numSections, L, xi);
+  double x = xi[isec]*L;
+
+  int order = sections[isec]->getOrder();
+  const ID &code = sections[isec]->getType();
+
+  for (int i = 0; i < numEleLoads; i++) {
+
+    double loadFactor = eleLoadFactors[i];
+    const Vector &data = eleLoads[i]->getData(type, loadFactor);
+
+    if (type == LOAD_TAG_Beam2dUniformLoad) {
+      double wa = data(2)*loadFactor;  // Axial
+      double wy = data(0)*loadFactor;  // Transverse
+      double wz = data(1)*loadFactor;  // Transverse
+      
+      for (int ii = 0; ii < order; ii++) {
+	
+	switch(code(ii)) {
+	case SECTION_RESPONSE_P:
+	  sp(ii) += wa*(L-x);
+	  break;
+	case SECTION_RESPONSE_MZ:
+	  sp(ii) += wy*0.5*x*(x-L);
+	  break;
+	case SECTION_RESPONSE_VY:
+	  sp(ii) += wy*(x-0.5*L);
+	  break;
+	case SECTION_RESPONSE_MY:
+	  sp(ii) += wz*0.5*x*(L-x);
+	  break;
+	case SECTION_RESPONSE_VZ:
+	  sp(ii) += wz*(x-0.5*L);
+	  break;
+	default:
+	  break;
+	}
+      }
+    }
+    else if (type == LOAD_TAG_Beam3dPointLoad) {
+      double Py = data(0)*loadFactor;
+      double Pz = data(1)*loadFactor;
+      double N  = data(2)*loadFactor;
+      double aOverL = data(2);
+      
+      if (aOverL < 0.0 || aOverL > 1.0)
+	continue;
+      
+      double a = aOverL*L;
+      
+      double Vy1 = Py*(1.0-aOverL);
+      double Vy2 = Py*aOverL;
+      
+      double Vz1 = Pz*(1.0-aOverL);
+      double Vz2 = Pz*aOverL;
+
+      for (int ii = 0; ii < order; ii++) {
+	
+	if (x <= a) {
+	  switch(code(ii)) {
+	  case SECTION_RESPONSE_P:
+	    sp(ii) += N;
+	    break;
+	  case SECTION_RESPONSE_MZ:
+	    sp(ii) -= x*Vy1;
+	    break;
+	  case SECTION_RESPONSE_VY:
+	    sp(ii) -= Vy1;
+	    break;
+	  case SECTION_RESPONSE_MY:
+	    sp(ii) += x*Vz1;
+	    break;
+	  case SECTION_RESPONSE_VZ:
+	    sp(ii) -= Vz1;
+	    break;
+	  default:
+	    break;
+	  }
+	}
+	else {
+	  switch(code(ii)) {
+	  case SECTION_RESPONSE_MZ:
+	    sp(ii) -= (L-x)*Vy2;
+	    break;
+	  case SECTION_RESPONSE_VY:
+	    sp(ii) += Vy2;
+	    break;
+	  case SECTION_RESPONSE_MY:
+	    sp(ii) += (L-x)*Vz2;
+	    break;
+	  case SECTION_RESPONSE_VZ:
+	    sp(ii) += Vz2;
+	    break;
+	  default:
+	    break;
+	  }
+	}
+      }
+    }
+    else {
+      opserr << "ForceBeamColumn3d::addLoad -- load type unknown for element with tag: " <<
+	this->getTag() << endln;
+    }
+  }
+  
+  // Don't think we need to do this anymore -- MHS
+  //this->update(); // quick fix -- MHS
+}
+
+void
+ForceBeamColumn3d::computeSectionForceSensitivity(Vector &dspdh, int isec,
+						  int gradNumber)
+{
+  int type;
+
+  double L = crdTransf->getInitialLength();
+  double dLdh = crdTransf->getdLdh();
+
+  double xi[maxNumSections];
+  beamIntegr->getSectionLocations(numSections, L, xi);
+
+  double dxidh[maxNumSections];
+  beamIntegr->getLocationsDeriv(numSections, L, dLdh, dxidh);
+
+  double x = xi[isec]*L;
+  double dxdh = xi[isec]*dLdh + dxidh[isec]*L;
+      
+  int order = sections[isec]->getOrder();
+  const ID &code = sections[isec]->getType();
+
+  for (int i = 0; i < numEleLoads; i++) {
+
+    const Vector &data = eleLoads[i]->getData(type, 1.0);
+    
+    if (type == LOAD_TAG_Beam2dUniformLoad) {
+      double wy = data(0)*1.0;  // Transverse
+      double wa = data(1)*1.0;  // Axial
+
+      const Vector &sens = eleLoads[i]->getSensitivityData(gradNumber);
+      double dwydh = sens(0);
+      double dwadh = sens(1);
+      //opserr << wy << ' ' << dwydh << endln;
+      for (int ii = 0; ii < order; ii++) {
+	
+	switch(code(ii)) {
+	case SECTION_RESPONSE_P:
+	  //sp(ii) += wa*(L-x);
+	  dspdh(ii) += dwadh*(L-x) + wa*(dLdh-dxdh);
+	  break;
+	case SECTION_RESPONSE_MZ:
+	  //sp(ii) += wy*0.5*x*(x-L);
+	  //dspdh(ii) += 0.5 * (dwydh*x*(x-L) + wy*dxdh*(x-L) + wy*x*(dxdh-dLdh));
+	  dspdh(ii) += 0.5 * (dwydh*x*(x-L) + wy*(dxdh*(2*x-L)-x*dLdh));
+	  break;
+	case SECTION_RESPONSE_VY:
+	  //sp(ii) += wy*(x-0.5*L);
+	  dspdh(ii) += dwydh*(x-0.5*L) + wy*(dxdh-0.5*dLdh);
+	  break;
+	default:
+	  break;
+	}
+      }
+    }
+    else if (type == LOAD_TAG_Beam2dPointLoad) {
+      double P = data(0)*1.0;
+      double N = data(1)*1.0;
+      double aOverL = data(2);
+
+      if (aOverL < 0.0 || aOverL > 1.0)
+	continue;
+      
+      const Vector &sens = eleLoads[i]->getSensitivityData(gradNumber);
+      double dPdh = sens(0);
+      double dNdh = sens(1);
+      double daLdh = sens(2);
+
+      double a = aOverL*L;
+
+      double V1 = P*(1.0-aOverL);
+      double V2 = P*aOverL;
+      double dV1dh = P*(0.0-daLdh) + dPdh*(1.0-aOverL);
+      double dV2dh = P*daLdh + dPdh*aOverL;
+
+      for (int ii = 0; ii < order; ii++) {
+	
+	if (x <= a) {
+	  switch(code(ii)) {
+	  case SECTION_RESPONSE_P:
+	    //sp(ii) += N;
+	    dspdh(ii) += dNdh;
+	    break;
+	  case SECTION_RESPONSE_MZ:
+	    //sp(ii) -= x*V1;
+	    dspdh(ii) -= (dxdh*V1 + x*dV1dh);
+	    break;
+	  case SECTION_RESPONSE_VY:
+	    //sp(ii) -= V1;
+	    dspdh(ii) -= dV1dh;
+	    break;
+	  default:
+	    break;
+	  }
+	}
+	else {
+	  switch(code(ii)) {
+	  case SECTION_RESPONSE_MZ:
+	    //sp(ii) -= (L-x)*V2;
+	    dspdh(ii) -= (dLdh-dxdh)*V2 + (L-x)*dV2dh;
+	    break;
+	  case SECTION_RESPONSE_VY:
+	    //sp(ii) += V2;
+	    dspdh(ii) += dV2dh;
+	    break;
+	  default:
+	    break;
+	  }
+	}
+      }
+    }
+    else {
+      opserr << "ForceBeamColumn3d::computeSectionForceSensitivity -- load type unknown for element with tag: " <<
+	this->getTag() << endln;
+    }
+  }
+}
 
   int 
   ForceBeamColumn3d::addInertiaLoadToUnbalance(const Vector &accel)
@@ -1312,7 +1788,7 @@ ForceBeamColumn3d::getInitialStiff(void)
       opserr << "ForceBeamColumn3d::sendSelf() - failed to send ID data\n";
       return -1;
     }    
-
+ 
     //
     // send the sections
     //
@@ -1368,7 +1844,6 @@ ForceBeamColumn3d::getInitialStiff(void)
 
        return -1;
     }    
-
     return 0;
   }    
 
@@ -1388,7 +1863,7 @@ ForceBeamColumn3d::getInitialStiff(void)
 
       return -1;
     }    
-
+ 
     this->setTag(idData(0));
     connectedExternalNodes(0) = idData(1);
     connectedExternalNodes(1) = idData(2);
@@ -1417,14 +1892,12 @@ ForceBeamColumn3d::getInitialStiff(void)
     }
 
     crdTransf->setDbTag(crdTransfDbTag);
-
     // invoke recvSelf on the crdTransf obkject
     if (crdTransf->recvSelf(commitTag, theChannel, theBroker) < 0)  
     {
        opserr << "ForceBeamColumn3d::sendSelf() - failed to recv crdTranf\n";
        return -3;
     }      
-
 
     // create a new beamIntegr object if one needed
     if (beamIntegr == 0 || beamIntegr->getClassTag() != beamIntegrClassTag) {
@@ -1546,12 +2019,13 @@ ForceBeamColumn3d::getInitialStiff(void)
 	    sectClassTag << endln;
 	  exit(-1);
 	}
+	
 	sections[i]->setDbTag(sectDbTag);
 	if (sections[i]->recvSelf(commitTag, theChannel, theBroker) < 0) {
 	  opserr << "ForceBeamColumn3d::recvSelf() - section " << 
 	    i << " failed to recv itself\n";
 	  return -1;
-	}     
+	} 
       }
 
       this->initializeSectionHistoryVariables();
@@ -1601,7 +2075,7 @@ ForceBeamColumn3d::getInitialStiff(void)
     Vector dData(1+1+NEBD+NEBD*NEBD+secDefSize+4);   
 
     if (theChannel.recvVector(dbTag, commitTag, dData) < 0)  {
-      opserr << "ForceBeamColumn3d::sendSelf() - failed to send Vector data\n";
+      opserr << "ForceBeamColumn3d::recvSelf() - failed to send Vector data\n";
       return -1;
     }    
 
@@ -1643,7 +2117,6 @@ ForceBeamColumn3d::getInitialStiff(void)
     betaKc = dData(loc++);
     
     initialFlag = 2;  
-
     return 0;
   }
 
@@ -1910,7 +2383,7 @@ ForceBeamColumn3d::getInitialDeformations(Vector &v0)
     }
 
     // flag set to 2 used to print everything .. used for viewing data for UCSD renderer  
-     else if (flag == 2) {
+    else if (flag == 2) {
        static Vector xAxis(3);
        static Vector yAxis(3);
        static Vector zAxis(3);
@@ -2005,7 +2478,7 @@ ForceBeamColumn3d::getInitialDeformations(Vector &v0)
        }
      }
 
-     else {
+	 if (flag == OPS_PRINT_CURRENTSTATE) {
        s << "\nElement: " << this->getTag() << " Type: ForceBeamColumn3d ";
        s << "\tConnected Nodes: " << connectedExternalNodes ;
        s << "\tNumber of Sections: " << numSections;
@@ -2034,6 +2507,21 @@ ForceBeamColumn3d::getInitialDeformations(Vector &v0)
 	   s << "\numSections "<<i<<" :" << *sections[i];
        }
      }
+
+	 if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		 s << "\t\t\t{";
+		 s << "\"name\": \"" << this->getTag() << "\", ";
+		 s << "\"type\": \"ForceBeamColumn3d\", ";
+		 s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+		 s << "\"sections\": [";
+		 for (int i = 0; i < numSections - 1; i++)
+			 s << "\"" << sections[i]->getTag() << "\", ";
+		 s << "\"" << sections[numSections - 1]->getTag() << "\"], ";
+		 s << "\"integration\": ";
+		 beamIntegr->Print(s, flag);
+		 s << ", \"rho\": " << rho << ", ";
+		 s << "\"crdTransformation\": \"" << crdTransf->getTag() << "\"}";
+	 }
   }
 
   OPS_Stream &operator<<(OPS_Stream &s, ForceBeamColumn3d &E)
@@ -2043,42 +2531,35 @@ ForceBeamColumn3d::getInitialDeformations(Vector &v0)
   }
 
   int
-  ForceBeamColumn3d::displaySelf(Renderer &theViewer, int displayMode, float fact)
+  ForceBeamColumn3d::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **displayModes, int numModes)
   {
-    // first determine the end points of the beam based on
-    // the display factor (a measure of the distorted image)
-    const Vector &end1Crd = theNodes[0]->getCrds();
-    const Vector &end2Crd = theNodes[1]->getCrds();	
 
     static Vector v1(3);
     static Vector v2(3);
 
     if (displayMode >= 0) {
-      const Vector &end1Disp = theNodes[0]->getDisp();
-      const Vector &end2Disp = theNodes[1]->getDisp();
 
-      for (int i = 0; i < 3; i++) {
-	v1(i) = end1Crd(i) + end1Disp(i)*fact;
-	v2(i) = end2Crd(i) + end2Disp(i)*fact;    
-      }
+      theNodes[0]->getDisplayCrds(v1, fact);
+      theNodes[1]->getDisplayCrds(v2, fact);
+
     } else {
+
+      theNodes[0]->getDisplayCrds(v1, 0.);
+      theNodes[1]->getDisplayCrds(v2, 0.);
+
+      // add eigenvector values
       int mode = displayMode * -1;
       const Matrix &eigen1 = theNodes[0]->getEigenvectors();
       const Matrix &eigen2 = theNodes[1]->getEigenvectors();
       if (eigen1.noCols() >= mode) {
 	for (int i = 0; i < 3; i++) {
-	  v1(i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-	  v2(i) = end2Crd(i) + eigen2(i,mode-1)*fact;    
+	  v1(i) += eigen1(i,mode-1)*fact;
+	  v2(i) += eigen2(i,mode-1)*fact;    
 	}    
-      } else {
-	for (int i = 0; i < 3; i++) {
-	  v1(i) = end1Crd(i);
-	  v2(i) = end2Crd(i);
-	}    
-      }
+      } 
     }
 
-    return theViewer.drawLine (v1, v2, 1.0, 1.0);
+    return theViewer.drawLine (v1, v2, 1.0, 1.0, this->getTag());
   }
 
   Response*
@@ -2119,15 +2600,15 @@ ForceBeamColumn3d::getInitialDeformations(Vector &v0)
     // local force -
     }  else if (strcmp(argv[0],"localForce") == 0 || strcmp(argv[0],"localForces") == 0) {
 
-      output.tag("ResponseType","N_ 1");
+      output.tag("ResponseType","N_1");
       output.tag("ResponseType","Vy_1");
       output.tag("ResponseType","Vz_1");
       output.tag("ResponseType","T_1");
       output.tag("ResponseType","My_1");
-      output.tag("ResponseType","Tz_1");
+      output.tag("ResponseType","Mz_1");
       output.tag("ResponseType","N_2");
-      output.tag("ResponseType","Py_2");
-      output.tag("ResponseType","Pz_2");
+      output.tag("ResponseType","Vy_2");
+      output.tag("ResponseType","Vz_2");
       output.tag("ResponseType","T_2");
       output.tag("ResponseType","My_2");
       output.tag("ResponseType","Mz_2");
@@ -2173,10 +2654,38 @@ ForceBeamColumn3d::getInitialDeformations(Vector &v0)
     } else if (strcmp(argv[0],"getRemCriteria2") == 0) {
       theResponse = new ElementResponse(this, 8, Vector(2), ID(6));
 
-    } else if (strcmp(argv[0],"RayleighForces") == 0 || strcmp(argv[0],"rayleighForces") == 0) {theResponse = new ElementResponse(this, 12, theVector);
+    } else if (strcmp(argv[0],"RayleighForces") == 0 || 
+	       strcmp(argv[0],"rayleighForces") == 0) {
 
-      // section response -
-    } else if (strcmp(argv[0],"section") ==0) { 
+      theResponse = new ElementResponse(this, 12, theVector);
+
+    } else if (strcmp(argv[0],"sections") ==0) { 
+      CompositeResponse *theCResponse = new CompositeResponse();
+      int numResponse = 0;
+      double xi[maxNumSections];
+      double L = crdTransf->getInitialLength();
+      beamIntegr->getSectionLocations(numSections, L, xi);
+      
+      for (int i=0; i<numSections; i++) {
+	
+	output.tag("GaussPointOutput");
+	output.attr("number",i+1);
+	output.attr("eta",xi[i]*L);
+	
+	Response *theSectionResponse = sections[i]->setResponse(&argv[1], argc-1, output);
+	
+	if (theSectionResponse != 0) {
+	  numResponse = theCResponse->addResponse(theSectionResponse);
+	}
+      }
+      
+      if (numResponse == 0) // no valid responses found
+	delete theCResponse;
+	  else
+	    theResponse = theCResponse;
+    }
+
+    else if (strcmp(argv[0],"section") ==0) { 
 
       if (argc > 1) {
 
@@ -2190,7 +2699,15 @@ ForceBeamColumn3d::getInitialDeformations(Vector &v0)
 	  output.tag("GaussPointOutput");
 	  output.attr("number",sectionNum);
 	  output.attr("eta",2.0*xi[sectionNum-1]-1.0);
-	  theResponse =  sections[sectionNum-1]->setResponse(&argv[2], argc-2, output);
+
+	  if (strcmp(argv[2],"dsdh") != 0) {
+	    theResponse = sections[sectionNum-1]->setResponse(&argv[2], argc-2, output);
+	  } else {
+	    int order = sections[sectionNum-1]->getOrder();
+	    theResponse = new ElementResponse(this, 76, Vector(order));
+	    Information &info = theResponse->getInformation();
+	    info.theInt = sectionNum;
+	  }
 	  
 	  output.endTag();
 	  
@@ -2263,7 +2780,7 @@ ForceBeamColumn3d::getResponse(int responseID, Information &eleInfo)
     M2 = Se(4);
     theVector(4)  = M1;
     theVector(10) = M2;
-    V = -(M1+M2)/L;
+    V = (M1+M2)/L;
     theVector(2) = -V+p0[3];
     theVector(8) =  V+p0[4];
       
@@ -2511,6 +3028,172 @@ ForceBeamColumn3d::getResponse(int responseID, Information &eleInfo)
     return -1;
 }
 
+int 
+ForceBeamColumn3d::getResponseSensitivity(int responseID, int gradNumber,
+					  Information &eleInfo)
+{
+  // Basic deformation sensitivity
+  if (responseID == 3) {  
+    const Vector &dvdh = crdTransf->getBasicDisplSensitivity(gradNumber);
+    return eleInfo.setVector(dvdh);
+  }
+
+  // Basic force sensitivity
+  else if (responseID == 7) {
+    static Vector dqdh(6);
+
+    const Vector &dvdh = crdTransf->getBasicDisplSensitivity(gradNumber);
+
+    dqdh.addMatrixVector(0.0, kv, dvdh, 1.0);
+
+    dqdh.addVector(1.0, this->computedqdh(gradNumber), 1.0);
+    //opserr << "FBC2d: " << gradNumber;
+
+    return eleInfo.setVector(dqdh);
+  }
+
+  // dsdh
+  else if (responseID == 76) {
+
+    int sectionNum = eleInfo.theInt;
+    int order = sections[sectionNum-1]->getOrder();
+
+    Vector dsdh(order);
+    dsdh.Zero();
+
+    if (numEleLoads > 0) {
+      this->computeSectionForceSensitivity(dsdh, sectionNum-1, gradNumber);
+    }
+    //opserr << "FBC3d::getRespSens dspdh: " << dsdh;
+    static Vector dqdh(6);
+
+    const Vector &dvdh = crdTransf->getBasicDisplSensitivity(gradNumber);
+
+    dqdh.addMatrixVector(0.0, kv, dvdh, 1.0);
+
+    dqdh.addVector(1.0, this->computedqdh(gradNumber), 1.0);
+
+    //opserr << "FBC3d::getRespSens dqdh: " << dqdh;
+ 
+    double L = crdTransf->getInitialLength();
+    double oneOverL  = 1.0/L;  
+    double pts[maxNumSections];
+    beamIntegr->getSectionLocations(numSections, L, pts);
+    
+    const ID &code = sections[sectionNum-1]->getType();
+      
+    double xL  = pts[sectionNum-1];
+    double xL1 = xL-1.0;
+    
+    for (int ii = 0; ii < order; ii++) {
+      switch(code(ii)) {
+      case SECTION_RESPONSE_P:
+	dsdh(ii) += dqdh(0);
+	break;
+      case SECTION_RESPONSE_MZ:
+	dsdh(ii) +=  xL1*dqdh(1) + xL*dqdh(2);
+	break;
+      case SECTION_RESPONSE_VY:
+	dsdh(ii) += oneOverL*(dqdh(1)+dqdh(2));
+	break;
+      case SECTION_RESPONSE_MY:
+	dsdh(ii) +=  xL1*dqdh(3) + xL*dqdh(4);
+	break;
+      case SECTION_RESPONSE_VZ:
+	dsdh(ii) += oneOverL*(dqdh(3)+dqdh(4));
+	break;
+      case SECTION_RESPONSE_T:
+	dsdh(ii) += dqdh(5);
+	break;
+      default:
+	dsdh(ii) += 0.0;
+	break;
+      }
+    }
+    
+    double dLdh = crdTransf->getdLdh();
+    double d1oLdh = crdTransf->getd1overLdh();
+    
+    double dptsdh[maxNumSections];
+    beamIntegr->getLocationsDeriv(numSections, L, dLdh, dptsdh);
+    double dxLdh = dptsdh[sectionNum-1];// - xL/L*dLdh;
+
+    for (int j = 0; j < order; j++) {
+      switch (code(j)) {
+      case SECTION_RESPONSE_MZ:
+	dsdh(j) += dxLdh*(Se(1)+Se(2));
+	//dsdh(j) -= dLdh*xL/L*(Se(1)+Se(2));
+	break;
+      case SECTION_RESPONSE_VY:
+	dsdh(j) += d1oLdh*(Se(1)+Se(2));
+	break;
+      case SECTION_RESPONSE_MY:
+	dsdh(j) += dxLdh*(Se(3)+Se(4));
+	break;
+      case SECTION_RESPONSE_VZ:
+	dsdh(j) += d1oLdh*(Se(3)+Se(4));
+	break;
+      default:
+	break;
+      }
+    }
+
+    /*
+    opserr << "FBC3d::getRespSens dsdh=b*dqdh+dspdh: " << dsdh;
+
+    dsdh.Zero();
+    if (numEleLoads > 0) {
+      this->computeSectionForceSensitivity(dsdh, sectionNum-1, gradNumber);
+    }
+    const Matrix &ks = sections[sectionNum-1]->getSectionTangent();
+    const Vector &dedh  = sections[sectionNum-1]->getSectionDeformationSensitivity(gradNumber);
+    dsdh.addMatrixVector(1.0, ks, dedh, 1.0);
+    dsdh.addVector(1.0, sections[sectionNum-1]->getStressResultantSensitivity(gradNumber, true), 1.0);
+
+    opserr << "FBC3d::getRespSens dsdh=b*dqdh+dspdh: " << dsdh;
+    */
+
+    return eleInfo.setVector(dsdh);
+  }
+
+  // Plastic deformation sensitivity
+  else if (responseID == 4) {
+    static Vector dvpdh(6);
+
+    const Vector &dvdh = crdTransf->getBasicDisplSensitivity(gradNumber);
+
+    dvpdh = dvdh;
+    //opserr << dvpdh;
+
+    static Matrix fe(6,6);
+    this->getInitialFlexibility(fe);
+
+    const Vector &dqdh = this->computedqdh(gradNumber);
+
+    dvpdh.addMatrixVector(1.0, fe, dqdh, -1.0);
+    //opserr << dvpdh;
+
+    static Matrix fek(6,6);
+    fek.addMatrixProduct(0.0, fe, kv, 1.0);
+
+    dvpdh.addMatrixVector(1.0, fek, dvdh, -1.0);
+    //opserr << dvpdh;
+
+    const Matrix &dfedh = this->computedfedh(gradNumber);
+
+    dvpdh.addMatrixVector(1.0, dfedh, Se, -1.0);
+    //opserr << dvpdh << endln;
+    //opserr << dfedh << endln;
+
+    //opserr << dqdh + kv*dvdh << endln;
+
+    return eleInfo.setVector(dvpdh);
+  }
+
+  else
+    return -1;
+}
+
 int
 ForceBeamColumn3d::setParameter(const char **argv, int argc, Parameter &param)
 {
@@ -2520,9 +3203,11 @@ ForceBeamColumn3d::setParameter(const char **argv, int argc, Parameter &param)
   int result = -1;
 
   // If the parameter belongs to the element itself
-  if (strcmp(argv[0],"rho") == 0)
+  if (strcmp(argv[0],"rho") == 0) {
+    param.setValue(rho);
     return param.addObject(1, this);
-  
+  }
+
   // section response -
   if (strstr(argv[0],"sectionX") != 0) {
     if (argc > 2) {
@@ -2547,7 +3232,7 @@ ForceBeamColumn3d::setParameter(const char **argv, int argc, Parameter &param)
     }
   }
 
-  // If the parameter belongs to a section or lower
+  // If the parameter belongs to a particular section or lower
   if (strstr(argv[0],"section") != 0) {
     
     if (argc < 3)
@@ -2556,13 +3241,29 @@ ForceBeamColumn3d::setParameter(const char **argv, int argc, Parameter &param)
     // Get section number
     int sectionNum = atoi(argv[1]);
    
-   if (sectionNum > 0 && sectionNum <= numSections)
+    if (sectionNum > 0 && sectionNum <= numSections)
       return sections[sectionNum-1]->setParameter(&argv[2], argc-2, param);
 
     else
       return -1;
   }
   
+  // If the parameter belongs to all sections or lower
+  if (strstr(argv[0],"allSections") != 0) {
+    
+    if (argc < 2)
+      return -1;
+    
+    int ok;
+    for (int i = 0; i < numSections; i++) {
+      ok = sections[i]->setParameter(&argv[1], argc-1, param);
+      if (ok != -1)
+	result = ok;
+    }
+
+    return result;
+  }
+
   if (strstr(argv[0],"integration") != 0) {
     
     if (argc < 2)
@@ -2579,7 +3280,7 @@ ForceBeamColumn3d::setParameter(const char **argv, int argc, Parameter &param)
     if (ok != -1)
       result = ok;
   }
-  
+
   ok = beamIntegr->setParameter(argv, argc, param);
   if (ok != -1)
     result = ok;
@@ -2590,43 +3291,479 @@ ForceBeamColumn3d::setParameter(const char **argv, int argc, Parameter &param)
 int
 ForceBeamColumn3d::updateParameter (int parameterID, Information &info)
 {
-  // If the parameterID value is not equal to 1 it belongs 
-  // to section or material further down in the hierarchy. 
-  
-  return 0;
-
-  /*
-  if (parameterID == 1) {
-    
+  if (parameterID == 1) {    
     this->rho = info.theDouble;
     return 0;
-    
   }
-  else if (parameterID > 0 ) {
+  else
+    return -1;
+}
+
+int
+ForceBeamColumn3d::activateParameter(int passedParameterID)
+{
+  parameterID = passedParameterID;
+
+  return 0;  
+}
+
+const Matrix&
+ForceBeamColumn3d::getKiSensitivity(int gradNumber)
+{
+  theMatrix.Zero();
+  return theMatrix;
+}
+
+const Matrix&
+ForceBeamColumn3d::getMassSensitivity(int gradNumber)
+{
+    theMatrix.Zero();
+
+    double L = crdTransf->getInitialLength();
+    if (rho != 0.0 && parameterID == 1)
+      theMatrix(0,0) = theMatrix(1,1) = theMatrix(2,2) =
+	theMatrix(6,6) = theMatrix(7,7) = theMatrix(8,8) = 0.5*L;
+
+    return theMatrix;
+}
+
+const Vector&
+ForceBeamColumn3d::getResistingForceSensitivity(int gradNumber)
+{
+  static Vector dqdh(6);
+  dqdh = this->computedqdh(gradNumber);
+
+  // Transform forces
+  double dp0dh[6]; 
+  dp0dh[0] = 0.0; dp0dh[1] = 0.0; dp0dh[2] = 0.0;
+  dp0dh[3] = 0.0; dp0dh[4] = 0.0; dp0dh[5] = 0.0;
+  this->computeReactionSensitivity(dp0dh, gradNumber);
+  Vector dp0dhVec(dp0dh, 6);
+
+  static Vector P(12);
+  P.Zero();
+
+  if (crdTransf->isShapeSensitivity()) {
+  // dAdh^T q
+    P = crdTransf->getGlobalResistingForceShapeSensitivity(Se, dp0dhVec, gradNumber);
+    // k dAdh u
+    const Vector &dAdh_u = crdTransf->getBasicTrialDispShapeSensitivity();
+    dqdh.addMatrixVector(1.0, kv, dAdh_u, 1.0);
+  }
+
+  // A^T (dqdh + k dAdh u)
+  P += crdTransf->getGlobalResistingForce(dqdh, dp0dhVec);
+
+  return P;
+}
+
+int
+ForceBeamColumn3d::commitSensitivity(int gradNumber, int numGrads)
+{
+  int err = 0;
+
+  double L = crdTransf->getInitialLength();
+  double oneOverL = 1.0/L;
+  
+  double pts[maxNumSections];
+  beamIntegr->getSectionLocations(numSections, L, pts);
+  
+  double wts[maxNumSections];
+  beamIntegr->getSectionWeights(numSections, L, wts);
+
+  double dLdh = crdTransf->getdLdh();
+
+  double dptsdh[maxNumSections];
+  beamIntegr->getLocationsDeriv(numSections, L, dLdh, dptsdh);
+
+  double d1oLdh = crdTransf->getd1overLdh();
+
+  static Vector dqdh(6);
+  dqdh = this->computedqdh(gradNumber);
+
+  // dvdh = A dudh + dAdh u
+  const Vector &dvdh = crdTransf->getBasicDisplSensitivity(gradNumber);
+  dqdh.addMatrixVector(1.0, kv, dvdh, 1.0);  // A dudh
+
+  if (crdTransf->isShapeSensitivity()) {
+    //const Vector &dAdh_u = crdTransf->getBasicTrialDispShapeSensitivity();
+    //dqdh.addMatrixVector(1.0, kv, dAdh_u, 1.0);  // dAdh u
+  }
+
+  // Loop over integration points
+  for (int i = 0; i < numSections; i++) {
+
+    int order = sections[i]->getOrder();
+    const ID &code = sections[i]->getType();
     
-    // Extract the section number
-    int sectionNumber = (int)( floor((double)parameterID) / (100000) );
-    
-    int ok = -1;
-    for (int i=0; i<numSections; i++) {
-      if (sectionNumber == sections[i]->getTag()) {
-	ok = sections[i]->updateParameter(parameterID, info);
+    double xL  = pts[i];
+    double xL1 = xL-1.0;
+
+    double dxLdh  = dptsdh[i];    
+
+    Vector ds(workArea, order);
+    ds.Zero();
+
+    // Add sensitivity wrt element loads
+    if (numEleLoads > 0) {
+      this->computeSectionForceSensitivity(ds, i, gradNumber);
+    }
+
+    int j;
+    for (j = 0; j < order; j++) {
+      switch(code(j)) {
+      case SECTION_RESPONSE_P:
+	ds(j) += dqdh(0);
+	break;
+      case SECTION_RESPONSE_MZ:
+	ds(j) += xL1*dqdh(1) + xL*dqdh(2);
+	break;
+      case SECTION_RESPONSE_VY:
+	ds(j) += oneOverL*(dqdh(1)+dqdh(2));
+	break;
+      case SECTION_RESPONSE_MY:
+	ds(j) += xL1*dqdh(3) + xL*dqdh(4);
+	break;
+      case SECTION_RESPONSE_VZ:
+	ds(j) += oneOverL*(dqdh(3)+dqdh(4));
+	break;
+      case SECTION_RESPONSE_T:
+	ds(j) += dqdh(5);
+	break;
+      default:
+	ds(j) += 0.0;
+	break;
       }
     }
-    
-    if (ok < 0) {
-      opserr << "ForceBeamColumn3d::updateParameter() - could not update parameter. " << endln;
-      return ok;
+
+    const Vector &dsdh = sections[i]->getStressResultantSensitivity(gradNumber,true);
+    ds -= dsdh;
+
+    for (j = 0; j < order; j++) {
+      switch (code(j)) {
+      case SECTION_RESPONSE_MZ:
+	ds(j) += dxLdh*(Se(1)+Se(2));
+	break;
+      case SECTION_RESPONSE_VY:
+	ds(j) += d1oLdh*(Se(1)+Se(2));
+	break;
+      case SECTION_RESPONSE_MY:
+	ds(j) += dxLdh*(Se(3)+Se(4));
+	break;
+      case SECTION_RESPONSE_VZ:
+	ds(j) += d1oLdh*(Se(3)+Se(4));
+	break;
+      default:
+	break;
+      }
     }
-    else {
-      return ok;
+
+    Vector de(&workArea[order], order);
+    const Matrix &fs = sections[i]->getSectionFlexibility();
+    de.addMatrixVector(0.0, fs, ds, 1.0);
+
+    err += sections[i]->commitSensitivity(de, gradNumber, numGrads);
+  }
+
+  return err;
+}
+
+const Vector &
+ForceBeamColumn3d::computedqdh(int gradNumber)
+{
+  //opserr << "FBC3d::computedqdh " << gradNumber << endln;
+
+  double L = crdTransf->getInitialLength();
+  double oneOverL = 1.0/L;
+  
+  double pts[maxNumSections];
+  beamIntegr->getSectionLocations(numSections, L, pts);
+  
+  double wts[maxNumSections];
+  beamIntegr->getSectionWeights(numSections, L, wts);
+
+  double dLdh = crdTransf->getdLdh();
+
+  double dptsdh[maxNumSections];
+  beamIntegr->getLocationsDeriv(numSections, L, dLdh, dptsdh);
+
+  double dwtsdh[maxNumSections];
+  beamIntegr->getWeightsDeriv(numSections, L, dLdh, dwtsdh);
+
+  double d1oLdh = crdTransf->getd1overLdh();
+
+  static Vector dvdh(6);
+  dvdh.Zero();
+
+  // Loop over the integration points
+  for (int i = 0; i < numSections; i++) {
+
+    int order = sections[i]->getOrder();
+    const ID &code = sections[i]->getType();
+    
+    double xL  = pts[i];
+    double xL1 = xL-1.0;
+    double wtL = wts[i]*L;
+    
+    double dxLdh  = dptsdh[i];// - xL/L*dLdh;
+    double dwtLdh = wts[i]*dLdh + dwtsdh[i]*L;
+
+    //opserr << dptsdh[i] << ' ' << dwtsdh[i] << endln;
+
+    // Get section stress resultant gradient
+    Vector dsdh(&workArea[order], order);
+    dsdh = sections[i]->getStressResultantSensitivity(gradNumber,true);
+    //opserr << "FBC2d::dqdh -- " << gradNumber << ' ' << dsdh;
+    
+    Vector dspdh(&workArea[2*order], order);
+    dspdh.Zero();
+    // Add sensitivity wrt element loads
+    if (numEleLoads > 0) {
+      this->computeSectionForceSensitivity(dspdh, i, gradNumber);
+      //opserr << "FBC2d::dspdh -- " << i << ' ' << dsdh;
+    }
+    dsdh.addVector(1.0, dspdh, -1.0);
+
+    int j;
+    for (j = 0; j < order; j++) {
+      switch (code(j)) {
+      case SECTION_RESPONSE_MZ:
+	dsdh(j) -= dxLdh*(Se(1)+Se(2));
+	break;
+      case SECTION_RESPONSE_VY:
+	dsdh(j) -= d1oLdh*(Se(1)+Se(2));
+	break;
+      case SECTION_RESPONSE_MY:
+	dsdh(j) -= dxLdh*(Se(3)+Se(4));
+	break;
+      case SECTION_RESPONSE_VZ:
+	dsdh(j) -= d1oLdh*(Se(3)+Se(4));
+	break;
+      default:
+	break;
+      }
+    }
+
+    Vector dedh(workArea, order);
+    const Matrix &fs = sections[i]->getSectionFlexibility();
+    dedh.addMatrixVector(0.0, fs, dsdh, 1.0);
+
+    for (j = 0; j < order; j++) {
+      double dei = dedh(j)*wtL;
+      switch(code(j)) {
+      case SECTION_RESPONSE_P:
+	dvdh(0) += dei; 
+	break;
+      case SECTION_RESPONSE_MZ:
+	dvdh(1) += xL1*dei; 
+	dvdh(2) += xL*dei;
+	break;
+      case SECTION_RESPONSE_VY:
+	dei = oneOverL*dei;
+	dvdh(1) += dei;
+	dvdh(2) += dei;
+	break;
+      case SECTION_RESPONSE_MY:
+	dvdh(3) += xL1*dei; 
+	dvdh(4) += xL*dei;
+	break;
+      case SECTION_RESPONSE_VZ:
+	dei = oneOverL*dei;
+	dvdh(3) += dei;
+	dvdh(4) += dei;
+	break;
+      case SECTION_RESPONSE_T:
+	dvdh(5) += dei; 
+	break;
+      default:
+	break;
+      }
+    }
+
+    const Vector &e = vs[i];
+    for (j = 0; j < order; j++) {
+      switch(code(j)) {
+      case SECTION_RESPONSE_P:
+	dvdh(0) -= e(j)*dwtLdh;
+	break;
+      case SECTION_RESPONSE_MZ:
+	dvdh(1) -= xL1*e(j)*dwtLdh;
+	dvdh(2) -= xL*e(j)*dwtLdh;
+	
+	dvdh(1) -= dxLdh*e(j)*wtL;
+	dvdh(2) -= dxLdh*e(j)*wtL;
+	break;
+      case SECTION_RESPONSE_VY:
+	dvdh(1) -= oneOverL*e(j)*dwtLdh;
+	dvdh(2) -= oneOverL*e(j)*dwtLdh;
+
+	dvdh(1) -= d1oLdh*e(j)*wtL;
+	dvdh(2) -= d1oLdh*e(j)*wtL;
+	break;
+      case SECTION_RESPONSE_MY:
+	dvdh(3) -= xL1*e(j)*dwtLdh;
+	dvdh(4) -= xL*e(j)*dwtLdh;
+	
+	dvdh(3) -= dxLdh*e(j)*wtL;
+	dvdh(4) -= dxLdh*e(j)*wtL;
+	break;
+      case SECTION_RESPONSE_VZ:
+	dvdh(3) -= oneOverL*e(j)*dwtLdh;
+	dvdh(4) -= oneOverL*e(j)*dwtLdh;
+
+	dvdh(3) -= d1oLdh*e(j)*wtL;
+	dvdh(4) -= d1oLdh*e(j)*wtL;
+	break;
+      case SECTION_RESPONSE_T:
+	dvdh(5) -= e(j)*dwtLdh;
+	break;
+      default:
+	break;
+      }
     }
   }
-  else {
-    opserr << "ForceBeamColumn3d::updateParameter() - could not update parameter. " << endln;
-    return -1;
-  }      
-  */ 
+
+  static Matrix dfedh(6,6);
+  dfedh.Zero();
+
+  if (beamIntegr->addElasticFlexDeriv(L, dfedh, dLdh) < 0)
+    dvdh.addMatrixVector(1.0, dfedh, Se, -1.0);
+  
+  //opserr << "dfedh: " << dfedh << endln;
+
+  static Vector dqdh(6);
+  dqdh.addMatrixVector(0.0, kv, dvdh, 1.0);
+  
+  //opserr << "dqdh: " << dqdh << endln;
+
+  return dqdh;
+}
+
+const Matrix&
+ForceBeamColumn3d::computedfedh(int gradNumber)
+{
+  static Matrix dfedh(6,6);
+
+  dfedh.Zero();
+
+  double L = crdTransf->getInitialLength();
+  double oneOverL  = 1.0/L;  
+
+  double dLdh = crdTransf->getdLdh();
+  double d1oLdh = crdTransf->getd1overLdh();
+
+  beamIntegr->addElasticFlexDeriv(L, dfedh, dLdh);
+
+  double xi[maxNumSections];
+  beamIntegr->getSectionLocations(numSections, L, xi);
+  
+  double wt[maxNumSections];
+  beamIntegr->getSectionWeights(numSections, L, wt);
+
+  double dptsdh[maxNumSections];
+  beamIntegr->getLocationsDeriv(numSections, L, dLdh, dptsdh);
+
+  double dwtsdh[maxNumSections];
+  beamIntegr->getWeightsDeriv(numSections, L, dLdh, dwtsdh);
+
+  for (int i = 0; i < numSections; i++) {
+
+    int order      = sections[i]->getOrder();
+    const ID &code = sections[i]->getType();
+    
+    Matrix fb(workArea, order, NEBD);
+    Matrix fb2(&workArea[order*NEBD], order, NEBD);
+
+    double xL  = xi[i];
+    double xL1 = xL-1.0;
+    double wtL = wt[i]*L;
+
+    double dxLdh  = dptsdh[i];
+    double dwtLdh = wt[i]*dLdh + dwtsdh[i]*L;
+
+    const Matrix &fs = sections[i]->getInitialFlexibility();
+    const Matrix &dfsdh = sections[i]->getInitialFlexibilitySensitivity(gradNumber);
+    fb.Zero();
+    fb2.Zero();
+
+    double tmp;
+    int ii, jj;
+    for (ii = 0; ii < order; ii++) {
+      switch(code(ii)) {
+      case SECTION_RESPONSE_P:
+	for (jj = 0; jj < order; jj++) {
+	  fb(jj,0) += dfsdh(jj,ii)*wtL; // 1
+
+	  //fb(jj,0) += fs(jj,ii)*dwtLdh; // 3
+
+	  //fb2(jj,0) += fs(jj,ii)*wtL; // 4
+	}
+	break;
+      case SECTION_RESPONSE_MZ:
+	for (jj = 0; jj < order; jj++) {
+	  tmp = dfsdh(jj,ii)*wtL; // 1
+	  fb(jj,1) += xL1*tmp;
+	  fb(jj,2) += xL*tmp;
+
+	  tmp = fs(jj,ii)*wtL; // 2
+	  //fb(jj,1) += dxLdh*tmp;
+	  //fb(jj,2) += dxLdh*tmp;
+
+	  tmp = fs(jj,ii)*dwtLdh; // 3
+	  //fb(jj,1) += xL1*tmp;
+	  //fb(jj,2) += xL*tmp;
+
+	  tmp = fs(jj,ii)*wtL; // 4
+	  //fb2(jj,1) += xL1*tmp;
+	  //fb2(jj,2) += xL*tmp;
+	}
+	break;
+      case SECTION_RESPONSE_VY:
+	for (jj = 0; jj < order; jj++) {
+	  tmp = oneOverL*dfsdh(jj,ii)*wtL;
+	  fb(jj,1) += tmp;
+	  fb(jj,2) += tmp;
+
+	  // Need to complete for dLdh != 0
+	}
+	break;
+      default:
+	break;
+      }
+    }
+    for (ii = 0; ii < order; ii++) {
+      switch (code(ii)) {
+      case SECTION_RESPONSE_P:
+	for (jj = 0; jj < NEBD; jj++)
+	  dfedh(0,jj) += fb(ii,jj);
+	break;
+      case SECTION_RESPONSE_MZ:
+	for (jj = 0; jj < NEBD; jj++) {
+	  tmp = fb(ii,jj); // 1,2,3
+	  dfedh(1,jj) += xL1*tmp;
+	  dfedh(2,jj) += xL*tmp;
+
+	  tmp = fb2(ii,jj); // 4
+	  //dfedh(1,jj) += dxLdh*tmp;
+	  //dfedh(2,jj) += dxLdh*tmp;
+	}
+	break;
+      case SECTION_RESPONSE_VY:
+	for (jj = 0; jj < NEBD; jj++) {
+	  tmp = oneOverL*fb(ii,jj);
+	  dfedh(1,jj) += tmp;
+	  dfedh(2,jj) += tmp;
+
+	  // Need to complete for dLdh != 0
+	}
+	break;
+      default:
+	break;
+      }
+    }
+  }
+  
+  return dfedh;
 }
 
 void

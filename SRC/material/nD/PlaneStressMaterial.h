@@ -86,6 +86,7 @@ class PlaneStressMaterial: public NDMaterial{
 
     //send back the tangent 
     const Matrix& getTangent( ) ;
+    const Matrix& getInitialTangent( ) ;
 
     //density
     double getRho( ) ;
@@ -97,6 +98,9 @@ class PlaneStressMaterial: public NDMaterial{
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
 
     int setParameter(const char **argv, int argc, Parameter &param);
+
+    const Vector& getStressSensitivity(int gradIndex,
+				       bool conditional);
 
   private :
 
@@ -115,9 +119,6 @@ class PlaneStressMaterial: public NDMaterial{
     static Vector stress ;
 
     static Matrix tangent ;
-
-    int indexMap( int i ) ;
-
 } ; //end of PlaneStressMaterial declarations
 
 

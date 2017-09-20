@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.11 $
-// $Date: 2010-02-04 01:12:57 $
-// $Source: /usr/local/cvs/OpenSees/SRC/element/truss/CorotTruss.h,v $
+// $Revision: 6049 $
+// $Date: 2015-07-17 12:56:36 +0800 (Fri, 17 Jul 2015) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/truss/CorotTruss.h $
 
 #ifndef CorotTruss_h
 #define CorotTruss_h
@@ -47,7 +47,9 @@ class CorotTruss : public Element
     CorotTruss(int tag, int dim,
 	       int Nd1, int Nd2, 
 	       UniaxialMaterial &theMaterial,
-	       double A, double rho=0.0);
+	       double A, double rho = 0.0,
+	       int doRayleighDamping = 0,
+           int cMass = 0);
     
     CorotTruss();    
     ~CorotTruss();
@@ -71,6 +73,7 @@ class CorotTruss : public Element
     // public methods to obtain stiffness, mass, damping and residual information    
     const Matrix &getTangentStiff(void);
     const Matrix &getInitialStiff(void);
+    const Matrix &getDamp(void);
     const Matrix &getMass(void);    
 
     void zeroLoad(void);	
@@ -83,7 +86,7 @@ class CorotTruss : public Element
     // public methods for element output
     int sendSelf(int commitTag, Channel &theChannel);
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);    
+    int displaySelf(Renderer &, int mode, float fact, const char **displayModes=0, int numModes=0);
     void Print(OPS_Stream &s, int flag =0);    
 
     Response *setResponse(const char **argv, int argc, OPS_Stream &s);
@@ -102,26 +105,28 @@ class CorotTruss : public Element
     int numDOF;	                    // number of dof for CorotTruss
     int numDIM;                     // number of dimensions
 
-    double Lo;	        // initial length of truss
-    double Ln;		// current length of truss
-    double d21[3];      // current displacement offsets in basic system
-    double v21[3];      // current velocity offsets in basic system
-    double A; 	        // area of CorotTruss
-    double rho; 	// mass density per unit length
+    double Lo;              // initial length of truss
+    double Ln;              // current length of truss
+    double d21[3];          // current displacement offsets in basic system
+    double v21[3];          // current velocity offsets in basic system
+    double A;               // area of CorotTruss
+    double rho;             // mass density per unit length
+    int doRayleighDamping;  // flag to include Rayleigh damping
+    int cMass;              // consistent mass flag
 
     Node *theNodes[2];
 
     Matrix R;	// Rotation matrix
 
-    Matrix *theMatrix;
-
+    Vector *theLoad;    // pointer to the load vector P
+    Matrix *theMatrix;  // pointer to objects matrix (a class wide Matrix)
+    Vector *theVector;  // pointer to objects vector (a class wide Vector)
+    
     static Matrix M2;
     static Matrix M4;
     static Matrix M6;
     static Matrix M12;
     
-    Vector *theVector;
-
     static Vector V2;
     static Vector V4;
     static Vector V6;
@@ -129,7 +134,3 @@ class CorotTruss : public Element
 };
 
 #endif
-
-
-
-

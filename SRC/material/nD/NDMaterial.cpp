@@ -46,9 +46,54 @@
 #include <BeamFiberMaterial2d.h>
 #include <PlateFiberMaterial.h>
 #include <string.h>
+#include <TaggedObject.h>
+#include <MapOfTaggedObjects.h>
 
 Matrix NDMaterial::errMatrix(1,1);
 Vector NDMaterial::errVector(1);
+
+static MapOfTaggedObjects theNDMaterialObjects;
+
+bool OPS_addNDMaterial(NDMaterial *newComponent)
+{
+    return theNDMaterialObjects.addComponent(newComponent);
+}
+
+NDMaterial *OPS_getNDMaterial(int tag)
+{
+  TaggedObject *theResult = theNDMaterialObjects.getComponentPtr(tag);
+  if(theResult == 0) {
+      opserr << "NDMaterial no found with tag: " << tag << "\n";
+      return 0;
+  }
+  NDMaterial *theMat = (NDMaterial *)theResult;
+
+  return theMat;
+}
+
+void OPS_clearAllNDMaterial(void)
+{
+    theNDMaterialObjects.clearAll();
+}
+
+void OPS_printNDMaterial(OPS_Stream &s, int flag) {
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\"ndMaterials\": [\n";
+        MapOfTaggedObjectsIter theObjects = theNDMaterialObjects.getIter();
+        theObjects.reset();
+        TaggedObject *theObject;
+        int count = 0;
+        int numComponents = theNDMaterialObjects.getNumComponents();
+        while ((theObject = theObjects()) != 0) {
+            NDMaterial *theMaterial = (NDMaterial *)theObject;
+            theMaterial->Print(s, flag);
+            if (count < numComponents - 1)
+                s << ",\n";
+            count++;
+        }
+        s << "\n\t\t]";
+    }
+}
 
 NDMaterial::NDMaterial(int tag, int classTag)
 :Material(tag,classTag)
@@ -155,28 +200,28 @@ NDMaterial::getStrain(void)
 
 
 
-//Added by J.Jiang, U.Edinburgh
+//Functions for obtaining and updating temperature-dependent information Added by L.Jiang [SIF]
 double
 NDMaterial::getThermalTangentAndElongation(double &TempT, double &ET, double &Elong)
 {
-opserr << "NDMaterial::getThermalTangentAndElongation -- subclass responsibility\n";
-   return -1;    
+	opserr << "NDMaterial::getThermalTangentAndElongation -- subclass responsibility\n";
+	return -1;
 }
-//Added by L.Jiang, U.Edinburgh
+
 double
 NDMaterial::setThermalTangentAndElongation(double &TempT, double &ET, double &Elong)
 {
-opserr << "NDMaterial::setThermalTangentAndElongation -- subclass responsibility\n";
-   return -1;
+	opserr << "NDMaterial::setThermalTangentAndElongation -- subclass responsibility\n";
+	return -1;
 }
 
 const Vector&
 NDMaterial::getTempAndElong()
 {
-opserr << "NDMaterial::getTempAndElong -- subclass responsibility\n";
-   return errVector;    
+	opserr << "NDMaterial::getTempAndElong -- subclass responsibility\n";
+	return errVector;
 }
-
+//end of adding thermo-mechanical functions, L.Jiang [SIF]
 
 Response*
 NDMaterial::setResponse (const char **argv, int argc, 
@@ -203,8 +248,8 @@ NDMaterial::setResponse (const char **argv, int argc,
 	output.tag("ResponseType","sigma22");
 	output.tag("ResponseType","sigma33");
 	output.tag("ResponseType","sigma12");
-	output.tag("ResponseType","sigma13");
 	output.tag("ResponseType","sigma23");
+	output.tag("ResponseType","sigma13");
     } else {
       for (int i=0; i<size; i++) 
 	output.tag("ResponseType","UnknownStress");
@@ -224,31 +269,32 @@ NDMaterial::setResponse (const char **argv, int argc,
 	output.tag("ResponseType","eps22");
 	output.tag("ResponseType","eps33");
 	output.tag("ResponseType","eps12");
-	output.tag("ResponseType","eps13");
 	output.tag("ResponseType","eps23");
+	output.tag("ResponseType","eps13");
     } else {
       for (int i=0; i<size; i++) 
 	output.tag("ResponseType","UnknownStrain");
     }      
     theResponse =  new MaterialResponse(this, 2, this->getStress());
   }
-   else if (strcmp(argv[0],"TempAndElong") == 0 || strcmp(argv[0],"TempAndElong") == 0) {
-	 const Vector &res = this->getTempAndElong();
-	 int size = res.Size();
-	 if(size == 2){
-		output.tag("ResponseType","Temp");
-		output.tag("ResponseType","Elong");
-	 }
-	 //opserr<<"tempElong "<<this->getTempAndElong()<<endln;
-	 theResponse =  new MaterialResponse(this, 3, this->getTempAndElong());
+  //Adding temperature and thermal expansion output,L.Jiang [SIF]
+  else if (strcmp(argv[0], "TempAndElong") == 0 || strcmp(argv[0], "TempAndElong") == 0) {
+	  const Vector &res = this->getTempAndElong();
+	  int size = res.Size();
+	  if (size == 2) {
+		  output.tag("ResponseType", "Temp");
+		  output.tag("ResponseType", "Elong");
+	  }
+	  //opserr<<"tempElong "<<this->getTempAndElong()<<endln;
+	  theResponse = new MaterialResponse(this, 3, this->getTempAndElong());
 
   }
-
-   else if (strcmp(argv[0],"Tangent") == 0 || strcmp(argv[0],"tangent") == 0) {
-	 const Matrix &res = this->getTangent();
-	 theResponse =  new MaterialResponse(this, 4, this->getTangent());
+  else if (strcmp(argv[0], "Tangent") == 0 || strcmp(argv[0], "tangent") == 0) {
+	  const Matrix &res = this->getTangent();
+	  theResponse = new MaterialResponse(this, 4, this->getTangent());
 
   }
+  //end of adding output request,L.Jiang [SIF]
 
   output.endTag(); // NdMaterialOutput
 
@@ -265,11 +311,9 @@ NDMaterial::getResponse (int responseID, Information &matInfo)
   case 2:
     return matInfo.setVector(this->getStrain());
 
-  case 3:
-	  return matInfo.setVector(this->getTempAndElong());
-   case 4:
-	  return matInfo.setMatrix(this->getTangent());
-      
+  case 3:	  
+	return matInfo.setVector(this->getTempAndElong());
+    
   default:
     return -1;
   }
@@ -317,7 +361,7 @@ NDMaterial::getInitialTangentSensitivity(int gradIndex)
 	return dummy;
 }
 int
-NDMaterial::commitSensitivity(Vector & strainSensitivity, int gradIndex, int numGrads)
+NDMaterial::commitSensitivity(const Vector & strainSensitivity, int gradIndex, int numGrads)
 {
 	return 0;
 }

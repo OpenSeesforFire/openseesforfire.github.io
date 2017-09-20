@@ -17,7 +17,10 @@
 **   Filip C. Filippou (filippou@ce.berkeley.edu)                     **
 **                                                                    **
 ** ****************************************************************** */
-                                                                        
+
+
+//Modified by Liming Jiang [http://openseesforfire.github.io]
+                                                                    
 #include <ElasticIsotropic3DThermal.h>           
 #include <Channel.h>
 
@@ -25,18 +28,37 @@ Vector ElasticIsotropic3DThermal::sigma(6);
 Matrix ElasticIsotropic3DThermal::D(6,6);
 
 ElasticIsotropic3DThermal::ElasticIsotropic3DThermal
-(int tag, double e, double nu, double rho, double alpha, bool Soft) :
- ElasticIsotropicMaterial (tag, ND_TAG_ElasticIsotropic3DThermal, e, nu, rho, alpha),
- epsilon(6), Cepsilon(6),E0T(e),Alpha(alpha),Temp(0),ThermalElong(0),softening(true)
+(int tag, double e, double nu, double rho, double alpha, int softindex) :
+ ElasticIsotropicMaterialThermal (tag, ND_TAG_ElasticIsotropic3DThermal, e, nu, rho, alpha,softindex),
+ epsilon(6), Cepsilon(6),E0T(e),Alpha(alpha),Temp(0),ThermalElong(0)
 {
   E=E0T;
   epsilon.Zero();
   Cepsilon.Zero();
+  softIndex = softindex;
+  if (softIndex == 0) {
+	  //doNothing
+  }
+  else if (softIndex == 1) {
+	  redfactors = new double[12];
+	 double SteelRedfactors[12] = { 1.0, 0.9, 0.8 ,0.7, 0.6 ,0.31, 0.13, 0.09, 0.0675, 0.045, 0.0225 , 0.0 };
+	 for (int i = 0;i < 12;i++)
+		 redfactors[i] = SteelRedfactors[i];
+  }
+  else if (softIndex == 2) {
+	  redfactors = new double[12];
+	  double ConcreteRedfactors[12] = { 0.625, 0.4318 ,0.3036, 0.1875 ,0.1, 0.045, 0.03, 0.015, 0.008 , 0.004,0.001,0.0 };
+	  for (int i = 0;i < 12;i++)
+		  redfactors[i] = ConcreteRedfactors[i];
+  }
+  else {
+	  opserr << "ElasticIsotropic3DThermal " << this->getTag() << " recieves an invalid softening index" << endln;
+  }
 }
 
 ElasticIsotropic3DThermal::ElasticIsotropic3DThermal():
- ElasticIsotropicMaterial (0, ND_TAG_ElasticIsotropic3DThermal,0.0, 0.0, 0.0),
-	 Temp(0),ThermalElong(0) , epsilon(6), Cepsilon(6),softening(true)
+	ElasticIsotropicMaterialThermal(0, ND_TAG_ElasticIsotropic3DThermal,0.0, 0.0, 0.0),
+	 Temp(0),ThermalElong(0) , epsilon(6), Cepsilon(6),softIndex(0)
 {
   epsilon.Zero();
   Cepsilon.Zero();
@@ -138,101 +160,67 @@ ElasticIsotropic3DThermal::getStress (void)
 	
   return sigma;
 }
-double 
+double
 ElasticIsotropic3DThermal::setThermalTangentAndElongation(double &TempT, double&ET, double&Elong)
 {
+	double ThermalElongation;
+	if (softIndex!=0) {
+		Temp = TempT;
+		for (int i = 0; i<13; i++) {
+			if (Temp <= 80 + 100 * i)
+			{
+				if (i == 0) {
+					ET = E0T*(1.0 - Temp*(1.0 - redfactors[0]) / 80);
+				}
+				else if (i == 12) {
+					opserr << "Warning:The temperature " << Temp << " for ElasticIsotropic3DThermal is out of range\n";
+					return -1;
+				}
+				else {
+					ET = E0T*(redfactors[i - 1] - (Temp + 20 - 100 * i)*(redfactors[i - 1] - redfactors[i]) / 100);
+				}
+				break;
+			}
 
-if(softening){
-	double Temp = TempT;
-  double epsc0 = -0.0025;
- double fc;
-  // compression strength, at elevated temperature
-  //   strain at compression strength, at elevated temperature
-  //   ultimate (crushing) strain, at elevated temperature
-  if (Temp <= 0) {
-    fc = 1;
-    epsc0 = -0.0025;
-    //fcu = fcuT;
-    //epscu = -0.02;
-    //Ets = EtsT;  jz what is there the statement?
-  }
-  else if (Temp <= 80) {
-    fc = 1;
-    epsc0 = -(0.0025 + (0.004-0.0025)*(Temp - 0)/(80 - 0));
-  }
-  else if (Temp <= 180) {
-    fc = (1 - (Temp - 80)*0.05/100);
-    epsc0 = -(0.0040 + (0.0055-0.0040)*(Temp - 80)/100);
-  }
-  else if (Temp <= 280) {
-    fc = (0.95 - (Temp - 180)*0.1/100);
-    epsc0 = -(0.0055 + (0.0070-0.0055)*(Temp - 180)/100);
-   
-  }
-  else if (Temp <= 380) {
-    fc = (0.85 - (Temp - 280)*0.1/100);
-    epsc0 = -(0.0070 + (0.0100-0.0070)*(Temp - 280)/100);
-  }
-  else if (Temp <= 480) {
-    fc = (0.75 - (Temp - 380)*0.15/100);
-    epsc0 = -(0.0100 + (0.0150-0.0100)*(Temp - 380)/100);
+		}
 
-  }
-  else if (Temp <= 580) {
-    fc = (0.60 - (Temp - 480)*0.15/100);
-    epsc0 = -(0.0150 + (0.0250-0.0150)*(Temp - 480)/100);
-  }
-  else if (Temp <= 680) {
-    fc = (0.45 - (Temp - 580)*0.15/100);
-    epsc0 = -0.0250;
-  }
-  else if (Temp <= 780) {
-    fc = (0.30 - (Temp - 680)*0.15/100);
-    epsc0 = -0.0250;
+		if (softIndex == 1) {
+			if (Temp <= 1) {
+				ThermalElongation = Temp * 1.2164e-5;
+			}
+			else if (Temp <= 730) {
+				ThermalElongation = -2.416e-4 + 1.2e-5 *(Temp + 20) + 0.4e-8 *(Temp + 20)*(Temp + 20);
+			}
+			else if (Temp <= 840) {
+				ThermalElongation = 11e-3;
+			}
+			else if (Temp <= 1180) {
+				ThermalElongation = -6.2e-3 + 2e-5*(Temp + 20);
+			}
+		}
+		else if (softIndex == 2) {
+			if (Temp <= 1) {
+				ThermalElongation = Temp  * 9.213e-6;
+			}
+			else if (Temp <= 680) {
+				ThermalElongation = -1.8e-4 + 9e-6 *(Temp + 20) + 2.3e-11 *(Temp + 20)*(Temp + 20)*(Temp + 20);
+			}
+			else if (Temp <= 1180) {
+				ThermalElongation = 14e-3;
+			}
 
-  }
-  else if (Temp <= 880) {
-    fc = (0.15 - (Temp - 780)*0.07/100);
-    epsc0 = -0.0250;
-  }
-  else if (Temp <= 980) {
-    fc =(0.08 - (Temp - 880)*0.04/100);
-    epsc0 = -0.0250;
-  }
-  else if (Temp <= 1080) {
-    fc = (0.04 - (Temp - 980)*0.03/100);
-    epsc0 = -0.0250;
-  }
-  else  {
-    opserr << "the temperature is invalid\n";
-    
-  }
-  
-  double ThermalElongation;
-  if (Temp <= 1) {
-		  ThermalElongation = Temp  * 9.213e-6;
-  }
-  else if (Temp <= 680) {
-    ThermalElongation = -1.8e-4 + 9e-6 *(Temp+20) + 2.3e-11 *(Temp+20)*(Temp+20)*(Temp+20);
-  }
-  else if (Temp <= 1180) {
-    ThermalElongation = 14e-3;
-  }
-  else {
-    opserr << "the temperature is invalid\n";
-  }
-  
-  E = -fc*0.0025/epsc0*E0T;
-  Elong = ThermalElongation;
+		}
+		Elong = ThermalElongation;
 
-}
-else{
-  ET =E0T;
-  Elong = Alpha*TempT;
-}
-   Temp = TempT;
-   ThermalElong = Elong ;
-  return 0;
+	}
+	else {
+		ET = E0T;
+		Elong = Alpha*TempT;
+	}
+	E = ET;
+	Temp = TempT;
+	ThermalElong = Elong;
+	return 0;
 }
 
 const Vector&

@@ -2,11 +2,7 @@
 
 SIFSlab::SIFSlab(int tag, int typeTag, int jt1, int jt2, int jt3, int jt4,const ID& theMemInfo):
 SIFMember(tag,10,typeTag, theMemInfo),theLoad(0)
-{
-  //typeTag indicates composite beam or single beam
-  //typeTag==1 : single beam;
-  //typeTag==2 : composite beam
-  
+{  
   ConnectedJoints = new ID(4);
   //ConnectedJoints->resize(4);
   (*ConnectedJoints)(0) = jt1;
@@ -18,11 +14,7 @@ SIFMember(tag,10,typeTag, theMemInfo),theLoad(0)
 
 SIFSlab::SIFSlab(int tag, int typeTag, int jt1, int jt2, const ID& theMemInfo):
 SIFMember(tag,11,typeTag, theMemInfo),theLoad(0)
-{
-  //typeTag indicates composite beam or single beam
-  //typeTag==1 : single beam;
-  //typeTag==2 : composite beam
-  
+{  
   ConnectedJoints = new ID(2);
   //ConnectedJoints->resize(2);
   (*ConnectedJoints)(0) = jt1;

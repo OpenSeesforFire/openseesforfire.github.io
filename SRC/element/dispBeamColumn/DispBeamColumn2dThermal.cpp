@@ -49,6 +49,7 @@
 #include <ElementalLoad.h>
 #include <NodalThermalAction.h>
 #include <ThermalActionWrapper.h>
+#include <elementAPI.h>
 
 #include <math.h>
 #include <StandardStream.h>
@@ -59,6 +60,73 @@
 Matrix DispBeamColumn2dThermal::K(6,6);
 Vector DispBeamColumn2dThermal::P(6);
 double DispBeamColumn2dThermal::workArea[100];
+
+void* OPS_DispBeamColumn2dThermal()
+{
+    if(OPS_GetNumRemainingInputArgs() < 5) {
+	opserr<<"insufficient arguments:eleTag,iNode,jNode,transfTag,integrationTag <-mass mass> <-cmass>\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[5];
+    int numData = 5;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	opserr<<"WARNING: invalid integer inputs\n";
+	return 0;
+    }
+
+    // options
+    double mass = 0.0;
+    numData = 1;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	const char* type = OPS_GetString();
+	if(strcmp(type,"-mass") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) {
+		    opserr<<"WARNING: invalid mass\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return 0;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[4]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return 0;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return 0;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+		delete [] sections;
+	    return 0;
+	}
+    }
+    
+    Element *theEle =  new DispBeamColumn2dThermal(iData[0],iData[1],iData[2],secTags.Size(),sections,
+					    *bi,*theTransf,mass);
+    delete [] sections;
+    return theEle;
+}
 
 DispBeamColumn2dThermal::DispBeamColumn2dThermal(int tag, int nd1, int nd2,
 				   int numSec, SectionForceDeformation **s,
@@ -357,8 +425,9 @@ DispBeamColumn2dThermal::update(void)
   
   //opserr<< "Basic Deformation: "<<v<<endln;
   // Loop over the integration points
-  #ifdef _BDEBUG
-  opserr<<"BeamNUT_"<<this->getTag()<<" ,  v  "<<v<<endln<<" , Average epsT "<<AverageThermalElong<<endln;
+  #ifdef _DEBUG
+  //opserr << "BeamNUT_" << this->getTag() << " ,  v  " << v << endln;
+	  //<<" , Average epsT "<<AverageThermalElong<<endln;
   #endif
   for (int i = 0; i < numSections; i++) {
     
@@ -388,7 +457,7 @@ DispBeamColumn2dThermal::update(void)
 
      //FMK err += theSections[i]->setTrialSectionDeformationTemperature(e,dataMix); 
 #ifdef _BDEBUG
-	//opserr<<"DispBeamNUT:e"<<endln<<e;
+	//opserr << "Beam_" << this->getTag() << " Section " << i << endln;
 #endif
 	Vector dataMixV(dataMix,27);
     err += theSections[i]->setTrialSectionDeformation(e);  
@@ -437,9 +506,8 @@ DispBeamColumn2dThermal::getTangentStiff()
     // Get the section tangent stiffness and stress resultant
 
     const Matrix &ks = theSections[i]->getSectionTangent();
-#ifdef _BDEBUG
-	if(i==0)
-  opserr<<"Beam_"<<this->getTag()<<" Section "<<i<<endln<<" ,  K  "<<ks<<endln;
+#ifdef _DEBUG
+ // opserr<<"Beam_"<<this->getTag()<<" Section "<<i<<endln<<" ,  K  "<<ks<<endln;
 #endif
 	const Vector &s = theSections[i]->getStressResultant();
     // Perform numerical integration
@@ -754,8 +822,8 @@ DispBeamColumn2dThermal::addLoad(ElementalLoad *theLoad, double loadFactor)
   }
   else if(type == LOAD_TAG_NodalThermalAction) {
 	  //NodalLoad* theNodalThermal0,theNodalThermal1;	 
-	 NodalThermalAction* theNodalThermal0 = (NodalThermalAction*) (theNodes[0]->getNodalLoadPtr());
-	 NodalThermalAction* theNodalThermal1 = (NodalThermalAction*) (theNodes[1]->getNodalLoadPtr());	
+	 NodalThermalAction* theNodalThermal0 = theNodes[0]->getNodalThermalActionPtr();
+	 NodalThermalAction* theNodalThermal1 = theNodes[1]->getNodalThermalActionPtr();	
 	 int type;
 	 const Vector &data0 = theNodalThermal0->getData(type);
 	 const Vector &data1 = theNodalThermal1->getData(type);
@@ -1088,8 +1156,8 @@ DispBeamColumn2dThermal::getResistingForce()
   q.Zero();
   
   if (counterTemperature ==1 ) {
-   //this->update();
-	  counterTemperature++;
+     // this->update();
+	 // counterTemperature++;
   }
   // Loop over the integration points
   for (int i = 0; i < numSections; i++) {
@@ -1482,42 +1550,35 @@ DispBeamColumn2dThermal::Print(OPS_Stream &s, int flag)
 
 
 int
-DispBeamColumn2dThermal::displaySelf(Renderer &theViewer, int displayMode, float fact)
+DispBeamColumn2dThermal::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **displayModes, int numModes)
 {
-    // first determine the end points of the quad based on
-    // the display factor (a measure of the distorted image)
-    const Vector &end1Crd = theNodes[0]->getCrds();
-    const Vector &end2Crd = theNodes[1]->getCrds();	
+	static Vector v1(3);
+	static Vector v2(3);
 
-  static Vector v1(3);
-  static Vector v2(3);
+	if (displayMode >= 0) {
 
-  if (displayMode >= 0) {
-    const Vector &end1Disp = theNodes[0]->getDisp();
-    const Vector &end2Disp = theNodes[1]->getDisp();
-    
-    for (int i = 0; i < 2; i++) {
-      v1(i) = end1Crd(i) + end1Disp(i)*fact;
-      v2(i) = end2Crd(i) + end2Disp(i)*fact;    
-    }
-  } else {
-    int mode = displayMode  *  -1;
-    const Matrix &eigen1 = theNodes[0]->getEigenvectors();
-    const Matrix &eigen2 = theNodes[1]->getEigenvectors();
-    if (eigen1.noCols() >= mode) {
-      for (int i = 0; i < 2; i++) {
-	v1(i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-	v2(i) = end2Crd(i) + eigen2(i,mode-1)*fact;    
-      }    
-    } else {
-      for (int i = 0; i < 2; i++) {
-	v1(i) = end1Crd(i);
-	v2(i) = end2Crd(i);
-      }    
-    }
-  }
-	
-  return theViewer.drawLine (v1, v2, 1.0, 1.0);
+		theNodes[0]->getDisplayCrds(v1, fact);
+		theNodes[1]->getDisplayCrds(v2, fact);
+
+	}
+	else {
+
+		theNodes[0]->getDisplayCrds(v1, 0.);
+		theNodes[1]->getDisplayCrds(v2, 0.);
+
+		// add eigenvector values
+		int mode = displayMode  *  -1;
+		const Matrix &eigen1 = theNodes[0]->getEigenvectors();
+		const Matrix &eigen2 = theNodes[1]->getEigenvectors();
+		if (eigen1.noCols() >= mode) {
+			for (int i = 0; i < 2; i++) {
+				v1(i) += eigen1(i, mode - 1)*fact;
+				v2(i) += eigen2(i, mode - 1)*fact;
+			}
+		}
+	}
+
+	return theViewer.drawLine(v1, v2, 1.0, 1.0, this->getTag());
 }
 
 Response*

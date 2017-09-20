@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4967 $
-// $Date: 2012-08-13 06:39:44 +0100 (Mon, 13 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/GenericCopy.h $
+// $Revision: 6049 $
+// $Date: 2015-07-17 12:56:36 +0800 (Fri, 17 Jul 2015) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/GenericCopy.h $
 
 #ifndef GenericCopy_h
 #define GenericCopy_h
@@ -81,7 +81,7 @@ public:
     // public methods for element output
     int sendSelf(int commitTag, Channel &sChannel);
     int recvSelf(int commitTag, Channel &rChannel, FEM_ObjectBroker &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);
+    int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode);
     void Print(OPS_Stream &s, int flag = 0);
     
     // public methods for element recorder
@@ -92,20 +92,20 @@ protected:
     
 private:
     // private attributes - a copy for each object of the class
-    ID connectedExternalNodes;      // contains the tags of the end nodes
+    ID connectedExternalNodes;  // contains the tags of the end nodes
     
-    int numExternalNodes;
-    int numDOF;
+    int numExternalNodes;       // number of external nodes
+    int numDOF;                 // number of total DOF
     
-    int srcTag;
-    Element *theSource;
+    int srcTag;                 // tag of the source element
+    Element *theSource;         // pointer to the source element
     
-    static Matrix theMatrix;
-    static Matrix theInitStiff;
-    static Matrix theMass;
-    static Vector theVector;
-    static Vector theLoad;
-    
+    Matrix theMatrix;           // objects matrix
+    Vector theVector;           // objects vector
+    Vector theLoad;             // load vector
+    Matrix theInitStiff;        // initial stiffness matrix
+    Matrix theMass;             // mass matrix
+
     bool initStiffFlag;
     bool massFlag;
     

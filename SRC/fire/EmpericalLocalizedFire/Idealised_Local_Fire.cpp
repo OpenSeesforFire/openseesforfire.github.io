@@ -39,7 +39,7 @@
 
 Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, double crd3,
 								   double Q, double D1, double D2, int lineTag)
-:FireModel(tag,6),x1(crd1), x2(crd2), x3(crd3), d1(D1),d2(D2), k1(0),k2(0), q(Q), centerLine(lineTag), CurveType(1)
+:FireModel(tag,6),x1(crd1), x2(crd2), x3(crd3), d1(D1),d2(D2), k1(0),k2(0), q(Q), centerLine(lineTag), CurveType(1), FireLocPath(0)
 {
     // check the direction of central line of a Hasemi fire
     // 1 indicates it is parrallel to x1 axis, 2 indicates
@@ -52,7 +52,7 @@ Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, dou
 }
 
 Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, double crd3, double Q, double D1, double D2, double K1, double K2, int lineTag)
-:FireModel(tag, 6),x1(crd1), x2(crd2), x3(crd3), d1(D1),d2(D2), q(Q), k1(K1), k2(K2), centerLine(lineTag)
+:FireModel(tag, 6),x1(crd1), x2(crd2), x3(crd3), d1(D1),d2(D2), q(Q), k1(K1), k2(K2), centerLine(lineTag), FireLocPath(0)
 {
     // check the direction of central line of a Hasemi fire
     // 1 indicates it is parrallel to x1 axis, 2 indicates
@@ -69,7 +69,7 @@ Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, dou
 }
 
 Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, double crd3, double Q, double D1, double D2, double factor, int lineTag)
-:FireModel(tag,6),x1(crd1), x2(crd2), x3(crd3), d1(D1),d2(D2), Factor(factor), q(Q), centerLine(lineTag), CurveType(3)
+:FireModel(tag,6),x1(crd1), x2(crd2), x3(crd3), d1(D1),d2(D2), Factor(factor), q(Q), centerLine(lineTag), CurveType(3), FireLocPath(0)
 {
   // check the direction of central line of a Hasemi fire
   // 1 indicates it is parrallel to x1 axis, 2 indicates
@@ -79,6 +79,21 @@ Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, dou
     << " Only 1, or 2, or 3 is correct.\n";
 		}
   
+}
+
+//adding moving fire source
+Idealised_Local_Fire::Idealised_Local_Fire(int tag, PathTimeSeriesThermal* fireLocPath, double Q, double D1, double D2, double factor, int lineTag)
+	:FireModel(tag, 6), FireLocPath(fireLocPath), d1(D1), d2(D2), Factor(factor), q(Q), centerLine(lineTag), CurveType(3)
+{
+	// check the direction of central line of a Hasemi fire
+	// 1 indicates it is parrallel to x1 axis, 2 indicates
+	// parallelt to x2 axis, 3 indicates parallel to x3 axis.
+	if ((lineTag != 1) && (lineTag != 2) && (lineTag != 3)) {
+		opserr << "Idealised_Local_Fire::Idealised_Local_Fire - invalid line tag provided for Hasemi fire.\n"
+			<< " Only 1, or 2, or 3 is correct.\n";
+	}
+	x1 = 0; x2 = 0; x3 = 0;
+
 }
 
 
@@ -99,7 +114,30 @@ Idealised_Local_Fire::getFlux(HeatTransferNode* node, double time)
 	int size = coords.Size();
 
 	double deltaX1, deltaX2, sum, r;
+	//------------moving ..................
+	Vector fireLocs = 0;
+	if (FireLocPath != 0)
+	{
+		fireLocs = FireLocPath->getFactors(time);
 
+		if (fireLocs.Size() == 1) {
+			x1 = fireLocs(0);
+			x2 = 0;
+		}
+		else if (fireLocs.Size() == 2) {
+			x1 = fireLocs(0);
+			x2 = fireLocs(1);
+		}
+		else if (fireLocs.Size() == 3) {
+			x1 = fireLocs(0);
+			x2 = fireLocs(1);
+			x3 = fireLocs(2);
+		}
+		else {
+			opserr << "WARNING! IdealisedLoalFire::getFlux failed to get the location of fire origin" << endln;
+		}
+	}
+	//-----------------
 	if (centerLine == 1) {
 		deltaX1 = x2 - coords(1);
 		if (size == 3) {

@@ -218,13 +218,71 @@ double Clough::getStrain (void)
 int Clough::recvSelf(int cTag, Channel &theChannel, 
 			       FEM_ObjectBroker &theBroker)
 {
-	return 0;
+
+  int res = 0;
+  static Vector inp(40);
+
+  res = theChannel.recvVector(this->getDbTag(), cTag, inp);
+  
+  if (res < 0) {
+    opserr << "Clough::recvSelf() - failed to receive data\n";
+    return -1;
+  }
+	
+  elstk = inp[0];
+  fyieldPos = inp[1];
+  fyieldNeg = inp[2];
+  alpha = inp[3];
+  Resfac = inp[4];
+  capSlope = inp[5];
+  capDispPos = inp[6];
+  capDispNeg = inp[7];
+  ecaps = inp[8];
+  ecapk = inp[9];
+  ecapa = inp[10];
+  ecapd = inp[11];
+  cs = inp[12];
+  ck = inp[13];
+  ca = inp[14];
+  cd = inp[15];
+  for (int i=0; i<24; i++) 
+    hsCommit[i] = inp[16+i];
+
+  this->revertToLastCommit();
+
+  return res;  
 }
 
 
 int Clough::sendSelf(int cTag, Channel &theChannel)
 {
-	return 0;
+  int res = 0;
+  static Vector inp(40);
+	
+  inp[0]  = 	elstk;
+  inp[1]  =  	fyieldPos;
+  inp[2]  =  	fyieldNeg;
+  inp[3]  = 	alpha;
+  inp[4]  = 	Resfac;
+  inp[5]  = 	capSlope;
+  inp[6]  = 	capDispPos;
+  inp[7]  = 	capDispNeg;
+  inp[8]  = 	ecaps;
+  inp[9]  = 	ecapk;
+  inp[10] = 	ecapa;
+  inp[11] = 	ecapd;
+  inp[12] =	cs;
+  inp[13] = 	ck;
+  inp[14] = 	ca;
+  inp[15] = 	cd;
+  for (int i=0; i<24; i++) 
+    inp[16+i] = hsCommit[i];
+
+  res = theChannel.sendVector(this->getDbTag(), cTag, inp);
+  if (res < 0) 
+    opserr << "Clough::sendSelf() - failed to send data\n";
+
+  return res;  
 }
 
 
@@ -248,7 +306,7 @@ UniaxialMaterial *Clough::getCopy(void)
 	inp[13] = 	ck;
 	inp[14] = 	ca;
 	inp[15] = 	cd;
-
+	
   
   Clough *theCopy = new Clough(this->getTag(), inp );
   
@@ -531,20 +589,22 @@ int Clough::setTrialStrain( double d, double strainRate)
 	//	UPDATING OF DETERIORATION PARAMETERS ----------------------------
 	//	Check the remaining capacity of the system
 	
-	if( flagDeg == 1 || flagDeg == 2 ) {
-		if( ( Enrgtot >= Enrgts && Enrgts != 0.0) || ( Enrgtot >= Enrgtk && Enrgtk != 0.0) || 
-			( Enrgtot >= Enrgta && Enrgta != 0.0) || ( Enrgtot >= Enrgtd && Enrgtd != 0.0))
-		  //			opserr << "Total Energy greater than capacity\n";
-		
-		//	Update beta values for strength, acc. stiff. and capping
+	if (flagDeg == 1 || flagDeg == 2 ) {
+	  if (( Enrgtot >= Enrgts && Enrgts != 0.0) || ( Enrgtot >= Enrgtk && Enrgtk != 0.0) || 
+	     ( Enrgtot >= Enrgta && Enrgta != 0.0) || ( Enrgtot >= Enrgtd && Enrgtd != 0.0))
 
-		if( ecaps != 0.0 ) betas = pow ((Enrgc/(Enrgts-Enrgtot)) , cs );
-		if( betas>=1.0 ){
-			opserr << "Warning: Clough::SetTrial  : Total Strength loss\n" << "\a";	
-			betas = 1.0;
-		}
+	    opserr << "Total Energy greater than capacity\n";
+	  
+	  
+	  //	Update beta values for strength, acc. stiff. and capping
+	  if (ecaps != 0.0 ) betas = pow ((Enrgc/(Enrgts-Enrgtot)) , cs );
 
-		if( ecapa != 0.0 ) betaa = pow ((Enrgc/(Enrgta-Enrgtot)) , ca );
+	  if (betas>=1.0 ){
+	    opserr << "Warning: Clough::SetTrial  : Total Strength loss\n" << "\a";	
+	    betas = 1.0;
+	  }
+	  
+	  if (ecapa != 0.0 ) betaa = pow ((Enrgc/(Enrgta-Enrgtot)) , ca );
 		if( betaa>=1.0 ){
 			opserr << "Warning: Clough::SetTrial  : Total accelerated stiffness loss\n" << "\a";
 			betaa = 1.0;

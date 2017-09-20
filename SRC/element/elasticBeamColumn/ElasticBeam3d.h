@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.10 $
-// $Date: 2007-02-02 01:30:47 $
-// $Source: /usr/local/cvs/OpenSees/SRC/element/elasticBeamColumn/ElasticBeam3d.h,v $
+// $Revision: 6049 $
+// $Date: 2015-07-17 12:56:36 +0800 (Fri, 17 Jul 2015) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elasticBeamColumn/ElasticBeam3d.h $
                                                                         
                                                                         
 // Written: fmk 11/95
@@ -49,11 +49,13 @@ class ElasticBeam3d : public Element
   public:
     ElasticBeam3d();        
     ElasticBeam3d(int tag, double A, double E, double G, 
-		  double Jx, double Iy, double Iz, int Nd1, int Nd2,
-		  CrdTransf &theTransf, double rho = 0.0, int sectionTag = 0);
+		  double Jx, double Iy, double Iz,
+          int Nd1, int Nd2, CrdTransf &theTransf,
+          double rho = 0.0, int cMass = 0,
+          int sectionTag = 0);
 
     ElasticBeam3d(int tag, int Nd1, int Nd2, SectionForceDeformation *section, 
-		  CrdTransf &theTransf, double rho = 0.0);
+		  CrdTransf &theTransf, double rho = 0.0, int cMass = 0);
 
     ~ElasticBeam3d();
 
@@ -86,7 +88,7 @@ class ElasticBeam3d : public Element
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
     
     void Print(OPS_Stream &s, int flag =0);    
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);
+    int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes = 0, int numModes = 0);
 
     Response *setResponse (const char **argv, int argc, OPS_Stream &s);
     int getResponse (int responseID, Information &info);
@@ -98,6 +100,7 @@ class ElasticBeam3d : public Element
     double A,E,G,Jx,Iy,Iz;
 
     double rho;
+    int cMass;
     int sectionTag;
 
     static Matrix K;
@@ -117,5 +120,3 @@ class ElasticBeam3d : public Element
 };
 
 #endif
-
-

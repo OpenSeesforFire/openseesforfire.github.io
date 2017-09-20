@@ -51,9 +51,55 @@
 #include <Information.h>
 #include <math.h>
 #include <float.h>
-
+#include <elementAPI.h>
 
 //int count = 0;
+
+void* OPS_Concrete01WithSITC()
+{
+    int numdata = OPS_GetNumRemainingInputArgs();
+    if (numdata < 5) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: uniaxialMaterial Concrete01WithSITC tag? ";
+	opserr << "fpc? epsc0? fpcu? epscu? <endStrainSITC?>\n";
+	return 0;
+    }
+
+    int tag;
+    numdata = 1;
+    if (OPS_GetIntInput(&numdata,&tag) < 0) {
+	opserr << "WARNING invalid tag\n";
+	return 0;
+    }
+
+    double data[4];
+    numdata = 4;
+    if (OPS_GetDoubleInput(&numdata,data)) {
+	opserr << "WARNING invalid double data\n";
+	return 0;
+    }
+    UniaxialMaterial* mat = 0;
+    
+    numdata = OPS_GetNumRemainingInputArgs();
+    if (numdata > 0) {
+	double endStrainSITC;
+	numdata = 1;
+	if (OPS_GetDoubleInput(&numdata,&endStrainSITC) < 0) {
+	    opserr << "WARNING invalid double data\n";
+	    return 0;
+	}
+	mat = new Concrete01WithSITC(tag,data[0],data[1],data[2],data[3],endStrainSITC);
+    } else {
+	mat = new Concrete01WithSITC(tag,data[0],data[1],data[2],data[3]);
+    }
+
+    if (mat == 0) {
+	opserr << "WARNING: failed to create Concrete01WithSITC material\n";
+	return 0;
+    }
+
+    return mat;
+}
 
 Concrete01WithSITC::Concrete01WithSITC
 (int tag, double FPC, double EPSC0, double FPCU, double EPSCU, double endStrainSITC)
@@ -688,11 +734,24 @@ int Concrete01WithSITC::recvSelf (int commitTag, Channel& theChannel,
 
 void Concrete01WithSITC::Print (OPS_Stream& s, int flag)
 {
-   s << "Concrete01WithSITC, tag: " << this->getTag() << endln;
-   s << "  fpc: " << fpc << endln;
-   s << "  epsc0: " << epsc0 << endln;
-   s << "  fpcu: " << fpcu << endln;
-   s << "  epscu: " << epscu << endln;
+	if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+		s << "Concrete01WithSITC, tag: " << this->getTag() << endln;
+		s << "  fpc: " << fpc << endln;
+		s << "  epsc0: " << epsc0 << endln;
+		s << "  fpcu: " << fpcu << endln;
+		s << "  epscu: " << epscu << endln;
+	}
+
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "\t\t\t{";
+		s << "\"type\": \"Concrete01WithSITC\", ";
+		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"Ec\": " << 2.0*fpc/epsc0 << ", ";
+		s << "\"fc\": " << fpc << ", ";
+		s << "\"epsc\": " << epsc0 << ", ";
+		s << "\"fcu\": " << fpcu << ", ";
+		s << "\"epscu\": " << epscu << "}";
+	}
 }
 
 

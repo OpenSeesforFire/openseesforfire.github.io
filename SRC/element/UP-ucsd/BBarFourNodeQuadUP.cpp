@@ -29,6 +29,75 @@
 #include <FEM_ObjectBroker.h>
 #include <ElementResponse.h>
 #include <ElementalLoad.h>
+#include <elementAPI.h>
+
+void* OPS_BBarFourNodeQuadUP()
+{
+    if (OPS_GetNDM() != 2 || OPS_GetNDF() != 3) {
+	opserr << "WARNING -- model dimensions and/or nodal DOF not compatible with QuadUP element\n";
+	return 0;
+    }
+
+    if (OPS_GetNumRemainingInputArgs() < 11) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element bbarQuadUP eleTag? iNode? jNode? kNode? lNode? thk? type? matTag? bulk? rho? perm_x? perm_y? <b1? b2? pressure? dM? dK?>\n";
+	return 0;
+    }
+
+    // BBarFourNodeQuadUPId, iNode, jNode, kNode, lNode
+    int tags[5];
+    int num = 5;
+    if (OPS_GetIntInput(&num,tags) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+
+    double thk;
+    num = 1;
+    if (OPS_GetDoubleInput(&num,&thk) < 0) {
+	opserr<<"WARNING: invalid double input\n";
+	return 0;
+    }
+
+    int matTag;
+    if (OPS_GetIntInput(&num,&matTag) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+    NDMaterial* mat = OPS_getNDMaterial(matTag);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "Material: " << matTag;
+	opserr << "\nBBarFourNodeQuadUP element: " << tags[0] << endln;
+	return 0;
+    }
+
+    // bk, r, perm1, perm2
+    double data[4];
+    num = 4;
+    if (OPS_GetDoubleInput(&num,data) < 0) {
+	opserr<<"WARNING: invalid double input\n";
+	return 0;
+    }
+
+    // b1, b2, p
+    double opt[3] = {0,0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 3) {
+	num = 3;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,opt) < 0) {
+	    opserr<<"WARNING: invalid double input\n";
+	    return 0;
+	}
+    }
+
+    return new BBarFourNodeQuadUP(tags[0],tags[1],tags[2],tags[3],tags[4],
+				  *mat,"PlainStrain",thk,data[0],data[1],data[2],data[3],
+				  opt[0],opt[1],opt[2]);
+}
+
 
 Matrix BBarFourNodeQuadUP::K(12,12);
 Vector BBarFourNodeQuadUP::P(12);
@@ -583,8 +652,8 @@ BBarFourNodeQuadUP::addLoad(ElementalLoad *theLoad, double loadFactor)
 
 	if (type == LOAD_TAG_SelfWeight) {
 		applyLoad = 1;
-		appliedB[0] += loadFactor*b[0];
-		appliedB[1] += loadFactor*b[1];
+		appliedB[0] += loadFactor*data(0)*b[0];
+		appliedB[1] += loadFactor*data(1)*b[1];
 		return 0;
 	} else {
 		opserr << "BBarFourNodeQuad::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
@@ -982,7 +1051,7 @@ BBarFourNodeQuadUP::Print(OPS_Stream &s, int flag)
 }
 
 int
-BBarFourNodeQuadUP::displaySelf(Renderer &theViewer, int displayMode, float fact)
+BBarFourNodeQuadUP::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
     // first set the quantity to be displayed at the nodes;
     // if displayMode is 1 through 3 we will plot material stresses otherwise 0.0
@@ -1104,40 +1173,23 @@ BBarFourNodeQuadUP::setParameter(const char **argv, int argc, Parameter &param)
 
 
   // quad mass density per unit volume
-  if (strcmp(argv[0],"rho") == 0)
+  if (strcmp(argv[0],"rho") == 0) {
     return param.addObject(1, this);
 
   // quad pressure loading
-  if (strcmp(argv[0],"pressure") == 0)
+  } else if (strcmp(argv[0],"pressure") == 0) {
     return param.addObject(2, this);
 
   // permeability in horizontal direction
-  if (strcmp(argv[0],"hPerm") == 0)
+  } else if (strcmp(argv[0],"hPerm") == 0) {
     return param.addObject(3, this);
 
   // permeability in vertical direction
-  if (strcmp(argv[0],"vPerm") == 0)
+  } else if (strcmp(argv[0],"vPerm") == 0) {
     return param.addObject(4, this);
-
-  // material state (elastic/plastic) for UW soil materials
-  if (strcmp(argv[0],"materialState") == 0) {
-      return param.addObject(5,this);
   }
-  // frictional strength parameter for UW soil materials
-  if (strcmp(argv[0],"frictionalStrength") == 0) {
-      return param.addObject(7,this);
-  }
-  // non-associative parameter for UW soil materials
-  if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-      return param.addObject(8,this);
-  }
-  // cohesion parameter for UW soil materials
-  if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-      return param.addObject(9,this);
-  }
-
-  // a material parameter
-  if (strstr(argv[0],"material") != 0) {
+  // check for material parameters
+  if ((strstr(argv[0],"material") != 0) && (strcmp(argv[0],"materialState") != 0)) {
 
     if (argc < 3)
       return -1;
@@ -1149,7 +1201,7 @@ BBarFourNodeQuadUP::setParameter(const char **argv, int argc, Parameter &param)
       return -1;
   }
 
-  // otherwise it could be a forall material pointer
+  // otherwise it could be a for all material pointer
   else {
     int matRes = res;
     for (int i=0; i<4; i++) {
@@ -1187,39 +1239,6 @@ BBarFourNodeQuadUP::updateParameter(int parameterID, Information &info)
 		perm[1] = info.theDouble;
 		this->getDamp();	// update mass matrix
 		return 0;
-	case 5:
-		// added: C.McGann, U.Washington
-		for (int i = 0; i<4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 7:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 8:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 9:
-	    for (int i = 0; i < 4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
 	default:
 		if (parameterID >= 100) { // material parameter
 			int pointNum = parameterID/100;

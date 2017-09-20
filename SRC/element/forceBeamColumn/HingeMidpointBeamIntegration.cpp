@@ -42,6 +42,30 @@ Force-Based Beam-Column Elements." Journal of Structural Engineering,
 #include <Information.h>
 #include <Parameter.h>
 #include <math.h>
+#include <elementAPI.h>
+#include <ID.h>
+
+void* OPS_HingeMidpointBeamIntegration(int& integrationTag, ID& secTags)
+{
+    if(OPS_GetNumRemainingInputArgs() < 6) {
+	opserr<<"insufficient arguments:integrationTag,secTagI,lpI,secTagJ,lpJ,secTagE\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[6];
+    int numData = 6;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) return 0;
+
+    integrationTag = iData[0];
+    secTags.resize(4);
+    secTags(0) = iData[1];
+    secTags(1) = iData[5];
+    secTags(2) = iData[5];
+    secTags(3) = iData[3];
+
+    return new HingeMidpointBeamIntegration(iData[2],iData[4]);
+}
 
 HingeMidpointBeamIntegration::HingeMidpointBeamIntegration(double lpi,
 							   double lpj):
@@ -189,11 +213,17 @@ HingeMidpointBeamIntegration::activateParameter(int paramID)
 void
 HingeMidpointBeamIntegration::Print(OPS_Stream &s, int flag)
 {
-  s << "HingeMidpoint" << endln;
-  s << " lpI = " << lpI;
-  s << " lpJ = " << lpJ << endln;
-
-  return;
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "{\"type\": \"HingeMidpoint\", ";
+		s << "\"lpI\": " << lpI << ", ";
+		s << "\"lpJ\": " << lpJ << "}";
+	}
+	
+	else {
+		s << "HingeMidpoint" << endln;
+		s << " lpI = " << lpI;
+		s << " lpJ = " << lpJ << endln;
+	}
 }
 
 void 
@@ -225,11 +255,13 @@ HingeMidpointBeamIntegration::getLocationsDeriv(int numSections, double L,
     dptsdh[3] = -halfOneOverL;
   }
 
+  return;
+
   if (dLdh != 0.0) {
-    // STILL TO DO
-    opserr << "getPointsDeriv -- to do" << endln;
     dptsdh[0] = -0.5*(lpI*dLdh)/(L*L);
     dptsdh[1] = dLdh + 0.5*(lpJ*dLdh)/(L*L);
+    // STILL TO DO
+    //opserr << "getPointsDeriv -- to do" << endln;
   }
 
   return;
@@ -261,11 +293,13 @@ HingeMidpointBeamIntegration::getWeightsDeriv(int numSections, double L,
     dwtsdh[3] = oneOverL;
   }
 
+  return;
+
   if (dLdh != 0.0) {
     dwtsdh[0] = -lpI*dLdh/(L*L);
+    dwtsdh[1] = 0.5*(lpI+lpJ)*dLdh/(L*L);
+    dwtsdh[2] = 0.5*(lpI+lpJ)*dLdh/(L*L);
     dwtsdh[3] = -lpJ*dLdh/(L*L);
-    // STILL TO DO
-    opserr << "getWeightsDeriv -- to do" << endln;
   }
 
   return;

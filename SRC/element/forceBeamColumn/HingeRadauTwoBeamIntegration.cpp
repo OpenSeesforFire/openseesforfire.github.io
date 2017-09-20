@@ -42,6 +42,32 @@ Force-Based Beam-Column Elements." Journal of Structural Engineering,
 #include <FEM_ObjectBroker.h>
 #include <Information.h>
 #include <Parameter.h>
+#include <elementAPI.h>
+#include <ID.h>
+
+void* OPS_HingeRadauTwoBeamIntegration(int& integrationTag, ID& secTags)
+{
+    if(OPS_GetNumRemainingInputArgs() < 6) {
+	opserr<<"insufficient arguments:integrationTag,secTagI,lpI,secTagJ,lpJ,secTagE\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[6];
+    int numData = 6;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) return 0;
+
+    integrationTag = iData[0];
+    secTags.resize(6);
+    secTags(0) = iData[1];
+    secTags(1) = iData[1];
+    secTags(2) = iData[5];
+    secTags(3) = iData[5];
+    secTags(4) = iData[3];
+    secTags(5) = iData[3];
+
+    return new HingeRadauTwoBeamIntegration(iData[2],iData[4]);
+}
 
 HingeRadauTwoBeamIntegration::HingeRadauTwoBeamIntegration(double lpi,
 							   double lpj):
@@ -74,8 +100,8 @@ HingeRadauTwoBeamIntegration::getSectionLocations(int numSections, double L,
 
   static const double oneRoot3 = 1.0/sqrt(3.0);
 
-  double alpha = 0.5-0.5*(lpI+lpJ)*oneOverL;
-  double beta  = 0.5+0.5*(lpI-lpJ)*oneOverL;
+  double alpha = 0.5 - 0.5*(lpI+lpJ)*oneOverL;
+  double beta  = 0.5 + 0.5*(lpI-lpJ)*oneOverL;
   xi[2] = alpha*(-oneRoot3) + beta;
   xi[3] = alpha*(oneRoot3) + beta;
 
@@ -193,11 +219,17 @@ HingeRadauTwoBeamIntegration::activateParameter(int paramID)
 void
 HingeRadauTwoBeamIntegration::Print(OPS_Stream &s, int flag)
 {
-  s << "HingeRadauTwo" << endln;
-  s << " lpI = " << lpI;
-  s << " lpJ = " << lpJ << endln;
-
-  return;
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "{\"type\": \"HingeRadauTwo\", ";
+		s << "\"lpI\": " << lpI << ", ";
+		s << "\"lpJ\": " << lpJ << "}";
+	}
+	
+	else {
+		s << "HingeRadauTwo" << endln;
+		s << " lpI = " << lpI;
+		s << " lpJ = " << lpJ << endln;
+	}
 }
 
 void 
@@ -209,6 +241,8 @@ HingeRadauTwoBeamIntegration::getLocationsDeriv(int numSections,
 
   for (int i = 0; i < numSections; i++)
     dptsdh[i] = 0.0;
+
+  //return;
 
   static const double oneRoot3 = 1.0/sqrt(3.0);
 
@@ -231,9 +265,22 @@ HingeRadauTwoBeamIntegration::getLocationsDeriv(int numSections,
     dptsdh[4] = -2.0/3*oneOverL;
   }
 
+  return;
+
   if (dLdh != 0.0) {
+    dptsdh[1] = -2.0/3*lpI*dLdh/(L*L);
+    double dalphadh =  0.5*(lpI+lpJ)*dLdh/(L*L);
+    double dbetadh  = -0.5*(lpI-lpJ)*dLdh/(L*L);
+    dptsdh[2] = -oneRoot3*dalphadh + dbetadh;
+    dptsdh[3] =  oneRoot3*dalphadh + dbetadh;
+    double alpha = 0.5*L - 0.5*(lpI+lpJ);
+    double beta  = 0.5*L + 0.5*(lpI-lpJ);
+    dptsdh[2] = -(-oneRoot3*alpha+beta)*dLdh/(L*L) + 0.5*dLdh;///(L*L);
+    dptsdh[3] = -( oneRoot3*alpha+beta)*dLdh/(L*L) + 0.5*dLdh;///(L*L);
+    dptsdh[4] = -(L-2.0/3*lpJ)*dLdh/(L*L);
+    dptsdh[5] =  -L*dLdh/(L*L);
     // STILL TO DO
-    opserr << "getPointsDeriv -- to do" << endln;
+    //opserr << "getPointsDeriv -- to do" << endln;
   }
 
   return;
@@ -272,11 +319,17 @@ HingeRadauTwoBeamIntegration::getWeightsDeriv(int numSections,
     dwtsdh[5] = 0.25*oneOverL;
   }
 
+  return;
+
   if (dLdh != 0.0) {
-    dwtsdh[0] = -lpI*dLdh/(L*L);
-    dwtsdh[5] = -lpJ*dLdh/(L*L);
+    dwtsdh[0] = -0.25*lpI*dLdh/(L*L);
+    dwtsdh[1] = -0.75*lpI*dLdh/(L*L);
+    dwtsdh[2] = 0.5*(lpI+lpJ)*dLdh/(L*L);
+    dwtsdh[3] = 0.5*(lpI+lpJ)*dLdh/(L*L);
+    dwtsdh[4] = -0.75*lpJ*dLdh/(L*L);
+    dwtsdh[5] = -0.25*lpJ*dLdh/(L*L);
     // STILL TO DO
-    opserr << "getWeightsDeriv -- to do" << endln;
+    //opserr << "getWeightsDeriv -- to do" << endln;
   }
 
   return;

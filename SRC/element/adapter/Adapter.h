@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4967 $
-// $Date: 2012-08-13 06:39:44 +0100 (Mon, 13 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/adapter/Adapter.h $
+// $Revision: 6501 $
+// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/adapter/Adapter.h $
 
 #ifndef Adapter_h
 #define Adapter_h
@@ -102,7 +102,8 @@ public:
     // public methods for element output
     int sendSelf(int commitTag, Channel &sChannel);
     int recvSelf(int commitTag, Channel &rChannel, FEM_ObjectBroker &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);
+    int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode);
+    
     void Print(OPS_Stream &s, int flag = 0);
     
     // public methods for element recorder
@@ -113,37 +114,43 @@ protected:
 
 private:
     // private attributes - a copy for each object of the class
-    ID connectedExternalNodes;      // contains the tags of the end nodes
-    ID *theDOF;                     // array with the dof of the end nodes
-    ID basicDOF;                    // contains the basic dof
+    ID connectedExternalNodes;  // contains the tags of the end nodes
+    ID *theDOF;                 // array with the dof of the end nodes
+    ID basicDOF;                // contains the basic dof
     
-    int numExternalNodes;   // number of nodes
-    int numDOF;             // number of degrees of freedom
-    int numBasicDOF;        // number of DOF in basic system
+    int numExternalNodes;       // number of nodes
+    int numDOF;                 // number of degrees of freedom
+    int numBasicDOF;            // number of DOF in basic system
     
-    Matrix kb;          // stiffness matrix in basic system
-    int ipPort;         // ipPort
-    int addRayleigh;    // flag to add Rayleigh damping
-    Matrix *mb;         // mass matrix in basic system
-    double tPast;       // past time
+    Matrix kb;                  // stiffness matrix in basic system
+    int ipPort;                 // ipPort
+    int addRayleigh;            // flag to add Rayleigh damping
+    Matrix *mb;                 // mass matrix in basic system
+    double tPast;               // past time
     
-    static Matrix theMatrix;    // objects matrix (a class wide Matrix)
-    static Vector theVector;    // objects vector (a class wide Vector)
-    static Vector theLoad;      // load vector
+    Matrix theMatrix;           // objects matrix
+    Vector theVector;           // objects vector
+    Vector theLoad;             // load vector
     
-    Vector db;  // deformation in basic system
-    Vector q;   // forces in basic system
+    Vector db;                  // deformation in basic system
+    Vector q;                   // forces in basic system
     
-    Channel *theChannel;    // channel
-    double *rData;          // receive data array
-    Vector *recvData;       // receive vector
-    double *sData;          // send data array
-    Vector *sendData;       // send vector
+    Channel *theChannel;        // channel
+    double *rData;              // receive data array
+    Vector *recvData;           // receive vector
+    double *sData;              // send data array
+    Vector *sendData;           // send vector
     
-    Vector *ctrlDisp;   // ctrl displacements in basic system
-    Vector *ctrlForce;  // ctrl forces in basic system
-    Vector *daqDisp;    // daq displacements in basic system
-    Vector *daqForce;   // daq forces in basic system
+    Vector *ctrlDisp;           // ctrl displacements in basic system
+    Vector *ctrlVel;            // ctrl velocities in basic system
+    Vector *ctrlAccel;          // ctrl accelerations in basic system
+    Vector *ctrlForce;          // ctrl forces in basic system
+    Vector *ctrlTime;           // ctrl time in basic system
+    Vector *daqDisp;            // daq displacements in basic system
+    Vector *daqVel;             // daq velocities in basic system
+    Vector *daqAccel;           // daq accelerations in basic system
+    Vector *daqForce;           // daq forces in basic system
+    Vector *daqTime;            // daq time in basic system
     
     Node **theNodes;
     

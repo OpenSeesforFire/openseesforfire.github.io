@@ -44,7 +44,7 @@
 //  Yield condition enforced at time n+1 
 //
 //  set eta := 0 for rate independent case
-//
+//  Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io]
 
 
 #include <stdio.h> 
@@ -128,6 +128,8 @@ protected :
   double bulk_0;  //initial bulk modulus
   double shear_0; //initial shear modulus
 
+  int Tchange;
+
 
   Vector TempAndElong;  //TempAndElong, Liming
 
@@ -144,6 +146,7 @@ protected :
   static double IIdev[3][3][3][3] ; //rank 4 deviatoric 
   static double IbunI[3][3][3][3] ; //rank 4 I bun I 
 
+  static int MaterialTag;
   //material input
   Matrix strain ;               //strain tensor
 

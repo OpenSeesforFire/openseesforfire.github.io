@@ -15,6 +15,9 @@ class SIFMaterial: public TaggedObject
 public:
 	SIFMaterial(int tag, int MaterialTypeTag, 
 	double fy, double E0);
+
+	SIFMaterial(int tag, int MaterialTypeTag,
+		double fy, double fu, double E0);
 	
 	SIFMaterial(int tag, int MaterialTypeTag, 
 	double fc, double epsc0, double fcu, double epscu, double rat, double ft,double Ets, double moisture);

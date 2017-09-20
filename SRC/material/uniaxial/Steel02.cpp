@@ -49,7 +49,7 @@
 
 
 void *
-OPS_NewSteel02()
+OPS_Steel02()
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
@@ -73,7 +73,7 @@ OPS_NewSteel02()
 
   if (numData == 3) {
     if (OPS_GetDoubleInput(&numData, dData) != 0) {
-      opserr << "Invalid arggs: uniaxialMaterial Steel02 " << iData[0] << 
+      opserr << "Invalid double: uniaxialMaterial Steel02 " << iData[0] << 
 	" fy? E? b? <R0? cR1? cR2? <a1? a2? a3? a4?>>" << endln;
       return 0;
     }
@@ -83,7 +83,7 @@ OPS_NewSteel02()
 
   } else if (numData == 6) {
     if (OPS_GetDoubleInput(&numData, dData) != 0) {
-      opserr << "Invalid arggs: uniaxialMaterial Steel02 " << iData[0] << 
+      opserr << "Invalid int: uniaxialMaterial Steel02 " << iData[0] << 
 	" fy? E? b? <R0? cR1? cR2? <a1? a2? a3? a4?>>" << endln;
       return 0;
     }
@@ -509,11 +509,11 @@ Steel02::recvSelf(int commitTag, Channel &theChannel,
   sigs0P = data(14); 
   epssrP = data(15); 
   sigsrP = data(16); 
-  konP = data(17);   
+  konP = int(data(17));   
   epsP = data(18);   
   sigP = data(19);   
   eP   = data(20);   
-  this->setTag(data(21));
+  this->setTag(int(data(21)));
   sigini = data(22);
 
   e = eP;
@@ -526,5 +526,35 @@ Steel02::recvSelf(int commitTag, Channel &theChannel,
 void 
 Steel02::Print(OPS_Stream &s, int flag)
 {
-  s << "Steel02:(strain, stress, tangent) " << eps << " " << sig << " " << e << endln;
+  if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {      
+    //    s << "Steel02:(strain, stress, tangent) " << eps << " " << sig << " " << e << endln;
+    s << "Steel02 tag: " << this->getTag() << endln;
+    s << "  fy: " << Fy << " ";
+    s << "  E0: " << E0 << " ";
+    s << "   b: " << b << " ";
+    s << "  R0: " << R0 << ",";
+    s << " cR1: " << cR1 << ",";
+    s << " cR2: " << cR2 << ",";    
+    s << "  a1: " << a1 << " ";
+    s << "  a2: " << a2 << " ";
+    s << "  a3: " << a3 << " ";
+    s << "  a4: " << a4 << " ";    
+  }
+  
+  if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+    s << "\t\t\t{";
+	s << "\"name\": \"" << this->getTag() << "\", ";
+	s << "\"type\": \"Steel02\", ";
+	s << "\"E\": " << E0 << ", ";
+	s << "\"fy\": " << Fy << ", ";
+    s << "\"b\": " << b << ", ";
+    s << "\"R0\": " << R0 << ", ";
+    s << "\"cR1\": " << cR1 << ", ";
+    s << "\"cR2\": " << cR2 << ", ";
+    s << "\"a1\": " << a1 << ", ";
+    s << "\"a2\": " << a2 << ", ";
+    s << "\"a3\": " << a3 << ", ";
+    s << "\"a4\": " << a4 << ", ";    
+    s << "\"sigini\": " << sigini << "}";
+  }
 }

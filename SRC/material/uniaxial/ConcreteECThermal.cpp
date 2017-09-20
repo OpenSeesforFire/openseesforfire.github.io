@@ -27,12 +27,7 @@
 // strictly satisfy Eurocode regarding the temperature dependent properties.
 
 // Concrete02 is written by FMK in the year of 2006 and based on Concr2.f
-/*-----------------------------------------------------------------------
-! concrete model with damage modulus    
-!       by MOHD YASSIN (1993)
-! adapted to FEDEAS material library
-! by D. Sze and Filip C. Filippou in 1994
------------------------------------------------------------------------*/
+
 
 
 #include <stdlib.h>
@@ -46,7 +41,7 @@
 #include <OPS_Globals.h>
 
 void *
-OPS_NewConcreteECThermal()
+OPS_ConcreteECThermal(void)
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;

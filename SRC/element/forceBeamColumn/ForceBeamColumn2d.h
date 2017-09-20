@@ -112,15 +112,13 @@ class ForceBeamColumn2d: public Element
   
   int sendSelf(int cTag, Channel &theChannel);
   int recvSelf(int cTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
-  int displaySelf(Renderer &theViewer, int displayMode, float fact);        
+  int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **displayModes=0, int numModes=0);
   
   friend OPS_Stream &operator<<(OPS_Stream &s, ForceBeamColumn2d &E);        
   void Print(OPS_Stream &s, int flag =0);    
   
   Response *setResponse(const char **argv, int argc, OPS_Stream &s);
   int getResponse(int responseID, Information &eleInformation);
-  int getResponseSensitivity(int responseID, int gradNumber,
-			     Information &eleInformation);
   
   // AddingSensitivity:BEGIN //////////////////////////////////////////
   int setParameter(const char **argv, int argc, Parameter &param);
@@ -130,6 +128,8 @@ class ForceBeamColumn2d: public Element
   const Matrix &getKiSensitivity(int gradNumber);
   const Matrix &getMassSensitivity(int gradNumber);
   int commitSensitivity(int gradNumber, int numGrads);
+  int getResponseSensitivity(int responseID, int gradNumber,
+			     Information &eleInformation);
   // AddingSensitivity:END ///////////////////////////////////////////
 
  protected:
@@ -194,7 +194,7 @@ class ForceBeamColumn2d: public Element
   static Vector theVector;
   static double workArea[];
   
-  enum {maxNumSections = 20};
+  enum {maxNumSections = 30};
   enum {maxSectionOrder = 5};
 
   // following are added for subdivision of displacement increment
@@ -212,6 +212,8 @@ class ForceBeamColumn2d: public Element
   void computeReactionSensitivity(double *dp0dh, int gradNumber);
   void computeSectionForceSensitivity(Vector &dspdh, int isec, int gradNumber);
   // AddingSensitivity:END ///////////////////////////////////////////
+
+  Matrix tjcMass;
 };
 
 #endif

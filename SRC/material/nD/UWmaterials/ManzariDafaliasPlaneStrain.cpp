@@ -22,24 +22,20 @@
 //
 // Description: This file contains the implementation of the ManzariDafaliasPlaneStrain class.
 
-#include <ManzariDafaliasPlaneStrain.h>
-#include <Channel.h>
-#include <FEM_ObjectBroker.h>
+#include "ManzariDafaliasPlaneStrain.h"
 
-//static vectors and matrices
-Vector ManzariDafaliasPlaneStrain::strain(3);
-Vector ManzariDafaliasPlaneStrain::stress(3);
-Matrix ManzariDafaliasPlaneStrain::tangent(3,3);
+Vector ManzariDafaliasPlaneStrain::mEpsilon_M(3);
+Vector ManzariDafaliasPlaneStrain::mSigma_M(3);
+Vector ManzariDafaliasPlaneStrain::rSigma(4);
+Matrix ManzariDafaliasPlaneStrain::mTangent(3,3);
+Matrix ManzariDafaliasPlaneStrain::mTangent_init(3,3);
 
 // full constructor
-ManzariDafaliasPlaneStrain::ManzariDafaliasPlaneStrain( int tag, double Ko, double Go, double v, double b, double Patm,
-													    double Ao, double ho, double Cm, double Me, double Mc,
-														double kBE, double kBC, double kDE, double kDC, double ecRef,
-														double lambda, double Pref, double m, double Fmax, double Cf,
-														double eo, double mDen)
-:ManzariDafalias(tag, ND_TAG_ManzariDafaliasPlaneStrain, Ko, Go, v, b, Patm, Ao, ho, Cm, Me, Mc,
-											             kBE, kBC, kDE, kDC, ecRef, lambda, Pref, m, Fmax, Cf,
-											             eo, mDen)
+ManzariDafaliasPlaneStrain::ManzariDafaliasPlaneStrain(int tag, double G0, double nu, double e_init, double Mc, double c, double lambda_c, double e0, double ksi,
+	double P_atm, double m, double h0, double ch, double nb, double A0, double nd, double z_max, double cz, double mDen, int integrationScheme, 
+	int tangentType, int JacoType, double TolF, double TolR)
+:ManzariDafalias(tag, ND_TAG_ManzariDafaliasPlaneStrain, G0, nu, e_init, Mc, c, lambda_c, e0, ksi, P_atm, m, h0, ch, nb, A0, nd, z_max, cz, mDen,
+				integrationScheme, tangentType, JacoType, TolF, TolR)
 {
 }
 
@@ -83,11 +79,11 @@ int
 ManzariDafaliasPlaneStrain::setTrialStrain(const Vector &strain_from_element) 
 {
 	mEpsilon.Zero();
-	mEpsilon(0) = strain_from_element(0);
-	mEpsilon(1) = strain_from_element(1);
-	mEpsilon(3) = strain_from_element(2);
+	mEpsilon(0) = -1.0 * strain_from_element(0); // -1.0 is for geotechnical sign convention
+	mEpsilon(1) = -1.0 * strain_from_element(1);
+	mEpsilon(3) = -1.0 * strain_from_element(2);
 
-    this->plastic_integrator();
+    this->integrate();
 	
 	return 0;
 }
@@ -103,54 +99,89 @@ ManzariDafaliasPlaneStrain::setTrialStrain(const Vector &v, const Vector &r)
 const Vector& 
 ManzariDafaliasPlaneStrain::getStrain() 
 {
-	strain(0) = mEpsilon(0);
-	strain(1) = mEpsilon(1);
-	strain(2) = mEpsilon(3);
+	mEpsilon_M(0) = -1.0 * mEpsilon(0); // -1.0 is for geotechnical sign convention
+	mEpsilon_M(1) = -1.0 * mEpsilon(1);
+	mEpsilon_M(2) = -1.0 * mEpsilon(3);
 	
-    return strain;
+    return mEpsilon_M;
 } 
 
 // send back the stress 
 const Vector& 
 ManzariDafaliasPlaneStrain::getStress() 
 {
-	stress(0) = mSigma(0);
-	stress(1) = mSigma(1);
-	stress(2) = mSigma(3);
+	mSigma_M(0) = -1.0 * mSigma(0); // -1.0 is for geotechnical sign convention
+	mSigma_M(1) = -1.0 * mSigma(1);
+	mSigma_M(2) = -1.0 * mSigma(3);
 	
- 	return stress;
+ 	return mSigma_M;
+}
+
+
+const Vector&
+ManzariDafaliasPlaneStrain::getStressToRecord()
+{
+	rSigma(0) = -1.0 * mSigma(0); // -1.0 is for geotechnical sign convention
+	rSigma(1) = -1.0 * mSigma(1);
+	rSigma(2) = -1.0 * mSigma(2);
+	rSigma(3) = -1.0 * mSigma(3);
+
+	return rSigma;
 }
 
 // send back the tangent 
 const Matrix& 
 ManzariDafaliasPlaneStrain::getTangent() 
 {
-	tangent(0,0) = mCep(0,0);
-	tangent(0,1) = mCep(0,1);
-	tangent(0,2) = mCep(0,3);
-	tangent(1,0) = mCep(1,0);
-	tangent(1,1) = mCep(1,1);
-	tangent(1,2) = mCep(1,3);
-	tangent(2,0) = mCep(3,0);
-	tangent(2,1) = mCep(3,1);
-	tangent(2,2) = mCep(3,3);
-	
-    return tangent;
+	Matrix C(6,6);
+	if (mTangType == 0)
+		C = mCe;
+	else if (mTangType == 1)
+		C = mCep;
+	else
+		C = mCep_Consistent;
+
+	mTangent(0,0) = C(0,0);
+	mTangent(0,1) = C(0,1);
+	mTangent(0,2) = C(0,3);
+	mTangent(1,0) = C(1,0);
+	mTangent(1,1) = C(1,1);
+	mTangent(1,2) = C(1,3);
+	mTangent(2,0) = C(3,0);
+	mTangent(2,1) = C(3,1);
+	mTangent(2,2) = C(3,3);
+
+    return mTangent;
 } 
 
 // send back the tangent 
 const Matrix& 
 ManzariDafaliasPlaneStrain::getInitialTangent() 
 {
-	tangent(0,0) = mCep(0,0);
-	tangent(0,1) = mCep(0,1);
-	tangent(0,2) = mCep(0,3);
-	tangent(1,0) = mCep(1,0);
-	tangent(1,1) = mCep(1,1);
-	tangent(1,2) = mCep(1,3);
-	tangent(2,0) = mCep(3,0);
-	tangent(2,1) = mCep(3,1);
-	tangent(2,2) = mCep(3,3);
+	mTangent_init(0,0) = mCe(0,0);
+	mTangent_init(0,1) = mCe(0,1);
+	mTangent_init(0,2) = mCe(0,3);
+	mTangent_init(1,0) = mCe(1,0);
+	mTangent_init(1,1) = mCe(1,1);
+	mTangent_init(1,2) = mCe(1,3);
+	mTangent_init(2,0) = mCe(3,0);
+	mTangent_init(2,1) = mCe(3,1);
+	mTangent_init(2,2) = mCe(3,3);
 	
-    return tangent;
+    return mTangent_init;
 }
+
+//send back the state parameters
+const Vector 
+ManzariDafaliasPlaneStrain::getState()
+ {
+	 Vector result(26);
+	 result.Assemble(mEpsilonE,0,1.0);
+	 result.Assemble(mAlpha,6,1.0);
+	 result.Assemble(mFabric,12,1.0);
+	 result.Assemble(mAlpha_in,18,1.0);
+	 result(24) = mVoidRatio;
+	 result(25) = mDGamma;
+
+	 return result;
+ }

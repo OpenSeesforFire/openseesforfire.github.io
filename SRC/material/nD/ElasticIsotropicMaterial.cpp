@@ -36,7 +36,6 @@
 #include <ElasticIsotropicPlaneStrain2D.h>
 #include <ElasticIsotropicAxiSymm.h>
 #include <ElasticIsotropicThreeDimensional.h>
-#include <ElasticIsotropic3DThermal.h> //added by Liming,UoE
 #include <ElasticIsotropicPlateFiber.h>
 #include <ElasticIsotropicBeamFiber.h>
 #include <ElasticIsotropicBeamFiber2d.h>
@@ -52,7 +51,7 @@
 
 
 void *
-OPS_NewElasticIsotropicMaterial(void)
+OPS_ElasticIsotropicMaterial(void)
 {
   NDMaterial *theMaterial = 0;
   
@@ -64,9 +63,8 @@ OPS_NewElasticIsotropicMaterial(void)
   }
   
   int iData[1];
-  double dData[4];
+  double dData[3];
   dData[2] = 0.0;
-  dData[3] = 0.0;
   
   int numData = 1;
   if (OPS_GetInt(&numData, iData) != 0) {
@@ -74,10 +72,8 @@ OPS_NewElasticIsotropicMaterial(void)
     return 0;
   }
   
-  if (numArgs > 4) 
-    numData = 4;
-  else if(numArgs==3)
-	  numData = 3;
+  if (numArgs > 3) 
+    numData = 3;
   else
     numData = 2;
   
@@ -86,30 +82,23 @@ OPS_NewElasticIsotropicMaterial(void)
     return 0;
   }  
   
- 
-  //added by Liming, UoE,2014;
-  if(numData ==4)
-	   theMaterial = new ElasticIsotropicMaterial(iData[0], dData[0], dData[1], dData[2],dData[3]);
-  else
-	 theMaterial = new ElasticIsotropicMaterial(iData[0], dData[0], dData[1], dData[2]);
-
+  theMaterial = new ElasticIsotropicMaterial(iData[0], dData[0], dData[1], dData[2]);
+  
   return theMaterial;
 }
 
 
-//double ElasticIsotropicMaterial::Alpha = 0;
-
 
 ElasticIsotropicMaterial::ElasticIsotropicMaterial
-(int tag, int classTag, double e, double nu, double r,double alpha)
-  :NDMaterial(tag, classTag), E(e), v(nu), rho(r),Alpha(alpha)
+(int tag, int classTag, double e, double nu, double r)
+  :NDMaterial(tag, classTag), E(e), v(nu), rho(r), parameterID(0)
 {
 
 }
 
 ElasticIsotropicMaterial::ElasticIsotropicMaterial
-(int tag, double e, double nu, double r,double alpha)
-  :NDMaterial(tag, ND_TAG_ElasticIsotropic), E(e), v(nu), rho(r),Alpha(alpha)
+(int tag, double e, double nu, double r)
+  :NDMaterial(tag, ND_TAG_ElasticIsotropic), E(e), v(nu), rho(r), parameterID(0)
 {
 
 }
@@ -152,18 +141,12 @@ ElasticIsotropicMaterial::getCopy (const char *type)
     return theModel;
   }
 
-  else if (strcmp(type,"ThreeDimensionalThermal") == 0 || strcmp(type,"3DThermal") == 0) {
-    ElasticIsotropic3DThermal *theModel;
-    theModel = new ElasticIsotropic3DThermal (this->getTag(), E, v, rho, Alpha);
-    return theModel;
-  }
-
   else if (strcmp(type,"PlateFiber") == 0) {
     ElasticIsotropicPlateFiber *theModel;
     theModel = new ElasticIsotropicPlateFiber(this->getTag(), E, v, rho);
     return theModel;
   }
-  
+
   else if (strcmp(type,"BeamFiber") == 0) {
     ElasticIsotropicBeamFiber *theModel;
     theModel = new ElasticIsotropicBeamFiber(this->getTag(), E, v, rho);
@@ -348,26 +331,39 @@ ElasticIsotropicMaterial::recvSelf (int commitTag, Channel &theChannel,
 void
 ElasticIsotropicMaterial::Print (OPS_Stream &s, int flag)
 {
-	s << "Elastic Isotropic Material Model" << endln;
-	s << "\tE:  " << E << endln;
-	s << "\tv:  " << v << endln;
-	s << "\trho:  " << rho << endln;
-
-	return;
+    if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+        s << "Elastic Isotropic Material Model" << endln;
+        s << "\tE:  " << E << endln;
+        s << "\tv:  " << v << endln;
+        s << "\trho:  " << rho << endln;
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"type\": \"ElasticIsotropicMaterial\", ";
+        s << "\"E\": " << E << ", ";
+        s << "\"nu\": " << v << ", ";
+        s << "\"rho\": " << rho << "}";
+    }
 }
 
 int
 ElasticIsotropicMaterial::setParameter(const char **argv, int argc,
 				      Parameter &param)
 {
-  if (strcmp(argv[0],"E") == 0)
+  if (strcmp(argv[0],"E") == 0) {
+    param.setValue(E);
     return param.addObject(1, this);
-  
-  else if (strcmp(argv[0],"nu") == 0 || strcmp(argv[0],"v") == 0)
+  }
+  else if (strcmp(argv[0],"nu") == 0 || strcmp(argv[0],"v") == 0) {
+    param.setValue(v);
     return param.addObject(2, this);
-  
-  else if (strcmp(argv[0],"rho") == 0)
+  }
+  else if (strcmp(argv[0],"rho") == 0) {
+    param.setValue(rho);
     return param.addObject(3, this);
+  }
 
   return -1;
 }
@@ -388,4 +384,12 @@ ElasticIsotropicMaterial::updateParameter(int parameterID, Information &info)
   default:
     return -1;
   }
+}
+
+int
+ElasticIsotropicMaterial::activateParameter(int paramID)
+{
+  parameterID = paramID;
+
+  return 0;
 }

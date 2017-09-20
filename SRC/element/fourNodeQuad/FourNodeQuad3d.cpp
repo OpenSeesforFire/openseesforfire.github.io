@@ -80,7 +80,7 @@ OPS_FourNodeQuad3d()
   int numData;
   int matTag = 0;
   int eleTag = 0;
-  char *pType;
+  const char *pType;
 
   numData = 5;
   if (OPS_GetIntInput(&numData, iData) != 0) {
@@ -95,7 +95,8 @@ OPS_FourNodeQuad3d()
     return 0;
   }
 
-  if (OPS_GetStringCopy(&pType) != 0) {
+  pType = OPS_GetString();
+  if (pType != 0) {
     opserr << "WARNING element FourNodeQuad3d : invalid pType for element: " << eleTag << "\n";
   }
 
@@ -107,7 +108,7 @@ OPS_FourNodeQuad3d()
   }
 
 
-  NDMaterial *theMaterial = OPS_GetNDMaterial(matTag);
+  NDMaterial *theMaterial = OPS_getNDMaterial(matTag);
   
   if (theMaterial == 0) {
     opserr << "WARNING material with tag " << matTag << "not found for element " << eleTag << endln;
@@ -640,8 +641,8 @@ FourNodeQuad3d::addLoad(ElementalLoad *theLoad, double loadFactor)
   
   if (type == LOAD_TAG_SelfWeight) {
     applyLoad = 1;
-    appliedB[0] += loadFactor*b[0];
-    appliedB[1] += loadFactor*b[1];
+    appliedB[0] += loadFactor*data(0)*b[0];
+    appliedB[1] += loadFactor*data(1)*b[1];
     return 0;
   } else {
     opserr << "FourNodeQuad3d::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
@@ -1035,7 +1036,7 @@ FourNodeQuad3d::Print(OPS_Stream &s, int flag)
 }
 
 int
-FourNodeQuad3d::displaySelf(Renderer &theViewer, int displayMode, float fact)
+FourNodeQuad3d::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **mdes, int numMode)
 {
     // first set the quantity to be displayed at the nodes;
     // if displayMode is 1 through 3 we will plot material stresses otherwise 0.0
@@ -1211,17 +1212,12 @@ FourNodeQuad3d::setParameter(const char **argv, int argc, Parameter &param)
 
   int res = -1;
 
-  // added: C.McGann, U.Washington
-  	if (strcmp(argv[0],"materialState") == 0) {
-		return param.addObject(5,this);
-	}
-
   // quad pressure loading
-  if (strcmp(argv[0],"pressure") == 0)
+  if (strcmp(argv[0],"pressure") == 0) {
     return param.addObject(2, this);
-
+  }
   // a material parameter
-  else if (strstr(argv[0],"material") != 0) {
+  else if ((strstr(argv[0],"material") != 0) && (strcmp(argv[0],"materialState") != 0)) {
 
     if (argc < 3)
       return -1;
@@ -1272,16 +1268,6 @@ FourNodeQuad3d::updateParameter(int parameterID, Information &info)
 		pressure = info.theDouble;
 		this->setPressureLoadAtNodes();	// update consistent nodal loads
 		return 0;
-
-	case 5:
-		// added: C.McGann, U.Washington
-		for (int i = 0; i<4; i++) {
-			matRes = theMaterial[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
 
 	default: 
 	  /*	  

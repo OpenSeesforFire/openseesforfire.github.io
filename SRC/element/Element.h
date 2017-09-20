@@ -37,15 +37,12 @@
 #ifndef Element_h
 #define Element_h
 
-#include <ID.h>
-
 #include <DomainComponent.h>
+#include <ID.h>
 
 class Matrix;
 class Vector;
-class Renderer;
 class Info;
-class Information;
 class Response;
 class ElementalLoad;
 class Node;
@@ -75,7 +72,8 @@ class Element : public DomainComponent
     virtual const Matrix &getTangentStiff(void) =0;
     virtual const Matrix &getInitialStiff(void) =0;
     virtual const Matrix &getDamp(void);    
-    virtual const Matrix &getMass(void);    
+    virtual const Matrix &getMass(void);
+    virtual const Matrix &getGeometricTangentStiff();
 
     // methods for applying loads
     virtual void zeroLoad(void);	
@@ -95,6 +93,8 @@ class Element : public DomainComponent
     virtual int getResponse(int responseID, Information &eleInformation);
     virtual int getResponseSensitivity(int responseID, int gradIndex,
 				       Information &eleInformation);
+
+    virtual int displaySelf(Renderer &, int mode, float fact, const char **displayModes=0, int numModes=0);
 
 // AddingSensitivity:BEGIN //////////////////////////////////////////
     virtual int addInertiaLoadSensitivityToUnbalance(const Vector &accel, bool tag);
@@ -118,13 +118,14 @@ class Element : public DomainComponent
     Matrix **previousK;
     int numPreviousK;
 
-  private:
     int index, nodeIndex;
 
     static Matrix ** theMatrices; 
     static Vector ** theVectors1; 
     static Vector ** theVectors2; 
     static int numMatrices;
+
+  private:
 };
 
 

@@ -49,6 +49,7 @@
 #include <SIFBuilderDomain.h>
 #include <SIFMember.h>
 #include <NorminalFireEC1.h>
+#include <ParametricFireEC1.h>
 #include <LocalizedFireEC1.h>
 #include <PathTimeSeriesThermal.h>
 #include <Beam3dThermalAction.h>
@@ -175,8 +176,9 @@ SIFfireAction::UpdateFireModel(int MemberType)
       return 0;
 	 }
   else if(FireModelType==2){
+	  // ParametricFireEC1(int tag, double I, double Av, double H, double At, double Af, double Qf, double tlim, double startTime = 0);
 	  if(theFireModel==0)
-		 theFireModel= new NorminalFireEC1(this->getTag(),3,StartTime);
+		 theFireModel= new ParametricFireEC1(this->getTag(), 1159, 28.13, 3.5,752,240, 420, 1200,StartTime);
 
 	  return 0;
 	 }
@@ -313,18 +315,22 @@ SIFfireAction::Apply(int LoadPatternTag, double timeStep, double fireDuration )
     return -1;
   }
 
+ 
   ID SecXBeams = theCompartment->getConnectedSecXBeams();
   ID XBeams = theCompartment->getConnectedXBeams();
   ID YBeams = theCompartment->getConnectedYBeams();
   ID Columns = theCompartment->getConnectedColumns();
   ID Slabs = theCompartment->getConnectedSlabs();
   int theMemberID;
- 
+
+  int dislabel = 0;
+  
   //Then loop over all the SecXBeams in the compartment
   int NumSecXBeams = SecXBeams.Size();
   if(NumSecXBeams>0)
 		opserr<<endln<<"Secondary XBeam  ";
-
+  if (dislabel == 7)
+	  NumSecXBeams = 0;
   for(int i=0; i<NumSecXBeams; i++){
     //Get the member pointer from SIFDomain;
     theMemberID = SecXBeams(i);
@@ -335,10 +341,12 @@ SIFfireAction::Apply(int LoadPatternTag, double timeStep, double fireDuration )
 
   //Then loop over all the XBeams in the compartment
 	
+
   int NumXBeams = XBeams.Size();
   if(NumXBeams>0)
 		opserr<<endln<<"XBeam  ";
-
+  if (dislabel == 1|| dislabel == 123)
+	  NumXBeams = 0;
   for(int i=0; i<NumXBeams; i++){
     //Get the member pointer from SIFDomain;
     theMemberID = XBeams(i);
@@ -347,12 +355,14 @@ SIFfireAction::Apply(int LoadPatternTag, double timeStep, double fireDuration )
     this->RunHTforMember(theMember, thePatternTag);
   }
   //end of loop over the XBeams
-
+  
 
   //Then loop over all the YBeams in the compartmens
   int NumYBeams = YBeams.Size();
    if(NumYBeams>0)
 		opserr<<endln<<"YBeam  ";
+   if (dislabel == 2 || dislabel == 123)
+	   NumYBeams = 0;
   for(int i=0; i<NumYBeams; i++){
     theMemberID = YBeams(i);
     SIFYBeam* theMember =  theSIFDomain->getSIFYBeam(theMemberID);
@@ -360,21 +370,27 @@ SIFfireAction::Apply(int LoadPatternTag, double timeStep, double fireDuration )
     this->RunHTforMember(theMember, thePatternTag);
   }
   //end of loop over the YBeams
-
+  
+  
     //Then loop over all the Columns in the compartmens
  int NumColumns = Columns.Size();
+ if (dislabel == 3 || dislabel == 123)
+	 NumColumns = 0;
   if(NumColumns>0)
 		opserr<<endln<<"Column  ";
   for(int i=0; i<NumColumns; i++){
     theMemberID = Columns(i);
     SIFColumn* theMember =  theSIFDomain->getSIFColumn(theMemberID);
 	opserr<<" "<<theMember->getTag();
-    this->RunHTforMember(theMember, thePatternTag);
+	    if(theMember->getTag()==3301)
+		this->RunHTforMember(theMember, thePatternTag);
   }
   //end of loop over the Columns
+  
 
-   //Then loop over all the Columns in the compartmens
    int NumSlabs = Slabs.Size();
+   if (dislabel == 9)
+	   NumSlabs = 0;
 	 if(NumSlabs>0)
 		opserr<<endln<<"Slab ";
   for(int i=0; i<NumSlabs; i++){
@@ -384,7 +400,7 @@ SIFfireAction::Apply(int LoadPatternTag, double timeStep, double fireDuration )
    this->RunHTforMember(theMember, thePatternTag);
   }
   //end of loop over the Slabs
-
+ 
 	//Finnaly all the members will have thermalActions defined directly with pathtimeseriesThermal.
 	return 0;
 }
@@ -436,7 +452,8 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
 		if(MemberTypeTag==1){
 			//XBeam
 			expoFaceID->resize(7);
-				(*expoFaceID)(0)=1; (*expoFaceID)(1)=4; (*expoFaceID)(2)=5; 
+				(*expoFaceID)(0)=1; 
+				(*expoFaceID)(1)=4; (*expoFaceID)(2)=5; 
 				(*expoFaceID)(3)=6; (*expoFaceID)(4)=7; (*expoFaceID)(5)=8; (*expoFaceID)(6)=9; 
 			//end of yBayInfo == ComYBayInfo+1;
 		}
@@ -450,27 +467,24 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
 			AmbFaceID.resize(1);
 				AmbFaceID(0)=16;
 		}
+		//end of Secondary XBeam
 		else if(MemberTypeTag==2){
-			
-			expoFaceID->resize(7);
+				expoFaceID->resize(7);
 				(*expoFaceID)(0)=1; (*expoFaceID)(1)=4; (*expoFaceID)(2)=5; 
 				(*expoFaceID)(3)=6; (*expoFaceID)(4)=7; (*expoFaceID)(5)=8; (*expoFaceID)(6)=9; 
 		}
 		//END OF yBeam
 		else if(MemberTypeTag==3){
-			//Column
-		
 			expoFaceID->resize(8);
 				(*expoFaceID)(0)=1; (*expoFaceID)(1)=4; (*expoFaceID)(2)=5; 
 				(*expoFaceID)(3)=6; (*expoFaceID)(4)=7; (*expoFaceID)(5)=8; (*expoFaceID)(6)=9; (*expoFaceID)(7)=12;
 		}
 		//END OF Column
-		else if(MemberTypeTag==11){
+		else if (MemberTypeTag == 10 || MemberTypeTag == 11) {
 			expoFaceID->resize(1);
-			(*expoFaceID)(0)=1;  
+			(*expoFaceID)(0) = 1;
 			AmbFaceID.resize(1);
-			AmbFaceID(0)=2;
-
+			AmbFaceID(0) = 2;
 		}
 		//end of Slab
 		this->UpdateFireModel(MemberTypeTag);
@@ -677,11 +691,11 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
     //----------------------Data transaction---------------------
     int NumofSeries;
 
-    if(FireModelType ==1 ||FireModelType ==2)
+    if(FireModelType ==1 ||FireModelType ==2 )
     {
       NumofSeries = 1;
     }
-    else if(FireModelType ==3 )
+    else if(FireModelType ==3)
     {
       NumofSeries = 4;//may be 5
     }
@@ -694,7 +708,7 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
     thePathTimeSeries = new PathTimeSeriesThermal*[NumofSeries];
     
 	for(int k=0;k<NumofSeries;k++){
-		if(MemberTypeTag!=10)
+		if(MemberTypeTag!=10 & MemberTypeTag!=11)
 			thePathTimeSeries[k] = new PathTimeSeriesThermal(thePathSeriesTag++,15);
 		else
 			thePathTimeSeries[k] = new PathTimeSeriesThermal(thePathSeriesTag++,9);
@@ -721,8 +735,14 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
 		}
 		ElementalLoad* theThermalAction=0;
 		for(int i=0; i<theMemberEleTags.Size(); i++){
-			if(MemberTypeTag!=10)
-				theThermalAction = new Beam3dThermalAction(theSIFDomain->getEleLoadTag()+1,locs(0),locs(1),locs(2),locs(3) , thePathTimeSeries[0], theMemberEleTags(i));
+			if (MemberTypeTag != 10) {
+				if (MemberTypeTag == 11) {
+					theThermalAction = new Beam3dThermalAction(theSIFDomain->getEleLoadTag() + 1, locs, thePathTimeSeries[0], theMemberEleTags(i));
+				}
+				else
+					theThermalAction = new Beam3dThermalAction(theSIFDomain->getEleLoadTag() + 1, locs(0), locs(1), locs(2), locs(3), thePathTimeSeries[0], theMemberEleTags(i));
+
+			}
 			else
 				theThermalAction = new ShellThermalAction(theSIFDomain->getEleLoadTag()+1, locs(0),locs(8), thePathTimeSeries[0], theMemberEleTags(i));
 			
@@ -748,10 +768,21 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
 
 		SIFJoint* theJT0 = theSIFDomain->getSIFJoint(theMember->getConnectedJoints()(0));
 		int NodeEndTag0 = theJT0->getNodeTag()(0);
-		SIFJoint* theJT1 = theSIFDomain->getSIFJoint(theMember->getConnectedJoints()(1));
-		int NodeEndTag1 = theJT1->getNodeTag()(0);
+		int NodeEndTag1;
+		if (MemberTypeTag != 10) {
+			SIFJoint* theJT1 = theSIFDomain->getSIFJoint(theMember->getConnectedJoints()(1));
+			NodeEndTag1 = theJT1->getNodeTag()(0);
+		}
+		else
+		{
+			SIFJoint* theJT1 = theSIFDomain->getSIFJoint(theMember->getConnectedJoints()(3));
+			NodeEndTag1 = theJT1->getNodeTag()(0);
+		}
+		
 		
 		ID intNodes = theMember->getIntNodeTags();
+		int MidNodeTag = intNodes((intNodes.Size()-1)*0.5);  //0.5!!!!!!
+
 		int MidNodeTag1 = intNodes((intNodes.Size()-1)*0.3);  //0.3
 		int MidNodeTag2 = intNodes((intNodes.Size()-1)*0.7);  //0.7
 
@@ -767,11 +798,18 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
 					NodeTag = MidNodeTag1;
 				else if(NumofSeries ==2)
 					NodeTag = NodeEndTag1;
+				else if(NumofSeries ==3)
+					NodeTag = MidNodeTag;
+				else
+					opserr<<"SIFfireAction::incorrect number of series"<<endln;
 			}
 			else if(i==2){
-				NodeTag =  MidNodeTag2;
+				if(NumofSeries ==4)
+					NodeTag = MidNodeTag2;
+				else if(NumofSeries ==3)
+					NodeTag = NodeEndTag1;
 			}
-			else if(i==2)
+			else if(i==3)
 				NodeTag = NodeEndTag1;
 			
 			Vector* theCrds = new Vector(3);
@@ -817,8 +855,18 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
 				ratios(0) = (damageVec(0)-0.5)/theMemLength; ratios(1) = damageVec(0)/theMemLength; //Location of Partial damage!!!!!
 			}
 			else {
+				if(NumofSeries==4){
+				ratios.resize(4);
 				theThermalAction = new ThermalActionWrapper(theSIFDomain->getEleLoadTag()+1,theMemberEleTags(i),theNodalTA[0],theNodalTA[1],theNodalTA[2],theNodalTA[3]);
 				ratios(0) =0.0; ratios(1) =0.3;ratios(2) =0.7; ratios(3) =1.0;
+				}
+				else if(NumofSeries==3){
+				ratios.resize(3);
+				theThermalAction = new ThermalActionWrapper(theSIFDomain->getEleLoadTag()+1,theMemberEleTags(i),theNodalTA[0],theNodalTA[1],theNodalTA[2]);
+				ratios(0) =0.0; ratios(1) =0.5; ratios(3) =1.0;
+				}
+				else 
+					opserr<<"SIFfireAction::invalid number of series for dimensional reduced heat transfer analysis"<<endln;
 			}
 			theThermalAction->setRatios(ratios);
 			if (theDomain->addElementalLoad(theThermalAction, LoadPatternTag) == false) {

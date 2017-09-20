@@ -1,8 +1,17 @@
 include ../../../Makefile.def
 
-OBJS       = ElastomericBearing2d.o \
-	ElastomericBearing3d.o \
-	TclElastomericBearingCommand.o
+OBJS = ElastomericBearingPlasticity2d.o \
+	ElastomericBearingPlasticity3d.o \
+	ElastomericBearingBoucWen2d.o \
+	ElastomericBearingBoucWen3d.o \
+	ElastomericBearingBoucWenMod3d.o \
+	ElastomericBearingUFRP2d.o \
+	ElastomericX.o \
+	HDR.o \
+	LeadRubberX.o \
+	TclElastomericBearingPlasticityCommand.o \
+	TclElastomericBearingBoucWenCommand.o \
+	TclElastomericBearingUFRPCommand.o
 
 # Compilation control
 

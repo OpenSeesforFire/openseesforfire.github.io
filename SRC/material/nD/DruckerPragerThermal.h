@@ -32,7 +32,7 @@
 // Created: 12/04
 //
 // Description: This file contains the class definition for DruckerPragerThermal. 
-//
+////Modified by Liming Jiang [http://openseesforfire.github.io]
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +49,7 @@ class DruckerPragerThermal : public NDMaterial
     // Full Constructor
     DruckerPragerThermal(int tag, int classTag, double bulk, double shear,
 		  double s_y, double r, double r_bar, double Kinfinity, double Kinit, 
-		  double d1, double d2, double H, double t, double massDen, double sigT , double atm = 101.0);
+		  double d1, double d2, double H, double t, double massDen = 0.0, double atm = 101.0);
 
   // Elastic Constructor
   //	  DruckerPragerThermal(int tag, double bulk, double shear);
@@ -129,10 +129,7 @@ class DruckerPragerThermal : public NDMaterial
   double mAlpha2_n;		// alpha2_n
   double mAlpha2_n1;	// alpha2_n+1
   
-  static double  mElastFlag;    // Flag to determine elastic behavior
-  static double* mloadStagex;
-  static int	 matCount;
-  int matN;
+  int mElastFlag;    // Flag to determine elastic behavior
   int mFlag;
   
   Matrix mCe;			// elastic tangent stiffness matrix
@@ -140,8 +137,6 @@ class DruckerPragerThermal : public NDMaterial
   Vector mI1;			// 2nd Order Identity Tensor	
   Matrix mIIvol;		// IIvol = I1 tensor I1  
   Matrix mIIdev;		// 4th Order Deviatoric Tensor
-
-  double SigT;
   
   Vector mState;		// state vector for output
   
@@ -163,8 +158,6 @@ class DruckerPragerThermal : public NDMaterial
   static const double one3 ;
   static const double two3 ;
   static const double root23 ;
-
-  
 };
 
 

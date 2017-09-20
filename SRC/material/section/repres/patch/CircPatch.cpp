@@ -32,6 +32,32 @@
 #include <Patch.h>
 #include <CircPatch.h>
 #include <QuadCell.h>
+#include <CircSectionCell.h>
+#include <elementAPI.h>
+
+void* OPS_CircPatch()
+{
+    if(OPS_GetNumRemainingInputArgs() < 9) {
+	opserr<<"insufficient arguments for CircPatch\n";
+	return 0;
+    }
+
+    // get idata
+    int numData = 3;
+    int idata[3];
+    if(OPS_GetIntInput(&numData,&idata[0]) < 0) return 0;
+
+    // get data
+    double data[6];
+    numData = 6;
+    static Vector centerPos(2);
+    centerPos(0) = data[0];
+    centerPos(1) = data[1];
+    if(OPS_GetDoubleInput(&numData,&data[0]) < 0) return 0;
+
+    return new CircPatch(idata[0],idata[1],idata[2],centerPos,
+			 data[2],data[3],data[4],data[5]);
+}
 
 
 CircPatch::CircPatch(): matID(0), nDivCirc(1), nDivRad(1), centerPosit(2),
@@ -139,8 +165,6 @@ CircPatch::getCells (void) const
    {
       numCells  = this->getNumCells();
 
-      //opserr << "\nnumCells: " << numCells;
-
       cells = new Cell* [numCells];
       
       if (!cells)
@@ -151,8 +175,6 @@ CircPatch::getCells (void) const
 
       deltaRad   = (extRad - intRad) / nDivRad;
       deltaTheta = (finalAngRadians - initAngRadians) / nDivCirc;
-
-      //opserr << "\ndeltaRad: " << deltaRad;
 
       k = 0;
       for (j = 0; j < nDivRad; j++)
@@ -165,10 +187,9 @@ CircPatch::getCells (void) const
             // compute coordinates
                        
             theta_i  = initAngRadians + deltaTheta*i;
+
+	    /*
             theta_i1 = theta_i + deltaTheta;
-
-            //opserr << "\n theta_i: "<< theta_i;
-
             cellVertCoord(0,0) = centerPosit(0) + rad_j  * cos(theta_i1);
             cellVertCoord(0,1) = centerPosit(1) + rad_j  * sin(theta_i1);
             cellVertCoord(1,0) = centerPosit(0) + rad_j  * cos(theta_i);
@@ -179,7 +200,11 @@ CircPatch::getCells (void) const
             cellVertCoord(3,1) = centerPosit(1) + rad_j1 * sin(theta_i1);
 
             cells[k] = new QuadCell(cellVertCoord); 
-            //opserr << "\ncreating cells Cell " << k << " :" << cells[k];
+	    */
+
+            theta_i1 = theta_i + deltaTheta/2.0;
+	    cells[k] = new CircSectionCell(rad_j, rad_j1, deltaTheta, theta_i1, centerPosit(0), centerPosit(1));
+
             k++; 
          }
       }

@@ -45,6 +45,7 @@
 #include <ID.h>
 
 #include <classTags.h>
+#include <elementAPI.h>
 
 #define maxOrder 10
 
@@ -52,6 +53,64 @@
 // Can increase if needed!!!
 double ParallelSection::workArea[2*maxOrder*(maxOrder+1)];
 int    ParallelSection::codeArea[maxOrder];
+
+void* OPS_ParallelSection()
+{
+    if (OPS_GetNumRemainingInputArgs() < 3) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: section Parallel tag? tag1? tag2? ..." << endln;
+	return 0;
+    }
+ 
+    int tag;
+    int numdata = 1;
+
+    if (OPS_GetIntInput(&numdata, &tag) < 0) {
+	opserr << "WARNING invalid section Parallel tag" << endln;
+	return 0;
+    }
+
+    int numMaterials = OPS_GetNumRemainingInputArgs();
+	
+    if (numMaterials == 0) {
+	opserr << "WARNING no component section(s) provided\n";
+	opserr << "section Parallel: " << tag << endln;
+	return 0;
+    }
+    
+    // Create an array to hold pointers to component materials
+    SectionForceDeformation **theMats = new SectionForceDeformation *[numMaterials];
+	
+    // For each material get the tag and ensure it exists in model already
+    for (int i = 0; i < numMaterials; i++) {
+	int tagI;
+	if (OPS_GetIntInput(&numdata, &tagI) < 0) {
+	    opserr << "WARNING invalid component tag\n";
+	    opserr << "section Parallel: " << tag << endln;
+	    return 0;
+	}
+	    
+	SectionForceDeformation *theMat = OPS_getSectionForceDeformation(tagI);
+	    
+	if (theMat == 0) {
+	    opserr << "WARNING component section does not exist\n";
+	    opserr << "Component section: "; 
+	    opserr << "\tsection Parallel: " << tag << endln;
+	    delete [] theMats;
+	    return 0;
+	}
+	else
+	    theMats[i] = theMat;
+    }	
+	
+    // Parsing was successful, allocate the material
+    SectionForceDeformation* theSection = new ParallelSection(tag, numMaterials, theMats);
+	
+    // Deallocate the temporary pointers
+    delete [] theMats;
+
+    return theSection;
+}
 
 // constructors:
 ParallelSection::ParallelSection (int tag, int numSecs,
@@ -206,7 +265,7 @@ ParallelSection::setTrialSectionDeformation (const Vector &def)
     Vector defi(orderi);
     for (int j = 0; j < orderi; j++) 
       for (int k = 0; k < order; k++) 
-	if (code(k) == (*theCode)(j))
+	if (code(j) == (*theCode)(k))
 	  defi(j) = def(k);
 
     ret += theSections[i]->setTrialSectionDeformation(defi);
@@ -232,11 +291,10 @@ ParallelSection::getSectionTangent(void)
     const ID &code = theSections[i]->getType();
     for (int j = 0; j < orderi; j++) 
       for (int k = 0; k < order; k++) 
-	if (code(k) == (*theCode)(j))
+	if (code(j) == (*theCode)(k))
 	  P(j,k) = 1.0;
-
     const Matrix &ksi = theSections[i]->getSectionTangent();
-
+    //opserr << P << ksi;
     ks->addMatrixTripleProduct(1.0, P, ksi, 1.0);
   }
 
@@ -254,7 +312,7 @@ ParallelSection::getInitialTangent(void)
     const ID &code = theSections[i]->getType();
     for (int j = 0; j < orderi; j++) 
       for (int k = 0; k < order; k++) 
-	if (code(k) == (*theCode)(j))
+	if (code(j) == (*theCode)(k))
 	  P(j,k) = 1.0;
 
     const Matrix &ksi = theSections[i]->getInitialTangent();
@@ -276,7 +334,7 @@ ParallelSection::getStressResultant(void)
     const Vector &si = theSections[i]->getStressResultant();
     for (int j = 0; j < orderi; j++) 
       for (int k = 0; k < order; k++) 
-	if (code(k) == (*theCode)(j))
+	if (code(j) == (*theCode)(k))
 	  (*s)(k) += si(j);
   }
 
@@ -337,6 +395,8 @@ ParallelSection::revertToStart(void)
 {
   int err = 0;
   
+  e->Zero();
+
   for (int i = 0; i < numSections; i++)
     err += theSections[i]->revertToStart();
   
@@ -359,18 +419,29 @@ ParallelSection::recvSelf(int cTag, Channel &theChannel, FEM_ObjectBroker &theBr
 void
 ParallelSection::Print(OPS_Stream &s, int flag)
 {
-  s << "\nSection Parallel, tag: " << this->getTag() << endln;
-
-  if (flag == 2) {
-    for (int i = 0; i < numSections; i++) {
-      s << "\t\tSection, tag: " << endln;
-      theSections[i]->Print(s, flag);
+    if (flag == OPS_PRINT_PRINTMODEL_SECTION || flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+        s << "\nSection Parallel, tag: " << this->getTag() << endln;
+        if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+            for (int i = 0; i < numSections; i++) {
+                s << "\t\tSection, tag: " << endln;
+                theSections[i]->Print(s, flag);
+            }
+        }
+        else {
+            for (int i = 0; i < numSections; i++)
+                s << "\t\tSection, tag: " << theSections[i]->getTag() << endln;
+        }
     }
-  }
-  else {
-    for (int i = 0; i < numSections; i++)
-      s << "\t\tSection, tag: " << theSections[i]->getTag() << endln;
-  }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"type\": \"ParallelSection\", ";
+        s << "\"sections\": [";
+        for (int i = 0; i < numSections-1; i++)
+            s << "\"" << theSections[i]->getTag() << "\", ";
+        s << "\"" << theSections[numSections - 1]->getTag() << "\"]}";
+    }
 }
 
 Response*
@@ -446,7 +517,7 @@ ParallelSection::getStressResultantSensitivity(int gradIndex,
     const Vector &si = theSections[i]->getStressResultantSensitivity(gradIndex, conditional);
     for (int j = 0; j < orderi; j++) 
       for (int k = 0; k < order; k++) 
-	if (code(k) == (*theCode)(j))
+	if (code(j) == (*theCode)(k))
 	  (*s)(k) += si(j);
   }
   
@@ -475,7 +546,7 @@ ParallelSection::commitSensitivity(const Vector& defSens,
     Vector defi(orderi);
     for (int j = 0; j < orderi; j++) 
       for (int k = 0; k < order; k++) 
-	if (code(k) == (*theCode)(j))
+	if (code(j) == (*theCode)(k))
 	  defi(j) = defSens(k);
 
     ret += theSections[i]->commitSensitivity(defi, gradIndex, numGrads);

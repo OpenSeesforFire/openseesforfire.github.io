@@ -38,7 +38,7 @@ class ElasticShearSection3d : public SectionForceDeformation
 {
  public:
   ElasticShearSection3d(int tag, double E, double A, double Iz, 
-			double Iy, double G, double J, double alpha);
+			double Iy, double G, double J, double alphaY, double alphaZ);
   ElasticShearSection3d(void);
   ~ElasticShearSection3d(void);
   
@@ -78,10 +78,9 @@ class ElasticShearSection3d : public SectionForceDeformation
   
  private:
   
-  double E, A, Iz, Iy, G, J, alpha;
+  double E, A, Iz, Iy, G, J, alphaY, alphaZ;
   
   Vector e;			// section trial deformations
-  Vector eCommit;
   
   static Vector s;
   static Matrix ks;

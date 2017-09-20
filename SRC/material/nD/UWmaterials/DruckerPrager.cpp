@@ -56,7 +56,7 @@ const double DruckerPrager :: root23 = sqrt( 2.0 / 3.0 ) ;
 static int numDruckerPragerMaterials = 0;
 
 OPS_Export void *
-OPS_NewDruckerPragerMaterial(void)
+OPS_DruckerPragerMaterial(void)
 {
   if (numDruckerPragerMaterials == 0) {
     numDruckerPragerMaterials++;
@@ -250,15 +250,15 @@ void DruckerPrager::initialize( )
     //        useable for s^a = 2G * IIdev^ab * epsilon_b
     // (Need a different form for s^a = IIdev ^a_b * sigma^a)
     mIIdev.Zero();
-    mIIdev(0,0) =   two3;
-    mIIdev(0,1) = - one3;
-    mIIdev(0,2) = - one3;
-    mIIdev(1,0) = - one3;
-    mIIdev(1,1) =   two3;
-    mIIdev(1,2) = - one3;
-    mIIdev(2,0) = - one3;
-    mIIdev(2,1) = - one3;
-    mIIdev(2,2) =   two3;
+    mIIdev(0,0) = two3;
+    mIIdev(0,1) = -one3;
+    mIIdev(0,2) = -one3;
+    mIIdev(1,0) = -one3;
+    mIIdev(1,1) = two3;
+    mIIdev(1,2) = -one3;
+    mIIdev(2,0) = -one3;
+    mIIdev(2,1) = -one3;
+    mIIdev(2,2) = two3;
     mIIdev(3,3) = 0.5;
     mIIdev(4,4) = 0.5;
     mIIdev(5,5) = 0.5;
@@ -777,67 +777,66 @@ int DruckerPrager::getResponse (int responseID, Information &matInfo)
 
 int DruckerPrager::setParameter(const char **argv, int argc, Parameter &param)
 {
-	if (argc < 2)
-    	return -1;
-
-	int theMaterialTag = atoi(argv[1]);
-
-	if (theMaterialTag == this->getTag()) {
-
-		if (strcmp(argv[0],"updateMaterialStage") == 0) {
-			return param.addObject(1, this);
-		} else if (strcmp(argv[0],"shearModulus") == 0) {
-    		return param.addObject(10, this);
-		} else if (strcmp(argv[0],"bulkModulus") == 0) {
-    		return param.addObject(11, this);
-		}
-	}
-
+	if (strcmp(argv[0],"materialState") == 0) {
+        // switch elastic/plastic state
+		return param.addObject(5,this);
+	} else if (strcmp(argv[0],"frictionalStrength") == 0) {
+        // update rho parameter
+		return param.addObject(7,this);
+	} else if (strcmp(argv[0],"nonassociativeTerm") == 0) {
+        // update nonassociative rho_bar parameter
+		return param.addObject(8,this);
+	} else if (strcmp(argv[0],"cohesiveIntercept") == 0) {
+        // update zero confinement yield strength
+		return param.addObject(9,this);
+	} else if (strcmp(argv[0],"shearModulus") == 0) {
+        // update shear modulus
+		return param.addObject(10,this);
+	} else if (strcmp(argv[0],"bulkModulus") == 0) {
+        // update bulk modulus
+		return param.addObject(11,this);
+    } else if (strcmp(argv[0],"updateMaterialStage") == 0) {
+        return -1;
+	} else {
+        // invalid parameter type
+        opserr << "WARNING: invalid parameter command for DruckerPrager nDMaterial with tag: " << this->getTag() << endln;
+        return -1;
+    }
+    
     return -1;
 }
 
 int
 DruckerPrager::updateParameter(int responseID, Information &info)
 {
-	// updateMaterialStage called
-	if (responseID == 1) {
+	if (responseID == 5) {
+        // materialState called - update mElasticFlag
 		mElastFlag = (int)info.theDouble;
-	}
-    // materialState called
-	else if (responseID == 5) {
-		mElastFlag = (int)info.theDouble;
-	}
-	// frictionalStrength called
-	else if (responseID == 7) {
+	} else if (responseID == 7) {
+        // frictionalStrength called - update rho and tension cutoff
 		mrho = info.theDouble;
-		// update tension cutoff
 		if (mrho == 0.0) { 
 			mTo = 1e10;
 		} else { 
 		    mTo = root23*msigma_y/mrho; 
 	    }
-	}
-	// nonassociativeTerm called
-	else if (responseID == 8) {
+	} else if (responseID == 8) {
+        // nonassociativeTerm called - update rho_bar
 		mrho_bar = info.theDouble;
-	}
-	// cohesiveIntercept called
-	else if (responseID == 9) {
+	} else if (responseID == 9) {
+        // cohesiveIntercept called - update sigma_y and tension cutoff
 		msigma_y = info.theDouble;
-		// update tension cutoff
 		if (mrho == 0.0) { 
 			mTo = 1e10;
 		} else { 
 		    mTo = root23*msigma_y/mrho; 
 	    }
-	}
-	// shearModulus called
-	else if (responseID == 10) {
+	} else if (responseID == 10) {
+        // shearModulus called - update G and Ce
     	mG = info.theDouble;
 		mCe  = mK*mIIvol + 2*mG*mIIdev;
-	}
-	// bulkModulus called
-	else if (responseID == 11) {
+	} else if (responseID == 11) {
+        // bulkModulus called - update K and Ce
     	mK = info.theDouble;
 		mCe  = mK*mIIvol + 2*mG*mIIdev;
   	}

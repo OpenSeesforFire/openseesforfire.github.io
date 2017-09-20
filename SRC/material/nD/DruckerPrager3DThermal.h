@@ -19,7 +19,7 @@
 // $Source: /usr/local/cvs/OpenSees/SRC/material/nD/DruckerPrager3DThermal.h,v $
 
 // Written: K.Petek, U.Washington
-
+//Modified by Jian Jiang,Liming Jiang [http://openseesforfire.github.io]
 //
 // DruckerPrager3DThermal isotropic hardening material class
 // 
@@ -47,7 +47,7 @@ class DruckerPrager3DThermal : public DruckerPragerThermal {
   //full constructor
   DruckerPrager3DThermal(int tag, double bulk, double shear,
 		  double s_y, double r, double r_bar, double Kinfinity, double Kinit, 
-		  double d1, double d2, double H, double t, double massDen,double sigT, double atm);
+		  double d1, double d2, double H, double t, double massDen, double atm);
 
 
   //destructor

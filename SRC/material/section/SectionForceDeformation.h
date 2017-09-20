@@ -53,6 +53,8 @@ class Response;
 #define SECTION_RESPONSE_MY		4
 #define SECTION_RESPONSE_VZ		5
 #define SECTION_RESPONSE_T		6	
+#define SECTION_RESPONSE_R		7	
+#define SECTION_RESPONSE_Q		8	
 
 class SectionForceDeformation : public Material
 {
@@ -72,7 +74,6 @@ class SectionForceDeformation : public Material
   virtual const Matrix &getInitialFlexibility (void);
   
   virtual double getRho(void);
-  virtual const Vector& getThermalElong(void){ return 0;};//added by Liming,UoE,2014
   
   virtual int commitState (void) = 0;
   virtual int revertToLastCommit (void) = 0;
@@ -87,6 +88,7 @@ class SectionForceDeformation : public Material
 
   virtual int getResponseSensitivity(int responseID, int gradIndex,
 				     Information &info);
+  
   
 
   // AddingSensitivity:BEGIN //////////////////////////////////////////
@@ -107,6 +109,8 @@ class SectionForceDeformation : public Material
   virtual const Vector &getTemperatureStress(const Vector &tData);//27 is for 'FireLoadPattern'
   //--- Adding Thermal Functions:[END]   by UoE OpenSees Group ----//
 
+  virtual const Vector& getThermalElong(void);
+
  protected:
   Matrix *fDefault;	// Default flexibility matrix
   Vector *sDefault;
@@ -115,5 +119,9 @@ class SectionForceDeformation : public Material
 
 };
 
+extern bool OPS_addSectionForceDeformation(SectionForceDeformation *newComponent);
+extern SectionForceDeformation *OPS_getSectionForceDeformation(int tag);
+extern void OPS_clearAllSectionForceDeformation(void);
+extern void OPS_printSectionForceDeformation(OPS_Stream &s, int flag=0);
 
 #endif

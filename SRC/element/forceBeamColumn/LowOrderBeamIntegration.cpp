@@ -24,6 +24,7 @@
 
 #include <LowOrderBeamIntegration.h>
 
+#include <ID.h>
 #include <Matrix.h>
 #include <Vector.h>
 #include <Channel.h>
@@ -31,13 +32,61 @@
 #include <Information.h>
 #include <Parameter.h>
 #include <math.h>
+#include <elementAPI.h>
+
+void* OPS_LowOrderBeamIntegration(int& integrationTag, ID& secTags)
+{
+    if(OPS_GetNumRemainingInputArgs() < 4) {
+	opserr<<"insufficient arguments:integrationTag,N,secTags,locations,weights\n";
+	return 0;
+    }
+
+    // inputs: integrationTag,N
+    int iData[2];
+    int numData = 2;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) return 0;
+
+    integrationTag = iData[0];
+    int N = iData[1];
+    if(N > 0) {
+	secTags.resize(N);
+    } else {
+	secTags.resize(1);
+	N = 1;
+    }
+
+    // check argumments
+    Vector pt(N);
+    if(OPS_GetNumRemainingInputArgs() < 2*N) {
+	opserr<<"There must be "<<N<<"secTags and locations\n";
+	return 0;
+    }
+
+    // secTags
+    int *secptr = &secTags(0);
+    if(OPS_GetIntInput(&N,secptr) < 0) return 0;
+
+    // locations
+    double *locptr = &pt(0);
+    if(OPS_GetDoubleInput(&N,locptr) < 0) return 0;
+
+    // weights
+    int Nc = OPS_GetNumRemainingInputArgs();
+    Vector wt(Nc);
+    if(Nc > 0) {
+	double *wtptr = &wt(0);
+	if(OPS_GetDoubleInput(&Nc,wtptr) < 0) return 0;
+    }
+    
+    return new LowOrderBeamIntegration(N,pt,Nc,wt);
+}
 
 LowOrderBeamIntegration::LowOrderBeamIntegration(int nIP,
 						 const Vector &pt,
 						 int nc,
 						 const Vector &wc):
   BeamIntegration(BEAM_INTEGRATION_TAG_LowOrder),
-  pts(nIP), wts(nIP), Nc(nc), parameterID(0)
+  pts(nIP), wts(nIP), Nc(nc), parameterID(0), computed(false)
 {
   for (int i = 0; i < nIP; i++) {
     if (pt(i) < 0.0 || pt(i) > 1.0)
@@ -74,6 +123,8 @@ LowOrderBeamIntegration::LowOrderBeamIntegration(int nIP,
   }
   else
     wts = wc;
+
+  computed = true;
 }
 
 LowOrderBeamIntegration::LowOrderBeamIntegration():
@@ -108,7 +159,7 @@ LowOrderBeamIntegration::getSectionWeights(int numSections,
 
   int Nf = nIP-Nc;
 
-  if (Nf > 0) {
+  if (!computed && Nf > 0) {
     Vector R(Nf);
     for (int i = 0; i < Nf; i++) {
       double sum = 0.0;
@@ -148,14 +199,42 @@ LowOrderBeamIntegration::getCopy(void)
 int
 LowOrderBeamIntegration::sendSelf(int cTag, Channel &theChannel)
 {
-  return -1;
+ int dbTag = this->getDbTag();
+  int nIP = pts.Size();
+  static ID iData(1);
+  iData(0)=nIP;
+  theChannel.sendID(dbTag, cTag, iData);
+
+  Vector dData(nIP*2);
+  for (int i=0; i<nIP; i++) {
+    dData(i) = pts(i);
+    dData(i+nIP) = wts(i);
+  }
+  return theChannel.sendVector(dbTag, cTag, dData);  
 }
+
 
 int
 LowOrderBeamIntegration::recvSelf(int cTag, Channel &theChannel,
 				  FEM_ObjectBroker &theBroker)
 {
-  return -1;
+ int dbTag = this->getDbTag();
+  int nIP;
+  static ID iData(1);
+  theChannel.recvID(dbTag, cTag, iData);
+  nIP = iData(0);
+  pts.resize(nIP);
+  wts.resize(nIP);
+
+  Vector dData(nIP*2);
+  int res = theChannel.recvVector(dbTag, cTag, dData);  
+  if (res == 0) {
+    for (int i=0; i<nIP; i++) {
+      pts(i) = dData(i);
+      wts(i) = dData(i+nIP);
+    }
+  }
+  return res;
 }
 
 int
@@ -189,16 +268,19 @@ int
 LowOrderBeamIntegration::updateParameter(int parameterID,
 					 Information &info)
 {
-  if (parameterID < 10) { // xf
+  if (parameterID <= 10) { // xf
     pts(Nc+(parameterID-1)) = info.theDouble;
+    computed = false;
     return 0;
   }
-  else if (parameterID < 20) { // xc
+  else if (parameterID <= 20) { // xc
     pts(parameterID-10-1) = info.theDouble;
+    computed = false;
     return 0;
   }
-  else if (parameterID < 30) { // wc
-    pts(parameterID-20-1) = info.theDouble;
+  else if (parameterID <= 30) { // wc
+    wts(parameterID-20-1) = info.theDouble;
+    computed = false;
     return 0;
   }
   else
@@ -216,14 +298,34 @@ LowOrderBeamIntegration::activateParameter(int paramID)
 void
 LowOrderBeamIntegration::Print(OPS_Stream &s, int flag)
 {
-  s << "LowOrder" << endln;
-  s << " Points: " << pts;
-  s << " Weights: " << wts;
-  double sum = 0.0;
-  int N = wts.Size();
-  for (int i = 0; i < N; i++)
-    sum += fabs(wts(i));
-  s << " Condition Number: " << sum << endln;
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "{\"type\": \"LowOrder\", ";
+        s << "\"points\": [";
+        int nIP = pts.Size();
+        for (int i = 0; i < nIP-1; i++)
+            s << pts(i) << ", ";
+        s << pts(nIP - 1) << "], ";
+        s << "\"weights\": [";
+        double sum = 0.0;
+        nIP = wts.Size();
+        for (int i = 0; i < nIP-1; i++) {
+            s << wts(i) << ", ";
+            sum += fabs(wts(i));
+        }
+        s << wts(nIP - 1) << "], ";
+        s << "\"conditionNumber\": " << sum << "}";
+    }
+    
+    else {
+        s << "LowOrder" << endln;
+        s << " Points: " << pts;
+        s << " Weights: " << wts;
+        double sum = 0.0;
+        int N = wts.Size();
+        for (int i = 0; i < N; i++)
+            sum += fabs(wts(i));
+        s << " Condition Number: " << sum << endln;
+    }
 }
 
 void 
@@ -239,9 +341,13 @@ LowOrderBeamIntegration::getLocationsDeriv(int numSections, double L,
   double oneOverL = 1.0/L;
 
   if (parameterID < 10) // xf
-    dptsdh[Nc+(parameterID-1)] = oneOverL;
+    dptsdh[Nc+(parameterID-1)] = 1.0;
   else if (parameterID < 20) // xc
-    dptsdh[parameterID-10-1] = oneOverL;
+    dptsdh[parameterID-10-1] = 1.0;
+
+  //for (int i = 0; i < numSections; i++)
+  //  opserr << dptsdh[i] << ' ';
+  //opserr << endln;
 
   return;
 }
@@ -266,11 +372,11 @@ LowOrderBeamIntegration::getWeightsDeriv(int numSections, double L,
   double oneOverL = 1.0/L;
 
   if (parameterID < 10) // xf
-    dxfdh[parameterID-1] = oneOverL;
+    dxfdh[parameterID-1] = 1.0;
   else if (parameterID < 20) // xc
-    dxcdh[parameterID-10-1] = oneOverL;
+    dxcdh[parameterID-10-1] = 1.0;
   else if (parameterID < 30) // wc
-    dwtsdh[parameterID-20-1] = oneOverL;
+    dwtsdh[parameterID-20-1] = 1.0;
 
   int N = pts.Size();
   int Nf = N-Nc;
@@ -305,8 +411,12 @@ LowOrderBeamIntegration::getWeightsDeriv(int numSections, double L,
     J.Solve(R,dwfdh);
 
     for (int i = 0; i < Nf; i++)
-      dwtsdh[Nc+i] += dwfdh(i);    
+      dwtsdh[Nc+i] = dwfdh(i);    
   }
+
+  //for (int i = 0; i < numSections; i++)
+  //  opserr << dwtsdh[i] << ' ';
+  //opserr << endln;
 
   return;
 }

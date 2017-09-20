@@ -72,13 +72,79 @@ Journal of Structural Engineering, Approved for publication, February 2007.
 #include <FEM_ObjectBroker.h>
 #include <Renderer.h>
 #include <math.h>
-
+#include <elementAPI.h>
 #include <ElementResponse.h>
 #include <ElementalLoad.h>
 
 Matrix ElasticForceBeamColumn3d::theMatrix(12,12);
 Vector ElasticForceBeamColumn3d::theVector(12);
 double ElasticForceBeamColumn3d::workArea[200];
+
+void* OPS_ElasticForceBeamColumn3d()
+{
+    if(OPS_GetNumRemainingInputArgs() < 5) {
+	opserr<<"insufficient arguments:eleTag,iNode,jNode,transfTag,integrationTag <-mass mass> <-cmass>\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[5];
+    int numData = 5;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	opserr<<"WARNING: invalid integer inputs\n";
+	return 0;
+    }
+
+    // options
+    double mass = 0.0;
+    numData = 1;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	const char* type = OPS_GetString();
+	if(strcmp(type,"-mass") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) {
+		    opserr<<"WARNING: invalid mass\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return 0;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[4]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return 0;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return 0;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+		delete [] sections;
+	    return 0;
+	}
+    }
+    
+    Element *theEle =  new ElasticForceBeamColumn3d(iData[0],iData[1],iData[2],secTags.Size(),sections,*bi,*theTransf,mass);
+    delete [] sections;
+    return theEle;
+}
 
 // constructor:
 // invoked by a FEM_ObjectBroker, recvSelf() needs to be invoked on this object.
@@ -898,7 +964,7 @@ ElasticForceBeamColumn3d::Print(OPS_Stream &s, int flag)
     }
 
     // flag set to 2 used to print everything .. used for viewing data for UCSD renderer  
-     else if (flag == 2) {
+    else if (flag == 2) {
        static Vector xAxis(3);
        static Vector yAxis(3);
        static Vector zAxis(3);
@@ -990,9 +1056,9 @@ ElasticForceBeamColumn3d::Print(OPS_Stream &s, int flag)
 	 sections[i]->Print(s, flag); 
        }
 	   */
-     }
+    }
 
-     else {
+	if (flag == OPS_PRINT_CURRENTSTATE) {
        s << "\nElement: " << this->getTag() << " Type: ElasticForceBeamColumn3d ";
        s << "\tConnected Nodes: " << connectedExternalNodes ;
        s << "\tNumber of Sections: " << numSections;
@@ -1021,7 +1087,22 @@ ElasticForceBeamColumn3d::Print(OPS_Stream &s, int flag)
 	 for (int i = 0; i < numSections; i++)
 	   s << "\numSections "<<i<<" :" << *sections[i];
        }
-     }
+    }
+	
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "\t\t\t{";
+		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"type\": \"ElasticForceBeamColumn3d\", ";
+		s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+		s << "\"sections\": [";
+		for (int i = 0; i < numSections - 1; i++)
+			s << "\"" << sections[i]->getTag() << "\", ";
+		s << "\"" << sections[numSections - 1]->getTag() << "\"], ";
+		s << "\"integration\": ";
+		beamIntegr->Print(s, flag);
+		s << ", \"rho\": " << rho << ", ";
+		s << "\"crdTransformation\": \"" << crdTransf->getTag() << "\"}";
+	}
   }
 
   OPS_Stream &operator<<(OPS_Stream &s, ElasticForceBeamColumn3d &E)
@@ -1031,7 +1112,7 @@ ElasticForceBeamColumn3d::Print(OPS_Stream &s, int flag)
   }
 
   int
-  ElasticForceBeamColumn3d::displaySelf(Renderer &theViewer, int displayMode, float fact)
+  ElasticForceBeamColumn3d::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
   {
     // first determine the end points of the beam based on
     // the display factor (a measure of the distorted image)
@@ -1108,15 +1189,15 @@ ElasticForceBeamColumn3d::Print(OPS_Stream &s, int flag)
     // local force -
     }  else if (strcmp(argv[0],"localForce") == 0 || strcmp(argv[0],"localForces") == 0) {
 
-      output.tag("ResponseType","N_ 1");
+      output.tag("ResponseType","N_1");
       output.tag("ResponseType","Vy_1");
       output.tag("ResponseType","Vz_1");
       output.tag("ResponseType","T_1");
       output.tag("ResponseType","My_1");
-      output.tag("ResponseType","Tz_1");
+      output.tag("ResponseType","Mz_1");
       output.tag("ResponseType","N_2");
-      output.tag("ResponseType","Py_2");
-      output.tag("ResponseType","Pz_2");
+      output.tag("ResponseType","Vy_2");
+      output.tag("ResponseType","Vz_2");
       output.tag("ResponseType","T_2");
       output.tag("ResponseType","My_2");
       output.tag("ResponseType","Mz_2");
@@ -1265,7 +1346,7 @@ ElasticForceBeamColumn3d::getResponse(int responseID, Information &eleInfo)
     M2 = Se(4);
     theVector(4)  = M1;
     theVector(10) = M2;
-    V = -(M1+M2)/L;
+    V = (M1+M2)/L;
     theVector(2) = -V+p0[3];
     theVector(8) =  V+p0[4];
       

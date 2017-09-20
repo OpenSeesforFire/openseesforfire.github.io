@@ -26,7 +26,8 @@
 // Ed "C++" Love
 //
 // Generic Plate Fiber Material
-//
+ 
+// Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
 
 
 #include <PlateFiberMaterialThermal.h>
@@ -160,131 +161,67 @@ PlateFiberMaterialThermal::getRho()
 int 
 PlateFiberMaterialThermal::setTrialStrain(const Vector &strainFromElement)
 {
-  static const double tolerance = 1.0e-08;
-  double dd22stiff, Stress22,strain33incr, stress1, stress2, strain11, strain22, strain12, strain23, strain31;
+	static const double tolerance = 1.0e-08;
 
-  this->strain(0) = strainFromElement(0); //11
-  this->strain(1) = strainFromElement(1); //22
-  this->strain(2) = strainFromElement(2); //12
-  this->strain(3) = strainFromElement(3); //23
-  this->strain(4) = strainFromElement(4); //31
-  strain11 = this->strain(0);
-  strain22 = this->strain(1);
-  strain12 = this->strain(2);
-  strain23 = this->strain(3);
-  strain31 = this->strain(4);
-  double norm;
-  static Vector outOfPlaneStress(1);
-  static Vector strainIncrement(1);
-  static Vector threeDstress(6);
-  static Vector threeDstrain(6);
-  static Matrix threeDtangent(6,6);
-  static Vector threeDstressCopy(6); 
+	strain(0) = strainFromElement(0); //11
+	strain(1) = strainFromElement(1); //22
+	strain(2) = strainFromElement(2); //12
+	strain(3) = strainFromElement(3); //23
+	strain(4) = strainFromElement(4); //31
 
-  static Matrix threeDtangentCopy(6,6);
-  static Matrix dd22(1,1);
+	double norm;
+	double condensedStress;
+	double strainIncrement;
+	static Vector threeDstrain(6);
+	double dd22;
 
-  int i, j;
-  int ii, jj;
+	int count = 0;
+	const int maxCount = 20;
+	double norm0;
 
-  Ttemp = theMaterial->getTempAndElong()(0);
+	//newton loop to solve for out-of-plane strains
+	do {
 
-  int count = 0;
-  //newton loop to solve for out-of-plane strains
-  do {
+		//set three dimensional strain
+		threeDstrain(0) = this->strain(0);
+		threeDstrain(1) = this->strain(1);
+		threeDstrain(2) = this->Tstrain22;
+		threeDstrain(3) = this->strain(2);
+		threeDstrain(4) = this->strain(3);
+		threeDstrain(5) = this->strain(4);
 
-    //set three dimensional strain
-    threeDstrain(0) = this->strain(0);
-    threeDstrain(1) = this->strain(1);
-
-    threeDstrain(2) = this->Tstrain22;
-  
-    threeDstrain(3) = this->strain(2); 
-    threeDstrain(4) = this->strain(3);
-    threeDstrain(5) = this->strain(4);
-
-	//if(threeDstrain(2)>0.005||strain2>0.01||strain2<-0.01){
-		//opserr<<threeDstrain(2)<<"  strain22 "<< strain2<<endln;
-		//threeDstrain(2) =Cstrain22;
-	//}
-	
-
-    if (theMaterial->setTrialStrain(threeDstrain) < 0) {
-      opserr << "PlateFiberMaterialThermal::setTrialStrain - material failed in setTrialStrain() with strain " << threeDstrain;
-      return -1;
-    }
-
-    //three dimensional stress
-    threeDstress = theMaterial->getStress();
-
-    //three dimensional tangent 
-    threeDtangent = theMaterial->getTangent();
-
-    //NDmaterial strain order          = 11, 22, 33, 12, 23, 31 
-    //PlateFiberMaterialThermal strain order =  11, 22, 12, 23, 31, 33 
-
-    //swap matrix indices to sort out-of-plane components 
-    for (i=0; i<6; i++) {
-
-      ii = this->indexMap(i);
-
-      threeDstressCopy(ii) = threeDstress(i);
-
-      for (j=0; j<6; j++) {
-
-	jj = this->indexMap(j);
-
-	threeDtangentCopy(ii,jj) = threeDtangent(i,j);
-
-      }//end for j
-
-    }//end for i
-
-
-    //partitioned stresses and tangent
-    
-    outOfPlaneStress(0) = threeDstress(2);
-
-    dd22(0,0) = threeDtangentCopy(5,5);
-    
-	dd22stiff = dd22(0,0);
-	Stress22 = outOfPlaneStress(0);
-	stress1 = threeDstress(0);
-	stress2 = threeDstress(1);
-    //set norm
-    norm = outOfPlaneStress.Norm();
-
-    //int Solve(const Vector &V, Vector &res) const;
-    //int Solve(const Matrix &M, Matrix &res) const;
-    //condensation 
-	//static PlaneStress(1);
-	double deltaStrain1 = this->strain(0)- Cstrain1;
-	double deltaStrain2 = this->strain(1)- Cstrain2;
-	double deltaStrain12 = this->strain(1)- Cstrain12;
-//double Incrstrain22 = (threeDtangent(2,0)*deltaStrain1+threeDtangent(2,1)*deltaStrain2+threeDtangent(2,3)*deltaStrain12
-		//+outOfPlaneStress(0))/threeDtangent(2,2);
-    dd22.Solve(outOfPlaneStress, strainIncrement);
-	
-	 //strain33incr = strainIncrement(0);
-    //update out of plane strains
-	// if( (Ttemp-Ctemp)<tolerance){
-	this->Tstrain22 -= strainIncrement(0);
-	 //this->Tstrain22 -= Incrstrain22; 
-	// if(count>5&&count<10){
-		//this->Tstrain22 += strainIncrement(0);
-	//}
-#ifdef _SDEBUG
-		if(strainFromElement(5)==1110){
-			opserr<<"Eps22 "<<this->Tstrain22<< "  Eps11: "<<strain11<< "  Eps22: "<<strain22<< "  Eps12: "<<strain12<<" norm "<<norm<<endln;
+		if (theMaterial->setTrialStrain(threeDstrain) < 0) {
+			opserr << "PlateFiberMaterial::setTrialStrain - material failed in setTrialStrain() with strain " << threeDstrain;
+			return -1;
 		}
-#endif
 
-    count++;
-  } while (norm > tolerance && count < 10);
-  Ctemp = Ttemp;
-  Cstrain1 = this->strain(0);
-  Cstrain2 = this->strain(1);
-  return 0;
+		//three dimensional stress
+		const Vector &threeDstress = theMaterial->getStress();
+
+		//three dimensional tangent 
+		const Matrix &threeDtangent = theMaterial->getTangent();
+
+		//NDmaterial strain order          = 11, 22, 33, 12, 23, 31 
+		//PlateFiberMaterial strain order =  11, 22, 12, 23, 31, 33 
+
+		condensedStress = threeDstress(2);
+
+		dd22 = threeDtangent(2, 2);
+
+		//set norm
+		norm = fabs(condensedStress);
+		if (count == 0)
+			norm0 = norm;
+
+		//condensation 
+		strainIncrement = condensedStress / dd22;
+
+		//update out of plane strains
+		Tstrain22 -= strainIncrement;
+
+	} while (count++ < maxCount && norm > tolerance);
+
+	return 0;
 }
 
 

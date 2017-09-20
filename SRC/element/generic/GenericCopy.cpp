@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4967 $
-// $Date: 2012-08-13 06:39:44 +0100 (Mon, 13 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/GenericCopy.cpp $
+// $Revision: 6501 $
+// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/GenericCopy.cpp $
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 11/06
@@ -43,20 +43,13 @@
 #include <string.h>
 
 
-// initialize the class wide variables
-Matrix GenericCopy::theMatrix(1,1);
-Matrix GenericCopy::theInitStiff(1,1);
-Matrix GenericCopy::theMass(1,1);
-Vector GenericCopy::theVector(1);
-Vector GenericCopy::theLoad(1);
-
 // responsible for allocating the necessary space needed
 // by each object and storing the tags of the end nodes.
 GenericCopy::GenericCopy(int tag, ID nodes, int srctag)
     : Element(tag, ELE_TAG_GenericCopy),
-    connectedExternalNodes(nodes),
-    numExternalNodes(0), numDOF(0),
-    srcTag(srctag), theSource(0),
+    connectedExternalNodes(nodes), numExternalNodes(0), numDOF(0),
+    srcTag(srctag), theSource(0), theMatrix(1,1), theVector(1),
+    theLoad(1), theInitStiff(1,1), theMass(1,1),
     initStiffFlag(false), massFlag(false)
 {
     // initialize nodes
@@ -79,9 +72,9 @@ GenericCopy::GenericCopy(int tag, ID nodes, int srctag)
 // needs to be invoked upon
 GenericCopy::GenericCopy()
     : Element(0, ELE_TAG_GenericCopy),
-    connectedExternalNodes(1),
-    numExternalNodes(0), numDOF(0),
-    srcTag(0), theSource(0),
+    connectedExternalNodes(1), numExternalNodes(0), numDOF(0),
+    srcTag(0), theSource(0), theMatrix(1,1), theVector(1),
+    theLoad(1), theInitStiff(1,1), theMass(1,1),
     initStiffFlag(false), massFlag(false)
 {
     // initialize variables
@@ -180,14 +173,14 @@ void GenericCopy::setDomain(Domain *theDomain)
     // set the matrix and vector sizes and zero them
     theMatrix.resize(numDOF,numDOF);
     theMatrix.Zero();
-    theInitStiff.resize(numDOF,numDOF);
-    theInitStiff.Zero();
-    theMass.resize(numDOF,numDOF);
-    theMass.Zero();
     theVector.resize(numDOF);
     theVector.Zero();
     theLoad.resize(numDOF);
     theLoad.Zero();
+    theInitStiff.resize(numDOF,numDOF);
+    theInitStiff.Zero();
+    theMass.resize(numDOF,numDOF);
+    theMass.Zero();
     
     // call the base class method
     this->DomainComponent::setDomain(theDomain);
@@ -268,7 +261,7 @@ const Matrix& GenericCopy::getMass()
         theMass.Zero();
         
         // get mass matrix from source element
-        theMatrix = theSource->getMass();
+        theMass = theSource->getMass();
         massFlag = true;
     }
     
@@ -294,12 +287,12 @@ int GenericCopy::addLoad(ElementalLoad *theLoad, double loadFactor)
 
 int GenericCopy::addInertiaLoadToUnbalance(const Vector &accel)
 {
-    int ndim = 0, i;
-    static Vector Raccel(numDOF);
-    Raccel.Zero();
+    if (massFlag == false)
+        this->getMass();
     
-    // get mass matrix
-    Matrix M = this->getMass();
+    int ndim = 0, i;
+    Vector Raccel(numDOF);
+    
     // assemble Raccel vector
     for (i=0; i<numExternalNodes; i++ )  {
         Raccel.Assemble(theNodes[i]->getRV(accel), ndim);
@@ -307,7 +300,7 @@ int GenericCopy::addInertiaLoadToUnbalance(const Vector &accel)
     }
     
     // want to add ( - fact * M R * accel ) to unbalance
-    theLoad -= M * Raccel;
+    theLoad.addMatrixVector(1.0, theMass, Raccel, -1.0);
     
     return 0;
 }
@@ -321,9 +314,6 @@ const Vector& GenericCopy::getResistingForce()
     // determine resisting forces in global system
     theVector = theSource->getResistingForce();
     
-    // subtract external load
-    theVector.addVector(1.0, theLoad, -1.0);
-    
     return theVector;
 }
 
@@ -332,11 +322,14 @@ const Vector& GenericCopy::getResistingForceIncInertia()
 {
     theVector = this->getResistingForce();
     
+    // subtract external load
+    theVector.addVector(1.0, theLoad, -1.0);
+    
+    if (massFlag == false)
+        this->getMass();
+    
     int ndim = 0, i;
-    static Vector vel(numDOF);
-    static Vector accel(numDOF);
-    vel.Zero();
-    accel.Zero();
+    Vector vel(numDOF), accel(numDOF);
     
     // add the damping forces from element damping
     Matrix C = this->getDamp();
@@ -345,16 +338,16 @@ const Vector& GenericCopy::getResistingForceIncInertia()
         vel.Assemble(theNodes[i]->getTrialVel(), ndim);
         ndim += theNodes[i]->getNumberDOF();
     }
-    theVector += C * vel;
+    theVector.addMatrixVector(1.0, C, vel, 1.0);
     
     // add inertia forces from element mass
-    Matrix M = this->getMass();
+    ndim = 0;
     // assemble accel vector
     for (i=0; i<numExternalNodes; i++ )  {
         accel.Assemble(theNodes[i]->getTrialAccel(), ndim);
         ndim += theNodes[i]->getNumberDOF();
     }
-    theVector += M * accel;
+    theVector.addMatrixVector(1.0, theMass, accel, 1.0);
     
     return theVector;
 }
@@ -410,7 +403,7 @@ int GenericCopy::recvSelf(int commitTag, Channel &rChannel,
 
 
 int GenericCopy::displaySelf(Renderer &theViewer,
-    int displayMode, float fact)
+    int displayMode, float fact, const char **modes, int numMode)
 {
     int rValue = 0, i, j;
 
@@ -433,7 +426,7 @@ int GenericCopy::displaySelf(Renderer &theViewer,
                 for (j=0; j<end2NumCrds; j++)
                     v2(j) = end2Crd(j) + end2Disp(j)*fact;
 
-                rValue += theViewer.drawLine (v1, v2, 1.0, 1.0);
+                rValue += theViewer.drawLine(v1, v2, 1.0, 1.0, this->getTag(), 0);
             }
         } else  {
             int mode = displayMode * -1;
@@ -461,7 +454,7 @@ int GenericCopy::displaySelf(Renderer &theViewer,
                         v2(j) = end2Crd(j);
                 }
 
-                rValue += theViewer.drawLine (v1, v2, 1.0, 1.0);
+                rValue += theViewer.drawLine(v1, v2, 1.0, 1.0, this->getTag(), 0);
             }
         }
     }

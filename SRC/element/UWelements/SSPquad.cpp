@@ -21,6 +21,10 @@
 // Created: Chris McGann, UW, 04.2011
 //
 // Description: This file contains the implementation of the SSPquad class
+//
+// Reference:   McGann, C.R., Arduino, P., and Mackenzie-Helnwein, P. (2012) "Stabilized single-point
+//                4-node quadrilateral element for dynamic analysis of fluid saturated porous media."
+//                Acta Geotechnica, 7(4):297-311
 
 #include "SSPquad.h"
 
@@ -53,7 +57,7 @@ OPS_SSPquad(void)
 {
 	if (num_SSPquad == 0) {
     	num_SSPquad++;
-    	OPS_Error("SSPquad element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n", 1);
+    	opserr << "SSPquad element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n";
   	}
 
   	// Pointer to an element that will be returned
@@ -67,7 +71,7 @@ OPS_SSPquad(void)
   	}
 
   	int iData[6];
-  	char *theType;
+  	const char *theType;
 	double dData[3];
 	dData[1] = 0.0;
 	dData[2] = 0.0;
@@ -78,10 +82,8 @@ OPS_SSPquad(void)
 		return 0;
   	}
 
-	if (OPS_GetStringCopy(&theType) != 0) {
-    	opserr << "WARNING invalid type, want: ""PlaneStress"" or ""PlaneStrain""  element SSPquad " << iData[0] << endln;
-    	return 0;
-  	}
+	theType = OPS_GetString();
+
 
 	numData = 1;
 	if (OPS_GetDoubleInput(&numData, dData) != 0) {
@@ -90,7 +92,7 @@ OPS_SSPquad(void)
 	}
 
   	int matID = iData[5];
-  	NDMaterial *theMaterial = OPS_GetNDMaterial(matID);
+  	NDMaterial *theMaterial = OPS_getNDMaterial(matID);
   	if (theMaterial == 0) {
     	opserr << "WARNING element SSPquad " << iData[0] << endln;
 		opserr << " Material: " << matID << "not found\n";
@@ -364,11 +366,13 @@ SSPquad::getMass(void)
 void
 SSPquad::zeroLoad(void)
 {
-	applyLoad = 0;
-	appliedB[0] = 0.0;
-	appliedB[1] = 0.0;
+  applyLoad = 0;
+  appliedB[0] = 0.0;
+  appliedB[1] = 0.0;
+  
+  Q.Zero();
 
-	return;
+  return;
 }
 
 int
@@ -380,8 +384,8 @@ SSPquad::addLoad(ElementalLoad *theLoad, double loadFactor)
 
 	if (type == LOAD_TAG_SelfWeight) {
 		applyLoad = 1;
-		appliedB[0] += loadFactor*b[0];
-		appliedB[1] += loadFactor*b[1];
+		appliedB[0] += loadFactor*data(0)*b[0];
+		appliedB[1] += loadFactor*data(1)*b[1];
 		return 0;
 	} else {
 		opserr << "SSPquad::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
@@ -530,7 +534,7 @@ SSPquad::getResistingForceIncInertia()
 	}
 
 	// add the damping forces if rayleigh damping
-	if (betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0) {
+	if (alphaM != 0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0) {
 		mInternalForces += this->getRayleighDampingForces();
 	}
 
@@ -540,123 +544,129 @@ SSPquad::getResistingForceIncInertia()
 int
 SSPquad::sendSelf(int commitTag, Channel &theChannel)
 {
-	int res = 0;
+  int res = 0;
   
-	// note: we don't check for dataTag == 0 for Element
-	// objects as that is taken care of in a commit by the Domain
-	// object - don't want to have to do the check if sending data
-	int dataTag = this->getDbTag();
+  // note: we don't check for dataTag == 0 for Element
+  // objects as that is taken care of in a commit by the Domain
+  // object - don't want to have to do the check if sending data
+  int dataTag = this->getDbTag();
   
-	// SSPquad packs its data into a Vector and sends this to theChannel
-	// along with its dbTag and the commitTag passed in the arguments
-  	static Vector data(6);
-  	data(0) = this->getTag();
-  	data(1) = mThickness;
-  	data(2) = b[0];
-  	data(3) = b[1];
-	data(4) = theMaterial->getClassTag();	      
+  // SSPquad packs its data into a Vector and sends this to theChannel
+  // along with its dbTag and the commitTag passed in the arguments
+  static Vector data(10);
+  data(0) = this->getTag();
+  data(1) = mThickness;
+  data(2) = b[0];
+  data(3) = b[1];
+  data(4) = theMaterial->getClassTag();	      
   
-  	// Now quad sends the ids of its materials
-  	int matDbTag = theMaterial->getDbTag();
+  data(6) = alphaM;
+  data(7) = betaK;
+  data(8) = betaK0;
+  data(9) = betaKc;
+  // Now quad sends the ids of its materials
+  int matDbTag = theMaterial->getDbTag();
   
-  	static ID idData(12);
+  // NOTE: we do have to ensure that the material has a database
+  // tag if we are sending to a database channel.
+  if (matDbTag == 0) {
+    matDbTag = theChannel.getDbTag();
+    if (matDbTag != 0)
+      theMaterial->setDbTag(matDbTag);
+  }
+  data(5) = matDbTag;
   
-    // NOTE: we do have to ensure that the material has a database
-    // tag if we are sending to a database channel.
-    if (matDbTag == 0) {
-      matDbTag = theChannel.getDbTag();
-			if (matDbTag != 0)
-			  theMaterial->setDbTag(matDbTag);
-    }
-    data(5) = matDbTag;
-
-	res += theChannel.sendVector(dataTag, commitTag, data);
-  	if (res < 0) {
-    	opserr << "WARNING SSPquad::sendSelf() - " << this->getTag() << " failed to send Vector\n";
-    	return res;
-  	}
-
-	// SSPquad then sends the tags of its four nodes
-  	res += theChannel.sendID(dataTag, commitTag, mExternalNodes);
-  	if (res < 0) {
-    	opserr << "WARNING SSPquad::sendSelf() - " << this->getTag() << " failed to send ID\n";
-    	return res;
-  	}
-
-  	// finally, SSPquad asks its material object to send itself
-  	res = theMaterial->sendSelf(commitTag, theChannel);
-	if (res < 0) {
-		opserr << "WARNING SSPquad::sendSelf() - " << this->getTag() << " failed to send its Material\n";
-		return -3;
-	}
-
-	return 0;
+  res += theChannel.sendVector(dataTag, commitTag, data);
+  if (res < 0) {
+    opserr << "WARNING SSPquad::sendSelf() - " << this->getTag() << " failed to send Vector\n";
+    return res;
+  }
+  
+  // SSPquad then sends the tags of its four nodes
+  res += theChannel.sendID(dataTag, commitTag, mExternalNodes);
+  if (res < 0) {
+    opserr << "WARNING SSPquad::sendSelf() - " << this->getTag() << " failed to send ID\n";
+    return res;
+  }
+  
+  // finally, SSPquad asks its material object to send itself
+  res = theMaterial->sendSelf(commitTag, theChannel);
+  if (res < 0) {
+    opserr << "WARNING SSPquad::sendSelf() - " << this->getTag() << " failed to send its Material\n";
+    return -3;
+  }
+  
+  return 0;
 }
 
 int
 SSPquad::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
 {
-  	int res = 0;
-  	int dataTag = this->getDbTag();
-
-  	// SSPquad creates a Vector, receives the Vector and then sets the 
-  	// internal data with the data in the Vector
-  	static Vector data(6);
-  	res += theChannel.recvVector(dataTag, commitTag, data);
-  	if (res < 0) {
-    	opserr << "WARNING SSPquad::recvSelf() - failed to receive Vector\n";
-    	return res;
-  	}
+  int res = 0;
+  int dataTag = this->getDbTag();
   
-  	this->setTag((int)data(0));
-  	mThickness = data(1);
-  	b[0] = data(2);
-  	b[1] = data(3);
-	
-
-  	// SSPquad now receives the tags of its four external nodes
-  	res += theChannel.recvID(dataTag, commitTag, mExternalNodes);
-  	if (res < 0) {
-    	opserr << "WARNING SSPquad::recvSelf() - " << this->getTag() << " failed to receive ID\n";
-    	return res;
-  	}
-
-	// finally, SSPquad creates a material object of the correct type, sets its
-	// database tag, and asks this new object to receive itself
-	int matClass = (int)data(4);
-	int matDb    = (int)data(5);
-
-	// check if material object exists and that it is the right type
-	if ((theMaterial == 0) || (theMaterial->getClassTag() != matClass)) {
-
-		// if old one, delete it
-		if (theMaterial != 0)
-			delete theMaterial;
-
-		// create new material object
-		NDMaterial *theMatCopy = theBroker.getNewNDMaterial(matClass);
-		theMaterial = (NDMaterial *)theMatCopy;
-
-		if (theMaterial == 0) {
-			opserr << "WARNING SSPquad::recvSelf() - " << this->getTag() 
-			  << " failed to get a blank Material of type " << matClass << endln;
-			return -3;
-		}
-	}
-
-	// NOTE: we set the dbTag before we receive the material
-	theMaterial->setDbTag(matDb);
-	res = theMaterial->recvSelf(commitTag, theChannel, theBroker);
-	if (res < 0) {
-		opserr << "WARNING SSPquad::recvSelf() - " << this->getTag() << " failed to receive its Material\n";
-		return -3;
-	}
-
-	return 0; 
+  // SSPquad creates a Vector, receives the Vector and then sets the 
+  // internal data with the data in the Vector
+  static Vector data(10);
+  res += theChannel.recvVector(dataTag, commitTag, data);
+  if (res < 0) {
+    opserr << "WARNING SSPquad::recvSelf() - failed to receive Vector\n";
+    return res;
+  }
+  
+  this->setTag((int)data(0));
+  mThickness = data(1);
+  b[0] = data(2);
+  b[1] = data(3);
+  
+  // SSPquad now receives the tags of its four external nodes
+  res += theChannel.recvID(dataTag, commitTag, mExternalNodes);
+  if (res < 0) {
+    opserr << "WARNING SSPquad::recvSelf() - " << this->getTag() << " failed to receive ID\n";
+    return res;
+  }
+  
+  // finally, SSPquad creates a material object of the correct type, sets its
+  // database tag, and asks this new object to receive itself
+  int matClass = (int)data(4);
+  int matDb    = (int)data(5);
+  
+  alphaM = data(6);
+  betaK = data(7);
+  betaK0 = data(8);
+  betaKc = data(9);
+  
+  // check if material object exists and that it is the right type
+  if ((theMaterial == 0) || (theMaterial->getClassTag() != matClass)) {
+    
+    // if old one, delete it
+    if (theMaterial != 0)
+      delete theMaterial;
+    
+    // create new material object
+    NDMaterial *theMatCopy = theBroker.getNewNDMaterial(matClass);
+    theMaterial = (NDMaterial *)theMatCopy;
+    
+    if (theMaterial == 0) {
+      opserr << "WARNING SSPquad::recvSelf() - " << this->getTag() 
+	     << " failed to get a blank Material of type " << matClass << endln;
+      return -3;
+    }
+  }
+  
+  // NOTE: we set the dbTag before we receive the material
+  theMaterial->setDbTag(matDb);
+  res = theMaterial->recvSelf(commitTag, theChannel, theBroker);
+  if (res < 0) {
+    opserr << "WARNING SSPquad::recvSelf() - " << this->getTag() << " failed to receive its Material\n";
+    return -3;
+  }
+  
+  return 0; 
 }
 
 int
-SSPquad::displaySelf(Renderer &theViewer, int displayMode, float fact)
+SSPquad::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 	return 0;
 }
@@ -692,52 +702,16 @@ SSPquad::setParameter(const char **argv, int argc, Parameter &param)
 	if (argc < 1) {
 		return -1;
 	}
+
 	int res = -1;
 
-	// material state (elastic/plastic) for UW soil materials
-	if (strcmp(argv[0],"materialState") == 0) {
-		return param.addObject(5,this);
-	}
-	// frictional strength parameter for UW soil materials
-	if (strcmp(argv[0],"frictionalStrength") == 0) {
-		return param.addObject(7,this);
-	}
-	// non-associative parameter for UW soil materials
-	if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-		return param.addObject(8,this);
-	}
-	// cohesion parameter for UW soil materials
-	if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-		return param.addObject(9,this);
-	}
-	
-	// quad pressure loading
-  	if (strcmp(argv[0],"pressure") == 0) {
-    	return param.addObject(2, this);
-	}
-  	// a material parameter
-  	if (strstr(argv[0],"material") != 0) {
+    // no element parameters, call setParameter in the material	
+    int matRes = res;
+	matRes =  theMaterial->setParameter(argv, argc, param);
 
-    	if (argc < 3) {
-      		return -1;
-		}
-
-    	int pointNum = atoi(argv[1]);
-    	if (pointNum > 0 && pointNum <= 4) {
-      		return theMaterial->setParameter(&argv[2], argc-2, param);
-    	} else {
-      		return -1;
-		}
-  	}
-  	// otherwise it could be just a forall material parameter
-  	else {
-    	int matRes = res;
-      	matRes =  theMaterial->setParameter(argv, argc, param);
-
-      	if (matRes != -1) {
-			res = matRes;
-		}
-  	}
+    if (matRes != -1) {
+		res = matRes;
+	}
   
   return res;
 }
@@ -745,49 +719,18 @@ SSPquad::setParameter(const char **argv, int argc, Parameter &param)
 int
 SSPquad::updateParameter(int parameterID, Information &info)
 {
-	int res = -1;
+    int res = -1;
 	int matRes = res;
-  	switch (parameterID) {
-    	case -1:
-      		return -1;
-		case 1:
-			matRes = theMaterial->updateParameter(parameterID, info);
-			if (matRes != -1) {
-				res = matRes;
-			}
-			return res;
-		case 2:
-			//pressure = info.theDouble;
-			//this->setPressureLoadAtNodes();	// update consistent nodal loads
-			return 0;
-		case 5:
-			matRes = theMaterial->updateParameter(parameterID, info);
-			if (matRes != -1) {
-				res = matRes;
-			}
-			return res;
-		case 7:
-			matRes = theMaterial->updateParameter(parameterID, info);
-			if (matRes != -1) {
-				res = matRes;
-			}
-			return res;
-		case 8:
-			matRes = theMaterial->updateParameter(parameterID, info);
-			if (matRes != -1) {
-				res = matRes;
-			}
-			return res;
-		case 9:
-			matRes = theMaterial->updateParameter(parameterID, info);
-			if (matRes != -1) {
-				res = matRes;
-			}
-			return res;
 
-		default: 
-	  	    return -1;
-  	}
+	if (parameterID == res) {
+        return -1;
+    } else {
+        matRes = theMaterial->updateParameter(parameterID, info);
+		if (matRes != -1) {
+			res = matRes;
+		}
+		return res;
+    }
 }
 
 Matrix 

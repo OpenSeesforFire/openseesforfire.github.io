@@ -36,12 +36,14 @@
 #include <ZeroLengthND.h>
 #include <ZeroLengthSection.h>
 #include <ZeroLengthContact2D.h>
+#include <ZeroLengthRocking.h>
 #include <ZeroLengthContact3D.h>
 #include <TclModelBuilder.h>
 #include <ID.h>
 #include <Vector.h>
 #include <Domain.h>
 #include <UniaxialMaterial.h>
+#include <NDMaterial.h>
 
 int
 TclModelBuilder_addZeroLength(ClientData clientData, Tcl_Interp *interp,
@@ -134,6 +136,8 @@ TclModelBuilder_addZeroLength(ClientData clientData, Tcl_Interp *interp,
 
     // create the array
     UniaxialMaterial **theMats = new UniaxialMaterial *[numMat];
+    UniaxialMaterial **theDampMats = new UniaxialMaterial *[numMat];
+
     if (theMats == 0) {
       opserr << "WARNING out of memory " <<
 	"creating material array of size " << numMat <<
@@ -146,31 +150,32 @@ TclModelBuilder_addZeroLength(ClientData clientData, Tcl_Interp *interp,
     // fill in the material array
     argi=6; 
     for (int i=0; i<numMat; i++) {
+      theDampMats[i] = 0;
 
-	int matID;	
+      int matID;	
+      
+      // read the material tag	
+      if (Tcl_GetInt(interp, argv[argi], &matID) != TCL_OK) {
+	opserr << "WARNING invalid matID " << argv[argi] <<
+	  "- element ZeroLength eleTag? iNode? jNode? " <<
+	  "-mat matID1? ... -dir dirMat1? .. " <<
+	  "<-orient x1? x2? x3? y1? y2? y3?>\n";
+	delete [] theMats;	    
+        return TCL_ERROR;
+      } else {
 
-	// read the material tag
-	if (Tcl_GetInt(interp, argv[argi], &matID) != TCL_OK) {
-	  opserr << "WARNING invalid matID " << argv[argi] <<
-	    "- element ZeroLength eleTag? iNode? jNode? " <<
+	// get a pointer to the material from the modelbuilder	    
+	argi++;
+	UniaxialMaterial *theMat = OPS_getUniaxialMaterial(matID);
+	if (theMat == 0) {
+	  opserr << "WARNING no material " << matID <<
+	    "exitsts - element ZeroLength eleTag? iNode? jNode? " <<
 	    "-mat matID1? ... -dir dirMat1? .. " <<
-	    "<-orient x1? x2? x3? y1? y2? y3?>\n";
-	    delete [] theMats;	    
-	    return TCL_ERROR;
+	    "<-orient x1? x2? x3? y1? y2? y3?>\n"  ;
+	  delete [] theMats;		
+	  return TCL_ERROR;		
 	} else {
-
-	    // get a pointer to the material from the modelbuilder	    
-	    argi++;
-	    UniaxialMaterial *theMat = OPS_getUniaxialMaterial(matID);
-	    if (theMat == 0) {
-	      opserr << "WARNING no material " << matID <<
-		"exitsts - element ZeroLength eleTag? iNode? jNode? " <<
-		"-mat matID1? ... -dir dirMat1? .. " <<
-		"<-orient x1? x2? x3? y1? y2? y3?>\n"  ;
-		delete [] theMats;		
-		return TCL_ERROR;		
-	    } else {
-		
+	  
 		// add the material to the array
 		theMats[i] = theMat;
 	    }
@@ -273,12 +278,46 @@ TclModelBuilder_addZeroLength(ClientData clientData, Tcl_Interp *interp,
 	    argi++;
 	} else 	if (strcmp(argv[argi],"-doRayleigh") == 0)  {
 	  doRayleighDamping = 1;
-	  if (argi < argc) 
-	    if ((Tcl_GetInt(interp, argv[argi+1], &doRayleighDamping) == TCL_OK))
-	      argi++;
-	    
 	  argi++;
+	  if (argi < argc) 
+	    if ((Tcl_GetInt(interp, argv[argi], &doRayleighDamping) == TCL_OK))
+	      argi++;
+	} else 	if (strcmp(argv[argi],"-dampMats") == 0)  {
+	  doRayleighDamping = 2;
+	  argi++;
+	  for (int i=0; i<numMat; i++) {
+
+	    int matID;	
+      
+	    // read the material tag	
+	    if (Tcl_GetInt(interp, argv[argi], &matID) != TCL_OK) {
+	      opserr << "WARNING invalid matID " << argv[argi] <<
+		"- element ZeroLength eleTag? iNode? jNode? " <<
+		"-mat matID1? ... -dir dirMat1? .. " <<
+		"<-orient x1? x2? x3? y1? y2? y3?>\n";
+	      delete [] theMats;	    
+	      return TCL_ERROR;
+	    } else {
+	      UniaxialMaterial *theMat = OPS_getUniaxialMaterial(matID);
+	      if (theMat == 0) {
+		opserr << "WARNING no material " << matID <<
+		  "exitsts - element ZeroLength eleTag? iNode? jNode? " <<
+		  "-mat matID1? ... -dir dirMat1? .. " <<
+		  "<-orient x1? x2? x3? y1? y2? y3?>\n"  ;
+		delete [] theMats;		
+		return TCL_ERROR;		
+	      } else {
+		theDampMats[i] = theMat;
+	      }
+	    }
+
+	    argi++;
+	  }
+
 	}  else
+
+
+
 	  argi++;
     }
     
@@ -287,7 +326,12 @@ TclModelBuilder_addZeroLength(ClientData clientData, Tcl_Interp *interp,
     //
 
     Element *theEle;
-    theEle = new ZeroLength(eleTag, ndm, iNode, jNode, x, y, numMat, theMats, theDirns, doRayleighDamping);
+
+    if (doRayleighDamping != 2) 
+      theEle = new ZeroLength(eleTag, ndm, iNode, jNode, x, y, numMat, theMats, theDirns, doRayleighDamping);
+    else
+      theEle = new ZeroLength(eleTag, ndm, iNode, jNode, x, y, numMat, theMats, theDampMats, theDirns, doRayleighDamping);
+
     if (theEle == 0) {
 	delete [] theMats;	
 	return TCL_ERROR;
@@ -300,6 +344,7 @@ TclModelBuilder_addZeroLength(ClientData clientData, Tcl_Interp *interp,
 
     // return the memory we stole and return OK
     delete [] theMats;    
+    delete [] theDampMats;
     return TCL_OK;
 }
 
@@ -413,12 +458,14 @@ TclModelBuilder_addZeroLengthSection(ClientData clientData, Tcl_Interp *interp,
 	    }
 	  }
 	}
-      } else if (strcmp(argv[argi],"-doRayleigh") == 0)  {
-	doRayleighDamping = 0;
-	argi++;
-      } else
-	argi++;
-
+	} else 	if (strcmp(argv[argi],"-doRayleigh") == 0)  {
+	  doRayleighDamping = 1;
+	  argi++;
+	  if (argi < argc) 
+	    if ((Tcl_GetInt(interp, argv[argi], &doRayleighDamping) == TCL_OK))
+	      argi++;	    
+	}  else
+	  argi++;
     }
     
     //
@@ -822,7 +869,7 @@ TclModelBuilder_addZeroLengthND(ClientData clientData, Tcl_Interp *interp,
     // now we create the element and add it to the domain
     //
 
-	NDMaterial *theNDMat = theBuilder->getNDMaterial(NDTag);
+	NDMaterial *theNDMat = OPS_getNDMaterial(NDTag);
 
 	if (theNDMat == 0) {
 	  opserr << "zeroLengthND -- no NDMaterial with tag " << NDTag << " exists in Domain\n";
@@ -843,4 +890,195 @@ TclModelBuilder_addZeroLengthND(ClientData clientData, Tcl_Interp *interp,
 	  return TCL_ERROR;
 	
 	return TCL_OK;
+}
+
+
+int
+TclModelBuilder_addZeroLengthRocking(ClientData clientData, Tcl_Interp *interp,
+                              int argc, TCL_Char **argv,
+                              Domain *theDomain,
+                              TclModelBuilder *theBuilder) {
+    
+    int ndm = theBuilder->getNDM(); // the spatial dimension of the problem
+    
+    //
+    // first scan the command line to obtain eleID, iNode, jNode, and the orientation 
+    // of ele xPrime and yPrime not along the global x and y axis
+    //
+    
+    int eleTag, iNode, jNode;
+    
+    // a quick check on number of args
+    if (argc < 9) {
+        opserr << "WARNING too few arguments " <<
+        "want - element ZeroLengthRocking eleTag? iNode? jNode? " <<
+        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+        
+        return TCL_ERROR;
+    }
+    
+    // get the ele tag 
+    if (Tcl_GetInt(interp, argv[2], &eleTag) != TCL_OK) {
+        opserr << "WARNING invalied eleTag " << argv[2] <<
+        "- element ZeroLengthRocking eleTag? iNode? jNode? " <<
+        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+        return TCL_ERROR;
+    }
+    
+    // get the two end nodes
+    if (Tcl_GetInt(interp, argv[3], &iNode) != TCL_OK) {
+        opserr << "WARNING invalied iNode " << argv[3] << 
+        "- element ZeroLengthRocking eleTag? iNode? jNode? " <<
+        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+        
+        return TCL_ERROR;
+    }
+    
+    if (Tcl_GetInt(interp, argv[4], &jNode) != TCL_OK) {
+        opserr << "WARNING invalid jNode " << argv[4] <<
+        "- element ZeroLengthRocking eleTag? iNode? jNode? " <<
+        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+        return TCL_ERROR;
+    }
+    
+    // look for rocking required inputs
+    double kr = 0;
+    double R = 0;
+    double theta = 0;
+    double kap = 1.0e12;
+    
+    // rotational stiffness
+    if (Tcl_GetDouble(interp, argv[5], &kr) != TCL_OK) {
+        opserr << "WARNING invalid kr " << argv[5] <<
+        "- element ZeroLengthRocking eleTag? iNode? jNode? " <<
+        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+        return TCL_ERROR;
+    }
+    
+    // rocking radius
+    if (Tcl_GetDouble(interp, argv[6], &R) != TCL_OK) {
+        opserr << "WARNING invalid radius " << argv[6] <<
+        "- element ZeroLengthRocking eleTag? iNode? jNode? " <<
+        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+        return TCL_ERROR;
+    }
+    
+    // theta0
+    if (Tcl_GetDouble(interp, argv[7], &theta) != TCL_OK) {
+        opserr << "WARNING invalid theta0 " << argv[7] <<
+        "- element ZeroLengthRocking eleTag? iNode? jNode? " <<
+        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+        return TCL_ERROR;
+    }
+    
+    // kappa
+    if (Tcl_GetDouble(interp, argv[8], &kap) != TCL_OK) {
+        opserr << "WARNING invalid kappa " << argv[8] <<
+        "- element ZeroLengthRocking eleTag? iNode? jNode? " <<
+        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+        return TCL_ERROR;
+    }
+    
+    // create the vectors for the element orientation
+    Vector x(3); x(0) = 1.0; x(1) = 0.0; x(2) = 0.0;
+    Vector y(3); y(0) = 0.0; y(1) = 1.0; y(2) = 0.0;
+    double xi = 1.0e-8;
+    double dTol = 1.0e-7;
+    double vTol = 1.0e-7;
+    int argi = 9;
+    
+    while (argi < argc) {
+        if (strcmp(argv[argi],"-orient") == 0) {
+            if (argc < (argi+7)) {
+                opserr << "WARNING not enough paramaters after -orient flag for ele " << eleTag <<
+                "- element ZeroLengthRocking eleTag? iNode? jNode? " <<
+                "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";	      
+                return TCL_ERROR;
+                
+            } else {
+                argi++;
+                double value;
+                // read the x values
+                for (int i=0; i<3; i++)  {
+                    if (Tcl_GetDouble(interp, argv[argi], &value) != TCL_OK) {
+                        opserr << "WARNING invalid -orient value for ele  " << eleTag << argv[i] <<
+                        "- element ZeroLength eleTag? iNode? jNode? " <<
+                        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+                        return TCL_ERROR;
+                    } else {
+                        argi++;
+                        x(i) = value;
+                    }
+                }
+                // read the y values
+                for (int j=0; j<3; j++)  {
+                    if (Tcl_GetDouble(interp, argv[argi], &value) != TCL_OK) {
+                        opserr << "WARNING invalid -orient value for ele  " <<
+                        eleTag << argv[argi] <<
+                        "- element ZeroLength eleTag? iNode? jNode? " <<
+                        "kr? radius? theta0? kappa? <-orient x1? x2? x3? y1? y2? y3?>\n";
+                        return TCL_ERROR;
+                    } else {
+                        argi++;
+                        y(j) = value;
+                    }
+                }
+            }
+            
+        } else if (strcmp(argv[argi],"-xi") == 0) {
+            if (argc < (argi+2)) {
+                opserr << "WARNING not enough paramaters after -xi flag for ele " << eleTag << endln;
+                return TCL_ERROR;
+            } else {
+                argi++;
+                if (Tcl_GetDouble(interp, argv[argi], &xi) != TCL_OK) {
+                    opserr << "WARNING invalid -xi value for ele  " << eleTag << endln;
+                    return TCL_ERROR;
+                } else
+                    argi++;
+            }
+            
+        } else if (strcmp(argv[argi],"-dTol") == 0) {
+            if (argc < (argi+2)) {
+                opserr << "WARNING not enough paramaters after -dTol flag for ele " << eleTag << endln;
+                return TCL_ERROR;
+            } else {
+                argi++;
+                if (Tcl_GetDouble(interp, argv[argi], &dTol) != TCL_OK) {
+                    opserr << "WARNING invalid -dTol value for ele  " << eleTag << endln;
+                    return TCL_ERROR;
+                } else
+                    argi++;
+            }
+
+        } else if (strcmp(argv[argi],"-vTol") == 0) {
+            if (argc < (argi+2)) {
+                opserr << "WARNING not enough paramaters after -vTol flag for ele " << eleTag << endln;
+                return TCL_ERROR;
+            } else {
+                argi++;
+                if (Tcl_GetDouble(interp, argv[argi], &vTol) != TCL_OK) {
+                    opserr << "WARNING invalid -vTol value for ele  " << eleTag << endln;
+                    return TCL_ERROR;
+                } else
+                    argi++;
+            }
+            
+        } else
+            argi++;
+    }
+    
+    //
+    // now we create the element and add it to the domain
+    //
+    Element *theEle;
+    theEle = new ZeroLengthRocking(eleTag, ndm, iNode, jNode, x, y, 
+                                   kr, R, theta, kap, xi, dTol, vTol);
+    if (theEle == 0)
+        return TCL_ERROR;
+    
+    if (theDomain->addElement(theEle) == false)
+        return TCL_ERROR;
+     
+    return TCL_OK;
 }

@@ -42,8 +42,54 @@
 #include <float.h>
 
 #include <string.h>
+#include <elementAPI.h>
 
 #include <OPS_Globals.h>
+
+void *
+OPS_SeriesMaterial(void)
+{
+  // Pointer to a uniaxial material that will be returned
+  UniaxialMaterial *theMaterial = 0;
+
+  int numArgs = OPS_GetNumRemainingInputArgs();
+  if (numArgs < 3) {
+    opserr << "Invalid #args,  want: uniaxialMaterial Series $tag $tag1 $tag2 ... " << endln;
+    return 0;
+  }
+  
+  int *iData = new int[numArgs];
+  UniaxialMaterial **theMats = new UniaxialMaterial *[numArgs-1];
+    
+  if (OPS_GetIntInput(&numArgs, iData) != 0) {
+    opserr << "WARNING invalid data for uniaxialMaterial Series" << endln;
+    return 0;
+  }
+
+  for (int i=1; i<numArgs; i++) {
+    UniaxialMaterial *theMat = OPS_GetUniaxialMaterial(iData[i]);
+    if (theMat == 0) {
+      opserr << "WARNING no existing material with tag " << iData[i] 
+	     << " for uniaxialMaterial Series" << iData[0] << endln;
+      delete [] iData;
+      delete [] theMats;
+      return 0;
+    }
+    theMats[i-1] = theMat;
+  }
+
+  // Parsing was successful, allocate the material
+  theMaterial = new SeriesMaterial(iData[0], numArgs-1, theMats);
+  if (theMaterial == 0) {
+    opserr << "WARNING could not create uniaxialMaterial of type Series\n";
+    return 0;
+  }
+  
+  delete [] iData;
+  delete [] theMats;
+  
+  return theMaterial;
+}
 
 SeriesMaterial::SeriesMaterial(int tag, int num,
 			       UniaxialMaterial ** theMaterialModels,
@@ -61,7 +107,6 @@ SeriesMaterial::SeriesMaterial(int tag, int num,
       opserr << "SeriesMaterial::SeriesMaterial -- failed to allocate material array\n";
       exit(-1);
     }
-
 
     int i;
     for (i = 0; i < numMaterials; i++) {
@@ -95,6 +140,9 @@ SeriesMaterial::SeriesMaterial(int tag, int num,
       stress[i] = 0.0;
       flex[i] = 0.0;
     }
+
+    Ttangent = this->getInitialTangent();
+    Ctangent = Ttangent;
 }
 
 SeriesMaterial::SeriesMaterial()
@@ -132,7 +180,8 @@ SeriesMaterial::setTrialStrain(double newStrain, double strainRate)
 {
 	// Using the incremental iterative strain
 	double dv = newStrain-Tstrain;
-	
+
+
 	if (fabs(dv) < DBL_EPSILON)
 	  return 0;
 
@@ -325,8 +374,8 @@ UniaxialMaterial *
 SeriesMaterial::getCopy(void)
 {
     SeriesMaterial *theCopy = new 
-		SeriesMaterial(this->getTag(), numMaterials, theModels,
-			maxIterations, tolerance);
+      SeriesMaterial(this->getTag(), numMaterials, theModels,
+		     maxIterations, tolerance);
 
     theCopy->Cstrain = Cstrain;
     theCopy->Cstress = Cstress;
@@ -506,10 +555,22 @@ SeriesMaterial::recvSelf(int cTag, Channel &theChannel,
 void 
 SeriesMaterial::Print(OPS_Stream &s, int flag)
 {
-    s << "\nSeriesMaterial, tag: " << this->getTag() << endln;
-    s << "\tUniaxial Componenets" << endln;
-    for (int i = 0; i < numMaterials; i++)
-		s << "\t\tUniaxial Material, tag: " << theModels[i]->getTag() << endln;
+    if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+        s << "\nSeriesMaterial, tag: " << this->getTag() << endln;
+        s << "\tUniaxial Componenets" << endln;
+        for (int i = 0; i < numMaterials; i++)
+            s << "\t\tUniaxial Material, tag: " << theModels[i]->getTag() << endln;
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"type\": \"SeriesMaterial\", ";
+        s << "\"materials\": [";
+        for (int i = 0; i < numMaterials - 1; i++)
+            s << "\"" << theModels[i]->getTag() << "\", ";
+        s << "\"" << theModels[numMaterials - 1]->getTag() << "\"]}";
+    }
 }
 
 Response*

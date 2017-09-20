@@ -205,13 +205,21 @@ DistHingeIntegration::activateParameter(int paramID)
 void
 DistHingeIntegration::Print(OPS_Stream &s, int flag)
 {
-  s << "DistHinge" << endln;
-  s << " lpI = " << lpI;
-  s << " lpJ = " << lpJ << endln;
-
-  beamInt->Print(s, flag);
-
-  return;
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "{\"type\": \"DistHinge\", ";
+		s << "\"lpI\": " << lpI << ", ";
+		s << "\"lpJ\": " << lpJ << ", ";
+		s << "\"integration\": ";
+		beamInt->Print(s, flag);
+		s << "}";
+	}
+	
+	else {
+		s << "DistHinge" << endln;
+		s << " lpI = " << lpI;
+		s << " lpJ = " << lpJ << endln;
+		beamInt->Print(s, flag);
+	}
 }
 
 void 
@@ -226,7 +234,7 @@ DistHingeIntegration::getLocationsDeriv(int numSections, double L,
 
   beamInt->getSectionLocations(numPerHinge, L, dptsdh);
 
-  opserr << "DistHingeIntegration::getLocationsDeriv -- implementation for interior not yet finished" << endln;
+  //opserr << "DistHingeIntegration::getLocationsDeriv -- implementation for interior not yet finished" << endln;
 
   if (parameterID == 1) { // lpI
     for (int i = 0; i < numPerHinge; i++) {
@@ -266,7 +274,7 @@ DistHingeIntegration::getWeightsDeriv(int numSections, double L,
 
   beamInt->getSectionWeights(numPerHinge, L, dwtsdh);
 
-  opserr << "DistHingeIntegration::getWeightsDeriv -- implementation for interior not yet finished" << endln;
+  //opserr << "DistHingeIntegration::getWeightsDeriv -- implementation for interior not yet finished" << endln;
 
   if (parameterID == 1) { // lpI
     for (int i = 0; i < numPerHinge; i++) {

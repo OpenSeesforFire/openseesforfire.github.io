@@ -47,6 +47,7 @@
 
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
 
 //static data
 double  BbarBrickWithSensitivity::xl[3][8] ;
@@ -68,6 +69,44 @@ const double  BbarBrickWithSensitivity::wg[] = { 1.0, 1.0, 1.0, 1.0,
 
 
 # define ELE_TAG_BbarBrickWithSensitivity 1984587234
+
+void* OPS_BbarBrickWithSensitivity()
+{
+    if (OPS_GetNumRemainingInputArgs() < 10) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element Brick eleTag? Node1? Node2? Node3? Node4? Node5? Node6? Node7? Node 8? matTag?\n";
+	return 0;
+    }
+
+    int idata[10];
+    int num = 10;
+    if (OPS_GetIntInput(&num,idata)<0) {
+	opserr<<"WARNING: invalid integer data\n";
+	return 0;
+    }
+
+    NDMaterial* mat = OPS_getNDMaterial(idata[9]);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "material tag: " << idata[9];
+	opserr << "\nBrick element: " << idata[0] << endln;
+    }
+
+    double data[3] = {0,0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 3) {
+	num = 3;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,data) < 0) {
+	    opserr<<"WARNING: invalid double data\n";
+	    return 0;
+	}	
+    }
+
+    return new BbarBrickWithSensitivity(idata[0],idata[1],idata[2],idata[3],idata[4],idata[5],idata[6],idata[7],idata[8],*mat,data[0],data[1],data[2]);
+}
+
 //null constructor
 BbarBrickWithSensitivity::BbarBrickWithSensitivity( ) :
 Element( 0, ELE_TAG_BbarBrickWithSensitivity ),
@@ -484,12 +523,19 @@ BbarBrickWithSensitivity::addLoad(ElementalLoad *theLoad, double loadFactor)
   int type;
   const Vector &data = theLoad->getData(type, loadFactor);
 
-  if ((type == LOAD_TAG_BrickSelfWeight) || (type == LOAD_TAG_SelfWeight)) {
-    applyLoad = 1;
-    appliedB[0] += loadFactor * b[0];
-    appliedB[1] += loadFactor * b[1];
-    appliedB[2] += loadFactor * b[2];
+  if (type == LOAD_TAG_BrickSelfWeight) {
+      applyLoad = 1;
+      appliedB[0] += loadFactor * b[0];
+      appliedB[1] += loadFactor * b[1];
+      appliedB[2] += loadFactor * b[2];
     return 0;
+  } else if (type == LOAD_TAG_SelfWeight) {
+      // added compatability with selfWeight class implemented for all continuum elements, C.McGann, U.W.
+      applyLoad = 1;
+	  appliedB[0] += loadFactor*data(0)*b[0];
+	  appliedB[1] += loadFactor*data(1)*b[1];
+	  appliedB[2] += loadFactor*data(2)*b[2];
+	  return 0;
   } else {
     opserr << "BbarBrickWithSensitivity::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
     return -1;
@@ -1456,7 +1502,7 @@ int  BbarBrickWithSensitivity::recvSelf (int commitTag,
 //**************************************************************************
 
 int
-BbarBrickWithSensitivity::displaySelf(Renderer &theViewer, int displayMode, float fact)
+BbarBrickWithSensitivity::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
     const Vector &end1Crd = nodePointers[0]->getCrds();
     const Vector &end2Crd = nodePointers[1]->getCrds();

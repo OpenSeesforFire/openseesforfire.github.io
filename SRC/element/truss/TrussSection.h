@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.13 $
-// $Date: 2010-02-04 01:11:29 $
-// $Source: /usr/local/cvs/OpenSees/SRC/element/truss/TrussSection.h,v $
+// $Revision: 6420 $
+// $Date: 2016-09-10 10:30:46 +0800 (Sat, 10 Sep 2016) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/truss/TrussSection.h $
                                                                         
                                                                         
 #ifndef TrussSection_h
@@ -47,12 +47,12 @@ class SectionForceDeformation;
 class TrussSection : public Element
 {
   public:
-    TrussSection(int tag, 
-		 int dimension,
+    TrussSection(int tag, int dimension,
 		 int Nd1, int Nd2, 
 		 SectionForceDeformation &theSection,
-		 double rho=0.0,
-		 int doRayleigh = 0);
+		 double rho = 0.0,
+		 int doRayleighDamping = 0,
+         int cMass = 0);
     
     TrussSection();    
     ~TrussSection();
@@ -76,8 +76,8 @@ class TrussSection : public Element
     // public methods to obtain stiffness, mass, damping and residual information    
     const Matrix &getTangentStiff(void);
     const Matrix &getInitialStiff(void);
-    const Matrix &getMass(void);    
-    const Matrix &getDamp(void);    
+    const Matrix &getDamp(void);
+    const Matrix &getMass(void);
 
     void zeroLoad(void);	
     int addLoad(ElementalLoad *theLoad, double loadFactor);
@@ -89,13 +89,22 @@ class TrussSection : public Element
     // public methods for element output
     int sendSelf(int commitTag, Channel &theChannel);
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);    
+    int displaySelf(Renderer &, int mode, float fact, const char **displayModes=0, int numModes=0);
     void Print(OPS_Stream &s, int flag =0);    
     
     Response *setResponse(const char **argv, int argc, OPS_Stream &s);
     int getResponse(int responseID, Information &eleInformation);
     
-    int setParameter (const char **argv, int argc, Parameter &param);
+    // AddingSensitivity:BEGIN //////////////////////////////////////////
+    int addInertiaLoadSensitivityToUnbalance(const Vector &accel, bool tag);
+    int setParameter(const char **argv, int argc, Parameter &param);
+    int updateParameter(int parameterID, Information &info);
+    int activateParameter(int parameterID);
+    const Vector & getResistingForceSensitivity(int gradNumber);
+    const Matrix & getKiSensitivity(int gradNumber);
+    const Matrix & getMassSensitivity(int gradNumber);
+    int commitSensitivity(int gradNumber, int numGrads);
+    // AddingSensitivity:END ///////////////////////////////////////////
 
   protected:
     
@@ -107,21 +116,27 @@ class TrussSection : public Element
     int dimension;                       // truss in 2 or 3d domain
     int numDOF;	                         // number of dof for truss
 
-    Vector *theLoad;          // pointer to the load vector P    
-    Matrix *theMatrix; 	// pointer to objects matrix (one of class Matrices)
-    Vector *theVector;      // pointer to objects vector (one of class Vectors)
+    Vector *theLoad;    // pointer to the load vector P
+    Matrix *theMatrix;  // pointer to objects matrix (a class wide Matrix)
+    Vector *theVector;  // pointer to objects vector (a class wide Vector)
 
     double cosX[3];     // direction cosines
 
-    double L;		// length of truss based on undeformed configuration
-    double rho; 		// mass density per unit length
-    int doRayleighDamping;
+    double L;               // length of truss based on undeformed configuration
+    double rho;             // mass density per unit length
+    int doRayleighDamping;  // flag to include Rayleigh damping
+    int cMass;              // consistent mass flag
 
     Node *theNodes[2];
     double *initialDisp;
 
     SectionForceDeformation  *theSection;
     
+    // AddingSensitivity:BEGIN //////////////////////////////////////////
+    int parameterID;
+    Vector *theLoadSens;
+    // AddingSensitivity:END ///////////////////////////////////////////
+
     // static data - single copy for all objects of the class	
     static Matrix trussM2;   // class wide matrix for 2*2
     static Matrix trussM3;   // class wide matrix for 3*3	

@@ -50,7 +50,7 @@
 #include <OPS_Globals.h>
 
 void *
-OPS_NewConcrete02()
+OPS_Concrete02()
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
@@ -351,7 +351,23 @@ Concrete02::recvSelf(int commitTag, Channel &theChannel,
 void 
 Concrete02::Print(OPS_Stream &s, int flag)
 {
-  s << "Concrete02:(strain, stress, tangent) " << eps << " " << sig << " " << e << endln;
+  if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {      
+    s << "Concrete02:(strain, stress, tangent) " << eps << " " << sig << " " << e << endln;
+  }
+
+  if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+    s << "\t\t\t{";
+	s << "\"name\": \"" << this->getTag() << "\", ";
+	s << "\"type\": \"Concrete02\", ";
+	s << "\"Ec\": " << 2.0*fc/epsc0 << ", ";
+	s << "\"fc\": " << fc << ", ";
+    s << "\"epsc\": " << epsc0 << ", ";
+    s << "\"fcu\": " << fcu << ", ";
+    s << "\"epscu\": " << epscu << ", ";
+    s << "\"ratio\": " << rat << ", ";
+    s << "\"ft\": " << ft << ", ";
+    s << "\"Ets\": " << Ets << "}";
+  }
 }
 
 

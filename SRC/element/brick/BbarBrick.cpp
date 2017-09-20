@@ -48,6 +48,45 @@
 
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
+
+void* OPS_BbarBrick()
+{
+    if (OPS_GetNumRemainingInputArgs() < 10) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element Brick eleTag? Node1? Node2? Node3? Node4? Node5? Node6? Node7? Node 8? matTag?\n";
+	return 0;
+    }
+
+    int idata[10];
+    int num = 10;
+    if (OPS_GetIntInput(&num,idata)<0) {
+	opserr<<"WARNING: invalid integer data\n";
+	return 0;
+    }
+
+    NDMaterial* mat = OPS_getNDMaterial(idata[9]);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "material tag: " << idata[9];
+	opserr << "\nBrick element: " << idata[0] << endln;
+    }
+
+    double data[3] = {0,0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 3) {
+	num = 3;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,data) < 0) {
+	    opserr<<"WARNING: invalid double data\n";
+	    return 0;
+	}	
+    }
+
+    return new BbarBrick(idata[0],idata[1],idata[2],idata[3],idata[4],idata[5],idata[6],idata[7],
+			 idata[8],*mat,data[0],data[1],data[2]);
+}
 
 //static data
 double  BbarBrick::xl[3][8] ;
@@ -478,12 +517,19 @@ BbarBrick::addLoad(ElementalLoad *theLoad, double loadFactor)
   int type;
   const Vector &data = theLoad->getData(type, loadFactor);
 
-  if ((type == LOAD_TAG_BrickSelfWeight) || (type == LOAD_TAG_SelfWeight)) {
-    applyLoad = 1;
-    appliedB[0] += loadFactor * b[0];
-    appliedB[1] += loadFactor * b[1];
-    appliedB[2] += loadFactor * b[2];
+  if (type == LOAD_TAG_BrickSelfWeight) {
+      applyLoad = 1;
+      appliedB[0] += loadFactor * b[0];
+      appliedB[1] += loadFactor * b[1];
+      appliedB[2] += loadFactor * b[2];
     return 0;
+  } else if (type == LOAD_TAG_SelfWeight) {
+      // added compatability with selfWeight class implemented for all continuum elements, C.McGann, U.W.
+      applyLoad = 1;
+	  appliedB[0] += loadFactor*data(0)*b[0];
+	  appliedB[1] += loadFactor*data(1)*b[1];
+	  appliedB[2] += loadFactor*data(2)*b[2];
+	  return 0;
   } else {
     opserr << "BbarBrick::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
     return -1;
@@ -1269,7 +1315,7 @@ int  BbarBrick::recvSelf (int commitTag,
 //**************************************************************************
 
 int
-BbarBrick::displaySelf(Renderer &theViewer, int displayMode, float fact)
+BbarBrick::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 
     const Vector &end1Crd = nodePointers[0]->getCrds();
@@ -1543,8 +1589,8 @@ BbarBrick::setResponse(const char **argv, int argc, OPS_Stream &output)
       output.tag("ResponseType","sigma22");
       output.tag("ResponseType","sigma33");
       output.tag("ResponseType","sigma12");
-      output.tag("ResponseType","sigma13");
       output.tag("ResponseType","sigma23");
+      output.tag("ResponseType","sigma13");
 
       output.endTag(); // NdMaterialOutput
       output.endTag(); // GaussPoint
@@ -1563,8 +1609,8 @@ BbarBrick::setResponse(const char **argv, int argc, OPS_Stream &output)
       output.tag("ResponseType","eps22");
       output.tag("ResponseType","eps33");
       output.tag("ResponseType","eps12");
-      output.tag("ResponseType","eps13");
-      output.tag("ResponseType","eps23");      
+      output.tag("ResponseType","eps23");
+      output.tag("ResponseType","eps13");      
 
       output.endTag(); // NdMaterialOutput
       output.endTag(); // GaussPoint
@@ -1628,68 +1674,51 @@ BbarBrick::getResponse(int responseID, Information &eleInfo)
 int
 BbarBrick::setParameter(const char **argv, int argc, Parameter &param)
 {
-  	if (argc < 1) {
-   		return -1;
-	}
+  if (argc < 1)
+  return -1;
 
-  	int res = -1;
+  int res = -1;
 
-	// material state (elastic/plastic) for UW soil materials
-	if (strcmp(argv[0],"materialState") == 0) {
-		return param.addObject(5,this);
-	// frictional strength parameter for UW soil materials
-	} else if (strcmp(argv[0],"frictionalStrength") == 0) {
-		return param.addObject(7,this);
-	// non-associative parameter for UW soil materials
-	} else if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-		return param.addObject(8,this);
-	// cohesion parameter for UW soil materials
-	} else if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-		return param.addObject(9,this);
+  if ((strstr(argv[0],"material") != 0) && (strcmp(argv[0],"materialState") != 0)) {
 
-  	} else if (strstr(argv[0],"material") != 0) {
-		
-    	if (argc < 3) {
-      		return -1;
-		}
+    if (argc < 3)
+      return -1;
 
-    	int pointNum = atoi(argv[1]);
-    	if (pointNum > 0 && pointNum <= 8) {
-    		return materialPointers[pointNum-1]->setParameter(&argv[2], argc-2, param);
-    	} else {
-      		return -1;
-		}
+    int pointNum = atoi(argv[1]);
+    if (pointNum > 0 && pointNum <= 8)
+      return materialPointers[pointNum-1]->setParameter(&argv[2], argc-2, param);
+    else 
+      return -1;
+  }
   
-  	// otherwise it could be just a forall material parameter
-  	} else {
-		
-    	int matRes = res;
-    	for (int i=0; i<8; i++) {
-      		matRes =  materialPointers[i]->setParameter(argv, argc, param);
-      		if (matRes != -1) {
-				res = matRes;
-			}
-    	}
-  	}
-
- 	 return res;
+  // otherwise it could be just a forall material parameter
+  else {
+    int matRes = res;
+    for (int i=0; i<8; i++) {
+      matRes =  materialPointers[i]->setParameter(argv, argc, param);
+      if (matRes != -1)
+	res = matRes;
+    }
+  }
+  
+  return res;
 }
     
 int
 BbarBrick::updateParameter(int parameterID, Information &info)
 {
-	int res = -1;
+    int res = -1;
 	int matRes = res;
-	if (parameterID == 1 || parameterID == 5 || parameterID == 7 || parameterID == 8 || parameterID == 9) {
-		for (int i = 0; i<8; i++) {
-			matRes = materialPointers[i]->updateParameter(parameterID, info);
-		}
+
+    if (parameterID == res) {
+        return -1;
+    } else {
+        for (int i = 0; i<8; i++) {
+            matRes = materialPointers[i]->updateParameter(parameterID, info);
+        }
 		if (matRes != -1) {
 			res = matRes;
 		}
 		return res;
-	} else {
-    	return -1;
-	}
+    }
 }
-

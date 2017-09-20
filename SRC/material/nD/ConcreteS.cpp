@@ -33,6 +33,35 @@
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
 #include <MaterialResponse.h>
+#include <elementAPI.h>
+
+void* OPS_ConcreteS()
+{
+    int argc = OPS_GetNumRemainingInputArgs() + 2;
+    if (argc < 8) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: nDMaterial ConcreteS tag? E? nu? fc? ft? Es?" << endln;
+	return 0;
+    }
+
+    int tag;
+    int numdata = 1;
+    if (OPS_GetIntInput(&numdata, &tag) < 0) {
+	opserr << "WARNING invalid nDMaterial ConcreteS tag" << endln;
+	return 0;
+    }
+
+    // double E, nu, fc, ft, Es;
+    double data[5];
+    numdata = 5;
+    if (OPS_GetDoubleInput(&numdata, data) < 0) {
+	opserr << "WARNING invalid double inputs" << endln;
+	opserr << "ConcreteS: " << tag << endln;
+	return 0;
+    }
+
+    return new ConcreteS( tag, data[0], data[1], data[2], data[3], data[4]);
+}
 
 //null constructor
 ConcreteS::ConcreteS( ) : 
@@ -64,10 +93,6 @@ ConcreteS::~ConcreteS( )
 void ConcreteS::setInitials()
 {
   double fac;
-    strain0.Zero();
-  strain.Zero();
-  stress0.Zero();
-  stress.Zero();
   eTangent.Zero();
   eTangent(0,0) = 1.0;
   eTangent(0,1) = nu;
@@ -77,10 +102,9 @@ void ConcreteS::setInitials()
   fac = E / (1.0 - nu * nu);
   eTangent *= fac;
   tangent = eTangent;
-  Ep = 0.5* E;
+  Ep = 10 * E;
   EmEp1 = 1.0 / (E + Ep);
-  beta = - (Ep - 2* Es) / ft;
-
+  beta = - (Ep + 11 * Es) / ft;
 //  Ep = E * Es / (E + Es)
 //  EmEp1 = 1.0 / (E - Ep) = (E + Es) / E^2;
 //  EmEp1 = (E + Es) / (E * E);
@@ -213,13 +237,11 @@ ConcreteS::setTrialStrain( const Vector &strainFromElement )
   psmax = ft + Ep * cStrain0;
 //  if (psmax < ftmin) psmax = ftmin;
   yieldFunc = ps1 - psmax;
-  bool y1=false; bool y2 =false;
 
   if (yieldFunc > 0.0)
   {
     cStrain = cStrain0 + yieldFunc * EmEp1;
     ps1 = ft + Ep * cStrain;
-	y1 = true;
   }
 
   yieldFunc = ps2 - psmax;
@@ -229,7 +251,6 @@ ConcreteS::setTrialStrain( const Vector &strainFromElement )
     tStrain = cStrain0 + yieldFunc * EmEp1;
     ps2 = ft + Ep * tStrain;
     if (cStrain < tStrain) cStrain = tStrain;
-	y2= true;
   }
   
   sigm = 0.5 * (ps1 + ps2);
@@ -241,25 +262,23 @@ ConcreteS::setTrialStrain( const Vector &strainFromElement )
   stress(2) = sigd * sin(theta);
 
   stressd = stress;   
-  //beta =-2000;
+  
   double damage = exp(beta * cStrain);
   if (ps1 > 0.0) ps1 *= damage;
   if (ps2 > 0.0) ps2 *= damage;
-  // if (ps1 > 0.0||ps2>0.0) tangent *= damage;
-
 
   sigm = 0.5 * (ps1 + ps2);
   sigd = 0.5 * fabs(ps1 - ps2);
   
-stressd(1) = sigd * cos(theta);
+  stressd(1) = sigd * cos(theta);
   stressd(0) = sigm + stressd(1);
   stressd(1) = sigm - stressd(1);
   stressd(2) = sigd * sin(theta);
 
- // if (ps1 > 0.0 || ps2 > 0.0)
- // {
-  // double damage = exp(beta * cStrain);
-    //stressd *= damage;
+//  if (ps1 > 0.0 || ps2 > 0.0)
+//  {
+//    double damage = exp(beta * cStrain);
+//    stressd *= damage;
 ////    tangent *= damage;
 //  }
 

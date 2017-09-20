@@ -35,7 +35,7 @@ class ParametricFireEC1 : public FireModel
 {
     public:
       ParametricFireEC1(int tag);
-	  ParametricFireEC1(int tag, double I, double Av, double H, double At, double Af, double Qf, double tlim);
+	  ParametricFireEC1(int tag, double I, double Av, double H, double At, double Af, double Qf, double tlim, double startTime = 0);
 
 	  virtual ~ParametricFireEC1();
 	  
@@ -53,6 +53,7 @@ class ParametricFireEC1 : public FireModel
 	  double Afire;  // area of the floor with fire
 	  double Qfire;  // total design fire related with Afire
 	  double tlimit;  // time levels corresponds to different fire growth rate
+	  double StartTime; //starttime of the fire action
 };
 
 #endif

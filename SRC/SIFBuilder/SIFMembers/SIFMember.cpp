@@ -96,7 +96,7 @@ int
 SIFMember::getMemberTypeTag(void)
 {
   return MemberTypeTag;
-  //1:xBeam,2:YBeam,3:Column,4:Slab, 21 xSecBeam, 11: slab modelled as plane frame
+  //1:xBeam,2:YBeam,3:Column,10:Slab, 21 xSecBeam, 11: slab modelled as plane frame
 }
 
 

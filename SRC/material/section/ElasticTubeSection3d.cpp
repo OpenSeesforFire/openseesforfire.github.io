@@ -33,6 +33,38 @@
 #include <Parameter.h>
 
 #include <classTags.h>
+#include <elementAPI.h>
+
+void* OPS_ElasticTubeSection3d()
+{
+    if (OPS_GetNumRemainingInputArgs() < 5) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: section ElasticTube tag? E? d? tw? G?" << endln;
+	return 0;
+    }
+	
+    int tag;
+    int numdata = 1;
+    if (OPS_GetIntInput(&numdata, &tag) < 0) {
+	opserr << "WARNING invalid section ElasticTube tag" << endln;
+	return 0;
+    }
+
+    numdata = 4;
+    double data[4];
+    if (OPS_GetDoubleInput(&numdata, data) < 0) {
+	opserr << "WARNING invalid double inputs" << endln;
+	opserr << "ElasticTube section: " << tag << endln;	    
+	return 0;
+    }
+
+    double E = data[0];
+    double d = data[1];
+    double tw = data[2];
+    double G = data[3];
+
+    return new ElasticTubeSection3d(tag, E, d, tw, G);	
+}
 
 Vector ElasticTubeSection3d::s(4);
 Matrix ElasticTubeSection3d::ks(4,4);
@@ -41,7 +73,7 @@ ID ElasticTubeSection3d::code(4);
 ElasticTubeSection3d::ElasticTubeSection3d(void)
 :SectionForceDeformation(0, SEC_TAG_ElasticTube3d),
  E(0.0), d(0.0), tw(0.0), G(0.0),
- e(4), eCommit(4), parameterID(0)
+ e(4), parameterID(0)
 {
   if (code(0) != SECTION_RESPONSE_P) {
     code(0) = SECTION_RESPONSE_P;	// P is the first quantity
@@ -55,7 +87,7 @@ ElasticTubeSection3d::ElasticTubeSection3d
 (int tag, double E_in, double d_in, double tw_in, double G_in)
 :SectionForceDeformation(tag, SEC_TAG_ElasticTube3d),
  E(E_in), d(d_in), tw(tw_in), G(G_in),
- e(4), eCommit(4), parameterID(0)
+ e(4), parameterID(0)
 {
   if (E <= 0.0)  {
     opserr << "ElasticTubeSection3d::ElasticTubeSection3d -- Input E <= 0.0\n";
@@ -89,24 +121,18 @@ ElasticTubeSection3d::~ElasticTubeSection3d(void)
 int 
 ElasticTubeSection3d::commitState(void)
 {
-  eCommit = e;
-
   return 0;
 }
 
 int 
 ElasticTubeSection3d::revertToLastCommit(void)
 {
-  e = eCommit;
-
   return 0;
 }
 
 int 
 ElasticTubeSection3d::revertToStart(void)
 {
-  eCommit.Zero();
-
   return 0;
 }
 
@@ -215,7 +241,7 @@ ElasticTubeSection3d::getCopy(void)
   ElasticTubeSection3d *theCopy =
     new ElasticTubeSection3d (this->getTag(), E, d, tw, G);
   
-  theCopy->eCommit = eCommit;
+  theCopy->parameterID = parameterID;
   
   return theCopy;
 }
@@ -237,7 +263,7 @@ ElasticTubeSection3d::sendSelf(int commitTag, Channel &theChannel)
 {
   int res = 0;
   
-  static Vector data(9);
+  static Vector data(5);
   
   int dataTag = this->getDbTag();
   
@@ -246,10 +272,6 @@ ElasticTubeSection3d::sendSelf(int commitTag, Channel &theChannel)
   data(2) = d;
   data(3) = tw;    
   data(4) = G;    
-  data(5) = eCommit(0);
-  data(6) = eCommit(1);
-  data(7) = eCommit(2);
-  data(8) = eCommit(3);
 
   res += theChannel.sendVector(dataTag, commitTag, data);
   if (res<0) {
@@ -266,7 +288,7 @@ ElasticTubeSection3d::recvSelf(int commitTag, Channel &theChannel,
 {
   int res = 0;
 
-  static Vector data(9);
+  static Vector data(5);
   
   int dataTag = this->getDbTag();
   
@@ -281,10 +303,6 @@ ElasticTubeSection3d::recvSelf(int commitTag, Channel &theChannel,
   d =  data(2);
   tw = data(3);
   G =  data(4);
-  eCommit(0) = data(5);
-  eCommit(1) = data(6);
-  eCommit(2) = data(7);  
-  eCommit(3) = data(8);
   
   return res;
 }

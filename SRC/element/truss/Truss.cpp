@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.36 $
-// $Date: 2010-05-25 00:38:51 $
-// $Source: /usr/local/cvs/OpenSees/SRC/element/truss/Truss.cpp,v $
+// $Revision: 6593 $
+// $Date: 2017-06-15 06:17:10 +0800 (Thu, 15 Jun 2017) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/truss/Truss.cpp $
                                                                         
                                                                         
 // Written: fmk 
@@ -68,26 +68,27 @@ Vector Truss::trussV12(12);
 #define OPS_Export 
 
 OPS_Export void *
-OPS_NewTrussElement()
+OPS_TrussElement()
 {
   Element *theElement = 0;
 
   int numRemainingArgs = OPS_GetNumRemainingInputArgs();
 
   if (numRemainingArgs < 4) {
-    opserr << "Invalid Args want: element Truss $tag $iNode $jNode $sectTag <-rho $rho> <-rayleigh $flag>\n";
-    opserr << " or: element Truss $tag $iNode $jNode $A $matTag <-rho $rho> <-rayleig $flagh>\n";
+    opserr << "Invalid Args want: element Truss $tag $iNode $jNode $sectTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
+    opserr << " or: element Truss $tag $iNode $jNode $A $matTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
     return 0;	
   }
 
-  if (numRemainingArgs == 4 || numRemainingArgs == 6 || numRemainingArgs ==8)
+  if (numRemainingArgs == 4 || numRemainingArgs == 6 || numRemainingArgs == 8 || numRemainingArgs == 10)
     return 0; // it's a TrussSection
 
-  int    iData[3];
+  int iData[3];
   double A = 0.0;
   double rho = 0.0;
   int matTag = 0;
-  int doRayleigh = 0;
+  int doRayleigh = 0; // by default rayleigh not done
+  int cMass = 0; // by default use lumped mass matrix
   int ndm = OPS_GetNDM();
 
   int numData = 3;
@@ -99,14 +100,14 @@ OPS_NewTrussElement()
   numData = 1;
   if (OPS_GetDouble(&numData, &A) != 0) {
     opserr << "WARNING: Invalid A: element Truss " << iData[0] << 
-      " $iNode $jNode $A $matTag <-rho $rho> <-rayleig $flagh>\n";
+      " $iNode $jNode $A $matTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
     return 0;	
   }
 
   numData = 1;
   if (OPS_GetInt(&numData, &matTag) != 0) {
     opserr << "WARNING: Invalid matTag: element Truss " << iData[0] << 
-      " $iNode $jNode $A $matTag <-rho $rho> <-rayleig $flagh>\n";
+      " $iNode $jNode $A $matTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
     return 0;
   }
 
@@ -114,62 +115,65 @@ OPS_NewTrussElement()
     
   if (theUniaxialMaterial == 0) {
     opserr << "WARNING: Invalid material not found element Truss " << iData[0] << " $iNode $jNode $A " << 
-      matTag << " <-rho $rho> <-rayleig $flagh>\n";
+      matTag << " <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
     return 0;
   }
   
   numRemainingArgs -= 5;
   while (numRemainingArgs > 1) {
-    char argvS[15];
-    if (OPS_GetString(argvS, 15) != 0) {
-      opserr << "WARNING: Invalid optional string element Truss " << iData[0] << 
-	" $iNode $jNode $A $matTag <-rho $rho> <-doRayleigh $flagh>\n";
-      return 0;
-    } 
+    const char *argvS = OPS_GetString();
   
     if (strcmp(argvS,"-rho") == 0) {
       numData = 1;
       if (OPS_GetDouble(&numData, &rho) != 0) {
 	opserr << "WARNING Invalid rho in element Truss " << iData[0] << 
-	  " $iNode $jNode $A $matTag <-rho $rho> <-doRayleigh $flagh>\n";
+	  " $iNode $jNode $A $matTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
+	return 0;
+      }
+    } else if (strcmp(argvS,"-cMass") == 0) {
+      numData = 1;
+      if (OPS_GetInt(&numData, &cMass) != 0) {
+	opserr << "WARNING: Invalid cMass in element Truss " << iData[0] << 
+	  " $iNode $jNode $A $matTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
 	return 0;
       }
     } else if (strcmp(argvS,"-doRayleigh") == 0) {
       numData = 1;
       if (OPS_GetInt(&numData, &doRayleigh) != 0) {
 	opserr << "WARNING: Invalid doRayleigh in element Truss " << iData[0] << 
-	  " $iNode $jNode $A $matTag <-rho $rho> <-doRayleigh $flagh>\n";
+	  " $iNode $jNode $A $matTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
 	return 0;
       }
     } else {
       opserr << "WARNING: Invalid option " << argvS << "  in: element Truss " << iData[0] << 
-	" $iNode $jNode $A $matTag <-rho $rho> <-doRayleigh $flagh>\n";
+	" $iNode $jNode $A $matTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
       return 0;
     }      
     numRemainingArgs -= 2;
   }
 
-  //now create the ReinforcedConcretePlaneStress
-  theElement = new Truss(iData[0], ndm, iData[1], iData[2], *theUniaxialMaterial, A, rho, doRayleigh);
+  // now create the Truss
+  theElement = new Truss(iData[0], ndm, iData[1], iData[2], *theUniaxialMaterial, A, rho, doRayleigh, cMass);
 
   if (theElement == 0) {
     opserr << "WARNING: out of memory: element Truss " << iData[0] << 
-      " $iNode $jNode $A $matTag <-rho $rho> <-doRayleigh $flagh>\n";
+      " $iNode $jNode $A $matTag <-rho $rho> <-cMass $flag> <-doRayleigh $flag>\n";
   }
 
   return theElement;
 }
 
-Truss::Truss(int tag, 
-	     int dim,
-	     int Nd1, int Nd2, 
-	     UniaxialMaterial &theMat,
-	     double a, double r, int damp)
- :Element(tag,ELE_TAG_Truss),     
+Truss::Truss(int tag, int dim,
+         int Nd1, int Nd2, 
+         UniaxialMaterial &theMat,
+         double a, double r,
+         int damp, int cm)
+ :Element(tag,ELE_TAG_Truss),
   theMaterial(0), connectedExternalNodes(2),
-  dimension(dim), numDOF(0), theLoad(0),
-  theMatrix(0), theVector(0),
-  L(0.0), A(a), rho(r), doRayleighDamping(damp), initialDisp(0)
+  dimension(dim), numDOF(0),
+  theLoad(0), theMatrix(0), theVector(0),
+  L(0.0), A(a), rho(r), doRayleighDamping(damp),
+  cMass(cm), initialDisp(0)
 {
     // get a copy of the material and check we obtained a valid copy
     theMaterial = theMat.getCopy();
@@ -208,9 +212,10 @@ Truss::Truss(int tag,
 Truss::Truss()
 :Element(0,ELE_TAG_Truss),     
  theMaterial(0),connectedExternalNodes(2),
- dimension(0), numDOF(0), theLoad(0),
- theMatrix(0), theVector(0),
- L(0.0), A(0.0), rho(0.0), initialDisp(0)
+ dimension(0), numDOF(0),
+ theLoad(0), theMatrix(0), theVector(0),
+ L(0.0), A(0.0), rho(0.0), doRayleighDamping(0),
+ cMass(0), initialDisp(0)
 {
     // ensure the connectedExternalNode ID is of correct size 
   if (connectedExternalNodes.Size() != 2) {
@@ -370,6 +375,7 @@ Truss::setDomain(Domain *theDomain)
       return;
     }
 
+    // create the load vector
     if (theLoad == 0)
       theLoad = new Vector(numDOF);
     else if (theLoad->Size() != numDOF) {
@@ -603,23 +609,36 @@ Truss::getDamp(void)
 
 const Matrix &
 Truss::getMass(void)
-{   
+{
   // zero the matrix
   Matrix &mass = *theMatrix;
-  mass.Zero();    
+  mass.Zero();
   
   // check for quick return
   if (L == 0.0 || rho == 0.0) { // - problem in setDomain() no further warnings
     return mass;
-  }    
-  
-  double M = 0.5*rho*L;
-  int numDOF2 = numDOF/2;
-  for (int i = 0; i < dimension; i++) {
-    mass(i,i) = M;
-    mass(i+numDOF2,i+numDOF2) = M;
   }
-
+  
+  if (cMass == 0)  {
+    // lumped mass matrix
+    double m = 0.5*rho*L;
+    int numDOF2 = numDOF/2;
+    for (int i = 0; i < dimension; i++) {
+      mass(i,i) = m;
+      mass(i+numDOF2,i+numDOF2) = m;
+    }
+  } else  {
+    // consistent mass matrix
+    double m = rho*L/6.0;
+    int numDOF2 = numDOF/2;
+    for (int i = 0; i < dimension; i++) {
+      mass(i,i) = 2.0*m;
+      mass(i,i+numDOF2) = m;
+      mass(i+numDOF2,i) = m;
+      mass(i+numDOF2,i+numDOF2) = 2.0*m;
+    }
+  }
+  
   return mass;
 }
 
@@ -640,16 +659,16 @@ Truss::addLoad(ElementalLoad *theLoad, double loadFactor)
 int 
 Truss::addInertiaLoadToUnbalance(const Vector &accel)
 {
-    // check for a quick return
-    if (L == 0.0 || rho == 0.0) 
-	return 0;
-
+  // check for a quick return
+  if (L == 0.0 || rho == 0.0) 
+    return 0;
+  
   // get R * accel from the nodes
   const Vector &Raccel1 = theNodes[0]->getRV(accel);
   const Vector &Raccel2 = theNodes[1]->getRV(accel);    
-
+  
   int nodalDOF = numDOF/2;
-    
+  
 #ifdef _G3DEBUG    
   if (nodalDOF != Raccel1.Size() || nodalDOF != Raccel2.Size()) {
     opserr <<"Truss::addInertiaLoadToUnbalance " <<
@@ -657,22 +676,23 @@ Truss::addInertiaLoadToUnbalance(const Vector &accel)
     return -1;
   }
 #endif
-    
-  double M = 0.5*rho*L;
-    // want to add ( - fact * M R * accel ) to unbalance
+  
+  // want to add ( - fact * M R * accel ) to unbalance
+  if (cMass == 0)  {
+    double m = 0.5*rho*L;
     for (int i=0; i<dimension; i++) {
-	double val1 = Raccel1(i);
-	double val2 = Raccel2(i);	
-	
-	// perform - fact * M*(R * accel) // remember M a diagonal matrix
-	val1 *= -M;
-	val2 *= -M;
-	
-	(*theLoad)(i) += val1;
-	(*theLoad)(i+nodalDOF) += val2;
-    }	
-
-    return 0;
+      (*theLoad)(i) -= m*Raccel1(i);
+      (*theLoad)(i+nodalDOF) -= m*Raccel2(i);
+    }
+  } else  {
+    double m = rho*L/6.0;
+    for (int i=0; i<dimension; i++) {
+      (*theLoad)(i) -= 2.0*m*Raccel1(i) + m*Raccel2(i);
+      (*theLoad)(i+nodalDOF) -= m*Raccel1(i) + 2.0*m*Raccel2(i);
+    }
+  }
+  
+  return 0;
 }
 
 
@@ -783,10 +803,7 @@ Truss::getResistingForce()
       (*theVector)(i) = -temp;
       (*theVector)(i+numDOF2) = temp;
     }
-
-    // subtract external load:  Ku - P
-    (*theVector) -= *theLoad;
-
+    
     return *theVector;
 }
 
@@ -796,27 +813,42 @@ Truss::getResistingForceIncInertia()
 {	
   this->getResistingForce();
   
+  // subtract external load
+  (*theVector) -= *theLoad;
+  
   // now include the mass portion
   if (L != 0.0 && rho != 0.0) {
     
+    // add inertia forces from element mass
     const Vector &accel1 = theNodes[0]->getTrialAccel();
     const Vector &accel2 = theNodes[1]->getTrialAccel();	
     
     int numDOF2 = numDOF/2;
-    double M = 0.5*rho*L;
-    for (int i = 0; i < dimension; i++) {
-      (*theVector)(i) += M*accel1(i);
-      (*theVector)(i+numDOF2) += M*accel2(i);
+    
+    if (cMass == 0)  {
+      // lumped mass matrix
+      double m = 0.5*rho*L;
+      for (int i = 0; i < dimension; i++) {
+        (*theVector)(i) += m*accel1(i);
+        (*theVector)(i+numDOF2) += m*accel2(i);
+      }
+    } else  {
+      // consistent mass matrix
+      double m = rho*L/6.0;
+      for (int i=0; i<dimension; i++) {
+        (*theVector)(i) += 2.0*m*accel1(i) + m*accel2(i);
+        (*theVector)(i+numDOF2) += m*accel1(i) + 2.0*m*accel2(i);
+      }
     }
     
     // add the damping forces if rayleigh damping
     if (doRayleighDamping == 1 && (alphaM != 0.0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0))
-      (*theVector) += this->getRayleighDampingForces();
-  }  else {
+      theVector->addVector(1.0, this->getRayleighDampingForces(), 1.0);
+  } else {
     
     // add the damping forces if rayleigh damping
     if (doRayleighDamping == 1 && (betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0))
-      (*theVector) += this->getRayleighDampingForces();
+      theVector->addVector(1.0, this->getRayleighDampingForces(), 1.0);
   }
   
   return *theVector;
@@ -835,25 +867,21 @@ Truss::sendSelf(int commitTag, Channel &theChannel)
   // truss packs it's data into a Vector and sends this to theChannel
   // along with it's dbTag and the commitTag passed in the arguments
 
-  static Vector data(11);
+  static Vector data(12);
   data(0) = this->getTag();
   data(1) = dimension;
   data(2) = numDOF;
   data(3) = A;
-  data(4) = theMaterial->getClassTag();
   data(6) = rho;
-
-  if (doRayleighDamping == 0)
-    data(7) = 0;
-  else
-    data(7) = 1;
-
-
+  data(7) = doRayleighDamping;
+  data(8) = cMass;
+  
+  data(4) = theMaterial->getClassTag();
   int matDbTag = theMaterial->getDbTag();
-
+  
   if (initialDisp != 0) {
     for (int i=0; i<dimension; i++) {
-      data[8+i] = initialDisp[i];
+      data[9+i] = initialDisp[i];
     }
   }
 
@@ -873,7 +901,6 @@ Truss::sendSelf(int commitTag, Channel &theChannel)
   }	      
 
   // truss then sends the tags of it's two end nodes
-
   res = theChannel.sendID(dataTag, commitTag, connectedExternalNodes);
   if (res < 0) {
     opserr <<"WARNING Truss::sendSelf() - " << this->getTag() << " failed to send Vector\n";
@@ -899,7 +926,7 @@ Truss::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
   // truss creates a Vector, receives the Vector and then sets the 
   // internal data with the data in the Vector
 
-  static Vector data(11);
+  static Vector data(12);
   res = theChannel.recvVector(dataTag, commitTag, data);
   if (res < 0) {
     opserr <<"WARNING Truss::recvSelf() - failed to receive Vector\n";
@@ -911,11 +938,8 @@ Truss::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
   numDOF = (int)data(2);
   A = data(3);
   rho = data(6);
-  if (data(7) == 0)
-    doRayleighDamping = 0;
-  else
-    doRayleighDamping = 1;
-
+  doRayleighDamping = (int)data(7);
+  cMass = (int)data(8);
 
   initialDisp = new double[dimension];
   for (int i=0; i<dimension; i++)
@@ -923,14 +947,14 @@ Truss::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
 
   int initial = 0;
   for (int i=0; i<dimension; i++) {
-    if (data(8+i) != 0.0) {
+    if (data(9+i) != 0.0) {
       initial = 1;
     }
   }
   
   if (initial != 0) {
     for (int i=0; i<dimension; i++) {
-      initialDisp[i] = data(8+i);
+      initialDisp[i] = data(9+i);
     }    
   }
   
@@ -973,67 +997,59 @@ Truss::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
   return 0;
 }
 
-
 int
-Truss::displaySelf(Renderer &theViewer, int displayMode, float fact)
+Truss::displaySelf(Renderer &theViewer, int displayMode, float fact, 
+		   const char **displayModes, int numModes)
 {
-    // ensure setDomain() worked
-    if (L == 0.0)
-       return 0;
+  int res = 0;
+  if (L == 0.0)
+    return res;
+  
+  static Vector v1(3);
+  static Vector v2(3);
+  float d1 = 0.0;
+  float d2 = 0.0;
+  
+  theNodes[0]->getDisplayCrds(v1, fact);
+  theNodes[1]->getDisplayCrds(v2, fact);
 
-    // first determine the two end points of the truss based on
-    // the display factor (a measure of the distorted image)
-    // store this information in 2 3d vectors v1 and v2
-    const Vector &end1Crd = theNodes[0]->getCrds();
-    const Vector &end2Crd = theNodes[1]->getCrds();	
-
-    static Vector v1(3);
-    static Vector v2(3);
-
-    if (displayMode == 1 || displayMode == 2) {
-      const Vector &end1Disp = theNodes[0]->getDisp();
-      const Vector &end2Disp = theNodes[1]->getDisp();    
-
-	for (int i=0; i<dimension; i++) {
-	    v1(i) = end1Crd(i)+end1Disp(i)*fact;
-	    v2(i) = end2Crd(i)+end2Disp(i)*fact;    
-	}
-	
-	// compute the strain and axial force in the member
-	double strain, force;
-	if (L == 0.0) {
-	    strain = 0.0;
-	    force = 0.0;
-	} else {
-	    strain = this->computeCurrentStrain();
-	    theMaterial->setTrialStrain(strain);
-	    force = A*theMaterial->getStress();    
-	}
+  if (displayMode > 0) {
+    res += theViewer.drawLine(v1, v2, d1, d1, this->getTag(), 0);
+  }
+  
+  for (int i=0; i<numModes; i++) {
     
-	if (displayMode == 2) // use the strain as the drawing measure
-	  return theViewer.drawLine(v1, v2, (float)strain, (float)strain);	
-	else { // otherwise use the axial force as measure
-	  return theViewer.drawLine(v1,v2, (float)force, (float)force);
-	}
-    } else if (displayMode < 0) {
-      int mode = displayMode  *  -1;
-      const Matrix &eigen1 = theNodes[0]->getEigenvectors();
-      const Matrix &eigen2 = theNodes[1]->getEigenvectors();
-      if (eigen1.noCols() >= mode) {
-	for (int i = 0; i < dimension; i++) {
-	  v1(i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-	  v2(i) = end2Crd(i) + eigen2(i,mode-1)*fact;    
-	}    
-      } else {
-	for (int i = 0; i < dimension; i++) {
-	  v1(i) = end1Crd(i);
-	  v2(i) = end2Crd(i);
-	}    
-      }
-      return theViewer.drawLine(v1, v2, 1.0, 1.0);	
+    const char *mode = displayModes[i];
+    if (strcmp(mode, "axialForce") == 0) {
+      double force = A*theMaterial->getStress();    	  
+      d1 = force; 
+      d2 = force;
+
+      res +=theViewer.drawLine(v1, v2, d1, d1, this->getTag(), i);
+      
+    } else if (strcmp(mode, "material") == 0) {
+      d1 = theMaterial->getTag();
+      d2 = theMaterial->getTag();
+
+      res += theViewer.drawLine(v1, v2, d1, d1, this->getTag(), i);
+      
+    } else if (strcmp(mode, "materialStress") == 0) {
+      d1 = theMaterial->getStress();
+      d2 = theMaterial->getStress();
+
+      res += theViewer.drawLine(v1, v2, d1, d1, this->getTag(), i);
+      
+      } else if (strcmp(mode, "materialStrain") == 0) {
+      
+      d1 = theMaterial->getStrain();
+      d2 = theMaterial->getStrain();
+
+      res += theViewer.drawLine(v1, v2, d1, d1, this->getTag(), i);
     }
-    return 0;
+  }    
+  return res;
 }
+
 
 
 void
@@ -1044,38 +1060,51 @@ Truss::Print(OPS_Stream &s, int flag)
     strain = theMaterial->getStrain();
     force = A * theMaterial->getStress();
     
-    if (flag == 0) { // print everything
-	s << "Element: " << this->getTag(); 
-	s << " type: Truss  iNode: " << connectedExternalNodes(0);
-	s << " jNode: " << connectedExternalNodes(1);
-	s << " Area: " << A << " Mass/Length: " << rho;
-	
-	s << " \n\t strain: " << strain;
-	if (initialDisp != 0) {
-	  s << " initialDisplacements: ";
-	  for (int i = 0; i < dimension; i++) 
-	    s << initialDisp[i] << " ";
+	if (flag == OPS_PRINT_CURRENTSTATE) {
+		s << "Element: " << this->getTag();
+		s << " type: Truss  iNode: " << connectedExternalNodes(0);
+		s << " jNode: " << connectedExternalNodes(1);
+		s << " Area: " << A << " Mass/Length: " << rho;
+		s << " cMass: " << cMass;
+        
+		s << " \n\t strain: " << strain;
+		if (initialDisp != 0) {
+			s << " initialDisplacements: ";
+			for (int i = 0; i < dimension; i++)
+				s << initialDisp[i] << " ";
+		}
+        
+		s << " axial load: " << force;
+        
+		if (L != 0.0) {
+			int numDOF2 = numDOF / 2;
+			double temp;
+			for (int i = 0; i < dimension; i++) {
+				temp = cosX[i] * force;
+				(*theVector)(i) = -temp;
+				(*theVector)(i + numDOF2) = temp;
+			}
+			s << " \n\t unbalanced load: " << *theVector;
+		}
+        
+		s << " \t Material: " << *theMaterial;
+		s << endln;
 	}
-
-	s << " axial load: " <<  force;
-
-	if (L != 0.0) {
-	  int numDOF2 = numDOF/2;
-	  double temp;
-	  for (int i = 0; i < dimension; i++) {
-	    temp = cosX[i]*force;
-	    (*theVector)(i) = -temp;
-	    (*theVector)(i+numDOF2) = temp;
-	  }
-	  s << " \n\t unbalanced load: " << *theVector;	
+    
+	if (flag == 1) {
+		s << this->getTag() << "  " << strain << "  ";
+		s << force << endln;
 	}
-
-	s << " \t Material: " << *theMaterial;
-	s << endln;
-    } else if (flag == 1) {
-	s << this->getTag() << "  " << strain << "  ";
-	s << force << endln;
-    }
+    
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "\t\t\t{";
+		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"type\": \"Truss\", ";
+		s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+		s << "\"A\": " << A << ", ";
+		s << "\"rho\": " << rho << ", ";
+		s << "\"material\": \"" << theMaterial->getTag() << "\"}";
+	}
 }
 
 double
@@ -1204,13 +1233,15 @@ Truss::setParameter(const char **argv, int argc, Parameter &param)
     return -1;
   
   // Cross sectional area of the truss
-  if (strcmp(argv[0],"A") == 0)
+  if (strcmp(argv[0],"A") == 0) {
+    param.setValue(A);
     return param.addObject(1, this);
-  
+  }
   // Mass densitity of the truss
-  if (strcmp(argv[0],"rho") == 0)
+  if (strcmp(argv[0],"rho") == 0) {
+    param.setValue(rho);
     return param.addObject(2, this);
-  
+  }
   // Explicit specification of a material parameter
   if (strstr(argv[0],"material") != 0) {
     
@@ -1303,17 +1334,30 @@ Truss::getMassSensitivity(int gradNumber)
 {
   Matrix &mass = *theMatrix;
   mass.Zero();
-
+  
   if (parameterID == 2) {
-    double massDerivative = 0.5*L;
-
-    int numDOF2 = numDOF/2;
-    for (int i = 0; i < dimension; i++) {
-      mass(i,i) = massDerivative;
-      mass(i+numDOF2,i+numDOF2) = massDerivative;
+    
+    if (cMass == 0)  {
+      // lumped mass matrix
+      double massDerivative = 0.5*L;
+      int numDOF2 = numDOF/2;
+      for (int i = 0; i < dimension; i++) {
+        mass(i,i) = massDerivative;
+        mass(i+numDOF2,i+numDOF2) = massDerivative;
+      }
+    } else  {
+      // consistent mass matrix
+      double massDerivative = L/6.0;
+      int numDOF2 = numDOF/2;
+      for (int i = 0; i < dimension; i++) {
+        mass(i,i) = 2.0*massDerivative;
+        mass(i,i+numDOF2) = massDerivative;
+        mass(i+numDOF2,i) = massDerivative;
+        mass(i+numDOF2,i+numDOF2) = 2.0*massDerivative;
+      }
     }
   }
-
+  
   return mass;
 }
 
@@ -1553,9 +1597,7 @@ Truss::commitSensitivity(int gradNumber, int numGrads)
 	}
 	
 	// Pass it down to the material
-	theMaterial->commitSensitivity(strainSensitivity, gradNumber, numGrads);
-
-	return 0;
+	return theMaterial->commitSensitivity(strainSensitivity, gradNumber, numGrads);
 }
 
 // AddingSensitivity:END /////////////////////////////////////////////

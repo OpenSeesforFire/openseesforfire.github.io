@@ -7,7 +7,9 @@ OBJS       = ZeroLength.o \
 	ZeroLengthND.o \
 	ZeroLengthContactNTS2D.o \
 	ZeroLengthInterface2D.o \
+	ZeroLengthRocking.o \
 	CoupledZeroLength.o \
+	ZeroLengthImpact3D.o \
 	TclZeroLength.o
 
 

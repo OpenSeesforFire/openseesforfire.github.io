@@ -28,6 +28,8 @@
 // Ref: Dvorkin,Bathe, A continuum mechanics based four node shell
 //      element for general nonlinear analysis,
 //      Eng.Comput.,1,77-88,1984
+// Modified for SIF modelling by Jian Jiang, Liming Jiang [http://openseesforfire.github.io] 
+
 
 #include <stdio.h> 
 #include <stdlib.h> 
@@ -57,7 +59,7 @@
 static int numShellMITC4Thermal = 0;
 
 void *
-OPS_NewShellMITC4Thermal(void)
+OPS_ShellMITC4Thermal(void)
 {
   if (numShellMITC4Thermal == 0) {
     opserr << "Using ShellMITC4Thermal - Developed by: Leopoldo Tesser, Diego A. Talledo, Veronique Le Corvec\n";
@@ -80,7 +82,7 @@ OPS_NewShellMITC4Thermal(void)
     return 0;
   }
 
-  SectionForceDeformation *theSection = OPS_GetSectionForceDeformation(iData[5]);
+  SectionForceDeformation *theSection = OPS_getSectionForceDeformation(iData[5]);
 
   if (theSection == 0) {
     opserr << "ERROR:  element ShellMITC4Thermal " << iData[0] << "section " << iData[5] << " not found\n";
@@ -187,6 +189,8 @@ connectedExternalNodes(4), load(0), Ki(0)
    residThermal[i] = 0.0;
   
   counterTemperature = 0;
+
+  Geolinear = true;
 
  }
 //******************************************************************
@@ -931,10 +935,10 @@ ShellMITC4Thermal::addLoad(ElementalLoad *theLoad, double loadFactor)
   else if (type == LOAD_TAG_NodalThermalAction) {
  
 	  //NodalLoad* theNodalThermal0,theNodalThermal1;	 
-	 NodalThermalAction* theNodalThermal0 = (NodalThermalAction*) (nodePointers[0]->getNodalLoadPtr());
-	 NodalThermalAction* theNodalThermal1 = (NodalThermalAction*) (nodePointers[1]->getNodalLoadPtr());	
-	 NodalThermalAction* theNodalThermal2 = (NodalThermalAction*) (nodePointers[2]->getNodalLoadPtr());
-	 NodalThermalAction* theNodalThermal3 = (NodalThermalAction*) (nodePointers[3]->getNodalLoadPtr());	
+	 NodalThermalAction* theNodalThermal0 = nodePointers[0]->getNodalThermalActionPtr();
+	 NodalThermalAction* theNodalThermal1 = nodePointers[1]->getNodalThermalActionPtr();	
+	 NodalThermalAction* theNodalThermal2 = nodePointers[2]->getNodalThermalActionPtr();
+	 NodalThermalAction* theNodalThermal3 = nodePointers[3]->getNodalThermalActionPtr();	
 
 
 	 int type;
@@ -1059,6 +1063,7 @@ int
 ShellMITC4Thermal::addInertiaLoadToUnbalance(const Vector &accel)
 {
   int tangFlag = 1 ;
+  static Vector r(24);
 
   int i;
 
@@ -1071,17 +1076,19 @@ ShellMITC4Thermal::addInertiaLoadToUnbalance(const Vector &accel)
   if (allRhoZero == 0) 
     return 0;
 
+  formInertiaTerms( tangFlag ) ;
+
   int count = 0;
   for (i=0; i<4; i++) {
     const Vector &Raccel = nodePointers[i]->getRV(accel);
     for (int j=0; j<6; j++)
-      resid(count++) = Raccel(i);
+      r(count++) = Raccel(j);
   }
 
-  formInertiaTerms( tangFlag ) ;
   if (load == 0) 
     load = new Vector(24);
-  load->addMatrixVector(1.0, mass, resid, -1.0);
+
+  load->addMatrixVector(1.0, mass, r, -1.0);
 
   return 0;
 }
@@ -1099,9 +1106,15 @@ const Vector&  ShellMITC4Thermal::getResistingForce( )
   if (load != 0)
     resid -= *load;
 
-#ifdef _SDEBUG
-  opserr<< "ShellMITC4Thermal: "<<this->getTag()<< " Resid: "<<endln
-	 <<resid<<endln;
+#ifdef _sDEBUG
+  if (this->getTag() == 1||this->getTag() == 3||this->getTag() == 15) {
+	    opserr << "ShellMITC4Thermal: " << this->getTag() << " Resid: " << endln
+		  << resid << endln;
+	}
+
+  if (resid(0) != resid(0)|| resid(1) != resid(1))
+	  opserr << "ShellMITC4Thermal: " << this->getTag() << " Resid: " << endln
+	  << resid << endln;
 #endif
 
   if (counterTemperature == 1)
@@ -1353,6 +1366,11 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
   //zero stiffness and residual 
   stiff.Zero( ) ;
   resid.Zero( ) ;
+  
+//start Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
+  if(!Geolinear)
+	updateBasis( );
+//end Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
 
   double dx34 = xl[0][2]-xl[0][3];
   double dy34 = xl[1][2]-xl[1][3];
@@ -1485,8 +1503,8 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
       //nodal "displacements" 
       const Vector &ul = nodePointers[j]->getTrialDisp( ) ;
 
-#ifdef _SDEBUG
-	if((this->getTag())==1&&j==2)
+#ifdef _sDEBUG
+	if (this->getTag() == 1||this->getTag() == 3||this->getTag() == 15) 
 			opserr<<"Node "<<j<<" TrialDisp "<<ul<<endln;
 #endif
 	  if(ul.Norm()>1e6)
@@ -1508,22 +1526,12 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
 	      epsDrill +=  BdrillJ[p]*ul(p) ;
     } // end for j
   
-#ifdef _SDEBUG
-		if(this->getTag()==1)
-			opserr<<"Shellthermal "<<this->getTag()<< "int "<<i<<" strain  "<<strain<<endln;
+#ifdef _sDEBUG
+	if (this->getTag() == 1 && i == 3)
+		opserr << "Shell " << i << " strain  " << strain << endln;
 #endif
-    //send the strain to the material 
-		Vector newStrain = Vector(9);
-		newStrain.Zero();
-   for(int mi =0;mi<8;mi++)
-	   newStrain(mi) = strain(mi);
-  if(this->getTag()==1&&i==1)
-     newStrain(8)=111;
-  //if(this->getTag()==13)
-	//  opserr<<"ele:  13"<<endln;
-
-    if(counterTemperature !=1&&counterTemperature !=2)
-       success = materialPointers[i]->setTrialSectionDeformation( newStrain ) ;
+    //if(counterTemperature !=1&&counterTemperature !=2)
+       success = materialPointers[i]->setTrialSectionDeformation( strain ) ;
 
     //compute the stress
     stress = materialPointers[i]->getStressResultant( ) ;
@@ -1729,6 +1737,96 @@ ShellMITC4Thermal::computeBasis( )
   }  //end for i 
 
 }
+
+//start Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
+//************************************************************************
+//compute local coordinates and basis
+
+void   
+ShellMITC4Thermal::updateBasis( ) 
+{
+  //could compute derivatives \frac{ \partial {\bf x} }{ \partial L_1 } 
+  //                     and  \frac{ \partial {\bf x} }{ \partial L_2 }
+  //and use those as basis vectors but this is easier 
+  //and the shell is flat anyway.
+
+  static Vector temp(3) ;
+
+  static Vector v1(3) ;
+  static Vector v2(3) ;
+  static Vector v3(3) ;
+
+  //get two vectors (v1, v2) in plane of shell by 
+  // nodal coordinate differences
+
+  const Vector &coor0 = nodePointers[0]->getCrds( ) + nodePointers[0]->getTrialDisp();
+
+  const Vector &coor1 = nodePointers[1]->getCrds( ) + nodePointers[1]->getTrialDisp();
+
+  const Vector &coor2 = nodePointers[2]->getCrds( ) + nodePointers[2]->getTrialDisp();
+  
+  const Vector &coor3 = nodePointers[3]->getCrds( ) + nodePointers[3]->getTrialDisp();
+
+  v1.Zero( ) ;
+  //v1 = 0.5 * ( coor2 + coor1 - coor3 - coor0 ) ;
+  v1  = coor2 ;
+  v1 += coor1 ;
+  v1 -= coor3 ;
+  v1 -= coor0 ;
+  v1 *= 0.50 ;
+  
+  v2.Zero( ) ;
+  //v2 = 0.5 * ( coor3 + coor2 - coor1 - coor0 ) ;
+  v2  = coor3 ;
+  v2 += coor2 ;
+  v2 -= coor1 ;
+  v2 -= coor0 ;
+  v2 *= 0.50 ;
+ 
+  //normalize v1 
+  //double length = LovelyNorm( v1 ) ;
+  double length = v1.Norm( ) ;
+  v1 /= length ;
+
+  //Gram-Schmidt process for v2 
+
+  //double alpha = LovelyInnerProduct( v2, v1 ) ;
+  double alpha = v2^v1 ;
+
+  //v2 -= alpha*v1 ;
+  temp = v1 ;
+  temp *= alpha ;
+  v2 -= temp ;
+
+  //normalize v2 
+  //length = LovelyNorm( v2 ) ;
+  length = v2.Norm( ) ;
+  v2 /= length ;
+
+  //cross product for v3  
+  v3 = LovelyCrossProduct( v1, v2 ) ;
+  
+  //local nodal coordinates in plane of shell
+
+  int i ;
+  for ( i = 0; i < 4; i++ ) {
+
+       const Vector &coorI = nodePointers[i]->getCrds( ) ;
+       xl[0][i] = coorI^v1 ;  
+       xl[1][i] = coorI^v2 ;
+
+  }  //end for i 
+
+  //basis vectors stored as array of doubles
+  for ( i = 0; i < 3; i++ ) {
+      g1[i] = v1(i) ;
+      g2[i] = v2(i) ;
+      g3[i] = v3(i) ;
+  }  //end for i 
+
+}
+//end Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
+
 
 //*************************************************************************
 //compute Bdrill
@@ -2228,24 +2326,24 @@ int  ShellMITC4Thermal::recvSelf (int commitTag,
 //**************************************************************************
 
 int
-ShellMITC4Thermal::displaySelf(Renderer &theViewer, int displayMode, float fact)
+ShellMITC4Thermal::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
-    // first determine the end points of the quad based on
-    // the display factor (a measure of the distorted image)
-    // store this information in 4 3d vectors v1 through v4
-    const Vector &end1Crd = nodePointers[0]->getCrds();
-    const Vector &end2Crd = nodePointers[1]->getCrds();	
-    const Vector &end3Crd = nodePointers[2]->getCrds();	
-    const Vector &end4Crd = nodePointers[3]->getCrds();	
+	// first determine the end points of the quad based on
+	// the display factor (a measure of the distorted image)
+	// store this information in 4 3d vectors v1 through v4
+	const Vector &end1Crd = nodePointers[0]->getCrds();
+	const Vector &end2Crd = nodePointers[1]->getCrds();
+	const Vector &end3Crd = nodePointers[2]->getCrds();
+	const Vector &end4Crd = nodePointers[3]->getCrds();
 
-    static Matrix coords(4,3);
-    static Vector values(4);
-    static Vector P(24) ;
+	static Matrix coords(4, 3);
+	static Vector values(4);
+	static Vector P(24);
 
-    for (int j=0; j<4; j++)
+	for (int j = 0; j<4; j++)
 		values(j) = 0.0;
 
-    if (displayMode >= 0) {
+	if (displayMode >= 0) {
 		// Display mode is positive:
 		// display mode = 0 -> plot no contour
 		// display mode = 1-8 -> plot 1-8 stress resultant
@@ -2255,23 +2353,24 @@ ShellMITC4Thermal::displaySelf(Renderer &theViewer, int displayMode, float fact)
 		const Vector &end2Disp = nodePointers[1]->getDisp();
 		const Vector &end3Disp = nodePointers[2]->getDisp();
 		const Vector &end4Disp = nodePointers[3]->getDisp();
-		
+
 		// Get stress resultants
-        if (displayMode <= 8 && displayMode > 0) {
-			for (int i=0; i<4; i++) {
+		if (displayMode <= 8 && displayMode > 0) {
+			for (int i = 0; i<4; i++) {
 				const Vector &stress = materialPointers[i]->getStressResultant();
-				values(i) = stress(displayMode-1);
+				values(i) = stress(displayMode - 1);
 			}
 		}
 
 		// Get nodal absolute position = OriginalPosition + (Displacement*factor)
 		for (int i = 0; i < 3; i++) {
-			coords(0,i) = end1Crd(i) + end1Disp(i)*fact;
-			coords(1,i) = end2Crd(i) + end2Disp(i)*fact;
-			coords(2,i) = end3Crd(i) + end3Disp(i)*fact;
-			coords(3,i) = end4Crd(i) + end4Disp(i)*fact;
+			coords(0, i) = end1Crd(i) + end1Disp(i)*fact;
+			coords(1, i) = end2Crd(i) + end2Disp(i)*fact;
+			coords(2, i) = end3Crd(i) + end3Disp(i)*fact;
+			coords(3, i) = end4Crd(i) + end4Disp(i)*fact;
 		}
-	} else {
+	}
+	else {
 		// Display mode is negative.
 		// Plot eigenvectors
 		int mode = displayMode * -1;
@@ -2281,25 +2380,26 @@ ShellMITC4Thermal::displaySelf(Renderer &theViewer, int displayMode, float fact)
 		const Matrix &eigen4 = nodePointers[3]->getEigenvectors();
 		if (eigen1.noCols() >= mode) {
 			for (int i = 0; i < 3; i++) {
-				coords(0,i) = end1Crd(i) + eigen1(i,mode-1)*fact;
-				coords(1,i) = end2Crd(i) + eigen2(i,mode-1)*fact;
-				coords(2,i) = end3Crd(i) + eigen3(i,mode-1)*fact;
-				coords(3,i) = end4Crd(i) + eigen4(i,mode-1)*fact;
-			}    
-		} else {
+				coords(0, i) = end1Crd(i) + eigen1(i, mode - 1)*fact;
+				coords(1, i) = end2Crd(i) + eigen2(i, mode - 1)*fact;
+				coords(2, i) = end3Crd(i) + eigen3(i, mode - 1)*fact;
+				coords(3, i) = end4Crd(i) + eigen4(i, mode - 1)*fact;
+			}
+		}
+		else {
 			for (int i = 0; i < 3; i++) {
-				coords(0,i) = end1Crd(i);
-				coords(1,i) = end2Crd(i);
-				coords(2,i) = end3Crd(i);
-				coords(3,i) = end4Crd(i);
+				coords(0, i) = end1Crd(i);
+				coords(1, i) = end2Crd(i);
+				coords(2, i) = end3Crd(i);
+				coords(3, i) = end4Crd(i);
 			}
 		}
 	}
 
-    int error = 0;
-	
-	// Draw a poligon with coordinates coords and values (colors) corresponding to values vector
-    error += theViewer.drawPolygon (coords, values);
+	int error = 0;
 
-    return error;
+	// Draw a poligon with coordinates coords and values (colors) corresponding to values vector
+	error += theViewer.drawPolygon(coords, values);
+
+	return error;
 }

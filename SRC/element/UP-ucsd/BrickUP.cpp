@@ -59,6 +59,61 @@
 
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
+
+void* OPS_BrickUP()
+{
+    if (OPS_GetNDM() != 3 || OPS_GetNDF() != 4) {
+	opserr << "WARNING -- model dimensions and/or nodal DOF not compatible with BrickUP element\n";
+	return 0;
+    }
+    if (OPS_GetNumRemainingInputArgs() < 15) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element brickUP eleTag? N1? N2? N3? N4? N5? N6? N7? N8? matTag? bulk? rhof? perm_x? perm_y? perm_z? <b1? b2? b3?>\n";
+	return 0;
+    }
+
+    // brickUPId, Node[8], matID
+    int tags[10];
+    int num = 10;
+    if (OPS_GetIntInput(&num,tags) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+
+    NDMaterial* mat = OPS_getNDMaterial(tags[9]);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "material tag: " << tags[9];
+	opserr << "\nBrick element: " << tags[0] << endln;
+    }
+
+    // bk, r, perm1, perm2, perm3
+    double data[5];
+    num = 5;
+    if (OPS_GetDoubleInput(&num,data) < 0) {
+	opserr<<"WARNING: invalid double input\n";
+	return 0;
+    }
+
+    // b1, b2, b3
+    double opt[3] = {0,0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 3) {
+	num = 3;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,opt) < 0) {
+	    opserr<<"WARNING: invalid double input\n";
+	    return 0;
+	}
+    }
+
+    return new BrickUP(tags[0],tags[1],tags[2],tags[3],tags[4],
+		       tags[5],tags[6],tags[7],tags[8],
+		       *mat,data[0],data[1],data[2],data[3],data[4],
+		       opt[0],opt[1],opt[2]);
+}
 
 //static data
 double  BrickUP::xl[4][8] ;
@@ -665,12 +720,19 @@ BrickUP::addLoad(ElementalLoad *theLoad, double loadFactor)
   int type;
   const Vector &data = theLoad->getData(type, loadFactor);
 
-  if ((type == LOAD_TAG_BrickSelfWeight) || (type == LOAD_TAG_SelfWeight)) {
-    applyLoad = 1;
-    appliedB[0] += loadFactor * b[0];
-    appliedB[1] += loadFactor * b[1];
-    appliedB[2] += loadFactor * b[2];
+  if (type == LOAD_TAG_BrickSelfWeight) {
+      applyLoad = 1;
+      appliedB[0] += loadFactor * b[0];
+      appliedB[1] += loadFactor * b[1];
+      appliedB[2] += loadFactor * b[2];
     return 0;
+  } else if (type == LOAD_TAG_SelfWeight) {
+      // added compatability with selfWeight class implemented for all continuum elements, C.McGann, U.W.
+      applyLoad = 1;
+	  appliedB[0] += loadFactor*data(0)*b[0];
+	  appliedB[1] += loadFactor*data(1)*b[1];
+	  appliedB[2] += loadFactor*data(2)*b[2];
+	  return 0;
   } else {
     opserr << "BrickUP::addLoad - load type unknown for ele with tag: " << this->getTag() << endln;
     return -1;
@@ -1367,7 +1429,7 @@ int  BrickUP::recvSelf (int commitTag,
 //**************************************************************************
 
 int
-BrickUP::displaySelf(Renderer &theViewer, int displayMode, float fact)
+BrickUP::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 
     const Vector &end1Crd = nodePointers[0]->getCrds();
@@ -1643,41 +1705,28 @@ BrickUP::getResponse(int responseID, Information &eleInfo)
 int
 BrickUP::setParameter(const char **argv, int argc, Parameter &param)
 {
-  if (argc < 1)
+  if (argc < 1) {
     return -1;
-
-  // permeability in horizontal direction
-  if (strcmp(argv[0],"hPerm") == 0)
-    return param.addObject(3, this);
-
-  // permeability in vertical direction
-  if (strcmp(argv[0],"vPerm") == 0)
-    return param.addObject(4, this);
-
-  // material state (elastic/plastic) for UW soil materials
-  if (strcmp(argv[0],"materialState") == 0) {
-      return param.addObject(5,this);
-  }
-  // frictional strength parameter for UW soil materials
-  if (strcmp(argv[0],"frictionalStrength") == 0) {
-      return param.addObject(7,this);
-  }
-  // non-associative parameter for UW soil materials
-  if (strcmp(argv[0],"nonassociativeTerm") == 0) {
-      return param.addObject(8,this);
-  }
-  // cohesion parameter for UW soil materials
-  if (strcmp(argv[0],"cohesiveIntercept") == 0) {
-      return param.addObject(9,this);
   }
 
   int res = -1;
 
-  int matRes = res;
-  for (int i=0; i<8; i++) {
-    matRes =  materialPointers[i]->setParameter(argv, argc, param);
-    if (matRes != -1)
-      res = matRes;
+  // permeability in horizontal direction
+  if (strcmp(argv[0],"hPerm") == 0) {
+    return param.addObject(3, this);
+
+  // permeability in vertical direction
+  } else if (strcmp(argv[0],"vPerm") == 0) {
+    return param.addObject(4, this);
+
+  } else {
+
+    int matRes = res;
+    for (int i=0; i<8; i++) {
+      matRes =  materialPointers[i]->setParameter(argv, argc, param);
+      if (matRes != -1)
+        res = matRes;
+    }
   }
 
   return res;
@@ -1698,39 +1747,6 @@ BrickUP::updateParameter(int parameterID, Information &info)
 		perm[2] = info.theDouble;
 		this->getDamp();	// update mass matrix
 		return 0;
-	case 5:
-		// added: C.McGann, U.Washington
-		for (int i = 0; i<8; i++) {
-			matRes = materialPointers[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 7:
-	    for (int i = 0; i < 8; i++) {
-			matRes = materialPointers[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 8:
-	    for (int i = 0; i < 8; i++) {
-			matRes = materialPointers[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
-	case 9:
-	    for (int i = 0; i < 8; i++) {
-			matRes = materialPointers[i]->updateParameter(parameterID, info);
-		}
-		if (matRes != -1) {
-			res = matRes;
-		}
-		return res;
 	default:
 		return -1;
   }

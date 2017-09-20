@@ -37,7 +37,7 @@
 
 SineTimeSeries::SineTimeSeries(int tag, double startTime, double finishTime,
 			                   double T, double peakAmplt)
-:TimeSeries(tag, TSERIES_TAG_SineTimeSeries),
+:TimeSeries(tag, 1),
  tStart(startTime), tFinish(finishTime),
  period(T), peakAmplitude(peakAmplt)
 {
@@ -48,7 +48,7 @@ SineTimeSeries::SineTimeSeries(int tag, double startTime, double finishTime,
 }
 
 SineTimeSeries::SineTimeSeries()
-:TimeSeries(TSERIES_TAG_SineTimeSeries),
+:TimeSeries(1),
  tStart(0.0), tFinish(0.0),
  period(1.0), peakAmplitude(1.0)
 {

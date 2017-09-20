@@ -42,7 +42,7 @@
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
 #include <ElementResponse.h>
-
+#include <ElementIter.h>
 #include <elementAPI.h>
 
 double Tri31::matrixData[36];
@@ -61,7 +61,8 @@ OPS_Tri31(void)
 {
   if (num_Tri31 == 0) {
     num_Tri31++;
-    OPS_Error("Tri31 - Written by Roozbeh G. Mikola and N.Sitar, UC Berkeley\n",1);
+    opserr<<"Tri31 - Written by Roozbeh G. Mikola and N.Sitar, UC Berkeley\n";
+  //OPS_Error("Tri31 - Written by Roozbeh G. Mikola and N.Sitar, UC Berkeley\n",1);
   }
   
   // Pointer to an element that will be returned
@@ -94,10 +95,11 @@ OPS_Tri31(void)
     return 0;
   }
   
-  if (OPS_GetStringCopy(&theType) != 0) {
-    opserr << "WARNING invalid type, want: ""PlaneStress"" or ""PlaneStrain""  element SSPquad " << iData[0] << endln;
-    return 0;
-  }
+  // if (OPS_GetStringCopy(&theType) != 0) {
+  //   opserr << "WARNING invalid type, want: ""PlaneStress"" or ""PlaneStrain""  element SSPquad " << iData[0] << endln;
+  //   return 0;
+  // }
+  theType = (char*)OPS_GetString();
   
   numData = 1;
   if (OPS_GetIntInput(&numData, &iData[4]) != 0) {
@@ -106,7 +108,7 @@ OPS_Tri31(void)
   }
   int matID = iData[4];
   
-  NDMaterial *theMaterial = OPS_GetNDMaterial(matID);
+  NDMaterial *theMaterial = OPS_getNDMaterial(matID);
   if (theMaterial == 0) {
     opserr << "WARNING element Tri31 " << iData[0] << endln;
     opserr << " Material: " << matID << "not found\n";
@@ -134,6 +136,81 @@ OPS_Tri31(void)
   return theElement;
 }
 
+int OPS_Tri31(Domain& theDomain, const ID& elenodes, ID& eletags)
+{
+    // get inputs
+    int numRemainingInputArgs = OPS_GetNumRemainingInputArgs();
+    if (numRemainingInputArgs < 3) {
+	opserr << "Invalid #args, want: thk? type? matTag? <pressure? rho? b1? b2?>\n";
+	return -1;
+    }
+
+    int matID;
+    double thk;
+    char *theType;
+    double dData[4];
+    dData[0] = 0.0;
+    dData[1] = 0.0;
+    dData[2] = 0.0;
+    dData[3] = 0.0;
+ 
+    int numData = 1;
+    if (OPS_GetDoubleInput(&numData, &thk) != 0) {
+	opserr << "WARNING invalid thickness data: element Tri31 \n";
+	return -1;
+    }
+
+    theType = (char*)OPS_GetString();
+  
+    numData = 1;
+    if (OPS_GetIntInput(&numData, &matID) != 0) {
+	opserr << "WARNING invalid integer data: element Tri31\n";
+	return -1;
+    }
+  
+    NDMaterial *theMaterial = OPS_getNDMaterial(matID);
+    if (theMaterial == 0) {
+	opserr << "WARNING element Tri31 \n";
+	opserr << " Material: " << matID << "not found\n";
+	return -1;
+    }
+  
+    if (OPS_GetNumRemainingInputArgs() >= 4) {
+	numData = 4;
+	if (OPS_GetDoubleInput(&numData, &dData[0]) != 0) {
+	    opserr << "WARNING invalid optional data: element Tri31\n";
+	    return -1;
+	}
+    }
+
+    // create elements
+    ElementIter& theEles = theDomain.getElements();
+    Element* theEle = theEles();
+    int currTag = 0;
+    if (theEle != 0) {
+	currTag = theEle->getTag();
+    }
+
+    eletags.resize(elenodes.Size()/3);
+
+    for (int i=0; i<eletags.Size(); i++) {
+	theEle = new Tri31(--currTag,elenodes(3*i),elenodes(3*i+1),elenodes(3*i+2),
+			   *theMaterial, theType, thk,
+			   dData[0], dData[1], dData[2], dData[3]);
+	if (theEle == 0) {
+	    opserr<<"WARING: run out of memory for creating element\n";
+	    return -1;
+	}
+	if (theDomain.addElement(theEle) == false) {
+	    opserr<<"WARNING: failed to add element to domain\n";
+	    delete theEle;
+	    return -1;
+	}
+	eletags(i) = currTag;
+    }
+  
+    return 0;
+}
 
 Tri31::Tri31(int tag, int nd1, int nd2, int nd3,
 	     NDMaterial &m, const char *type, double t,
@@ -233,7 +310,13 @@ Tri31::getNodePtrs(void)
 int
 Tri31::getNumDOF()
 {
-    return 6;
+  int sum = 0;
+
+  sum += theNodes[0]->getNumberDOF();
+  sum += theNodes[1]->getNumberDOF();
+  sum += theNodes[2]->getNumberDOF();
+
+  return sum;
 }
 
 void
@@ -265,11 +348,19 @@ Tri31::setDomain(Domain *theDomain)
     int dofNd2 = theNodes[1]->getNumberDOF();
     int dofNd3 = theNodes[2]->getNumberDOF();
     
-    if (dofNd1 != 2 || dofNd2 != 2 || dofNd3 != 2) {
-		//opserr << "FATAL ERROR Tri31 (tag: %d), has differing number of DOFs at its nodes",
-	    //this->getTag());
-	    return;
+    if (dofNd1 != 2 && dofNd1 != 3) {
+      opserr << "WARNING Tri31::setDomain() element " << this->getTag() << " does not have 2 or 3 DOF at node " << theNodes[0]->getTag() << endln;
+      return;
     }
+    if (dofNd2 != 2 && dofNd2 != 3) {
+      opserr << "WARNING Tri31::setDomain() element " << this->getTag() << " does not have 2 or 3 DOF at node " << theNodes[1]->getTag() << endln;
+      return;
+    }
+    if (dofNd3 != 2 && dofNd3 != 3) {
+      opserr << "WARNING Tri31::setDomain() element " << this->getTag() << " does not have 2 or 3 DOF at node " << theNodes[2]->getTag() << endln;
+      return;
+    }
+
     this->DomainComponent::setDomain(theDomain);
 
     // Compute consistent nodal loads due to pressure
@@ -533,7 +624,11 @@ Tri31::addInertiaLoadToUnbalance(const Vector &accel)
 	static double rhoi[1]; //numgp
 	double sum = 0.0;
 	for (i = 0; i < numgp; i++) {
-		rhoi[i] = theMaterial[i]->getRho();
+            if(rho == 0) {
+                rhoi[i] = theMaterial[i]->getRho();
+            } else {
+                rhoi[i] = rho;
+            }
 	    sum += rhoi[i];
 	}
 
@@ -623,7 +718,11 @@ Tri31::getResistingForceIncInertia()
 	static double rhoi[1]; //numgp
 	double sum = 0.0;
 	for (i = 0; i < numgp; i++) {
+            if(rho == 0) {
 		rhoi[i] = theMaterial[i]->getRho();
+            } else {
+                rhoi[i] = rho;
+            }
 	    sum += rhoi[i];
 	}
 
@@ -884,7 +983,7 @@ Tri31::Print(OPS_Stream &s, int flag)
 }
 
 int
-Tri31::displaySelf(Renderer &theViewer, int displayMode, float fact)                                          
+Tri31::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 
     // first set the quantity to be displayed at the nodes;

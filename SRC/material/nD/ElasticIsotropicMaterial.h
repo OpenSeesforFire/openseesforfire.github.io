@@ -47,10 +47,10 @@ class ElasticIsotropicMaterial : public NDMaterial
 {
   public:
     // Only called by subclasses to pass their tags to NDMaterialModel
-    ElasticIsotropicMaterial (int tag, int classTag, double E, double nu, double rho = 0.0, double alpha=0);
+    ElasticIsotropicMaterial (int tag, int classTag, double E, double nu, double rho = 0.0);
 
     // Called by clients
-    ElasticIsotropicMaterial (int tag, double E, double nu, double rho = 0.0,double alpha=0);
+    ElasticIsotropicMaterial (int tag, double E, double nu, double rho = 0.0);
 
     // For parallel processing
     ElasticIsotropicMaterial (void);
@@ -95,17 +95,16 @@ class ElasticIsotropicMaterial : public NDMaterial
 
     virtual int setParameter(const char **argv, int argc, Parameter &param);
     virtual int updateParameter(int parameterID, Information &info);
-	
-	
-	
+    virtual int activateParameter(int paramID);
+
   protected:
     double E;	// Elastic modulus
     double v;	// Poisson ratio
     double rho ; //mass per unit 3D volume
-	double Alpha ;  // coefficient of thermal expansion
+
+    int parameterID;
   private:
-    // Uncomment when this material model is "sensitized"
-    //int parameterID;
+
 };
 
 

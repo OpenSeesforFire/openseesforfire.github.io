@@ -45,6 +45,55 @@
 
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
+
+void* OPS_Twenty_Node_Brick()
+{
+    if (OPS_GetNDM() != 3 ) {
+	opserr << "WARNING -- model dimensions and/or nodal DOF not compatible with 20NodeBrick element\n";
+	return 0;
+    }
+    
+    if (OPS_GetNumRemainingInputArgs() < 22) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element 20NodeBrick eleTag? N1? N2? N3? N4? N5? N6? N7? N8? N9? N10? N11? N12? N13? N14? N15? N16? N17? N18? N19? N20? matTag? <b1? b2? b3?>\n";
+	return 0;
+    }
+
+    // brickId, Nod[20], matID
+    int idata[22];
+    int num = 22;
+    if (OPS_GetIntInput(&num,idata)<0) {
+	opserr<<"WARNING: invalid integer data\n";
+	return 0;
+    }
+
+    NDMaterial* mat = OPS_getNDMaterial(idata[21]);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "material tag: " << idata[21];
+	opserr << "\nBrick element: " << idata[0] << endln;
+    }
+
+    // b1, b2, b3
+    double data[3] = {0,0,0};
+    num = OPS_GetNumRemainingInputArgs();
+    if (num > 3) {
+	num = 3;
+    }
+    if (num > 0) {
+	if (OPS_GetDoubleInput(&num,data) < 0) {
+	    opserr<<"WARNING: invalid double data\n";
+	    return 0;
+	}
+    }
+
+    return new Twenty_Node_Brick(idata[0],idata[1],idata[2],idata[3],idata[4],idata[5],
+				 idata[6],idata[7],idata[8],idata[9],idata[10],idata[11],
+				 idata[12],idata[13],idata[14],idata[15],idata[16],idata[17],
+				 idata[18],idata[19],idata[20],
+				 *mat,data[0],data[1],data[2]);
+}
 
 //static data
 double  Twenty_Node_Brick::xl[3][20] ;
@@ -825,12 +874,19 @@ Twenty_Node_Brick::addLoad(ElementalLoad *theLoad, double loadFactor)
 	int type;
   	const Vector &data = theLoad->getData(type, loadFactor);
 
-  	if ((type == LOAD_TAG_BrickSelfWeight) || (type == LOAD_TAG_SelfWeight)) {
-    	applyLoad = 1;
-    	appliedB[0] += loadFactor * b[0];
-    	appliedB[1] += loadFactor * b[1];
-    	appliedB[2] += loadFactor * b[2];
-    	return 0;
+    if (type == LOAD_TAG_BrickSelfWeight) {
+      applyLoad = 1;
+      appliedB[0] += loadFactor * b[0];
+      appliedB[1] += loadFactor * b[1];
+      appliedB[2] += loadFactor * b[2];
+    return 0;
+    } else if (type == LOAD_TAG_SelfWeight) {
+      // added compatability with selfWeight class implemented for all continuum elements, C.McGann, U.W.
+      applyLoad = 1;
+	  appliedB[0] += loadFactor*data(0)*b[0];
+	  appliedB[1] += loadFactor*data(1)*b[1];
+	  appliedB[2] += loadFactor*data(2)*b[2];
+	  return 0;
   	} else {
     	opserr << "Twenty_Node_Brick::addLoad - load type unknown for truss with tag: " << this->getTag() << endln;
     	return -1;
@@ -1618,8 +1674,7 @@ int  Twenty_Node_Brick::recvSelf (int commitTag,
 
 int
 
-Twenty_Node_Brick::displaySelf(Renderer &theViewer, int displayMode, float fact)
-
+Twenty_Node_Brick::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 
    return 0;
@@ -1678,8 +1733,8 @@ Twenty_Node_Brick::setResponse(const char **argv, int argc, OPS_Stream &output)
       output.tag("ResponseType","sigma22");
       output.tag("ResponseType","sigma33");
       output.tag("ResponseType","sigma12");
-      output.tag("ResponseType","sigma13");
-      output.tag("ResponseType","sigma23");      
+      output.tag("ResponseType","sigma23");
+      output.tag("ResponseType","sigma13");      
 
       output.endTag(); // NdMaterialOutput
       output.endTag(); // GaussPoint

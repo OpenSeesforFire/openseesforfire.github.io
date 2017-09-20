@@ -55,7 +55,7 @@ OPS_SurfaceLoad(void)
 {
   if (num_SurfaceLoad == 0) {
     num_SurfaceLoad++;
-    OPS_Error("SurfaceLoad element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n", 1);
+    opserr<<"SurfaceLoad element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n";
   }
 
   // Pointer to a uniaxial material that will be returned
@@ -319,7 +319,7 @@ SurfaceLoad::getResistingForce()
 const Vector &
 SurfaceLoad::getResistingForceIncInertia()
 {       
-  	return theVector;
+  	return getResistingForce();
 }
 
 int
@@ -380,7 +380,7 @@ SurfaceLoad::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theB
 }
 
 int
-SurfaceLoad::displaySelf(Renderer &theViewer, int displayMode, float fact)
+SurfaceLoad::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
   return 0;
 }

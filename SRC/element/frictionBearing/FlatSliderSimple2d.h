@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4952 $
-// $Date: 2012-08-09 06:56:05 +0100 (Thu, 09 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/FlatSliderSimple2d.h $
+// $Revision: 6049 $
+// $Date: 2015-07-17 12:56:36 +0800 (Fri, 17 Jul 2015) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/FlatSliderSimple2d.h $
 
 #ifndef FlatSliderSimple2d_h
 #define FlatSliderSimple2d_h
@@ -52,7 +52,7 @@ public:
         const Vector y = 0, const Vector x = 0,
         double shearDistI = 0.0,
         int addRayleigh = 0, double mass = 0.0,
-        int maxIter = 20, double tol = 1E-12);
+        int maxIter = 25, double tol = 1E-12);
     FlatSliderSimple2d();
     
     // destructor
@@ -90,7 +90,7 @@ public:
     // public methods for element output
     int sendSelf(int commitTag, Channel &theChannel);
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);
+    int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode);
     void Print(OPS_Stream &s, int flag = 0);
     
     Response *setResponse(const char **argv, int argc, OPS_Stream &s);
@@ -119,6 +119,7 @@ private:
     int maxIter;        // maximum number of iterations
     double tol;         // tolerance for convergence criterion
     double L;           // element length
+    bool onP0;          // flag to indicate if the element is on P0
     
     // state variables
     Vector ub;          // displacements in basic system
@@ -135,9 +136,9 @@ private:
     // initial stiffness matrix in basic system
     Matrix kbInit;
     
-    static Matrix theMatrix;
-    static Vector theVector;
-    static Vector theLoad;
+    static Matrix theMatrix;  // a class wide Matrix
+    static Vector theVector;  // a class wide Vector
+    Vector theLoad;
 };
 
 #endif

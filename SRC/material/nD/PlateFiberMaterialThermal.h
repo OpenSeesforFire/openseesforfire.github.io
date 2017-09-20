@@ -25,7 +25,8 @@
 // Ed "C++" Love
 //
 // Generic Plate Fiber Material
-//
+//Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
+
 
 
 #include <stdio.h> 

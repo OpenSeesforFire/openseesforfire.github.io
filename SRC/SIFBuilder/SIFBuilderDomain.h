@@ -156,10 +156,10 @@ class SIFBuilderDomain
 	
 	int defineBC();
 
-	int GenStructuralModel(const ID& MeshCtrlPars,bool isElasticModel=false,bool isDynamicModel=false);
+	int GenStructuralModel(const ID& MeshCtrlPars,bool isElasticModel,bool isDynamicModel, bool isPinnedModel);
   
-    int MeshSIFMember(SIFMember* theSIFMember, int NumEles, bool isEls=false);
-	int MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ, bool isEls=false);
+    int MeshSIFMember(SIFMember* theSIFMember, int NumEles);
+	int MeshSIFSlab(SIFMember* theSIFMember, int NumEleX,int NumEleZ);
 
 	CrdTransf* getCrdTransf(int MemberType, int TransfType);
 
@@ -212,6 +212,7 @@ class SIFBuilderDomain
 	SIFfireActionIter* theSIFfireAction_Iter;
 
 	bool isElastic;
+	bool isPinned;
 	int LoadApplied;
 	int theNodeTag;
 	int theEleTag;
@@ -219,6 +220,7 @@ class SIFBuilderDomain
 	const char *theHTdir;
 	ID SIFBuilderInfo;
 	double offset;
+	Vector fireFloorTag;
 
 	Domain* theDomain ;                 //static pointer to Domain;
 int nDoF ;                            //static tag for number of degree of freedom

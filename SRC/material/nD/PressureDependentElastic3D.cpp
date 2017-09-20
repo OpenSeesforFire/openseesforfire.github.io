@@ -31,6 +31,65 @@
 #include <PressureDependentElastic3D.h>
 #include <math.h>
 #include <string.h>
+#include <elementAPI.h>
+
+void* OPS_PressureDependentElastic3D()
+{
+    int argc = OPS_GetNumRemainingInputArgs() + 2;
+    if (argc < 6) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: nDMaterial PressureDependentElastic3D tag? E? v? rho?\n";
+	return 0;
+    }
+
+    int tag = 0;
+    int numdata = 1;
+    if (OPS_GetIntInput(&numdata, &tag) < 0) {
+	opserr << "WARNING invalid PressureDependentElastic3D tag\n";
+	return 0;
+    }
+    
+    // double E = 0.0;
+    // double v = 0.0;
+    // double rho = 0.0;
+    // double expp = 0.0;
+    // double prp = 0.0;
+    // double pop = 0.0;
+    double data[6] = {0,0,0,0,0,0};
+    numdata = OPS_GetNumRemainingInputArgs();
+    if (numdata > 6) numdata = 6;
+    if (OPS_GetDoubleInput(&numdata, data) < 0) {
+	opserr << "WARNING invalid PressureDependentElastic3D double inputs\n";
+	return 0;
+    }
+
+//////////////////////////////////////////////////////////////////////////////////
+    if( argc == 6 )
+    {
+	return new PressureDependentElastic3D (tag, data[0], data[1], data[2]);
+	//opserr << "nDMaterial PressureDependentElastic3D: expp =" << expp << endln;
+    }
+//////////////////////////////////////////////////////////////////////////////////
+    else if( argc == 7 )
+    {
+	return new PressureDependentElastic3D (tag, data[0], data[1], data[2], data[3]);
+	//opserr << "nDMaterial PressureDependentElastic3D: expp =" << expp << endln;
+    }
+//////////////////////////////////////////////////////////////////////////////////
+    else if (argc == 8 )
+    {
+	return new PressureDependentElastic3D (tag, data[0], data[1], data[2], data[3],
+					       data[4]);
+    }
+//////////////////////////////////////////////////////////////////////////////////
+    else if (argc >= 9 )
+    {
+	return new PressureDependentElastic3D (tag, data[0], data[1], data[2], data[3],
+					       data[4], data[5]);
+    }
+
+    return 0;
+}
 
 Matrix PressureDependentElastic3D::D(6,6);
 Vector PressureDependentElastic3D::sigma(6);
@@ -291,13 +350,24 @@ int PressureDependentElastic3D::recvSelf(int commitTag,
 
 void PressureDependentElastic3D::Print(OPS_Stream &s, int flag)
 {
-    s << "PressureDependentElastic3D" << "\n";
-    s << "tag: " << this->getTag() << "\n";
-    s << "E: " << E << "\n";
-    s << "v: " << v << "\n";
-    s << "exp: " << exp0 << "\n";
-    s << "p_ref: " << p_ref << "\n";
-    s << "p_cutoff: " << p_cutoff << "\n";
+    if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+        s << "PressureDependentElastic3D" << "\n";
+        s << "tag: " << this->getTag() << "\n";
+        s << "E: " << E << "\n";
+        s << "v: " << v << "\n";
+        s << "exp: " << exp0 << "\n";
+        s << "p_ref: " << p_ref << "\n";
+        s << "p_cutoff: " << p_cutoff << "\n";
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"type\": \"PressureDependentElastic3D\", ";
+        s << "\"E\": " << E << ", ";
+        s << "\"nu\": " << v << ", ";
+        s << "\"exp\": " << exp0 << ", ";
+        s << "\"pRef\": " << p_ref << ", ";
+        s << "\"pCutoff\": " << p_cutoff << "}";
+    }
 }
-
-

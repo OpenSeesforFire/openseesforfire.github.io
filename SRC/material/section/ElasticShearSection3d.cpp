@@ -33,15 +33,39 @@
 #include <string.h>
 
 #include <classTags.h>
+#include <elementAPI.h>
 
 Vector ElasticShearSection3d::s(6);
 Matrix ElasticShearSection3d::ks(6,6);
 ID ElasticShearSection3d::code(6);
 
+void* OPS_ElasticShearSection3d()
+{
+    if(OPS_GetNumRemainingInputArgs() < 9) {
+	opserr<<"insufficient arguments for ealstic shear 3d section\n";
+	return 0;
+    }
+
+    // get tag
+    int tag;
+    int numData = 1;
+    if(OPS_GetIntInput(&numData,&tag) < 0) return 0;
+
+    // get data
+    numData = 8;
+    double data[8];
+    if(OPS_GetDoubleInput(&numData,&data[0]) < 0) return 0;
+
+    return new ElasticShearSection3d(tag,data[0],data[1],data[2],
+				     data[3],data[4],data[5],data[6],
+				     data[7]);
+}
+
+
 ElasticShearSection3d::ElasticShearSection3d(void)
-:SectionForceDeformation(0, SEC_TAG_Elastic3d),
- E(0.0), A(0.0), Iz(0.0), Iy(0.0), G(0.0), J(0.0), alpha(0.0),
- e(6), eCommit(6)
+:SectionForceDeformation(0, SEC_TAG_ElasticShear3d),
+ E(0.0), A(0.0), Iz(0.0), Iy(0.0), G(0.0), J(0.0),
+ alphaY(0.0), alphaZ(0.0), e(6)
 {
     if (code(0) != SECTION_RESPONSE_P) {
 	code(0) = SECTION_RESPONSE_P;	// P is the first quantity
@@ -55,10 +79,10 @@ ElasticShearSection3d::ElasticShearSection3d(void)
 
 ElasticShearSection3d::ElasticShearSection3d
 (int tag, double E_in, double A_in, double Iz_in, double Iy_in,
- double G_in, double J_in, double alpha_in)
-:SectionForceDeformation(tag, SEC_TAG_Elastic3d),
- E(E_in), A(A_in), Iz(Iz_in), Iy(Iy_in), G(G_in), J(J_in), alpha(alpha_in),
- e(6), eCommit(6)
+ double G_in, double J_in, double alphaY_in, double alphaZ_in)
+:SectionForceDeformation(tag, SEC_TAG_ElasticShear3d),
+ E(E_in), A(A_in), Iz(Iz_in), Iy(Iy_in), G(G_in), J(J_in),
+ alphaY(alphaY_in), alphaZ(alphaZ_in), e(6)
 {
     if (E <= 0.0)  {
       opserr << "ElasticShearSection3d::ElasticShearSection3d -- Input E <= 0.0\n";
@@ -84,8 +108,12 @@ ElasticShearSection3d::ElasticShearSection3d
       opserr << "ElasticShearSection3d::ElasticShearSection3d -- Input J <= 0.0\n";
     }
     
-    if (alpha <= 0.0)  {
-      opserr << "ElasticShearSection3d::ElasticShearSection3d -- Input alpha <= 0.0\n";
+    if (alphaY <= 0.0)  {
+      opserr << "ElasticShearSection3d::ElasticShearSection3d -- Input alphaY <= 0.0\n";
+    }
+
+    if (alphaZ <= 0.0)  {
+      opserr << "ElasticShearSection3d::ElasticShearSection3d -- Input alphaZ <= 0.0\n";
     }
 
 	if (code(0) != SECTION_RESPONSE_P) {
@@ -106,24 +134,18 @@ ElasticShearSection3d::~ElasticShearSection3d(void)
 int 
 ElasticShearSection3d::commitState(void)
 {
-  eCommit = e;
-
   return 0;
 }
 
 int 
 ElasticShearSection3d::revertToLastCommit(void)
 {
-  e = eCommit;
-
   return 0;
 }
 
 int 
 ElasticShearSection3d::revertToStart(void)
 {
-  eCommit.Zero();
-
   return 0;
 }
 
@@ -149,9 +171,9 @@ ElasticShearSection3d::getStressResultant (void)
   s(3) = E*Iy*e(3);
   s(5) = G*J*e(5);
 
-  double GA = G*A*alpha;
-  s(2) = GA*e(2);
-  s(4) = GA*e(4);
+  double GA = G*A;
+  s(2) = GA*alphaY*e(2);
+  s(4) = GA*alphaZ*e(4);
   
   return s;
 }
@@ -164,9 +186,9 @@ ElasticShearSection3d::getSectionTangent(void)
   ks(3,3) = E*Iy;
   ks(5,5) = G*J;
   
-  double GA = G*A*alpha;
-  ks(2,2) = GA;
-  ks(4,4) = GA;
+  double GA = G*A;
+  ks(2,2) = GA*alphaY;
+  ks(4,4) = GA*alphaZ;
   
   return ks;
 }
@@ -179,9 +201,9 @@ ElasticShearSection3d::getInitialTangent(void)
   ks(3,3) = E*Iy;
   ks(5,5) = G*J;
   
-  double GA = G*A*alpha;
-  ks(2,2) = GA;
-  ks(4,4) = GA;
+  double GA = G*A;
+  ks(2,2) = GA*alphaY;
+  ks(4,4) = GA*alphaZ;
   
   return ks;
 }
@@ -194,9 +216,9 @@ ElasticShearSection3d::getSectionFlexibility (void)
   ks(3,3) = 1.0/(E*Iy);
   ks(5,5) = 1.0/(G*J);
 
-  double GA = 1.0/(G*A*alpha);
-  ks(2,2) = GA;
-  ks(4,4) = GA;
+  double oneOverGA = 1.0/(G*A);
+  ks(2,2) = oneOverGA/alphaY;
+  ks(4,4) = oneOverGA/alphaZ;
 
   return ks;
 }
@@ -209,9 +231,9 @@ ElasticShearSection3d::getInitialFlexibility (void)
   ks(3,3) = 1.0/(E*Iy);
   ks(5,5) = 1.0/(G*J);
 
-  double GA = 1.0/(G*A*alpha);
-  ks(2,2) = GA;
-  ks(4,4) = GA;
+  double oneOverGA = 1.0/(G*A);
+  ks(2,2) = oneOverGA/alphaY;
+  ks(4,4) = oneOverGA/alphaZ;
 
   return ks;
 }
@@ -221,9 +243,10 @@ ElasticShearSection3d::getCopy ()
 {
     // Make a copy of the hinge
     ElasticShearSection3d *theCopy =
-	new ElasticShearSection3d (this->getTag(), E, A, Iz, Iy, G, J, alpha);
+	new ElasticShearSection3d (this->getTag(), E, A, Iz, Iy,
+                               G, J, alphaY, alphaZ);
 
-    theCopy->eCommit = eCommit;
+    theCopy->parameterID = parameterID;
 
     return theCopy;
 }
@@ -245,7 +268,7 @@ ElasticShearSection3d::sendSelf(int commitTag, Channel &theChannel)
 {
     int res = 0;
 
-    static Vector data(14);
+    static Vector data(9);
 
     int dataTag = this->getDbTag();
     
@@ -256,13 +279,8 @@ ElasticShearSection3d::sendSelf(int commitTag, Channel &theChannel)
     data(4) = Iy;
     data(5) = G;
     data(6) = J;
-    data(7) = alpha;
-    data(8) = eCommit(0);
-    data(9) = eCommit(1);
-    data(10) = eCommit(2);
-    data(11) = eCommit(3);
-    data(12) = eCommit(4);
-    data(13) = eCommit(5);
+    data(7) = alphaY;
+    data(8) = alphaZ;
     
     res += theChannel.sendVector(dataTag, commitTag, data);
     if(res < 0) {
@@ -279,7 +297,7 @@ ElasticShearSection3d::recvSelf(int commitTag, Channel &theChannel,
 {
     int res = 0;
     
-    static Vector data(14);
+    static Vector data(9);
 
     int dataTag = this->getDbTag();
 
@@ -295,14 +313,9 @@ ElasticShearSection3d::recvSelf(int commitTag, Channel &theChannel,
     Iz = data(3);
     Iy = data(4);
     G = data(5);
-    J = data(6); 
-    alpha = data(7);   
-    eCommit(0) = data(8);
-    eCommit(1) = data(9);
-    eCommit(2) = data(10);
-    eCommit(3) = data(11);
-    eCommit(4) = data(12);
-    eCommit(5) = data(13);
+    J = data(6);
+    alphaY = data(7);
+    alphaZ = data(8);
 
     return res;
 }
@@ -310,18 +323,31 @@ ElasticShearSection3d::recvSelf(int commitTag, Channel &theChannel,
 void
 ElasticShearSection3d::Print(OPS_Stream &s, int flag)
 {
-  if (flag == 2) {
+	if (flag == OPS_PRINT_PRINTMODEL_SECTION) {
+		s << "ElasticShearSection3d, tag: " << this->getTag() << endln;
+		s << "\t E: " << E << endln;
+		s << "\t A: " << A << endln;
+		s << "\tIz: " << Iz << endln;
+		s << "\tIy: " << Iy << endln;
+		s << "\t G: " << G << endln;
+		s << "\t J: " << J << endln;
+		s << "\talphaY: " << alphaY << endln;
+		s << "\talphaZ: " << alphaZ << endln;
+	}
 
-  } else {
-    s << "ElasticShearSection3d, tag: " << this->getTag() << endln;
-    s << "\t E: " << E << endln;
-    s << "\t A: " << A << endln;
-    s << "\tIz: " << Iz << endln;
-    s << "\tIy: " << Iy << endln;
-    s << "\t G: " << G << endln;
-    s << "\t J: " << J << endln;
-    s << "\talpha: " << alpha << endln;
-  }
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "\t\t\t{";
+		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"type\": \"ElasticShearSection3d\", ";
+		s << "\"E\": " << E << ", ";
+		s << "\"G\": " << G << ", ";
+		s << "\"A\": " << A << ", ";
+		s << "\"Avy\": " << alphaY*A << ", ";
+		s << "\"Avz\": " << alphaZ*A << ", ";
+		s << "\"Jx\": " << J << ", ";
+		s << "\"Iy\": " << Iy << ", ";
+		s << "\"Iz\": " << Iz << "}";
+	}
 }
 
 int
@@ -354,9 +380,13 @@ ElasticShearSection3d::setParameter(const char **argv, int argc, Parameter &para
 	  param.setValue(J);
     return param.addObject(6, this);
   }
-  if (strcmp(argv[0],"alpha") == 0) {
-	  param.setValue(alpha);
+  if (strcmp(argv[0],"alphaY") == 0) {
+	  param.setValue(alphaY);
     return param.addObject(7, this);
+  }
+  if (strcmp(argv[0],"alphaZ") == 0) {
+	  param.setValue(alphaZ);
+    return param.addObject(8, this);
   }
   return -1;
 }
@@ -377,7 +407,9 @@ ElasticShearSection3d::updateParameter(int paramID, Information &info)
   if (paramID == 6)
     J = info.theDouble;
   if (paramID == 7)
-    alpha = info.theDouble;
+    alphaY = info.theDouble;
+  if (paramID == 8)
+    alphaZ = info.theDouble;
 
   return 0;
 }
@@ -403,27 +435,24 @@ ElasticShearSection3d::getStressResultantSensitivity(int gradIndex,
   }
   if (parameterID == 2) { // A
     s(0) = E*e(0);
-    double Galpha = G*alpha;
-    s(2) = Galpha*e(2);
-    s(4) = Galpha*e(4);
+    s(2) = G*alphaY*e(2);
+    s(4) = G*alphaZ*e(4);
   }
   if (parameterID == 3) // Iz
     s(1) = E*e(1);
   if (parameterID == 4) // Iy
     s(3) = E*e(3);
   if (parameterID == 5) { // G
-    double Aalpha = A*alpha;
-    s(2) = Aalpha*e(2);
-    s(4) = Aalpha*e(4);
+    s(2) = A*alphaY*e(2);
+    s(4) = A*alphaZ*e(4);
     s(5) = J*e(5);
   }
   if (parameterID == 6) // J
     s(5) = G*e(5);
-  if (parameterID == 7) { // alpha
-    double GA = G*A;
-    s(2) = GA*e(2);
-    s(4) = GA*e(4);
-  }
+  if (parameterID == 7) // alphaY
+    s(2) = G*A*e(2);
+  if (parameterID == 8) // alphaZ
+    s(4) = G*A*e(4);
 
   return s;
 }

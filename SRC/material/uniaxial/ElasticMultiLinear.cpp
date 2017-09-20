@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4944 $
-// $Date: 2012-07-27 22:10:12 +0100 (Fri, 27 Jul 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/material/uniaxial/ElasticMultiLinear.cpp $
+// $Revision: 6593 $
+// $Date: 2017-06-15 06:17:10 +0800 (Thu, 15 Jun 2017) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/material/uniaxial/ElasticMultiLinear.cpp $
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 12/11
@@ -38,13 +38,14 @@
 #include <math.h>
 #include <float.h>
 #include <string.h>
+#include <stdlib.h>
 
 
-void *OPS_NewElasticMultiLinear()
+void *OPS_ElasticMultiLinear()
 {
     // Pointer to a uniaxial material that will be returned
     UniaxialMaterial *theMaterial = 0;
-
+    
     int argc = OPS_GetNumRemainingInputArgs();
     if (argc < 7) {
         opserr << "WARNING incorrect num args want: uniaxialMaterial ";
@@ -53,21 +54,34 @@ void *OPS_NewElasticMultiLinear()
         opserr << "(with at least two stress-strain points)\n";
         return 0;
     }
-
+    
     int tag[1];
     double strainData[64];
     double stressData[64];
-    char paraStr[8];
-
+    double eta = 0.0;
+    //char paraStr[8];
+    const char *paraStr;
+    
     int numData = 1;
     if (OPS_GetIntInput(&numData,tag) != 0)  {
         opserr << "WARNING invalid uniaxialMaterial ElasticMultiLinear tag\n";
         return 0;
     }
-
+    
+    // check if eta is provided (odd number of inputs)
+    if ((argc-3)%2 == 1)  {
+        numData = 1;
+        if (OPS_GetDoubleInput(&numData,&eta) != 0)  {
+            opserr << "WARNING invalid eta\n";
+            opserr << "uniaxialMaterial ElasticMultiLinear: " << tag[0] << endln;
+            return 0;
+        }
+        argc--;
+    }
+    
     // get strain data points
     numData = (argc - 3)/2;
-    OPS_GetString(paraStr,7);
+    paraStr = OPS_GetString();
     if (strcmp(paraStr,"-strain") == 0)  {
         if (OPS_GetDoubleInput(&numData,strainData) != 0)  {
             opserr << "WARNING invalid strainPoints\n";
@@ -80,9 +94,10 @@ void *OPS_NewElasticMultiLinear()
         return 0;
     }
     Vector strainPts(strainData,numData);
-
+    
     // get stress data points
-    OPS_GetString(paraStr,7);
+    paraStr = OPS_GetString();
+    //    OPS_GetString(paraStr,7);
     if (strcmp(paraStr,"-stress") == 0)  {
         if (OPS_GetDoubleInput(&numData, stressData) != 0)  {
             opserr << "WARNING invalid stressPoints\n";
@@ -95,10 +110,10 @@ void *OPS_NewElasticMultiLinear()
         return 0;
     }
     Vector stressPts(stressData,numData);
-
+    
     // Parsing was successful, allocate the material
-    theMaterial = new ElasticMultiLinear(tag[0], strainPts, stressPts);
-
+    theMaterial = new ElasticMultiLinear(tag[0], strainPts, stressPts, eta);
+    
     if (theMaterial == 0) {
         opserr << "WARNING could not create uniaxialMaterial of type ";
         opserr << "ElasticMultiLinear\n";
@@ -110,11 +125,12 @@ void *OPS_NewElasticMultiLinear()
 
 
 ElasticMultiLinear::ElasticMultiLinear(int tag,
-    const Vector &strainPts, const Vector &stressPts)
+    const Vector &strainPts, const Vector &stressPts, double et)
     : UniaxialMaterial(tag, MAT_TAG_ElasticMultiLinear),
-    strainPoints(strainPts), stressPoints(stressPts),
+    strainPoints(strainPts), stressPoints(stressPts), eta(et),
     trialID(0), trialIDmin(0), trialIDmax(0), initTangent(0.0),
-    trialStrain(0.0), trialStress(0.0), trialTangent(0.0)
+    trialStrain(0.0), trialStrainRate(0.0),
+    trialStress(0.0), trialTangent(0.0)
 {
     numDataPoints = strainPoints.Size();
     if (numDataPoints != stressPoints.Size())  {
@@ -123,18 +139,19 @@ ElasticMultiLinear::ElasticMultiLinear(int tag,
         exit(-1);        
     }
     trialIDmax = numDataPoints - 2;
-
+    
     this->revertToStart();
-
+    
     initTangent = trialTangent;
 }
 
 
 ElasticMultiLinear::ElasticMultiLinear()
     : UniaxialMaterial(0 ,MAT_TAG_ElasticMultiLinear),
-    strainPoints(1), stressPoints(1),
+    strainPoints(1), stressPoints(1), eta(0.0),
     trialID(0), trialIDmin(0), trialIDmax(0), initTangent(0.0),
-    trialStrain(0.0), trialStress(0.0), trialTangent(0.0)
+    trialStrain(0.0), trialStrainRate(0.0),
+    trialStress(0.0), trialTangent(0.0)
 {
     // does nothing
 }
@@ -149,7 +166,8 @@ ElasticMultiLinear::~ElasticMultiLinear()
 int ElasticMultiLinear::setTrialStrain(double strain, double strainRate)
 {
     trialStrain = strain;
-
+    trialStrainRate = strainRate;
+    
     // find the current interval
     double eps1 = strainPoints(trialID);
     double eps2 = strainPoints(trialID+1);
@@ -168,39 +186,23 @@ int ElasticMultiLinear::setTrialStrain(double strain, double strainRate)
     }
     double sig1 = stressPoints(trialID);
     double sig2 = stressPoints(trialID+1);
-
+    
     // get the tangent for the selected interval
     trialTangent = (sig2-sig1)/(eps2-eps1);
-
+    
     // get the stress for the selected interval
-    trialStress = sig1 + trialTangent*(trialStrain-eps1);
+    trialStress = sig1 + trialTangent*(trialStrain-eps1) + eta*trialStrainRate;
+    if (fabs(trialStress) < trialTangent*DBL_EPSILON)
+        trialStress = 0.0;
 
     return 0;
-}
-
-
-double ElasticMultiLinear::getStrain()
-{
-    return trialStrain;
-}
-
-
-double ElasticMultiLinear::getStress()
-{
-    return trialStress;
-}
-
-
-double ElasticMultiLinear::getTangent()
-{
-    return trialTangent;
 }
 
 
 int ElasticMultiLinear::commitState()
 {
     return 0;
-}	
+}
 
 
 int ElasticMultiLinear::revertToLastCommit()
@@ -212,9 +214,10 @@ int ElasticMultiLinear::revertToLastCommit()
 int ElasticMultiLinear::revertToStart()
 {
     trialID = 0;
-    trialStrain = 0;
-    trialStress = 0;
-
+    trialStrain = 0.0;
+    trialStrainRate = 0.0;
+    trialStress = 0.0;
+    
     // find the current interval
     double eps1 = strainPoints(trialID);
     double eps2 = strainPoints(trialID+1);
@@ -233,10 +236,10 @@ int ElasticMultiLinear::revertToStart()
     }
     double sig1 = stressPoints(trialID);
     double sig2 = stressPoints(trialID+1);
-
+    
     // get the tangent for the selected interval
     trialTangent = (sig2-sig1)/(eps2-eps1);
-
+    
     return 0;
 }
 
@@ -244,8 +247,8 @@ int ElasticMultiLinear::revertToStart()
 UniaxialMaterial *ElasticMultiLinear::getCopy()
 {
     ElasticMultiLinear *theCopy =
-        new ElasticMultiLinear(this->getTag(), strainPoints, stressPoints);
-
+        new ElasticMultiLinear(this->getTag(), strainPoints, stressPoints, eta);
+    
     return theCopy;
 }
 
@@ -253,19 +256,20 @@ UniaxialMaterial *ElasticMultiLinear::getCopy()
 int ElasticMultiLinear::sendSelf(int cTag, Channel &theChannel)
 {
     int res = 0;
-    static Vector data(5);
+    static Vector data(6);
     data(0) = this->getTag();
     data(1) = trialIDmin;
     data(2) = trialIDmax;
     data(3) = numDataPoints;
     data(4) = initTangent;
-
+    data(5) = eta;
+    
     res = theChannel.sendVector(this->getDbTag(), cTag, data);
     res += theChannel.sendVector(this->getDbTag(), cTag, strainPoints);
     res += theChannel.sendVector(this->getDbTag(), cTag, stressPoints);
     if (res < 0) 
         opserr << "ElasticMultiLinear::sendSelf() - failed to send data.\n";
-
+    
     return res;
 }
 
@@ -274,7 +278,7 @@ int ElasticMultiLinear::recvSelf(int cTag, Channel &theChannel,
     FEM_ObjectBroker &theBroker)
 {
     int res = 0;
-    static Vector data(5);
+    static Vector data(6);
     res = theChannel.recvVector(this->getDbTag(), cTag, data);
     if (res < 0) 
         opserr << "ElasticMultiLinear::recvSelf() - failed to recv data.\n";
@@ -284,7 +288,8 @@ int ElasticMultiLinear::recvSelf(int cTag, Channel &theChannel,
         trialIDmax    = (int)data(2);
         numDataPoints = (int)data(3);
         initTangent   = data(4);
-
+        eta           = data(5);
+        
         // receive the strain and stress arrays
         strainPoints.resize(numDataPoints);
         stressPoints.resize(numDataPoints);
@@ -300,9 +305,29 @@ int ElasticMultiLinear::recvSelf(int cTag, Channel &theChannel,
 
 void ElasticMultiLinear::Print(OPS_Stream &s, int flag)
 {
-    s << "ElasticMultiLinear tag: " << this->getTag() << endln;
-    s << "Input Parameter: strainPoints: " << strainPoints << endln;
-    s << "Input Parameter: stressPoints: " << stressPoints << endln;
-    s << "Current State: strain: "<< trialStrain << " stress: ";
-    s << trialStress << " tangent: " << trialTangent << endln;
+	if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+		s << "ElasticMultiLinear tag: " << this->getTag() << endln;
+		s << "Input Parameter: strainPoints: " << strainPoints << endln;
+		s << "Input Parameter: stressPoints: " << stressPoints << endln;
+		s << "Input Parameter: eta: " << eta << endln;
+		s << "Current State: strain: " << trialStrain << " stress: ";
+		s << trialStress << " tangent: " << trialTangent << endln;
+	}
+    
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "\t\t\t{";
+		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"type\": \"ElasticMultiLinear\", ";
+		s << "\"strainPoints\": [";
+		int numPts = strainPoints.Size();
+		for (int i = 0; i < numPts-1; i++)
+			s << strainPoints(i) << ", ";
+		s << strainPoints(numPts - 1) << "], ";
+		s << "\"stressPoints\": [";
+		numPts = stressPoints.Size();
+		for (int i = 0; i < numPts-1; i++)
+			s << stressPoints(i) << ", ";
+		s << stressPoints(numPts - 1) << "], ";
+		s << "\"eta\": " << eta << "}";
+	}
 }

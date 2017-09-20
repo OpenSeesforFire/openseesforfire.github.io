@@ -32,16 +32,18 @@
 //
 // What: "@(#) ElasticIsotropicThreeDimesnional.h, revA"
 
-#include <ElasticIsotropicMaterial.h>
+//Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io]
+
+#include <ElasticIsotropicMaterialThermal.h>
 #include <NDMaterial.h>
 #include <Matrix.h>
 #include <Vector.h>
 #include <ID.h>
 
-class ElasticIsotropic3DThermal : public ElasticIsotropicMaterial
+class ElasticIsotropic3DThermal : public ElasticIsotropicMaterialThermal
 {
   public:
-    ElasticIsotropic3DThermal(int tag, double e, double nu, double rho=0,double alpha=0.0, bool Soft = false);
+    ElasticIsotropic3DThermal(int tag, double e, double nu, double rho=0,double alpha=0.0, int softindex = 0);
     ElasticIsotropic3DThermal();
     ~ElasticIsotropic3DThermal();
 
@@ -80,12 +82,13 @@ class ElasticIsotropic3DThermal : public ElasticIsotropicMaterial
     Vector epsilon;	        // Trial strains
     Vector Cepsilon;	        // Committed strain
 	
-    bool softening;
+    int softIndex;
 	double Temp;  //Temperature
 	double ThermalElong;  // eps(theata) = alpha *temperature
 	double E0T;//Elasticity modulus at temperature T
 	double E;
 	double Alpha; //Coefficient of thermal exmapnsion
+	double* redfactors;
 };
 
 #endif

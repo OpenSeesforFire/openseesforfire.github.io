@@ -47,7 +47,7 @@
 #include <OPS_Globals.h>
 
 void *
-OPS_NewConcrete01()
+OPS_Concrete01()
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
@@ -543,11 +543,24 @@ int Concrete01::recvSelf (int commitTag, Channel& theChannel,
 
 void Concrete01::Print (OPS_Stream& s, int flag)
 {
-   s << "Concrete01, tag: " << this->getTag() << endln;
-   s << "  fpc: " << fpc << endln;
-   s << "  epsc0: " << epsc0 << endln;
-   s << "  fpcu: " << fpcu << endln;
-   s << "  epscu: " << epscu << endln;
+  if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {      
+    s << "Concrete01, tag: " << this->getTag() << endln;
+    s << "  fpc: " << fpc << endln;
+    s << "  epsc0: " << epsc0 << endln;
+    s << "  fpcu: " << fpcu << endln;
+    s << "  epscu: " << epscu << endln;
+  }
+  
+  if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+    s << "\t\t\t{";
+	s << "\"name\": \"" << this->getTag() << "\", ";
+	s << "\"type\": \"Concrete01\", ";
+	s << "\"Ec\": " << 2.0*fpc/epsc0 << ", ";
+	s << "\"fc\": " << fpc << ", ";
+    s << "\"epsc\": " << epsc0 << ", ";
+    s << "\"fcu\": " << fpcu << ", ";
+    s << "\"epscu\": " << epscu << "}";
+  }
 }
 
 
@@ -559,15 +572,19 @@ Concrete01::setParameter(const char **argv, int argc, Parameter &param)
 {
 
   if (strcmp(argv[0],"fc") == 0) {// Compressive strength
+    param.setValue(fpc);
     return param.addObject(1, this);
   }
   else if (strcmp(argv[0],"epsco") == 0) {// Strain at compressive strength
+    param.setValue(epsc0);
     return param.addObject(2, this);
   }
   else if (strcmp(argv[0],"fcu") == 0) {// Crushing strength
+    param.setValue(fpcu);
     return param.addObject(3, this);
   }
   else if (strcmp(argv[0],"epscu") == 0) {// Strain at crushing strength
+    param.setValue(epscu);
     return param.addObject(4, this);
   }
   
@@ -882,9 +899,9 @@ Concrete01::commitSensitivity(double TstrainSensitivity, int gradIndex, int numG
 	double ratio, ratioSensitivity;
 	double temp1, temp1Sensitivity;
 	double temp2, temp2Sensitivity;
-	double TminStrainSensitivity;
-	double TunloadSlopeSensitivity;
-	double TendStrainSensitivity;
+	double TminStrainSensitivity = CminStrainSensitivity;
+	double TunloadSlopeSensitivity = CunloadSlopeSensitivity;
+	double TendStrainSensitivity = CendStrainSensitivity;
 
 	if (dStrain<0.0 && Tstrain<CminStrain) {
 

@@ -53,7 +53,7 @@ OPS_BeamContact2D(void)
 {
   if (num_BeamContact2D == 0) {
     num_BeamContact2D++;
-    OPS_Error("BeamContact2D element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n", 1);
+    opserr<<"BeamContact2D element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n";
   }
 
   // Pointer to an element that will be returned
@@ -83,7 +83,7 @@ OPS_BeamContact2D(void)
   }
   
   int matID = iData[5];
-  NDMaterial *theMaterial = OPS_GetNDMaterial(matID);
+  NDMaterial *theMaterial = OPS_getNDMaterial(matID);
   if (theMaterial == 0) {
     opserr << "WARNING element BeamContact2D " << iData[0] << endln;
 	opserr << " Material: " << matID << "not found\n";
@@ -977,7 +977,7 @@ BeamContact2D::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &th
 }
 
 int
-BeamContact2D::displaySelf(Renderer &theViewer, int displayMode, float fact)
+BeamContact2D::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 	return 0;
 }

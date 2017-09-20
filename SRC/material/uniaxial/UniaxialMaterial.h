@@ -52,7 +52,8 @@ class SectionForceDeformation;
 class UniaxialMaterial : public Material
 {
   public:
-    UniaxialMaterial (int tag, int classTag);    
+    UniaxialMaterial(int tag, int classTag);    
+    UniaxialMaterial();
     virtual ~UniaxialMaterial();
 
     virtual int setTrialStrain (double strain, double strainRate =0) =0;
@@ -78,10 +79,12 @@ class UniaxialMaterial : public Material
     virtual Response *setResponse (const char **argv, int argc, 
 				   OPS_Stream &theOutputStream);
     virtual int getResponse (int responseID, Information &matInformation);    
+    virtual bool hasFailed(void) {return false;}
 
     // AddingSensitivity:BEGIN //////////////////////////////////////////
     virtual double getStressSensitivity     (int gradIndex, bool conditional);
     virtual double getStrainSensitivity     (int gradIndex);
+    virtual double getTangentSensitivity(int gradIndex);
     virtual double getInitialTangentSensitivity(int gradIndex);
     virtual double getDampTangentSensitivity(int gradIndex);
     virtual double getRhoSensitivity        (int gradIndex);
@@ -96,6 +99,6 @@ class UniaxialMaterial : public Material
 extern bool OPS_addUniaxialMaterial(UniaxialMaterial *newComponent);
 extern UniaxialMaterial *OPS_getUniaxialMaterial(int tag);
 extern void OPS_clearAllUniaxialMaterial(void);
+extern void OPS_printUniaxialMaterial(OPS_Stream &s, int flag = 0);
 
 #endif
-

@@ -72,13 +72,79 @@ Journal of Structural Engineering, Approved for publication, February 2007.
 #include <FEM_ObjectBroker.h>
 #include <Renderer.h>
 #include <math.h>
-
+#include <elementAPI.h>
 #include <ElementResponse.h>
 #include <ElementalLoad.h>
 
 Matrix ElasticForceBeamColumn2d::theMatrix(6,6);
 Vector ElasticForceBeamColumn2d::theVector(6);
 double ElasticForceBeamColumn2d::workArea[200];
+
+void* OPS_ElasticForceBeamColumn2d()
+{
+    if(OPS_GetNumRemainingInputArgs() < 5) {
+	opserr<<"insufficient arguments:eleTag,iNode,jNode,transfTag,integrationTag <-mass mass> <-cmass>\n";
+	return 0;
+    }
+
+    // inputs: 
+    int iData[5];
+    int numData = 5;
+    if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	opserr<<"WARNING: invalid integer inputs\n";
+	return 0;
+    }
+
+    // options
+    double mass = 0.0;
+    numData = 1;
+    while(OPS_GetNumRemainingInputArgs() > 0) {
+	const char* type = OPS_GetString();
+	if(strcmp(type,"-mass") == 0) {
+	    if(OPS_GetNumRemainingInputArgs() > 0) {
+		if(OPS_GetDoubleInput(&numData,&mass) < 0) {
+		    opserr<<"WARNING: invalid mass\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return 0;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[4]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return 0;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return 0;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+		delete [] sections;
+	    return 0;
+	}
+    }
+    
+    Element *theEle =  new ElasticForceBeamColumn2d(iData[0],iData[1],iData[2],secTags.Size(),sections,*bi,*theTransf,mass);
+    delete [] sections;
+    return theEle;
+}
 
 // constructor:
 // invoked by a FEM_ObjectBroker, recvSelf() needs to be invoked on this object.
@@ -239,13 +305,7 @@ ElasticForceBeamColumn2d::setDomain(Domain *theDomain)
 int
 ElasticForceBeamColumn2d::commitState()
 {
-	int ok = 0;
-	for (int i = 0; i < numSections; i++)
-		sections[i]->commitState();
-	
-	ok += crdTransf->commitState();
-
-	return ok;
+  return crdTransf->commitState();
 }
 
 int ElasticForceBeamColumn2d::revertToLastCommit()
@@ -331,7 +391,7 @@ ElasticForceBeamColumn2d::computeReactions(double *p0)
     if (type == LOAD_TAG_Beam2dUniformLoad) {
       double wa = data(1)*1.0;  // Axial
       double wy = data(0)*1.0;  // Transverse
-      
+
       p0[0] -= wa*L;
       double V = 0.5*wy*L;
       p0[1] -= V;
@@ -345,7 +405,6 @@ ElasticForceBeamColumn2d::computeReactions(double *p0)
       if (aOverL < 0.0 || aOverL > 1.0)
 	continue;
       
-      double a = aOverL*L;
       
       double V1 = P*(1.0-aOverL);
       double V2 = P*aOverL;
@@ -399,60 +458,60 @@ ElasticForceBeamColumn2d::computeBasicForces(Vector &q)
 int
 ElasticForceBeamColumn2d::update()
 {
-	int ok = crdTransf->update();
+  int ok = crdTransf->update();
 	
-	static Vector q(NEBD);
-	q.Zero();
-	this->computeBasicForces(q);
-
-	double L = crdTransf->getInitialLength();
-	double oneOverL = 1.0/L;
-
-	double xi[maxNumSections];
-	beamIntegr->getSectionLocations(numSections, L, xi);
-
-	for (int i = 0; i < numSections; i++) {
-
-		int order      = sections[i]->getOrder();
-	    const ID &code = sections[i]->getType();
-
-		double xL  = xi[i];
-	    double xL1 = xL-1.0;
-	    
-	    static Vector s;
-	    s.setData(workArea, order);
-		static Vector e;
-		e.setData(&workArea[order], order);
-
-	    int ii;
-	    for (ii = 0; ii < order; ii++) {
-	      switch(code(ii)) {
-	      case SECTION_RESPONSE_P:
-		s(ii) = q(0);
-		break;
-	      case SECTION_RESPONSE_MZ:
-		s(ii) =  xL1*q(1) + xL*q(2);
-		break;
-	      case SECTION_RESPONSE_VY:
-		s(ii) = oneOverL*(q(1)+q(2));
-		break;
-	      default:
-		s(ii) = 0.0;
-		break;
-	      }
-	    }
-	    
-	    // Add the effects of element loads, if present
-	    // s = b*q + sp
-	    if (numEleLoads > 0)
-	      this->computeSectionForces(s, i);
-
-		const Matrix &fs = sections[i]->getInitialFlexibility();
-		e.addMatrixVector(0.0, fs, s, 1.0);
-
-		ok += sections[i]->setTrialSectionDeformation(e);
-	}
-
+  static Vector q(NEBD);
+  q.Zero();
+  this->computeBasicForces(q);
+  
+  double L = crdTransf->getInitialLength();
+  double oneOverL = 1.0/L;
+  
+  double xi[maxNumSections];
+  beamIntegr->getSectionLocations(numSections, L, xi);
+  
+  for (int i = 0; i < numSections; i++) {
+    
+    int order      = sections[i]->getOrder();
+    const ID &code = sections[i]->getType();
+    
+    double xL  = xi[i];
+    double xL1 = xL-1.0;
+    
+    static Vector s;
+    s.setData(workArea, order);
+    static Vector e;
+    e.setData(&workArea[order], order);
+    
+    int ii;
+    for (ii = 0; ii < order; ii++) {
+      switch(code(ii)) {
+      case SECTION_RESPONSE_P:
+	s(ii) = q(0);
+	break;
+      case SECTION_RESPONSE_MZ:
+	s(ii) =  xL1*q(1) + xL*q(2);
+	break;
+      case SECTION_RESPONSE_VY:
+	s(ii) = oneOverL*(q(1)+q(2));
+	break;
+      default:
+	s(ii) = 0.0;
+	break;
+      }
+    }
+    
+    // Add the effects of element loads, if present
+    // s = b*q + sp
+    if (numEleLoads > 0)
+      this->computeSectionForces(s, i);
+    
+    const Matrix &fs = sections[i]->getInitialFlexibility();
+    e.addMatrixVector(0.0, fs, s, 1.0);
+    
+    ok += sections[i]->setTrialSectionDeformation(e);
+  }
+  
   return ok;
 }
 
@@ -509,7 +568,7 @@ ElasticForceBeamColumn2d::computeSectionForces(Vector &sp, int isec)
     if (type == LOAD_TAG_Beam2dUniformLoad) {
       double wa = data(1)*1.0;  // Axial
       double wy = data(0)*1.0;  // Transverse
-      
+
       for (int ii = 0; ii < order; ii++) {
 	
 	switch(code(ii)) {
@@ -589,8 +648,8 @@ ElasticForceBeamColumn2d::addInertiaLoadToUnbalance(const Vector &accel)
     return 0;
 
   // get R * accel from the nodes
-  const Vector &Raccel1 = theNodes[0]->getRV(accel);
-  const Vector &Raccel2 = theNodes[1]->getRV(accel);    
+  //const Vector &Raccel1 = theNodes[0]->getRV(accel);
+  //  const Vector &Raccel2 = theNodes[1]->getRV(accel);    
 
   double L = crdTransf->getInitialLength();
   double m = 0.5*rho*L;
@@ -897,8 +956,9 @@ ElasticForceBeamColumn2d::Print(OPS_Stream &s, int flag)
       sections[i]->Print(s, flag); 
     }
     */
-  } else {
+  }
 
+  if (flag == OPS_PRINT_CURRENTSTATE) {
     s << "\nElement: " << this->getTag() << " Type: ElasticForceBeamColumn2d ";
     s << "\tConnected Nodes: " << connectedExternalNodes ;
     s << "\tNumber of Sections: " << numSections;
@@ -926,6 +986,21 @@ ElasticForceBeamColumn2d::Print(OPS_Stream &s, int flag)
 	s << "\numSections "<<i<<" :" << *sections[i];
     }
   }
+
+  if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+	  s << "\t\t\t{";
+	  s << "\"name\": \"" << this->getTag() << "\", ";
+	  s << "\"type\": \"ElasticForceBeamColumn2d\", ";
+	  s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+	  s << "\"sections\": [";
+	  for (int i = 0; i < numSections - 1; i++)
+		  s << "\"" << sections[i]->getTag() << "\", ";
+	  s << "\"" << sections[numSections - 1]->getTag() << "\"], ";
+	  s << "\"integration\": ";
+	  beamIntegr->Print(s, flag);
+	  s << ", \"rho\": " << rho << ", ";
+	  s << "\"crdTransformation\": \"" << crdTransf->getTag() << "\"}";
+  }
 }
 
 OPS_Stream &operator<<(OPS_Stream &s, ElasticForceBeamColumn2d &E)
@@ -935,7 +1010,7 @@ OPS_Stream &operator<<(OPS_Stream &s, ElasticForceBeamColumn2d &E)
 }
 
 int
-ElasticForceBeamColumn2d::displaySelf(Renderer &theViewer, int displayMode, float fact)
+ElasticForceBeamColumn2d::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
   // first determine the end points of the beam based on
   // the display factor (a measure of the distorted image)
@@ -1059,6 +1134,9 @@ ElasticForceBeamColumn2d::setResponse(const char **argv, int argc, OPS_Stream &o
 
   else if (strcmp(argv[0],"integrationWeights") == 0)
     theResponse = new ElementResponse(this, 11, Vector(numSections));
+
+  else if (strcmp(argv[0],"basicStiffness") == 0)
+    theResponse = new ElementResponse(this, 12, Matrix(3,3));
 
   // section response -
   else if (strstr(argv[0],"sectionX") != 0) {
@@ -1194,6 +1272,14 @@ ElasticForceBeamColumn2d::getResponse(int responseID, Information &eleInfo)
     for (int i = 0; i < numSections; i++)
       weights(i) = wts[i]*L;
     return eleInfo.setVector(weights);
+  }
+
+  else if (responseID == 12) {
+    static Matrix fb(NEBD,NEBD);
+    this->getInitialFlexibility(fb);
+    static Matrix kb(NEBD,NEBD);
+    fb.Invert(kb);
+    return eleInfo.setMatrix(kb);
   }
 
   else

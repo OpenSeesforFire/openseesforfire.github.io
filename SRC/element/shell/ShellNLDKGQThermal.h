@@ -29,7 +29,8 @@
 //  using updated Lagrangian formula
 // Ref: Plate Bending Part - DKQ, thin plate element
 //      Membrane Part - GQ12, a membrane element with drilling DOF
-//
+// Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
+
 
 #include <stdio.h> 
 #include <stdlib.h> 
@@ -113,7 +114,7 @@ class ShellNLDKGQThermal : public Element {
     int getResponse( int responseID, Information &eleInfo );
       
     //plotting 
-    int displaySelf( Renderer &theViewer, int displayMode, float fact );
+	int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode);
 
   private : 
 

@@ -38,51 +38,102 @@
 #include <float.h>
 #include <Channel.h>
 
+#include <elementAPI.h>
+
+void *
+OPS_HystereticMaterial(void)
+{
+  // Pointer to a uniaxial material that will be returned
+  UniaxialMaterial *theMaterial = 0;
+
+  int numArgs = OPS_GetNumRemainingInputArgs();
+  if (numArgs != 18 && numArgs != 17 && numArgs != 14 && numArgs != 13) {
+    opserr << "Want: uniaxialMaterial Hysteretic tag? mom1p? rot1p? mom2p? rot2p? <mom3p? rot3p?> "
+	   << "\nmom1n? rot1n? mom2n? rot2n? <mom3n? rot3n?> pinchX? pinchY? damfc1? damfc2? <beta?>";
+    return 0;
+  }
+  
+  int iData[1];
+  double dData[17];
+  for (int i=0; i<17; i++) 
+    dData[i] = 0.0;
+
+  int numData = 1;
+  if (OPS_GetIntInput(&numData, iData) != 0) {
+    opserr << "WARNING invalid tag for uniaxialMaterial Hysteretic" << endln;
+    return 0;
+  }
+
+  numData = numArgs-1;
+  if (OPS_GetDoubleInput(&numData, dData) != 0) {
+    opserr << "Invalid data for uniaxial Hysteretic " << iData[0] << endln;
+    return 0;	
+  }
+
+  // Parsing was successful, allocate the material
+  if (numData > 13) 
+    theMaterial = new HystereticMaterial(iData[0], dData[0], dData[1], dData[2], dData[3], dData[4], dData[5],
+					 dData[6], dData[7], dData[8], dData[9], dData[10], dData[11], dData[12],
+  					 dData[13], dData[14], dData[15], dData[16]);
+  else
+    theMaterial = new HystereticMaterial(iData[0], dData[0], dData[1], dData[2], dData[3], dData[4], dData[5],
+					 dData[6], dData[7], dData[8], dData[9], dData[10], dData[11], dData[12]);
+
+  if (theMaterial == 0) {
+    opserr << "WARNING could not create uniaxialMaterial of type Hysteretic\n";
+    return 0;
+  }
+
+  return theMaterial;
+}
+
+
+
 HystereticMaterial::HystereticMaterial(int tag,
-			double m1p, double r1p, double m2p, double r2p, double m3p, double r3p,
-			double m1n, double r1n, double m2n, double r2n, double m3n, double r3n,
-			double px, double py, double d1, double d2, double b):
+				       double m1p, double r1p, double m2p, double r2p, double m3p, double r3p,
+				       double m1n, double r1n, double m2n, double r2n, double m3n, double r3n,
+				       double px, double py, double d1, double d2, double b):
 UniaxialMaterial(tag, MAT_TAG_Hysteretic),
 pinchX(px), pinchY(py), damfc1(d1), damfc2(d2), beta(b),
 mom1p(m1p), rot1p(r1p), mom2p(m2p), rot2p(r2p), mom3p(m3p), rot3p(r3p),
 mom1n(m1n), rot1n(r1n), mom2n(m2n), rot2n(r2n), mom3n(m3n), rot3n(r3n)
 {
-	bool error = false;
-	// Positive backbone parameters
-	if (rot1p <= 0.0)
-		error = true;
-
-	if (rot2p <= rot1p)
-		error = true;
-
-	if (rot3p <= rot2p)
-		error = true;
-
-	// Negative backbone parameters
-	if (rot1n >= 0.0)
-		error = true;
-
-	if (rot2n >= rot1n)
-		error = true;
-
-	if (rot3n >= rot2n)
-		error = true;
-	
-	if (error) {
-	  opserr << "HystereticMaterial::HystereticMaterial -- input backbone is not unique (one-to-one)\n";
-	  exit(-1);
-	}		
-
-	energyA = 0.5 * (rot1p*mom1p + (rot2p-rot1p)*(mom2p+mom1p) + (rot3p-rot2p)*(mom3p+mom2p) +
-		rot1n*mom1n + (rot2n-rot1n)*(mom2n+mom1n) + (rot3n-rot2n)*(mom3n+mom2n));
-
-	// Set envelope slopes
-	this->setEnvelope();
-
-	// Initialize history variables
-	this->revertToStart();
-	this->revertToLastCommit();
-
+  bool error = false;
+  // Positive backbone parameters
+  if (rot1p <= 0.0)
+    error = true;
+  
+  if (rot2p <= rot1p)
+    error = true;
+  
+  if (rot3p <= rot2p)
+    error = true;
+  
+  // Negative backbone parameters
+  if (rot1n >= 0.0)
+    error = true;
+  
+  if (rot2n >= rot1n)
+    error = true;
+  
+  if (rot3n >= rot2n)
+    error = true;
+  
+  if (error) {
+    opserr << "HystereticMaterial::HystereticMaterial -- input backbone is not unique (one-to-one)\n";
+    exit(-1);
+  }		
+  
+  energyA = 0.5 * (rot1p*mom1p + (rot2p-rot1p)*(mom2p+mom1p) + (rot3p-rot2p)*(mom3p+mom2p) +
+		   rot1n*mom1n + (rot2n-rot1n)*(mom2n+mom1n) + (rot3n-rot2n)*(mom3n+mom2n));
+  
+  // Set envelope slopes
+  this->setEnvelope();
+  
+  // Initialize history variables
+  this->revertToStart();
+  this->revertToLastCommit();
+  
 }
 
 HystereticMaterial::HystereticMaterial(int tag,
@@ -125,8 +176,6 @@ mom1n(m1n), rot1n(r1n), mom3n(m2n), rot3n(r2n)
 
 	rot2p = 0.5*(rot1p+rot3p);
 	rot2n = 0.5*(rot1n+rot3n);
-
-	opserr << mom1p << " " << mom2p << " " << mom3p << " " << rot1p << " " << rot2p << " " << rot3p << endln;
 
 	// Set envelope slopes
 	this->setEnvelope();
@@ -567,33 +616,67 @@ HystereticMaterial::recvSelf(int commitTag, Channel &theChannel,
 void
 HystereticMaterial::Print(OPS_Stream &s, int flag)
 {
-	s << "Hysteretic Material, tag: " << this->getTag() << endln;
-	s << "mom1p: " << mom1p << endln;
-	s << "rot1p: " << rot1p << endln;
-	s << "E1p: " << E1p << endln;
-	s << "mom2p: " << mom2p << endln;
-	s << "rot2p: " << rot2p << endln;
-	s << "E2p: " << E2p << endln;
-	s << "mom3p: " << mom3p << endln;
-	s << "rot3p: " << rot3p << endln;
-	s << "E3p: " << E3p << endln;
-
-	s << "mom1n: " << mom1n << endln;
-	s << "rot1n: " << rot1n << endln;
-	s << "E1n: " << E1n << endln;
-	s << "mom2n: " << mom2n << endln;
-	s << "rot2n: " << rot2n << endln;
-	s << "E2n: " << E2n << endln;
-	s << "mom3n: " << mom3n << endln;
-	s << "rot3n: " << rot3n << endln;
-	s << "E3n: " << E3n << endln;
-
-	s << "pinchX: " << pinchX << endln;
-	s << "pinchY: " << pinchY << endln;
-	s << "damfc1: " << damfc1 << endln;
-	s << "damfc2: " << damfc2 << endln;
-	s << "energyA: " << energyA << endln;
-	s << "beta: " << beta << endln;
+    if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+        s << "HHystereticMaterial, tag: " << this->getTag() << endln;
+        s << "s1p: " << mom1p << endln;
+        s << "e1p: " << rot1p << endln;
+        s << "E1p: " << E1p << endln;
+        s << "s2p: " << mom2p << endln;
+        s << "e2p: " << rot2p << endln;
+        s << "E2p: " << E2p << endln;
+        s << "s3p: " << mom3p << endln;
+        s << "e3p: " << rot3p << endln;
+        s << "E3p: " << E3p << endln;
+        
+        s << "s1n: " << mom1n << endln;
+        s << "e1n: " << rot1n << endln;
+        s << "E1n: " << E1n << endln;
+        s << "s2n: " << mom2n << endln;
+        s << "e2n: " << rot2n << endln;
+        s << "E2n: " << E2n << endln;
+        s << "s3n: " << mom3n << endln;
+        s << "e3n: " << rot3n << endln;
+        s << "E3n: " << E3n << endln;
+        
+        s << "pinchX: " << pinchX << endln;
+        s << "pinchY: " << pinchY << endln;
+        s << "damfc1: " << damfc1 << endln;
+        s << "damfc2: " << damfc2 << endln;
+        s << "energyA: " << energyA << endln;
+        s << "beta: " << beta << endln;
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"type\": \"HystereticMaterial\", ";
+        s << "\"s1p\": " << mom1p << ", ";
+        s << "\"e1p\": " << rot1p << ", ";
+        s << "\"E1p\": " << E1p << ", ";
+        s << "\"s2p\": " << mom2p << ", ";
+        s << "\"e2p\": " << rot2p << ", ";
+        s << "\"E2p\": " << E2p << ", ";
+        s << "\"s3p\": " << mom3p << ", ";
+        s << "\"e3p\": " << rot3p << ", ";
+        s << "\"E3p\": " << E3p << ", ";
+        
+        s << "\"s1n\": " << mom1n << ", ";
+        s << "\"e1n\": " << rot1n << ", ";
+        s << "\"E1n\": " << E1n << ", ";
+        s << "\"s2n\": " << mom2n << ", ";
+        s << "\"e2n\": " << rot2n << ", ";
+        s << "\"E2n\": " << E2n << ", ";
+        s << "\"s3n\": " << mom3n << ", ";
+        s << "\"e3n\": " << rot3n << ", ";
+        s << "\"E3n\": " << E3n << ", ";
+        
+        s << "\"pinchX\": " << pinchX << ", ";
+        s << "\"pinchY\": " << pinchY << ", ";
+        s << "\"damfc1\": " << damfc1 << ", ";
+        s << "\"damfc2\": " << damfc2 << ", ";
+        s << "\"energyA\": " << energyA << ", ";
+        s << "\"beta\": " << beta << "}";
+    }
 }
 
 void

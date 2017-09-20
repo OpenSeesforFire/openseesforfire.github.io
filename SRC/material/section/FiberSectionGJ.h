@@ -76,7 +76,6 @@ class FiberSectionGJ : public SectionForceDeformation
   int addFiber(Fiber &theFiber);
   
   int setParameter(const char **argv, int argc, Parameter &param);
-
   
  protected:
   
@@ -91,7 +90,6 @@ class FiberSectionGJ : public SectionForceDeformation
   double zBar;
   
   Vector e;          // trial section deformations 
-  Vector eCommit;    // committed section deformations 
   
   static ID code;
   static Vector s;         // section resisting forces

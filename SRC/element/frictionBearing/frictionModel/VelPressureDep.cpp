@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4952 $
-// $Date: 2012-08-09 06:56:05 +0100 (Thu, 09 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/frictionModel/VelPressureDep.cpp $
+// $Revision: 5818 $
+// $Date: 2014-09-19 01:12:23 +0800 (Fri, 19 Sep 2014) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/frictionModel/VelPressureDep.cpp $
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 02/06
@@ -96,16 +96,16 @@ int VelPressureDep::setTrial(double normalForce, double velocity)
         muFast = muFast0;
     
     // get COF for given trial velocity
-    double temp = (muFast-muSlow)*exp(-transRate*fabs(trialVel));
-    mu = muFast - temp;
+    double temp1 = exp(-transRate*fabs(trialVel));
+    double temp2 = (muFast-muSlow)*temp1;
+    mu = muFast - temp2;
     
     // get derivative of COF wrt normal force
-    DmuDn = deltaMu*alpha/A/pow(cosh(alpha*trialN/A),2)*
-            (exp(-transRate*fabs(trialVel))-1.0);
+    DmuDn = deltaMu*alpha/A/pow(cosh(alpha*trialN/A),2)*(temp1-1.0);
     
     // get derivative of COF wrt velocity
     if (trialVel != 0.0)
-        DmuDvel = transRate*trialVel/fabs(trialVel)*temp;
+        DmuDvel = transRate*trialVel/fabs(trialVel)*temp2;
     else
         DmuDvel = 0.0;
     

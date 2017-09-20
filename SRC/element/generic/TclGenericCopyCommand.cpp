@@ -19,8 +19,8 @@
 ** ****************************************************************** */
 
 // $Revision: 4967 $
-// $Date: 2012-08-13 06:39:44 +0100 (Mon, 13 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/TclGenericCopyCommand.cpp $
+// $Date: 2012-08-13 13:39:44 +0800 (Mon, 13 Aug 2012) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/TclGenericCopyCommand.cpp $
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 11/06

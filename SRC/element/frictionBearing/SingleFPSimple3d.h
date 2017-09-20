@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4952 $
-// $Date: 2012-08-09 06:56:05 +0100 (Thu, 09 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/SingleFPSimple3d.h $
+// $Revision: 6347 $
+// $Date: 2016-08-21 05:15:42 +0800 (Sun, 21 Aug 2016) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/SingleFPSimple3d.h $
 
 #ifndef SingleFPSimple3d_h
 #define SingleFPSimple3d_h
@@ -52,7 +52,8 @@ public:
         const Vector y = 0, const Vector x = 0,
         double shearDistI = 0.0, int addRayleigh = 0,
         int inclVertDisp = 0, double mass = 0.0,
-        int maxIter = 20, double tol = 1E-12);
+        int maxIter = 25, double tol = 1E-12,
+        double kFactUplift = 1E-12);
     SingleFPSimple3d();
     
     // destructor
@@ -90,7 +91,7 @@ public:
     // public methods for element output
     int sendSelf(int commitTag, Channel &theChannel);
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact);
+    int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode);
     void Print(OPS_Stream &s, int flag = 0);
     
     Response *setResponse(const char **argv, int argc, OPS_Stream &s);
@@ -101,7 +102,6 @@ protected:
 private:
     // private methods
     void setUp();
-    double sgn(double x);
     
     // private attributes - a copy for each object of the class
     ID connectedExternalNodes;          // contains the tags of the end nodes
@@ -120,7 +120,9 @@ private:
     double mass;        // mass of element
     int maxIter;        // maximum number of iterations
     double tol;         // tolerance for convergence criterion
+    double kFactUplift; // stiffness factor when uplift is encountered
     double L;           // element length
+    bool onP0;          // flag to indicate if the element is on P0
     
     // state variables
     Vector ub;          // displacements in basic system
@@ -137,9 +139,9 @@ private:
     // initial stiffness matrix in basic system
     Matrix kbInit;
     
-    static Matrix theMatrix;
-    static Vector theVector;
-    static Vector theLoad;
+    static Matrix theMatrix;  // a class wide Matrix
+    static Vector theVector;  // a class wide Vector
+    Vector theLoad;
 };
 
 #endif

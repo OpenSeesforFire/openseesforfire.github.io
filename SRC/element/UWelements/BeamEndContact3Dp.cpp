@@ -51,7 +51,7 @@ OPS_BeamEndContact3Dp(void)
 {
   	if (num_BeamEndContact3Dp == 0) {
     	num_BeamEndContact3Dp++;
-    	OPS_Error("BeamEndContact3Dp element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n", 1);
+    	opserr<<"BeamEndContact3Dp element - Written: C.McGann, P.Arduino, P.Mackenzie-Helnwein, U.Washington\n";
   	}
 
   	// Pointer to an element that will be returned
@@ -523,7 +523,7 @@ BeamEndContact3Dp::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker
 }
 
 int
-BeamEndContact3Dp::displaySelf(Renderer &theViewer, int displayMode, float fact)
+BeamEndContact3Dp::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numMode)
 {
 	return 0;
 }

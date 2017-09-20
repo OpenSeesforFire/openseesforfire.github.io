@@ -66,7 +66,8 @@ OPS_CycLiqCPMaterial(void)
 {
   if (numCycLiqCPMaterials == 0) {
     numCycLiqCPMaterials=1;
-    OPS_Error("\nCycLiqCP - Written: Rui Wang, Jian-Min Zhang, Gang Wang, Tsinghua University\nPlease refer to: Zhang and Wang, 2012, 'Large post-liquefaction deformation of sand, part I: physical mechanism, constitutive description and numerical algorithm', Acta Geotechnica\n", 1);
+    //OPS_Error("\nCycLiqCP - Written: Rui Wang, Jian-Min Zhang, Gang Wang, Tsinghua University\nPlease refer to: Zhang and Wang, 2012, 'Large post-liquefaction deformation of sand, part I: physical mechanism, constitutive description and numerical algorithm', Acta Geotechnica\n", 1);
+    opserr<<"\nCycLiqCP - Written: Rui Wang, Jian-Min Zhang, Gang Wang, Tsinghua University\nPlease refer to: Zhang and Wang, 2012, 'Large post-liquefaction deformation of sand, part I: physical mechanism, constitutive description and numerical algorithm', Acta Geotechnica\n";
   }
 
   NDMaterial *theMaterial = 0;
@@ -474,7 +475,7 @@ void CycLiqCP :: plastic_integrator( )
     dev_strain(i,i) -= ( one3*trace ) ;
 
 
-  en=(1+ein)*exp(trace_n)-1.;//void ratio
+  en=(1+ein)*exp(-trace_n)-1.;//void ratio
 
   // force elastic response if initialization analysis is designated===================================
 	if (mElastFlag == 0) {
@@ -1056,23 +1057,25 @@ CycLiqCP::sendSelf(int commitTag, Channel &theChannel)
   data(cnt++) =	   dir;
   data(cnt++) =	   ein;   
   data(cnt++) =	   rho;
-  data(cnt++) =	   epsvir_n;
-  data(cnt++) =	   epsvre_n;
-  data(cnt++) =	   gammarem;   
-  data(cnt++) =	   epsvc_n;
+  data(cnt++) =	   epsvir_nplus1;
+  data(cnt++) =	   epsvre_nplus1;
+  data(cnt++) =	   gammamonos;   
+  data(cnt++) =	   epsvc_nplus1;
   data(cnt++) =	   etam;
   data(cnt++) =	   epsvc0;
   data(cnt++) =	   p0;
 
 
-  for (int i=0; i<3; i++) 
+  for (int i=0; i<3; i++)
+  {
     for (int j=0; j<3; j++) 
 	{
-	  data(cnt+9)   = strain_n(i,j);
-	  data(cnt+9*2) = alpha_n(i,j);
-	  data(cnt+9*3) = stress_n(i,j);
+	  data(cnt+9)   = strain_nplus1(i,j);
+	  data(cnt+9*2) = alpha_nplus1(i,j);
+	  data(cnt+9*3) = stress_nplus1(i,j);
+	  cnt=cnt+1;
 	}
-
+  }
 
   // send the vector object to the channel
   if (theChannel.sendVector(this->getDbTag(), commitTag, data) < 0) {
@@ -1112,25 +1115,23 @@ CycLiqCP::recvSelf (int commitTag, Channel &theChannel,
   rho =	data(cnt++);    
   epsvir_n =	data(cnt++);    
   epsvre_n =	data(cnt++);    
-  gammarem  =	data(cnt++);      
+  gammamono  =	data(cnt++);      
   epsvc_n =	data(cnt++);    
   etam =	data(cnt++);    
   epsvc0 =	data(cnt++);    
   p0 =	data(cnt++);  
 
   for (int i=0; i<3; i++)
+  {
     for (int j=0; j<3; j++) 
 	{
       strain_n(i,j) = data(cnt+9);
 	  alpha_n(i,j) = data(cnt+9*2);
 	  stress_n(i,j) = data(cnt+9*3);
+	  cnt=cnt+1;
 	}
+  }
 
-	strain_nplus1=strain_n;
-	alpha_nplus1=alpha_n;
-	stress_nplus1=stress_n;
-	epsvir_nplus1=epsvir_n;
-	epsvre_nplus1=epsvre_n;
 
   return 0;
 }

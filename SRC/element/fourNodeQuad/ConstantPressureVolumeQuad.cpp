@@ -45,6 +45,39 @@
 #include <ElementResponse.h>
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
+
+void* OPS_ConstantPressureVolumeQuad()
+{
+    if (OPS_GetNDM() != 2 || OPS_GetNDF() != 2) {
+	opserr << "WARNING -- model dimensions and/or nodal DOF not compatible with quad element\n";
+	return 0;
+    }
+    
+    if (OPS_GetNumRemainingInputArgs() < 6) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: element ConstantPressureVolumeQuad eleTag? iNode? jNode? kNode? lNode? matTag?\n";
+	return 0;
+    }
+
+    // ConstantPressureVolumeQuadId, iNode, jNode, kNode, lNode, matID
+    int data[6];
+    int num = 6;
+    if (OPS_GetIntInput(&num,data) < 0) {
+	opserr<<"WARNING: invalid integer input\n";
+	return 0;
+    }
+
+    NDMaterial* mat = OPS_getNDMaterial(data[5]);
+    if (mat == 0) {
+	opserr << "WARNING material not found\n";
+	opserr << "Material: " << data[5];
+	opserr << "\nConstantPressureVolumeQuad element: " << data[0] << endln;
+	return 0;
+    }
+
+    return new ConstantPressureVolumeQuad(data[0],data[1],data[2],data[3],data[4],*mat);
+}
 
 //static data
 double ConstantPressureVolumeQuad::matrixData[64];
@@ -1269,7 +1302,7 @@ void ConstantPressureVolumeQuad :: shape2d( double ss, double tt,
 //***********************************************************************
 
 int
-ConstantPressureVolumeQuad::displaySelf(Renderer &theViewer, int displayMode, float fact)
+ConstantPressureVolumeQuad::displaySelf(Renderer &theViewer, int displayMode, float fact, const char **mode, int numModes)
 {
     // first determine the end points of the quad based on
     // the display factor (a measure of the distorted image)
@@ -1360,7 +1393,7 @@ ConstantPressureVolumeQuad::setResponse(const char **argv, int argc,
     }
     
     theResponse =  new ElementResponse(this, 1, resid);
-  }   else if (strcmp(argv[0],"material") == 0 || strcmp(argv[0],"integrPoint") == 0) {
+  }  else if (strcmp(argv[0],"material") == 0 || strcmp(argv[0],"integrPoint") == 0) {
     int pointNum = atoi(argv[1]);
     if (pointNum > 0 && pointNum <= 4) {
 
@@ -1372,7 +1405,8 @@ ConstantPressureVolumeQuad::setResponse(const char **argv, int argc,
       theResponse =  materialPointers[pointNum-1]->setResponse(&argv[2], argc-2, output);
       
       output.endTag();
-
+    }
+    
   } else if (strcmp(argv[0],"stresses") ==0) {
 
       for (int i=0; i<4; i++) {
@@ -1393,13 +1427,37 @@ ConstantPressureVolumeQuad::setResponse(const char **argv, int argc,
 	output.endTag(); // GaussPoint
 	output.endTag(); // NdMaterialOutput
       }
-
+      
       theResponse =  new ElementResponse(this, 3, Vector(16));
-    }
   }
+  
+  else if (strcmp(argv[0],"strains") ==0) {
+    
+      for (int i=0; i<4; i++) {
+	output.tag("GaussPoint");
+	output.attr("number",i+1);
+	output.attr("eta",sg[i]);
+	output.attr("neta",tg[i]);
+
+	output.tag("NdMaterialOutput");
+	output.attr("classType", materialPointers[i]->getClassTag());
+	output.attr("tag", materialPointers[i]->getTag());
+	
+	output.tag("ResponseType","UnknownStress");
+	output.tag("ResponseType","UnknownStress");
+	output.tag("ResponseType","UnknownStress");
+	output.tag("ResponseType","UnknownStress");
+	
+	output.endTag(); // GaussPoint
+	output.endTag(); // NdMaterialOutput
+      }
+
+      theResponse =  new ElementResponse(this, 4, Vector(16));
+  }
+
 	
   output.endTag(); // ElementOutput
-
+  
   return theResponse;
 }
 
@@ -1419,6 +1477,22 @@ ConstantPressureVolumeQuad::getResponse(int responseID, Information &eleInfo)
 
       // Get material stress response
       const Vector &sigma = materialPointers[i]->getStress();
+      stresses(cnt) = sigma(0);
+      stresses(cnt+1) = sigma(1);
+      stresses(cnt+2) = sigma(2);
+      stresses(cnt+3) = sigma(2);
+      cnt += 4;
+    }
+    return eleInfo.setVector(stresses);
+  } else if (responseID == 4) {
+
+    // Loop over the integration points
+    static Vector stresses(16);
+    int cnt = 0;
+    for (int i = 0; i < 4; i++) {
+
+      // Get material stress response
+      const Vector &sigma = materialPointers[i]->getStrain();
       stresses(cnt) = sigma(0);
       stresses(cnt+1) = sigma(1);
       stresses(cnt+2) = sigma(2);

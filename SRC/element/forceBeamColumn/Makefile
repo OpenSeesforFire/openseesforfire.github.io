@@ -1,8 +1,11 @@
 include ../../../Makefile.def
 
 OBJS       = ForceBeamColumn2d.o ForceBeamColumn3d.o \
-	ForceBeamColumn2dThermal.o ForceBeamColumn3dThermal.o \
+	ForceBeamColumn2dThermal.o \
 	ElasticForceBeamColumn2d.o ElasticForceBeamColumn3d.o \
+	ElasticForceBeamColumnWarping2d.o \
+	ForceBeamColumnCBDI2d.o \
+	ForceBeamColumnWarping2d.o \
 	TclForceBeamColumnCommand.o \
 	BeamIntegration.o \
 	LobattoBeamIntegration.o \
@@ -18,9 +21,12 @@ OBJS       = ForceBeamColumn2d.o ForceBeamColumn3d.o \
 	DistHingeIntegration.o \
 	RegularizedHingeIntegration.o \
 	TrapezoidalBeamIntegration.o \
+	CompositeSimpsonBeamIntegration.o \
 	FixedLocationBeamIntegration.o \
 	LowOrderBeamIntegration.o \
-	MidDistanceBeamIntegration.o
+	MidDistanceBeamIntegration.o \
+	GaussQBeamIntegration.o \
+	gaussq.o d1mach.o
 
 # Compilation control
 

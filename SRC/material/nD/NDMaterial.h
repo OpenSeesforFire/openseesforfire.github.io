@@ -19,7 +19,7 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 1.23 $		
+// $Revision: 1.23 $
 // $Date: 2010-09-13 21:29:28 $
 // $Source: /usr/local/cvs/OpenSees/SRC/material/nD/NDMaterial.h,v $
 
@@ -63,11 +63,12 @@ class NDMaterial : public Material
     virtual const Matrix &getTangent(void);
     virtual const Matrix &getInitialTangent(void) {return this->getTangent();};
 
-	//Added by L.Jiang, U.Edinburgh
-    virtual double getThermalTangentAndElongation(double &TempT, double &, double &);
-    virtual double setThermalTangentAndElongation(double &TempT, double &, double &);
-	virtual const Vector& getTempAndElong(void); 
-	//-------------------------------------------------------
+	//Added by L.Jiang, [SIF]
+	virtual double getThermalTangentAndElongation(double &TempT, double &, double &);
+	virtual double setThermalTangentAndElongation(double &TempT, double &, double &);
+	virtual const Vector& getTempAndElong(void);
+	//Added by L.Jiang, [SIF]
+
     virtual const Vector &getStress(void);
     virtual const Vector &getStrain(void);
 
@@ -92,7 +93,7 @@ class NDMaterial : public Material
     virtual const Matrix & getInitialTangentSensitivity    (int gradIndex);
     virtual const Matrix & getDampTangentSensitivity(int gradIndex);
     virtual double         getRhoSensitivity        (int gradIndex);
-    virtual int            commitSensitivity        (Vector & strainGradient, int gradIndex, int numGrads);
+    virtual int            commitSensitivity        (const Vector & strainGradient, int gradIndex, int numGrads);
 // AddingSensitivity:END ///////////////////////////////////////////
 
   protected:
@@ -102,5 +103,9 @@ class NDMaterial : public Material
     static Vector errVector;
 };
 
+extern bool OPS_addNDMaterial(NDMaterial *newComponent);
+extern NDMaterial *OPS_getNDMaterial(int tag);
+extern void OPS_clearAllNDMaterial(void);
+extern void OPS_printNDMaterial(OPS_Stream &s, int flag = 0);
 
 #endif

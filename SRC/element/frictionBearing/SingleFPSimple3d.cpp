@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4952 $
-// $Date: 2012-08-09 06:56:05 +0100 (Thu, 09 Aug 2012) $
-// $URL: svn://opensees.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/SingleFPSimple3d.cpp $
+// $Revision: 6501 $
+// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
+// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/SingleFPSimple3d.cpp $
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 02/06
@@ -45,29 +45,227 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <elementAPI.h>
+
+void* OPS_SingleFPSimple3d()
+{
+    int ndf = OPS_GetNDF();
+    if (ndf != 6)  {
+	opserr << "WARNING invalid ndf: " << ndf;
+	opserr << ", for space problem need 6 - singleFPBearing \n";    
+	return 0;
+    }
+    
+    if (OPS_GetNumRemainingInputArgs() < 14) {
+	opserr << "WARNING insufficient arguments\n";
+	opserr << "Want: singleFPBearing eleTag iNode jNode frnMdlTag Reff kInit -P matTag -T matTag -My matTag -Mz matTag <-orient <x1 x2 x3> y1 y2 y3> <-shearDist sDratio> <-doRayleigh> <-inclVertDsip> <-mass m> <-iter maxIter tol>\n";
+	return 0;
+    }
+
+    // tags
+    int idata[4];
+    int num = 4;
+    if (OPS_GetIntInput(&num, idata) < 0) {
+	opserr<<"WARNING: invalid integer inputs\n";
+	return 0;
+    }
+
+    FrictionModel* theFrnMdl = OPS_getFrictionModel(idata[3]);
+    if (theFrnMdl == 0) {
+	opserr << "WARNING friction model not found\n";
+	opserr << "frictionModel: " << idata[3] << endln;
+	return 0;
+    }
+
+    // data
+    double data[2];
+    num = 2;
+    if (OPS_GetDoubleInput(&num, data) < 0) {
+	opserr<<"WARNING: invalid double\n";
+	return 0;
+    }
+
+    // materials
+    UniaxialMaterial* mats[4] = {0,0,0,0};
+    const char* type = OPS_GetString();
+    if (strcmp(type,"-P") != 0) {
+	opserr<<"WARNING: want -P\n";
+	return 0;
+    }
+    int matTag;
+    num = 1;
+    if (OPS_GetIntInput(&num, &matTag) < 0) {
+	opserr<<"WARNING: invalid matTag\n";
+	return 0;
+    }
+    mats[0] = OPS_getUniaxialMaterial(matTag);
+    if (mats[0] == 0) {
+	opserr<<"WARNING: material not found\n";
+	return 0;
+    }
+
+    type = OPS_GetString();
+    if (strcmp(type,"-T") != 0) {
+	opserr<<"WARNING: want -T\n";
+	return 0;
+    }
+    num = 1;
+    if (OPS_GetIntInput(&num, &matTag) < 0) {
+	opserr<<"WARNING: invalid matTag\n";
+	return 0;
+    }
+    mats[1] = OPS_getUniaxialMaterial(matTag);
+    if (mats[1] == 0) {
+	opserr<<"WARNING: material not found\n";
+	return 0;
+    }
+    
+    type = OPS_GetString();
+    if (strcmp(type,"-My") != 0) {
+	opserr<<"WARNING: want -My\n";
+	return 0;
+    }
+    num = 1;
+    if (OPS_GetIntInput(&num, &matTag) < 0) {
+	opserr<<"WARNING: invalid matTag\n";
+	return 0;
+    }
+    mats[2] = OPS_getUniaxialMaterial(matTag);
+    if (mats[2] == 0) {
+	opserr<<"WARNING: material not found\n";
+	return 0;
+    }
+    
+    type = OPS_GetString();
+    if (strcmp(type,"-Mz") != 0) {
+	opserr<<"WARNING: want -Mz\n";
+	return 0;
+    }
+    num = 1;
+    if (OPS_GetIntInput(&num, &matTag) < 0) {
+	opserr<<"WARNING: invalid matTag\n";
+	return 0;
+    }
+    mats[3] = OPS_getUniaxialMaterial(matTag);
+    if (mats[3] == 0) {
+	opserr<<"WARNING: material not found\n";
+	return 0;
+    }
+
+    // options
+    Vector x,y(3);
+    y(0) = 0.0; y(1) = 1.0; y(2) = 0.0;
+    double sDistI = 0.0;
+    int doRayleigh = 0;
+    int inclVertDisp = 0;
+    double mass = 0.0;
+    int maxIter = 25;
+    double tol = 1e-12;
+    double kFactUplift = 1e-6;
+
+    while (OPS_GetNumRemainingInputArgs() > 0) {
+	type = OPS_GetString();
+	if (strcmp(type,"-orient") == 0) {
+	    if (OPS_GetNumRemainingInputArgs() < 3) {
+		opserr<<"WARNING: insufficient arguments after -orient\n";
+		return 0;
+	    }
+	    num = 3;
+	    x.resize(3);
+	    if (OPS_GetDoubleInput(&num, &x(0)) < 0) {
+		opserr<<"WARNING: invalid orient value\n";
+		return 0;
+	    }
+	    if (OPS_GetNumRemainingInputArgs() < 3) {
+		y = x;
+		x = Vector();
+		continue;
+	    }
+	    y.resize(3);
+	    if (OPS_GetDoubleInput(&num, &y(0)) < 0) {
+		y = x;
+		x = Vector();
+		continue;
+	    }
+	} else if (strcmp(type,"-shearDist") == 0) {
+	    if (OPS_GetNumRemainingInputArgs() < 1) {
+		opserr<<"WARNING: insufficient args\n";
+		return 0;
+	    }
+	    num = 1;
+	    if (OPS_GetDoubleInput(&num, &sDistI) < 0) {
+		opserr<<"WARNING: invalid shearDist\n";
+		return 0;
+	    }
+	} else if (strcmp(type,"-doRayleigh") == 0) {
+	    doRayleigh = 1;
+	} else if (strcmp(type,"-mass") == 0) {
+	    if (OPS_GetNumRemainingInputArgs() < 1) {
+		opserr<<"WARNING: insufficient args\n";
+		return 0;
+	    }
+	    num = 1;
+	    if (OPS_GetDoubleInput(&num, &mass) < 0) {
+		opserr<<"WARNING: invalid mass\n";
+		return 0;
+	    }
+	} else if (strcmp(type,"-iter") == 0) {
+	    if (OPS_GetNumRemainingInputArgs() < 2) {
+		opserr<<"WARNING: insufficient args\n";
+		return 0;
+	    }
+	    num = 1;
+	    if (OPS_GetIntInput(&num,&maxIter) < 0) {
+		opserr<<"WARNING: invalid maxIter\n";
+		return 0;
+	    }
+	    if (OPS_GetDoubleInput(&num,&tol) < 0) {
+		opserr<<"WARNING: invalid tol\n";
+		return 0;
+	    }
+	} else if (strcmp(type,"-inclVertdisp") == 0) {
+	    inclVertDisp = 1;
+	} else if (strcmp(type,"-kFactUplift") == 0) {
+	    if (OPS_GetNumRemainingInputArgs() < 1) {
+		opserr<<"WARNING: insufficient args\n";
+		return 0;
+	    }
+	    num = 1;
+	    if (OPS_GetDoubleInput(&num,&kFactUplift) < 0) {
+		opserr<<"WARNING: invalid kFactuplift\n";
+		return 0;
+	    }
+	}
+    }
+
+    return new SingleFPSimple3d(idata[0],idata[1],idata[2],*theFrnMdl,
+				data[0],data[1],mats,y,x,sDistI,doRayleigh,
+				inclVertDisp,mass,maxIter,tol,kFactUplift);
+}
 
 
 // initialize the class wide variables
 Matrix SingleFPSimple3d::theMatrix(12,12);
 Vector SingleFPSimple3d::theVector(12);
-Vector SingleFPSimple3d::theLoad(12);
 
 
 SingleFPSimple3d::SingleFPSimple3d(int tag, int Nd1, int Nd2,
     FrictionModel &thefrnmdl, double reff, double kinit,
     UniaxialMaterial **materials, const Vector _y, const Vector _x,
-    double sdI, int addRay, int vert, double m, int maxiter, double _tol)
+    double sdI, int addRay, int vert, double m, int maxiter, double _tol,
+    double kfactuplift)
     : Element(tag, ELE_TAG_SingleFPSimple3d),
     connectedExternalNodes(2), theFrnMdl(0), Reff(reff), kInit(kinit),
     x(_x), y(_y), shearDistI(sdI), addRayleigh(addRay), inclVertDisp(vert),
-    mass(m), maxIter(maxiter), tol(_tol),
-    L(0.0), ub(6), ubPlastic(2), qb(6), kb(6,6), ul(12), Tgl(12,12), Tlb(6,12),
-    ubPlasticC(2), kbInit(6,6)
+    mass(m), maxIter(maxiter), tol(_tol), kFactUplift(kfactuplift),
+    L(0.0), onP0(true), ub(6), ubPlastic(2), qb(6), kb(6,6), ul(12),
+    Tgl(12,12), Tlb(6,12), ubPlasticC(2), kbInit(6,6), theLoad(12)
 {
     // ensure the connectedExternalNode ID is of correct size & set values
     if (connectedExternalNodes.Size() != 2)  {
         opserr << "SingleFPSimple3d::SingleFPSimple3d() - element: "
             << this->getTag() << " - failed to create an ID of size 2.\n";
+        exit(-1);
     }
     
     connectedExternalNodes(0) = Nd1;
@@ -95,13 +293,13 @@ SingleFPSimple3d::SingleFPSimple3d(int tag, int Nd1, int Nd2,
     
     // get copies of the uniaxial materials
     for (int i=0; i<4; i++)  {
-        if (materials[i] == 0) {
+        if (materials[i] == 0)  {
             opserr << "SingleFPSimple3d::SingleFPSimple3d() - "
                 "null uniaxial material pointer passed.\n";
             exit(-1);
         }
         theMaterials[i] = materials[i]->getCopy();
-        if (theMaterials[i] == 0) {
+        if (theMaterials[i] == 0)  {
             opserr << "SingleFPSimple3d::SingleFPSimple3d() - "
                 << "failed to copy uniaxial material.\n";
             exit(-1);
@@ -111,8 +309,7 @@ SingleFPSimple3d::SingleFPSimple3d(int tag, int Nd1, int Nd2,
     // initialize initial stiffness matrix
     kbInit.Zero();
     kbInit(0,0) = theMaterials[0]->getInitialTangent();
-    kbInit(1,1) = kInit;
-    kbInit(2,2) = kInit;
+    kbInit(1,1) = kbInit(2,2) = kInit;
     kbInit(3,3) = theMaterials[1]->getInitialTangent();
     kbInit(4,4) = theMaterials[2]->getInitialTangent();
     kbInit(5,5) = theMaterials[3]->getInitialTangent();
@@ -126,9 +323,9 @@ SingleFPSimple3d::SingleFPSimple3d()
     : Element(0, ELE_TAG_SingleFPSimple3d),
     connectedExternalNodes(2), theFrnMdl(0), Reff(0.0), kInit(0.0),
     x(0), y(0), shearDistI(0.0), addRayleigh(0), inclVertDisp(0), 
-    mass(0.0), maxIter(20), tol(1E-8),
-    L(0.0), ub(6), ubPlastic(2), qb(6), kb(6,6), ul(12), Tgl(12,12),
-    Tlb(6,12), ubPlasticC(2), kbInit(6,6)
+    mass(0.0), maxIter(25), tol(1E-12), kFactUplift(1E-12),
+    L(0.0), onP0(false), ub(6), ubPlastic(2), qb(6), kb(6,6), ul(12),
+    Tgl(12,12), Tlb(6,12), ubPlasticC(2), kbInit(6,6), theLoad(12)
 {
     // ensure the connectedExternalNode ID is of correct size
     if (connectedExternalNodes.Size() != 2)  {
@@ -166,19 +363,19 @@ int SingleFPSimple3d::getNumExternalNodes() const
 }
 
 
-const ID& SingleFPSimple3d::getExternalNodes() 
+const ID& SingleFPSimple3d::getExternalNodes()
 {
     return connectedExternalNodes;
 }
 
 
-Node** SingleFPSimple3d::getNodePtrs() 
+Node** SingleFPSimple3d::getNodePtrs()
 {
     return theNodes;
 }
 
 
-int SingleFPSimple3d::getNumDOF() 
+int SingleFPSimple3d::getNumDOF()
 {
     return 12;
 }
@@ -201,11 +398,11 @@ void SingleFPSimple3d::setDomain(Domain *theDomain)
     // if can't find both - send a warning message
     if (!theNodes[0] || !theNodes[1])  {
         if (!theNodes[0])  {
-            opserr << "WARNING SingleFPSimple3d::setDomain() - Nd1: " 
+            opserr << "WARNING SingleFPSimple3d::setDomain() - Nd1: "
                 << connectedExternalNodes(0)
                 << " does not exist in the model for";
         } else  {
-            opserr << "WARNING SingleFPSimple3d::setDomain() - Nd2: " 
+            opserr << "WARNING SingleFPSimple3d::setDomain() - Nd2: "
                 << connectedExternalNodes(1)
                 << " does not exist in the model for";
         }
@@ -317,12 +514,12 @@ int SingleFPSimple3d::update()
     }
     
     // transform response from the global to the local system
-    ul = Tgl*ug;
-    uldot = Tgl*ugdot;
+    ul.addMatrixVector(0.0, Tgl, ug, 1.0);
+    uldot.addMatrixVector(0.0, Tgl, ugdot, 1.0);
     
     // transform response from the local to the basic system
-    ub = Tlb*ul;
-    ubdot = Tlb*uldot;
+    ub.addMatrixVector(0.0, Tlb, ul, 1.0);
+    ubdot.addMatrixVector(0.0, Tlb, uldot, 1.0);
     
     // get radii in basic y- and z-direction
     double Ry = sqrt(pow(Reff,2) - pow(ub(2),2));
@@ -335,25 +532,30 @@ int SingleFPSimple3d::update()
     // 1) get axial force and stiffness in basic x-direction
     double ub0Old = theMaterials[0]->getStrain();
     if (inclVertDisp == 0)  {
-        theMaterials[0]->setTrialStrain(ub(0),ubdot(0));
+        theMaterials[0]->setTrialStrain(ub(0), ubdot(0));
     } else  {
         double ubVert = Reff - sqrt(pow(Reff,2) - pow(ub(1),2) - pow(ub(2),2));
-        theMaterials[0]->setTrialStrain(ub(0)-ubVert,ubdot(0));
+        theMaterials[0]->setTrialStrain(ub(0)-ubVert, ubdot(0));
     }
     qb(0) = theMaterials[0]->getStress();
     kb(0,0) = theMaterials[0]->getTangent();
     
     // check for uplift
     if (qb(0) >= 0.0)  {
+        // update plastic displacements
+        ubPlastic(0) = ub(1);
+        ubPlastic(1) = ub(2);
+        // set basic forces
+        qb.Zero();
+        // set tangent stiffnesses
         kb = kbInit;
         if (qb(0) > 0.0)  {
-            theMaterials[0]->setTrialStrain(ub0Old,0.0);
-            kb = DBL_EPSILON*kbInit;
-            // update plastic displacements
-            ubPlastic(0) = ub(1);
-            ubPlastic(1) = ub(2);
+            theMaterials[0]->setTrialStrain(ub0Old, 0.0);
+            kb = kFactUplift*kbInit;  // kb = DBL_EPSILON*kbInit;
+            //opserr << "WARNING: SingleFPSimple3d::update() - element: "
+            //    << this->getTag() << " - uplift encountered, scaling "
+            //    << "stiffness matrix by: " << kFactUplift << endln;
         }
-        qb.Zero();
         return 0;
     }
     
@@ -362,12 +564,14 @@ int SingleFPSimple3d::update()
     Vector qbOld(2);
     do  {
         // save old shear forces
+        iter++;
         qbOld(0) = qb(1);
         qbOld(1) = qb(2);
         
         // get normal and friction (yield) forces
         double N = -qb(0) + qb(1)/Ry*ub(1) + qb(2)/Rz*ub(2)
             - qb(1)*ul(5) + qb(2)*ul(4);
+        N = N > 0.0 ? N : 0.0;  // can not be negative
         theFrnMdl->setTrial(N, ubdotAbs);
         double qYield = (theFrnMdl->getFrictionForce());
         
@@ -394,9 +598,8 @@ int SingleFPSimple3d::update()
             qb(1) = qTrial(0) + k2y*ub(1) - N*ul(5);
             qb(2) = qTrial(1) + k2z*ub(2) + N*ul(4);
             // set tangent stiffnesses
-            kb(1,1) = kInit;
+            kb(1,1) = kb(2,2) = kInit;
             kb(1,2) = kb(2,1) = 0.0;
-            kb(2,2) = kInit;
         }
         // plastic step -> return mapping
         else  {
@@ -412,12 +615,11 @@ int SingleFPSimple3d::update()
             // set tangent stiffnesses
             double D = pow(qTrialNorm,3);
             kb(1,1) =  qYield*k0y*qTrial(1)*qTrial(1)/D + k2y;
-            kb(1,2) = -qYield*k0z*qTrial(0)*qTrial(1)/D;
+            kb(1,2) = -qYield*k0z*qTrial(1)*qTrial(0)/D;
             kb(2,1) = -qYield*k0y*qTrial(0)*qTrial(1)/D;
             kb(2,2) =  qYield*k0z*qTrial(0)*qTrial(0)/D + k2z;
         }
-        iter++;
-    } while ((sqrt(pow(qb(1)-qbOld(0),2)+pow(qb(2)-qbOld(1),2)) >= tol) && (iter < maxIter));
+    } while ((sqrt(pow(qb(1)-qbOld(0),2)+pow(qb(2)-qbOld(1),2)) >= tol) && (iter <= maxIter));
     
     // issue warning if iteration did not converge
     if (iter >= maxIter)   {
@@ -429,17 +631,17 @@ int SingleFPSimple3d::update()
     }
     
     // 3) get moment and stiffness in basic x-direction
-    theMaterials[1]->setTrialStrain(ub(3),ubdot(3));
+    theMaterials[1]->setTrialStrain(ub(3), ubdot(3));
     qb(3) = theMaterials[1]->getStress();
     kb(3,3) = theMaterials[1]->getTangent();
     
     // 4) get moment and stiffness in basic y-direction
-    theMaterials[2]->setTrialStrain(ub(4),ubdot(4));
+    theMaterials[2]->setTrialStrain(ub(4), ubdot(4));
     qb(4) = theMaterials[2]->getStress();
     kb(4,4) = theMaterials[2]->getTangent();
     
     // 5) get moment and stiffness in basic z-direction
-    theMaterials[3]->setTrialStrain(ub(5),ubdot(5));
+    theMaterials[3]->setTrialStrain(ub(5), ubdot(5));
     qb(5) = theMaterials[3]->getStress();
     kb(5,5) = theMaterials[3]->getTangent();
     
@@ -490,11 +692,11 @@ const Matrix& SingleFPSimple3d::getInitialStiff()
     theMatrix.Zero();
     
     // transform from basic to local system
-    static Matrix kl(12,12);
-    kl.addMatrixTripleProduct(0.0, Tlb, kbInit, 1.0);
+    static Matrix klInit(12,12);
+    klInit.addMatrixTripleProduct(0.0, Tlb, kbInit, 1.0);
     
     // transform from local to global system
-    theMatrix.addMatrixTripleProduct(0.0, Tgl, kl, 1.0);
+    theMatrix.addMatrixTripleProduct(0.0, Tgl, klInit, 1.0);
     
     return theMatrix;
 }
@@ -572,7 +774,7 @@ int SingleFPSimple3d::addInertiaLoadToUnbalance(const Vector &accel)
     // check for quick return
     if (mass == 0.0)  {
         return 0;
-    }    
+    }
     
     // get R * accel from the nodes
     const Vector &Raccel1 = theNodes[0]->getRV(accel);
@@ -603,7 +805,7 @@ const Vector& SingleFPSimple3d::getResistingForce()
     
     // determine resisting forces in local system
     static Vector ql(12);
-    ql = Tlb^qb;
+    ql.addMatrixTransposeVector(0.0, Tlb, qb, 1.0);
     
     // add P-Delta moments to local forces
     double MpDelta1 = qb(0)*(ul(7)-ul(1));
@@ -625,10 +827,7 @@ const Vector& SingleFPSimple3d::getResistingForce()
     ql(9) -= Vdelta2;
     
     // determine resisting forces in global system
-    theVector = Tgl^ql;
-    
-    // subtract external load
-    theVector.addVector(1.0, theLoad, -1.0);
+    theVector.addMatrixTransposeVector(0.0, Tgl, ql, 1.0);
     
     return theVector;
 }
@@ -639,10 +838,13 @@ const Vector& SingleFPSimple3d::getResistingForceIncInertia()
     // this already includes damping forces from materials
     theVector = this->getResistingForce();
     
+    // subtract external load
+    theVector.addVector(1.0, theLoad, -1.0);
+    
     // add the damping forces from rayleigh damping
     if (addRayleigh == 1)  {
         if (alphaM != 0.0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0)
-            theVector += this->getRayleighDampingForces();
+            theVector.addVector(1.0, this->getRayleighDampingForces(), 1.0);
     }
     
     // add inertia forces from element mass
@@ -664,17 +866,22 @@ const Vector& SingleFPSimple3d::getResistingForceIncInertia()
 int SingleFPSimple3d::sendSelf(int commitTag, Channel &sChannel)
 {
     // send element parameters
-    static Vector data(10);
-    data(0) = this->getTag();
-    data(1) = Reff;
-    data(2) = kInit;
-    data(3) = shearDistI;
-    data(4) = addRayleigh;
-    data(5) = mass;
-    data(6) = maxIter;
-    data(7) = tol;
-    data(8) = x.Size();
-    data(9) = y.Size();
+    static Vector data(15);
+    data(0)  = this->getTag();
+    data(1)  = Reff;
+    data(2)  = kInit;
+    data(3)  = shearDistI;
+    data(4)  = addRayleigh;
+    data(5)  = mass;
+    data(6)  = maxIter;
+    data(7)  = tol;
+    data(8)  = kFactUplift;
+    data(9)  = x.Size();
+    data(10) = y.Size();
+    data(11) = alphaM;
+    data(12) = betaK;
+    data(13) = betaK0;
+    data(14) = betaKc;
     sChannel.sendVector(0, commitTag, data);
     
     // send the two end nodes
@@ -717,7 +924,7 @@ int SingleFPSimple3d::recvSelf(int commitTag, Channel &rChannel,
             delete theMaterials[i];
     
     // receive element parameters
-    static Vector data(10);
+    static Vector data(15);
     rChannel.recvVector(0, commitTag, data);
     this->setTag((int)data(0));
     Reff = data(1);
@@ -727,6 +934,11 @@ int SingleFPSimple3d::recvSelf(int commitTag, Channel &rChannel,
     mass = data(5);
     maxIter = (int)data(6);
     tol = data(7);
+    kFactUplift = data(8);
+    alphaM = data(11);
+    betaK = data(12);
+    betaK0 = data(13);
+    betaKc = data(14);
     
     // receive the two end nodes
     rChannel.recvID(0, commitTag, connectedExternalNodes);
@@ -760,20 +972,20 @@ int SingleFPSimple3d::recvSelf(int commitTag, Channel &rChannel,
     }
     
     // receive remaining data
-    if ((int)data(8) == 3)  {
+    if ((int)data(9) == 3)  {
         x.resize(3);
         rChannel.recvVector(0, commitTag, x);
     }
-    if ((int)data(9) == 3)  {
+    if ((int)data(10) == 3)  {
         y.resize(3);
         rChannel.recvVector(0, commitTag, y);
     }
+    onP0 = false;
     
     // initialize initial stiffness matrix
     kbInit.Zero();
     kbInit(0,0) = theMaterials[0]->getInitialTangent();
-    kbInit(1,1) = kInit;
-    kbInit(2,2) = kInit;
+    kbInit(1,1) = kbInit(2,2) = kInit;
     kbInit(3,3) = theMaterials[1]->getInitialTangent();
     kbInit(4,4) = theMaterials[2]->getInitialTangent();
     kbInit(5,5) = theMaterials[3]->getInitialTangent();
@@ -786,7 +998,7 @@ int SingleFPSimple3d::recvSelf(int commitTag, Channel &rChannel,
 
 
 int SingleFPSimple3d::displaySelf(Renderer &theViewer,
-    int displayMode, float fact)
+    int displayMode, float fact, const char **modes, int numMode)
 {
     int errCode = 0;
     
@@ -833,8 +1045,8 @@ int SingleFPSimple3d::displaySelf(Renderer &theViewer,
         }
     }
     
-    errCode += theViewer.drawLine (v1, v2, 1.0, 1.0);
-    errCode += theViewer.drawLine (v2, v3, 1.0, 1.0);
+    errCode += theViewer.drawLine (v1, v2, 1.0, 1.0, this->getTag(), 0);
+    errCode += theViewer.drawLine (v2, v3, 1.0, 1.0, this->getTag(), 0);
     
     return errCode;
 }
@@ -996,7 +1208,7 @@ int SingleFPSimple3d::getResponse(int responseID, Information &eleInfo)
     case 2:  // local forces
         theVector.Zero();
         // determine resisting forces in local system
-        theVector = Tlb^qb;
+        theVector.addMatrixTransposeVector(0.0, Tlb, qb, 1.0);
         // add P-Delta moments
         MpDelta1 = qb(0)*(ul(7)-ul(1));
         theVector(5)  += MpDelta1;
@@ -1035,7 +1247,7 @@ int SingleFPSimple3d::getResponse(int responseID, Information &eleInfo)
 void SingleFPSimple3d::setUp()
 {
     const Vector &end1Crd = theNodes[0]->getCrds();
-    const Vector &end2Crd = theNodes[1]->getCrds();	
+    const Vector &end2Crd = theNodes[1]->getCrds();
     Vector xp = end2Crd - end1Crd;
     L = xp.Norm();
     
@@ -1043,8 +1255,8 @@ void SingleFPSimple3d::setUp()
         if (x.Size() == 0)  {
             x.resize(3);
             x = xp;
-        } else  {
-            opserr << "WARNING SingleFPSimple3d::setUp() - " 
+        } else if (onP0)  {
+            opserr << "WARNING SingleFPSimple3d::setUp() - "
                 << "element: " << this->getTag()
                 << " - ignoring nodes and using specified "
                 << "local x vector to determine orientation.\n";
@@ -1059,8 +1271,8 @@ void SingleFPSimple3d::setUp()
     }
     
     // establish orientation of element for the tranformation matrix
-    // z = x cross yp
-    Vector z(3);
+    // z = x cross y
+    static Vector z(3);
     z(0) = x(1)*y(2) - x(2)*y(1);
     z(1) = x(2)*y(0) - x(0)*y(2);
     z(2) = x(0)*y(1) - x(1)*y(0);
@@ -1103,15 +1315,4 @@ void SingleFPSimple3d::setUp()
     Tlb(1,11) = -(1.0 - shearDistI)*L;
     Tlb(2,4) = -Tlb(1,5);
     Tlb(2,10) = -Tlb(1,11);
-}
-
-
-double SingleFPSimple3d::sgn(double x)
-{
-    if (x > 0)
-        return 1.0;
-    else if (x < 0)
-        return -1.0;
-    else
-        return 0.0;
 }

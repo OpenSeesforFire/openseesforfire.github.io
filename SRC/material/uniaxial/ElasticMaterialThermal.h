@@ -23,8 +23,8 @@
 // $Source: /usr/local/cvs/OpenSees/SRC/material/uniaxial/ElasticMaterialThermal.h,v $
                                                                         
                                                                         
-#ifndef ElasticMaterialThermal_h
-#define ElasticMaterialThermal_h
+#ifndef ElasticMaterial_h
+#define ElasticMaterial_h
 
 // Written: fmk 
 // Created: 07/98
@@ -34,9 +34,7 @@
 // ElasticMaterialThermal. ElasticMaterialThermal provides the abstraction
 // of an viscoelastic uniaxial material,
 // i.e. stress = E*strain + eta*strainrate
-//
-//
-// What: "@(#) ElasticMaterialThermal.h, revA"
+// Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
 
 
 #include <UniaxialMaterial.h>
@@ -44,28 +42,20 @@
 class ElasticMaterialThermal : public UniaxialMaterial
 {
   public:
-    ElasticMaterialThermal(int tag, double E, double alpha, double eta = 0.0);    
-    ElasticMaterialThermal();    
+    ElasticMaterialThermal(int tag, double Epos, double alpha =0.0, double et=0.0, double Eneg=0.0, int softindex = 0);
+    ElasticMaterialThermal();
     ~ElasticMaterialThermal();
 
     const char *getClassType(void) const {return "ElasticMaterialThermal";};
 
     int setTrialStrain(double strain, double strainRate = 0.0); 
-	int setTrialStrain(double strain, double FiberTemperature, double strainRate = 0.0);
-
     int setTrial(double strain, double &stress, double &tangent, double strainRate = 0.0); 
-	
-	double getThermalElongation(void);//returning the Thermal Elongation
-	double getElongTangent(double, double&, double&, double);
-
     double getStrain(void) {return trialStrain;};
     double getStrainRate(void) {return trialStrainRate;};
     double getStress(void);
-    double getTangent(void) {return E;};
+    double getTangent(void);
     double getDampTangent(void) {return eta;};
-    double getInitialTangent(void) {return E;};
-
-	int getVariable(const char *variable, Information &);  //For providing the universal function
+    double getInitialTangent(void);
 
     int commitState(void);
     int revertToLastCommit(void);    
@@ -75,30 +65,43 @@ class ElasticMaterialThermal : public UniaxialMaterial
     
     int sendSelf(int commitTag, Channel &theChannel);  
     int recvSelf(int commitTag, Channel &theChannel, 
-		 FEM_ObjectBroker &theBroker);    
+        FEM_ObjectBroker &theBroker);
     
     void Print(OPS_Stream &s, int flag =0);
     
     int setParameter(const char **argv, int argc, Parameter &param);
     int updateParameter(int parameterID, Information &info);
 
+	double getThermalElongation(void);//returning the Thermal Elongation
+	double getElongTangent(double, double&, double&, double);
+	int getVariable(const char *variable, Information &);  //For providing the universal function
+
+
     // AddingSensitivity:BEGIN //////////////////////////////////////////
     int activateParameter(int parameterID);
     double getStressSensitivity(int gradIndex, bool conditional);
+    double getTangentSensitivity(int gradIndex);
     double getInitialTangentSensitivity(int gradIndex);
     int commitSensitivity(double strainGradient, int gradIndex, int numGrads);
     // AddingSensitivity:END ///////////////////////////////////////////
 
   protected:
     
-  private: 
-    double ThermalElongation;
-	double TempT;
+  private:
     double trialStrain;
     double trialStrainRate;
-    double E;
+    double committedStrain;
+    double committedStrainRate;
+    double Epos;
+    double Eneg;
     double eta;
-	double Alpha;  //Thermal expansion coefficient
+	double Alpha;
+	double E0;
+	double Eneg0;
+	int softIndex;
+	double ThermalElongation;
+	double Temp;
+	double* redfactors;
 
     // AddingSensitivity:BEGIN //////////////////////////////////////////
     int parameterID;

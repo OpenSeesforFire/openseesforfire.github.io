@@ -3,7 +3,10 @@ include ../../../Makefile.def
 OBJS       = Truss.o \
 	TrussSection.o \
 	CorotTruss.o \
-	CorotTrussSection.o
+	CorotTrussSection.o \
+	Truss2.o \
+	N4BiaxialTruss.o \
+	CorotTruss2.o
 
 all:         $(OBJS)
 

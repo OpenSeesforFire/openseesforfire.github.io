@@ -34,14 +34,14 @@
 
 
 ParametricFireEC1::ParametricFireEC1(int tag, double I, double Av, double H, double At,
-										   double Af, double Qf, double tlim)
-:FireModel(tag,2), ThI(I), Avent(Av), Hvent(H), Atotal(At), Afire(Af), Qfire(Qf), tlimit(tlim/3600)
+										   double Af, double Qf, double tlim, double startTime)
+:FireModel(tag,2), ThI(I), Avent(Av), Hvent(H), Atotal(At), Afire(Af), Qfire(Qf), tlimit(tlim/3600), StartTime(startTime)
 {
-
+	//Qf in MJ
 }
 
 ParametricFireEC1::ParametricFireEC1(int tag)
-:FireModel(tag, 2),ThI(-1.0), Avent(-1.0), Hvent(-1.0), Atotal(-1.0), Afire(-1.0), Qfire(-1.0), tlimit(-1.0)
+:FireModel(tag, 2),ThI(-1.0), Avent(-1.0), Hvent(-1.0), Atotal(-1.0), Afire(-1.0), Qfire(-1.0), tlimit(-1.0), StartTime(0)
 {
 	
 	
@@ -69,10 +69,17 @@ ParametricFireEC1::getGasTemperature(double time)
 			<< "Note: 100.0 <= ThermalI <=2200.0";
 		exit(-1);
 		}
-    double theTime = time / 3600.0;
 	static double T, Ta, Ofactor, xx, x1, Gamma, tasterisk, Qtotal, tmax, tmax_ast;
 
 	Ta = 20.0;
+
+	if (time < StartTime)
+		return Ta;
+
+    double theTime = (time-StartTime) / 3600.0;
+	
+
+	
 	Ofactor = Avent * sqrt(Hvent) / Atotal;
 	xx = 1160/0.04;
 	x1 = Ofactor / ThI;
@@ -151,6 +158,8 @@ ParametricFireEC1::applyFluxBC(HeatFluxBC* theFlux, double time)
 		{
 		Convection* convec = (Convection*) theFlux;
 		convec->setSurroundingTemp(this->getGasTemperature(time)+273.15);
+		double Temp;
+		Temp= this->getGasTemperature(time);
 		convec->applyFluxBC(time);
 		} else if (flux_type == 2) {
 			Radiation* rad = (Radiation*) theFlux;

@@ -35,8 +35,52 @@
 #include <ElasticPPMaterial.h>
 #include <Vector.h>
 #include <Channel.h>
+#include <Parameter.h>
 #include <math.h>
 #include <float.h>
+
+#include <elementAPI.h>
+
+void *
+OPS_ElasticPPMaterial(void)
+{
+  // Pointer to a uniaxial material that will be returned
+  UniaxialMaterial *theMaterial = 0;
+
+  int numArgs = OPS_GetNumRemainingInputArgs();
+  if (numArgs < 3 || numArgs > 5) {
+    opserr << "Invalid #args,  want: uniaxialMaterial ElasticPP $tag $E $epsP <$epsN $eps0>\n";
+    return 0;
+  }
+  
+  int iData[1];
+  double dData[4];
+  dData[3] = 0.0; // setting default eps0 to 0.
+
+  int numData = 1;
+  if (OPS_GetIntInput(&numData, iData) != 0) {
+    opserr << "WARNING invalid tag for uniaxialMaterial ElasticPP" << endln;
+    return 0;
+  }
+
+  numData = numArgs-1;
+  if (OPS_GetDoubleInput(&numData, dData) != 0) {
+    opserr << "Invalid data for uniaxial ElasticPP " << iData[0] << endln;
+    return 0;	
+  }
+
+  if (numData == 2) 
+    dData[2] = -dData[1];
+
+  // Parsing was successful, allocate the material
+    theMaterial = new ElasticPPMaterial(iData[0], dData[0], dData[1], dData[2], dData[3]);
+  if (theMaterial == 0) {
+    opserr << "WARNING could not create uniaxialMaterial of type ElasticPP\n";
+    return 0;
+  }
+
+  return theMaterial;
+}
 
 
 ElasticPPMaterial::ElasticPPMaterial(int tag, double e, double eyp)
@@ -249,7 +293,7 @@ ElasticPPMaterial::recvSelf(int cTag, Channel &theChannel,
   if (res < 0) 
     opserr << "ElasticPPMaterial::recvSelf() - failed to recv data\n";
   else {
-    this->setTag(data(0));
+    this->setTag(int(data(0)));
     ep    = data(1);
     E     = data(2);
     ezero = data(3);
@@ -269,10 +313,62 @@ ElasticPPMaterial::recvSelf(int cTag, Channel &theChannel,
 void 
 ElasticPPMaterial::Print(OPS_Stream &s, int flag)
 {
-    s << "ElasticPP tag: " << this->getTag() << endln;
-    s << "  E: " << E << endln;
-    s << "  ep: " << ep << endln;
-    s << "  Otress: " << trialStress << " tangent: " << trialTangent << endln;
+	if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+		s << "ElasticPPMaterial tag: " << this->getTag() << endln;
+		s << "  E: " << E << endln;
+		s << "  ep: " << ep << endln;
+		s << "  stress: " << trialStress << " tangent: " << trialTangent << endln;
+	}
+    
+	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+		s << "\t\t\t{";
+		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"type\": \"ElasticPPMaterial\", ";
+		s << "\"E\": " << E << ", ";
+		s << "\"epsp\": " << ep << "}";
+	}
 }
 
 
+int
+ElasticPPMaterial::setParameter(const char **argv, int argc, Parameter &param)
+{
+  if (strcmp(argv[0],"sigmaY") == 0 || strcmp(argv[0],"fy") == 0 || strcmp(argv[0],"Fy") == 0) {
+    param.setValue(fyp);
+    return param.addObject(1, this);
+  }
+  if (strcmp(argv[0],"E") == 0) {
+    param.setValue(E);
+    return param.addObject(2, this);
+  }
+  if (strcmp(argv[0],"epsP") == 0 || strcmp(argv[0],"ep") == 0) {
+    param.setValue(ep);
+    return param.addObject(3, this);
+  }
+
+  return -1;
+}
+
+int
+ElasticPPMaterial::updateParameter(int parameterID, Information &info)
+{
+  switch (parameterID) {
+  case -1:
+    return -1;
+  case 1:
+    this->fyp = info.theDouble;
+    this->fyn = -fyp;
+    break;
+  case 2:
+    this->E = info.theDouble;
+    trialTangent = E;
+    break;
+  case 3:
+    this->ep = info.theDouble;
+    break;
+  default:
+    return -1;
+  }
+  
+  return 0;
+}
