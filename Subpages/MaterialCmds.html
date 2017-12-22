@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../stylesheets/styles.css">
+    <link rel="stylesheet" href="../stylesheets/github-light.css">
+    <meta name="viewport" content="../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav> 
+      <center><img src="../images/banner.png" style="height:50px;"></center>
+      </nav>
+      
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+        
+        <h4> <p class="view"><a href="../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../user.html">Users </a></p></h4>
+          <small><p class="view"><a href="starter.html">Getting Started </a></p></small>
+        <small><p class="view"><a href="heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
+         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>   
+      </header>
+<section>
+      
+<h2>Commands for Thermo-Mechanical analysis in OpenSees</h2>
+    <hr>
+<p>
+This page introduces the developed commands for performing thermo-mechanical analysis in OpenSees.
+ </p>
+<hr>
+    <center><b>Thermo-mechaical Unixal Materials</b></center>
+<hr>
+<!Steel01Thermal command---------------------------------------------------------------------->
+<h4><a name = "Steel01"> Steel01Thermal</a></h4>
+This class is derived by modification of the existing steel material class "Steel01" to include the temperature-dependent properties according to EN 1993-1-2 carbon steel at elevated temperature. The definition of the parameters of Steel01Thermal material in OpenSees Command language Manual:
+
+<div class="box">
+<code>
+uniaxialMaterial Steel01Thermal $matTag $Fy $E0 $b <$a1 $a2 $a3 $a4>
+</code>
+</div>
+
+
+<hr>
+
+<!Steel02Thermal command---------------------------------------------------------------------->
+<h4> <a name = "Steel02">Steel02Thermal</a> </h4>
+<b>Steeel02Thermal</b> is derived from "Steel02", which incorprates with a smooth transition from elastic to plastic behaviour.
+
+<div class="box">
+<code>
+uniaxialMaterial Steel02Thermal $matTag $Fy $E0 $b $R0 $cR1 $cR2 <$a1 $a1 $a1 $a1>
+</code>
+</div>
+
+<br>
+<hr>
+    
+<!SteelECThermal command---------------------------------------------------------------------->
+<h4> <a name = "SteelEC">SteelECThermal</a> </h4>
+<b>SteeelECThermal</b> is developed for modelling steel material at elevated temperature, and provding different types of steel material definition according to EN1992,EN1993.
+
+<div class="box">
+<code>
+uniaxialMaterial SteelECThermal $matTag <$steelType> $Fy $E0
+</code>
+</div>
+
+
+<br>   
+<hr>
+<!Concrete02Thermal command---------------------------------------------------------------------->
+<h4> <a name = "Concrete02">Concrete02Thermal</a> </h4>
+<b>Concrete02Thermal</b> is created for modelling concrete, which is derived from the standard "Concrete02" material and incorprates with temperature dependent properties sugggested in Eurocode 2 (EN1992-1-2).
+
+<div class="box">
+<code>
+uniaxialMaterial Concrete02Thermal $matTag $Fy $E0 <$a1 $a1 $a1 $a1>
+</code>
+</div>
+
+<br>   
+<hr>    
+<!ConcreteECThermal command---------------------------------------------------------------------->
+<h4> <a name = "ConcreteEC">ConcreteECThermal</a> </h4>
+<b>ConcreteECThermal</b> is derived by modification of the existing concrete material class "Concrete02" and "Concrete02Thermal" to include the temperature-dependent properties according to EN 1992-1-2 about concrete with siliceous aggregates at elevated temperature.
+
+<div class="box">
+<code>
+uniaxialMaterial ConcreteECThermal $matTag $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets
+</code>
+</div>
+
+<p>Example is shown as below: </p>
+<div class="box">
+<code>
+set fpc -30;<br>
+set epsc0 -0.003;<br>
+set fpcu [expr $fpc*0.05];<br>
+set epsU -0.02;<br>
+set lambda 0.1;<br>
+set ft 0.0;<br>
+set Ets [expr $ft/0.002];<br>
+ 
+uniaxialMaterial ConcreteECThermal 2 $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets;
+</code>
+</div>    
+<br>   
+<hr>
+    <center><b>Thermo-mechaical nD Materials</b></center>
+<hr>
+<!Multi-axis ElasticIsotropicThermal command---------------------------------------------------------------------->
+<h4> <a name = "ShellElas">ElasticIsotropicThermal</a> </h4>
+<b>ElasticIsotropicThermal</b> is created for analysis using shell elements in OpenSees, which could either be defined with constant thermal exapnasion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.
+
+<div class="box">
+<code>
+nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Thermal_expansion_ratio <-cSoft/-sSoft>;
+</code>
+</div>
+
+<br>   
+<hr>  
+    
+    
+<small><p>This page is created by Liming Jiang, 2016</p></small>
+      </section>
+     <footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
