@@ -29,7 +29,6 @@
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
-          <small><p class="view"><a href="starter.html">Getting Started </a></p></small>
         <small><p class="view"><a href="heattransfer.html">Heat Transfer </a></p></small>
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
@@ -40,44 +39,38 @@
       </header>
 <section>
       
-<h2>Advanced Examples</h2>
+<h2>A cantilever beam subjected to temperature rise using shell elements</h2>
     <hr>
+<h4> Introduction</h4>
+
 <p>
- In this section, several advanced examples are presented to demonstrate how to model structures in fire using OpenSees.</p>
-
+Figure E1-1 shows a 2m beam, only the left half of which is subjected to a uniform temperature increment from 0oC to 1000<sup>o</sup>C. The right half of the beam keeps ambient temperature and acts as a translational spring to restrain the displacement of the left part. Two beam elements are used in the model. Material class Steel01Thermal is used and the initial modulus of elasticity at 0<sup>o</sup>C is 200GPa.
+</p> 
+<p>Downloading the Example package here </p>
 <hr>
+<h4> A schematic plot of the Model</h4>
 
-<h4>Thermo-mechanical analysis</h4>
-<ul class="a">
-<li><a href="restrainedbeam.html">Restrained beam subjected to temperature rise</a></li>
-<li> Single beam subjected to temperature rise using 2D/3D frame elements </li>
-<li> Composite beam example </li>
-<li> Steel frame example </li>
-<li> <a href="CantBeam.html">Cantilever beam modelled using beam and shell elements </li>
-</ul>
-
-<hr>
-<h4> Heat transfer analysis </h4>
-<ul class="a">
-<li> Rectangular block </li> 
-<li> I-section </li>
-<li> SFRM protected I-Section </li>
-</ul>
+ <center><img src="../images/restrainedbeam.jpg"  style="width:300px;"> </center>    
+ <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>   
     
+<p>For users who want to conduct heat transfer analysis with OpenSees, it is necessary to follow the flowchart shown in Figure 1 when organising the Tcl commands and creating the script.</p>
+
+<p>
+First and foremost, the module is activated by <i>HeatTransfer</i> to enable the application of the relevant commands and facilities. Notice that the argument following the <i>HeatTransfer</i> command shall define the number of dimensions that can be either 1D or 2D or 3D, which is useful in the cases that dimensional reduction is applied. 
+</p>
+
+   
 <hr>
-<h4> Using SIFBuilder </h4>
-<ul class="a">
-<li> 2X2X2 frame building </li> 
-<li> Plane frame </li>
-</ul>
+<h4> Tcl script for modelling restrained beam</h4>
+<code>
 
-    
-
+wipe; <br> 
+</code>
 <br>
 <hr>
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
-     <footer>
+<footer>
         <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
         <small>Hosted on GitHub Pages, 2017</small></p>
       </footer>
