@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A5082902-86EB-4758-AF0A-3B2E5BAAA891}</ProjectGuid>
+    <RootNamespace>fire</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>14.0.25431.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>..\..\lib\debug\</OutDir>
+    <IntDir>.\..\..\obj\fire\debug\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\..\..\lib\release\</OutDir>
+    <IntDir>.\..\..\obj\fire\release\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\SRC\system_of_eqn\linearSOE\sparseSYM;..\..\..\SRC\system_of_eqn\linearSOE\bandSPD;..\..\..\SRC\system_of_eqn\linearSOE;..\..\..\SRC\system_of_eqn\linearSOE\bandGEN;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferDOFNumber;..\..\..\OTHER\SuperLU;..\..\..\OTHER\SuperLU_3.0;..\..\..\OTHER\SuperLU_MT;..\..\..\OTHER\AMD;..\..\..\OTHER\SuperLU_4.1\src;..\..\..\OTHER\ARPACK;..\..\..\OTHER\BLAS;..\..\..\OTHER\METIS;..\..\..\OTHER\SuperLU_DIST_2.0;..\..\..\OTHER\CBLAS;..\..\..\OTHER\UMFPACK;..\..\..\OTHER\ITPACK;..\..\..\OTHER\LAPACK;..\..\..\SRC\actor\channel;..\..\..\SRC\HeatTransfer\HeatTransferMaterial;..\..\..\SRC\element;..\..\..\SRC\domain\pattern;..\..\..\SRC\graph\numberer;..\..\..\SRC\graph\graph;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis;..\..\..\SRC\tagged\storage;..\..\..\SRC\graph;..\..\..\SRC\nDarray;..\..\..\SRC\fire;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents;..\..\..\SRC\HeatTransfer\HeatTransferDomain;..\..\..\SRC\fire\New Folder;..\..\..\SRC\tagged;..\..\..\SRC\actor\actor;..\..\..\SRC\handler;..\..\..\SRC;..\..\..\SRC\fire\EmpericalLocalizedFire;..\..\..\SRC\fire\NorminalFire;..\..\..\SRC\matrix;..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferDomain\TimeSeries;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\MP_TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferNode;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement;..\..\..\SRC\fire\EmpericalCompartmentFire;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler;..\..\..\SRC\HeatTransfer\KDTree\src;..\..\..\SRC\HeatTransfer\HTRecorder;..\..\..\SRC\HeatTransfer\HTModelBuilder;..\..\..\SRC\HeatTransfer\KDTree;..\..\..\SRC\HeatTransfer\HTSTRCInterface;..\..\..\SRC\HeatTransfer\SimpleMesh;..\..\..\SRC\HeatTransfer\Tcl;c:\Program Files\Tcl\include;c:\Program Files\tcl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_HEATTRANSFER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>.\..\..\lib\debug\fire.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\..\..\SRC\system_of_eqn\linearSOE\sparseSYM;..\..\..\SRC\system_of_eqn\linearSOE\bandSPD;..\..\..\SRC\system_of_eqn\linearSOE;..\..\..\SRC\system_of_eqn\linearSOE\bandGEN;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferDOFNumber;..\..\..\OTHER\SuperLU;..\..\..\OTHER\SuperLU_3.0;..\..\..\OTHER\SuperLU_MT;..\..\..\OTHER\AMD;..\..\..\OTHER\ARPACK;..\..\..\OTHER\BLAS;..\..\..\OTHER\METIS;..\..\..\OTHER\SuperLU_DIST_2.0;..\..\..\OTHER\CBLAS;..\..\..\OTHER\UMFPACK;..\..\..\OTHER\ITPACK;..\..\..\OTHER\LAPACK;..\..\..\SRC\actor\channel;..\..\..\SRC\HeatTransfer\HeatTransferMaterial;..\..\..\SRC\element;..\..\..\SRC\domain\pattern;..\..\..\SRC\graph\numberer;..\..\..\SRC\graph\graph;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis;..\..\..\SRC\tagged\storage;..\..\..\SRC\graph;..\..\..\SRC\nDarray;..\..\..\SRC\fire;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents;..\..\..\SRC\HeatTransfer\HeatTransferDomain;..\..\..\SRC\fire\New Folder;..\..\..\SRC\tagged;..\..\..\SRC\actor\actor;..\..\..\SRC\handler;..\..\..\SRC;..\..\..\SRC\fire\EmpericalLocalizedFire;..\..\..\SRC\fire\NorminalFire;..\..\..\SRC\matrix;..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferDomain\TimeSeries;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\MP_TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferNode;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement;..\..\..\SRC\fire\EmpericalCompartmentFire;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler;..\..\..\SRC\HeatTransfer\KDTree\src;..\..\..\SRC\HeatTransfer\HTRecorder;..\..\..\SRC\HeatTransfer\HTModelBuilder;..\..\..\SRC\HeatTransfer\KDTree;..\..\..\SRC\HeatTransfer\HTSTRCInterface;..\..\..\SRC\HeatTransfer\SimpleMesh;..\..\..\SRC\HeatTransfer\Tcl;c:\Program Files\Tcl\include;c:\Program Files\tcl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>.\..\..\lib\release\fire.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalCompartmentFire\EmpericalCompartmentFire.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalCompartmentFire\ParametricFireEC1.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\AlpertCeilingJetModel.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\Idealised_Local_Fire.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireEC1.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireSFPE.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\MovingLocalizedFireEC1.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\FireModel.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\NorminalFire\NorminalFireEC1.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\UserDefinedFire.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.h" />
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalCompartmentFire\EmpericalCompartmentFire.h" />
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalCompartmentFire\ParametricFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\AlpertCeilingJetModel.h" />
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\Idealised_Local_Fire.h" />
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireSFPE.h" />
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\MovingLocalizedFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\fire\FireModel.h" />
+    <ClInclude Include="..\..\..\SRC\fire\NorminalFire\NorminalFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\fire\UserDefinedFire.h" />
+    <ClInclude Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

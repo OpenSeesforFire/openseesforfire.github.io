@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="CFD_Interface">
+      <UniqueIdentifier>{a7748516-18a1-44a3-9eb9-c9b6bbf70c10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="EmpericalCompartmentFire">
+      <UniqueIdentifier>{2835fea1-cf5f-4255-a2ef-7f9321a071c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="EmpericalLocalizedFire">
+      <UniqueIdentifier>{78f4e460-4cb3-4ec3-b94c-13dba6ab7381}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NorminalFire">
+      <UniqueIdentifier>{fa09cfd7-cbe9-4431-a41b-ef28d5813abb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ZoneModel">
+      <UniqueIdentifier>{1df3c874-9a1f-4a51-9265-906bc3eb4c2f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.cpp">
+      <Filter>CFD_Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalCompartmentFire\EmpericalCompartmentFire.cpp">
+      <Filter>EmpericalCompartmentFire</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalCompartmentFire\ParametricFireEC1.cpp">
+      <Filter>EmpericalCompartmentFire</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\AlpertCeilingJetModel.cpp">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\Idealised_Local_Fire.cpp">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireEC1.cpp">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireSFPE.cpp">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\MovingLocalizedFireEC1.cpp">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\NorminalFire\NorminalFireEC1.cpp">
+      <Filter>NorminalFire</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.cpp">
+      <Filter>ZoneModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\fire\FireModel.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\UserDefinedFire.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.h">
+      <Filter>CFD_Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalCompartmentFire\EmpericalCompartmentFire.h">
+      <Filter>EmpericalCompartmentFire</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalCompartmentFire\ParametricFireEC1.h">
+      <Filter>EmpericalCompartmentFire</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\AlpertCeilingJetModel.h">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\Idealised_Local_Fire.h">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireEC1.h">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireSFPE.h">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\MovingLocalizedFireEC1.h">
+      <Filter>EmpericalLocalizedFire</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\NorminalFire\NorminalFireEC1.h">
+      <Filter>NorminalFire</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.h">
+      <Filter>ZoneModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\FireModel.h" />
+    <ClInclude Include="..\..\..\SRC\fire\UserDefinedFire.h" />
+  </ItemGroup>
+</Project>

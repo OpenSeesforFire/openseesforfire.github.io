@@ -1,0 +1,582 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="HeatTransferMaterial">
+      <UniqueIdentifier>{f2f09f5e-2df2-4e5a-baae-e025d459e6a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferMaterial\IsotropicMaterial">
+      <UniqueIdentifier>{c7a03834-63b3-4967-954d-8cd472811359}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferMaterial\OrthotropicMaterial">
+      <UniqueIdentifier>{501684e2-5379-4874-8fd3-27ed953ebbc0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferMaterial\AnisotropicMaterial">
+      <UniqueIdentifier>{bb712d96-e05e-4a6d-99ec-9a46a7a037ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain">
+      <UniqueIdentifier>{cefcc082-3576-4158-9963-459b844491dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\DomainComponents">
+      <UniqueIdentifier>{cffdd074-4a1d-458e-86e6-b4305806bf91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\DomainComponents\HeatTransferElement">
+      <UniqueIdentifier>{ab62b3ac-7741-4363-b627-ae354821f31a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\DomainComponents\HeatTransferNode">
+      <UniqueIdentifier>{a62de653-aa89-47a7-b6f2-ce800edcd0cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\DomainComponents\HeatFluxBC">
+      <UniqueIdentifier>{0a0ef55e-b452-4b0c-aef3-b8bb82a694eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\DomainComponents\TemperatureBC">
+      <UniqueIdentifier>{9cfe33aa-0e88-4bae-9020-59339c46206b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\DomainComponents\BoundaryPattern">
+      <UniqueIdentifier>{b923626c-63c6-4721-b2a3-449068ca1167}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\DomainComponents\MP_TemperatureBC">
+      <UniqueIdentifier>{68619902-2052-4778-913a-ee28490dd9d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\Iterator">
+      <UniqueIdentifier>{3e3d8b32-3c90-4e30-9fed-6cb9fecc478a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferDomain\TimeSeries">
+      <UniqueIdentifier>{3a436962-763f-4656-a0a1-853b9e3c2e5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferAnalysis">
+      <UniqueIdentifier>{4787e0f6-3fdc-4147-9351-8412a63c300c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferAnalysis\TemperatureBCHandler">
+      <UniqueIdentifier>{e809f57e-5a75-4ba2-be47-ade89558ecfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferAnalysis\HT_AnalysisModel">
+      <UniqueIdentifier>{82adf251-fe5b-4def-b698-f8c6af1aade5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferAnalysis\HeatTransferIntegrator">
+      <UniqueIdentifier>{8472df6a-ee11-41c9-b661-aaf1f83a1007}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferAnalysis\HT_SolutionAlgorithm">
+      <UniqueIdentifier>{ea381358-1824-4309-8e05-c13171ab2c21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferAnalysis\Iterator">
+      <UniqueIdentifier>{cc6943ad-f6d9-4593-80a7-23c95755c762}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferAnalysis\ConvergenceTest">
+      <UniqueIdentifier>{b8f4854b-c0ff-42a7-b386-e5c22e3dc30c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeatTransferAnalysis\HeatTransferDOFNumber">
+      <UniqueIdentifier>{7e03e4f7-4030-46d9-9f13-07a9cd8a35f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HTModelBuilder">
+      <UniqueIdentifier>{fb483a17-bbc9-4f7d-9cd2-c5b1a4d57b3c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HTRecorder">
+      <UniqueIdentifier>{378704b4-1f6d-418a-8702-848117296711}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HTSTRCInterface">
+      <UniqueIdentifier>{cf4b4484-06ab-4d1e-ab65-4e1b654f6a4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tcl">
+      <UniqueIdentifier>{9e32d20c-2d5b-45fd-8164-03b53c722f7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SimpleMesh">
+      <UniqueIdentifier>{23daf7df-e087-431c-a8b1-454e84e513fd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\CarbonSteelEC3.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\ConcreteEC2.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\HeatTransferMaterial.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\LWConcreteEC4.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\NWConcreteEC2.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\SFRMCoating.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\SimpleMaterial.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\SteelASCE.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\IsotropicMaterial\IsotropicMaterial.cpp">
+      <Filter>HeatTransferMaterial\IsotropicMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\OrthotropicMaterial\OrthotropicMaterial.cpp">
+      <Filter>HeatTransferMaterial\OrthotropicMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\AnisotropicMaterial\AnisotropicMaterial.cpp">
+      <Filter>HeatTransferMaterial\AnisotropicMaterial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferDomain.cpp">
+      <Filter>HeatTransferDomain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferDomainComponent.cpp">
+      <Filter>HeatTransferDomain\DomainComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\BrickEight.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\HeatTransferElement.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\LineTwo.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\QuadEight.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\QuadFour.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferNode\HeatTransferNode.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferNode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC\Convection.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatFluxBC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC\HeatFluxBC.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatFluxBC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC\PrescribedSurfFlux.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatFluxBC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC\Radiation.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\HeatFluxBC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\TemperatureBC\TemperatureBC.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\TemperatureBC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern\BoundaryPattern.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\BoundaryPattern</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern\FireImposedPattern.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\BoundaryPattern</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\MP_TemperatureBC\MP_TemperatureBC.cpp">
+      <Filter>HeatTransferDomain\DomainComponents\MP_TemperatureBC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\AllTempBCIter.cpp">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\BoundaryPatternIter.cpp">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\HeatFluxBCIter.cpp">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\HT_ElementIter.cpp">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\HT_NodeIter.cpp">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\HTDomain_Iter.cpp">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\MP_TempBCIter.cpp">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\TempBCIter.cpp">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\TimeSeries\SineTimeSeries.cpp">
+      <Filter>HeatTransferDomain\TimeSeries</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysis.cpp">
+      <Filter>HeatTransferAnalysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HT_TransientAnalysis.cpp">
+      <Filter>HeatTransferAnalysis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler\PenaltyBC_Handler.cpp">
+      <Filter>HeatTransferAnalysis\TemperatureBCHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler\TemperatureBCHandler.cpp">
+      <Filter>HeatTransferAnalysis\TemperatureBCHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\HT_AnalysisModel.cpp">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\HT_DOF_Group.cpp">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\HT_FE_Element.cpp">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\HT_PenaltyMP_FE.cpp">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\Penalty_FE.cpp">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator\BackwardDifference.cpp">
+      <Filter>HeatTransferAnalysis\HeatTransferIntegrator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator\HeatTransferIntegrator.cpp">
+      <Filter>HeatTransferAnalysis\HeatTransferIntegrator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator\HT_TransientIntegrator.cpp">
+      <Filter>HeatTransferAnalysis\HeatTransferIntegrator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm\HT_SolutionAlgorithm.cpp">
+      <Filter>HeatTransferAnalysis\HT_SolutionAlgorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm\LinearAlgorithm.cpp">
+      <Filter>HeatTransferAnalysis\HT_SolutionAlgorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm\ModifiedNewtonMethod.cpp">
+      <Filter>HeatTransferAnalysis\HT_SolutionAlgorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm\NewtonMethod.cpp">
+      <Filter>HeatTransferAnalysis\HT_SolutionAlgorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator\HT_DOF_GrpIter.cpp">
+      <Filter>HeatTransferAnalysis\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator\HT_FE_EleIter.cpp">
+      <Filter>HeatTransferAnalysis\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest\CTestNormResidual.cpp">
+      <Filter>HeatTransferAnalysis\ConvergenceTest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest\CTestNormTempIncr.cpp">
+      <Filter>HeatTransferAnalysis\ConvergenceTest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest\HT_ConvergenceTest.cpp">
+      <Filter>HeatTransferAnalysis\ConvergenceTest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferDOFNumber\HT_DOF_Numberer.cpp">
+      <Filter>HeatTransferAnalysis\HeatTransferDOFNumber</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HTModelBuilder\HTModelBuilder.cpp">
+      <Filter>HTModelBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTNodeRecorder.cpp">
+      <Filter>HTRecorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTRecorder.cpp">
+      <Filter>HTRecorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTRecorderToStru.cpp">
+      <Filter>HTRecorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HTSTRCInterface\HTSTRCInterface.cpp">
+      <Filter>HTSTRCInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\KDTree\src\KDTree.cpp">
+      <Filter>HTSTRCInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\Tcl\TclHeatTransferModule.cpp">
+      <Filter>Tcl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\HTConstants.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\HTElesSet.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\HTNodeSet.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Block.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Boundary.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Brick.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Composite2D.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Composite3D.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Entity.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_IsecProtected.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Isection.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Isection3D.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Line.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Mesh.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_MeshIter.cpp">
+      <Filter>SimpleMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\StainlessSteelEC.cpp">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\CarbonSteelEC3.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\ConcreteEC2.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\HeatTransferMaterial.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\LWConcreteEC4.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\NWConcreteEC2.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\SFRMCoating.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\SimpleMaterial.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\SteelASCE.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\IsotropicMaterial\IsotropicMaterial.h">
+      <Filter>HeatTransferMaterial\IsotropicMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\OrthotropicMaterial\OrthotropicMaterial.h">
+      <Filter>HeatTransferMaterial\OrthotropicMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\AnisotropicMaterial\AnisotropicMaterial.h">
+      <Filter>HeatTransferMaterial\AnisotropicMaterial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferDomain.h">
+      <Filter>HeatTransferDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferDomainComponent.h">
+      <Filter>HeatTransferDomain\DomainComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\BrickEight.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\HeatTransferElement.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\LineTwo.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\QuadEight.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement\QuadFour.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferElement</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferNode\HeatTransferNode.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatTransferNode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC\Convection.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatFluxBC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC\HeatFluxBC.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatFluxBC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC\PrescribedSurfFlux.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatFluxBC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC\Radiation.h">
+      <Filter>HeatTransferDomain\DomainComponents\HeatFluxBC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\TemperatureBC\TemperatureBC.h">
+      <Filter>HeatTransferDomain\DomainComponents\TemperatureBC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern\BoundaryPattern.h">
+      <Filter>HeatTransferDomain\DomainComponents\BoundaryPattern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern\FireImposedPattern.h">
+      <Filter>HeatTransferDomain\DomainComponents\BoundaryPattern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\MP_TemperatureBC\MP_TemperatureBC.h">
+      <Filter>HeatTransferDomain\DomainComponents\MP_TemperatureBC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\AllTempBCIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\BoundaryPatternIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\HeatFluxBCIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\HT_ElementIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\HT_NodeIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\HTDomain_Iter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\MP_TempBCIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\MP_TemperatureBCIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\TempBCIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator\TemperatureBCIter.h">
+      <Filter>HeatTransferDomain\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferDomain\TimeSeries\SineTimeSeries.h">
+      <Filter>HeatTransferDomain\TimeSeries</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysis.h">
+      <Filter>HeatTransferAnalysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HT_TransientAnalysis.h">
+      <Filter>HeatTransferAnalysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler\PenaltyBC_Handler.h">
+      <Filter>HeatTransferAnalysis\TemperatureBCHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler\TemperatureBCHandler.h">
+      <Filter>HeatTransferAnalysis\TemperatureBCHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\HT_AnalysisModel.h">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\HT_DOF_Group.h">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\HT_FE_Element.h">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\HT_PenaltyMP_FE.h">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel\Penalty_FE.h">
+      <Filter>HeatTransferAnalysis\HT_AnalysisModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator\BackwardDifference.h">
+      <Filter>HeatTransferAnalysis\HeatTransferIntegrator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator\HeatTransferIntegrator.h">
+      <Filter>HeatTransferAnalysis\HeatTransferIntegrator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator\HT_TransientIntegrator.h">
+      <Filter>HeatTransferAnalysis\HeatTransferIntegrator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm\HT_SolutionAlgorithm.h">
+      <Filter>HeatTransferAnalysis\HT_SolutionAlgorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm\LinearAlgorithm.h">
+      <Filter>HeatTransferAnalysis\HT_SolutionAlgorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm\ModifiedNewtonMethod.h">
+      <Filter>HeatTransferAnalysis\HT_SolutionAlgorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm\NewtonMethod.h">
+      <Filter>HeatTransferAnalysis\HT_SolutionAlgorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator\HT_DOF_GrpIter.h">
+      <Filter>HeatTransferAnalysis\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator\HT_FE_EleIter.h">
+      <Filter>HeatTransferAnalysis\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest\CTestNormResidual.h">
+      <Filter>HeatTransferAnalysis\ConvergenceTest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest\CTestNormTempIncr.h">
+      <Filter>HeatTransferAnalysis\ConvergenceTest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest\HT_ConvergenceTest.h">
+      <Filter>HeatTransferAnalysis\ConvergenceTest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferDOFNumber\HT_DOF_Numberer.h">
+      <Filter>HeatTransferAnalysis\HeatTransferDOFNumber</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HTModelBuilder\HTModelBuilder.h">
+      <Filter>HTModelBuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTNodeRecorder.h">
+      <Filter>HTRecorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTRecorder.h">
+      <Filter>HTRecorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTRecorderToStru.h">
+      <Filter>HTRecorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HTSTRCInterface\HTSTRCInterface.h">
+      <Filter>HTSTRCInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\KDTree\src\KDTree.h">
+      <Filter>HTSTRCInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\Tcl\TclHeatTransferModule.h">
+      <Filter>Tcl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\HTConstants.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\HTEleSet.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\HTNodeSet.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Block.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Boundary.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Brick.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Composite2D.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Composite3D.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Entity.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_IsecProtected.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Isection.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Isection3D.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Line.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_Mesh.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\SimpleMesh\Simple_MeshIter.h">
+      <Filter>SimpleMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\StainlessSteelEC.h">
+      <Filter>HeatTransferMaterial</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
