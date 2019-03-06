@@ -13,10 +13,10 @@
     <![endif]-->
   </head>
   <body>
-            <nav> 
+            <nav>
       <center><img src="../images/banner.png" style="height:50px;"></center>
       </nav>
-      
+
       <div class="wrapper">
       <header>
 
@@ -25,7 +25,7 @@
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
           <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
-        
+
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
@@ -33,27 +33,28 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="underconstruction.html">SIFBuilder Examples</a><img src="images/New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>  
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
       </header>
 <section>
-      
+
 <h2>A cantilever beam subjected to temperature rise using shell elements</h2>
     <hr>
 <h4> Introduction</h4>
 
 <p>
 Figure E1-1 shows a 2m beam, only the left half of which is subjected to a uniform temperature increment from 0oC to 1000<sup>o</sup>C. The right half of the beam keeps ambient temperature and acts as a translational spring to restrain the displacement of the left part. Two beam elements are used in the model. Material class Steel01Thermal is used and the initial modulus of elasticity at 0<sup>o</sup>C is 200GPa.
-</p> 
+</p>
 <p>Downloading the Example package <a href= "../Download/Shellbeam.tcl"> <strong>Here</strong></a></p>
 <hr>
 <h4> Geometry</h4>
 
- <center><img src="../images/CaseImgs/shellbeam.png"  style="width:500px;"> </center>    
- <center><small>Figure 1: A cantilever beam </small></center>   
-    
-    
+ <center><img src="../images/CaseImgs/shellbeam.png"  style="width:500px;"> </center>
+ <center><small>Figure 1: A cantilever beam </small></center>
+
+
 <p>This cantilever beam is 2m long. It is made of a rectangual section which is 0.4m in width and 0.1m in thickness. </p>
 
 
@@ -61,11 +62,11 @@ Figure E1-1 shows a 2m beam, only the left half of which is subjected to a unifo
 
 </p>
 
-   
+
 <hr>
 <h4> Tcl script for modelling cantilevel beam using shell elements</h4>
 <code>
-wipe; <br> 
+wipe; <br>
 set ANALYSIS "HasPoint"; <br>
 set TANALYSIS "Has0Thermo"; <br>
 model BasicBuilder -ndm 3 -ndf 6<br>
@@ -73,18 +74,18 @@ model BasicBuilder -ndm 3 -ndf 6<br>
 source DisplayPlane.tcl<br>
 source DisplayModel2D.tcl<br>
 source DisplayModel3D.tcl<br>
-    
+
 set nx 30;<br>
 set ny 4;<br>
 set slabT 0.1;<br>
 set slabB 0.4;<br><br>
 set slabL 3.0;<br>
-    
+
 set gt [expr 3.0e6/1.79e10*3.0e6*2];<br>
 set gc [expr 30e6/1.79e10*30e6*6];<br>
 nDMaterial  CDPPlaneStressThermal 100  1.79e10 0.2  3.0e6  30e6 $gt $gc;<br>
 nDMaterial   PlateFromPlaneStressThermal    4   100  10e9;<br><br>
-    
+
 nDMaterial ElasticIsotropic3DThermal  23 1.79e10 0.2 0 2.4e-5 -CSoft;<br>
 nDMaterial PlateFiberThermal 24 23;<br><br>
 
@@ -111,7 +112,7 @@ pattern Plain 1 Linear {<br>
 		set nodeID [expr ($nx+1)*($ID+1)];<br>
 		load $nodeID  0 0 [expr $Load/($ny+1)] 0 0 0 ;<br>
 	}<br>
-		
+
 }<br>
 puts "Point";<br>
 
@@ -123,7 +124,7 @@ system BandGeneral;<br>
 test NormDispIncr 1e-3 300 1;<br>
 algorithm Newton;<br>
 integrator LoadControl 0.1;	<br>
-analysis Static;<br>			
+analysis Static;<br>
 analyze 10;<br>
 loadConst -time 0.0<br>
 }<br>
@@ -136,7 +137,7 @@ puts "Thermal action to slab"<br>
 pattern Plain 3 Linear {<br>
 
 	eleLoad -range 1 $NumEles -type -shellThermal 1000 [expr -$slabT/2] 0 [expr $slabT/2];<br>
-	
+
 }<br>
 
 constraints Plain;<br>
@@ -146,7 +147,7 @@ system BandGeneral;<br>
 test NormDispIncr 1e-3  500 1;<br>
 algorithm Newton;<br>
 integrator LoadControl 0.01;	<br>
-analysis Static;	<br>		
+analysis Static;	<br>
 analyze 100;<br>
 
 }
@@ -155,12 +156,12 @@ analyze 100;<br>
 <br>
  <hr>
 <h4> Displacement of shell beam</h4>
-    
- <center><img src="../images/CaseImgs/shellbeamDisp.png"  style="width:500px;"> </center>    
- <center><small>Figure 2: Free-tip displacement under point load </small></center>  
 
-<center><img src="../images/CaseImgs/ConslabMaterialNon.png"  style="width:500px;"> </center>    
- <center><small>Figure 3: Free-tip dispalcement under thermal action </small></center>  
+ <center><img src="../images/CaseImgs/shellbeamDisp.png"  style="width:500px;"> </center>
+ <center><small>Figure 2: Free-tip displacement under point load </small></center>
+
+<center><img src="../images/CaseImgs/ConslabMaterialNon.png"  style="width:500px;"> </center>
+ <center><small>Figure 3: Free-tip dispalcement under thermal action </small></center>
 <hr>
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
@@ -170,6 +171,6 @@ analyze 100;<br>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+
   </body>
 </html>
