@@ -13,10 +13,10 @@
     <![endif]-->
   </head>
   <body>
-            <nav> 
+            <nav>
       <center><img src="../images/banner.png" style="height:50px;"></center>
       </nav>
-      
+
       <div class="wrapper">
       <header>
 
@@ -25,7 +25,7 @@
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
           <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
-        
+
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
@@ -33,26 +33,27 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="underconstruction.html">SIFBuilder Examples</a><img src="images/New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>  
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
       </header>
 <section>
-      
+
 <h2>A simply supported beam subjected to standard fire</h2>
     <hr>
 <h4> Introduction</h4>
 
 <p>
 Figure E1-1 shows a 2m beam, only the left half of which is subjected to a uniform temperature increment from 0oC to 1000<sup>o</sup>C. The right half of the beam keeps ambient temperature and acts as a translational spring to restrain the displacement of the left part. Two beam elements are used in the model. Material class Steel01Thermal is used and the initial modulus of elasticity at 0<sup>o</sup>C is 200GPa.
-</p> 
+</p>
 <p>Downloading the Example package here </p>
 <hr>
 <h4> A schematic plot of the Model</h4>
 
- <center><img src="../images/CaseImgs/Simply_supported_beam.jpg"  style="width:400px;"> </center>    
- <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>   
-    
+ <center><img src="../images/CaseImgs/Simply_supported_beam.jpg"  style="width:400px;"> </center>
+ <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
+
 <hr>
 <h4> Tcl script for modelling a steel beam subjected to uniform temperture rise</h4>
 
@@ -116,18 +117,18 @@ proc Wsection { secID matID d bf tf tw nfdw nftw nfbf nftf} {<br>
 	# nftw = number of fibers along web thickness<br>
 	# nfbf = number of fibers along flange width<br>
 	# nftf = number of fibers along flange thickness<br>
-  	
+
 	set dw [expr $d - 2 * $tf]<br>
 	set y1 [expr -$d/2]<br>
 	set y2 [expr -$dw/2]<br>
 	set y3 [expr  $dw/2]<br>
 	set y4 [expr  $d/2]<br>
-  
+
 	set z1 [expr -$bf/2]<br>
 	set z2 [expr -$tw/2]<br>
 	set z3 [expr  $tw/2]<br>
 	set z4 [expr  $bf/2]<br>
-  
+
 	section fiberSecThermal  $secID  {<br>
    		#                     nfIJ  nfJK    yI  zI    yJ  zJ    yK  zK    yL  zL<br>
    		patch quadr  $matID  $nfbf $nftf   $y1 $z4   $y1 $z1   $y2 $z1   $y2 $z4<br>
@@ -215,11 +216,11 @@ analyze 100;<br>
 wipe;<br>
 </code>
 <br>
-    
+
 <h4> Displacement of mid-node</h4>
     <p>The varation of the mid-node displacement is shown in the following figure, where the node moves towards the right-hand direction due to thermal expansion and moves back because of material degradation</p>
- <center><img src="../images/CaseImgs/beamuniform.jpg"  style="width:500px;"> </center>    
- <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>  
+ <center><img src="../images/CaseImgs/beamuniform.jpg"  style="width:500px;"> </center>
+ <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
 
 <h4> Reference</h4>
 <p><a href = 'https://www.sciencedirect.com/science/article/pii/S0141029617320552'>Computational performance of beam-column elements in modelling structural members subjected to localised fire ,2017</a></p>
@@ -232,6 +233,6 @@ wipe;<br>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+
   </body>
 </html>
