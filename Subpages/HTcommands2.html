@@ -13,10 +13,10 @@
     <![endif]-->
   </head>
   <body>
-            <nav> 
+            <nav>
       <center><img src="../images/banner.png" style="height:50px;"></center>
       </nav>
-      
+
       <div class="wrapper">
       <header>
 
@@ -25,7 +25,7 @@
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
           <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
-        
+
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
@@ -34,12 +34,13 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="underconstruction.html">SIFBuilder Examples</a><img src="images/New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>  
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
       </header>
 <section>
-      
+
 <h2>Commands for Heat Transfer Analysis in OpenSees</h2>
     <hr>
 <p>
@@ -51,7 +52,7 @@
 
 <div class="box">
 <code>
-HTMaterial $matType $matTag <$par1 $par2..> 
+HTMaterial $matType $matTag <$par1 $par2..>
 </code>
 </div>
 
@@ -65,8 +66,8 @@ HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
 </div>
 <br>
 <hr>
-    
-<!HTEntity command---------------------------------------------------------------------->    
+
+<!HTEntity command---------------------------------------------------------------------->
 <h4><a name = "HTEntity">HTEntity</a></h4>
 <b>HTEntity</b> command is used to create an entity of regular shape, which maybe a 1D line, a 2D rectangular block and a number of other options. The template for defining an entity is :
 
@@ -80,7 +81,7 @@ The parameters for defiing <b> HTEntity</b> are listed in th following tables:</
 <table style="width:80%">
   <tr>
     <td>Category</td>
-    <td>EntityType</td> 
+    <td>EntityType</td>
     <td>Centroid</td>
 	<td>Dimension</td>
   </tr>
@@ -129,22 +130,22 @@ The parameters for defiing <b> HTEntity</b> are listed in th following tables:</
 </table>
 
 <p>
-The definition of the parameters mentioned above for 1D and 2D HTEntities are illustrated in Figure 1.    
+The definition of the parameters mentioned above for 1D and 2D HTEntities are illustrated in Figure 1.
 </p>
-<img src="../images/htentity2d.png"  style="width:600px;">   
-<img src="../images/brick.png"  style="width:300px;"> 
-<center><small>Figure 1:  HTEntities Heat Transfer analysis</small></center> 
+<img src="../images/htentity2d.png"  style="width:600px;">
+<img src="../images/brick.png"  style="width:300px;">
+<center><small>Figure 1:  HTEntities Heat Transfer analysis</small></center>
 <br>
 <p>A few examples have been shown as below:</p>
 
 <div class="box">
 <code>
 HTEntity  Isection   1    0.0      0.2    0.4 0.20 0.02 0.02;<br>
-HTEntity  Block   2    0.0      0.45     0.6    0.1; 
+HTEntity  Block   2    0.0      0.45     0.6    0.1;
 </code>
 </div>
-    
-<br>    
+
+<br>
 <hr>
 <!HTMesh command---------------------------------------------------------------------->
 <h4> <a name = "HTMesh">HTMesh </a> </h4>
@@ -152,15 +153,15 @@ HTEntity  Block   2    0.0      0.45     0.6    0.1;
 
 <div class="box">
 <code>
-HTMesh $meshTag $EntityTag $MaterialTag <-SecondMat $secMatTag> -phaseChange $PCTag <$PCTag2> -MeshCtrls $eleSizeX <$eleSizeY $eleSizeZ..> 
+HTMesh $meshTag $EntityTag $MaterialTag <-SecondMat $secMatTag> -phaseChange $PCTag <$PCTag2> -MeshCtrls $eleSizeX <$eleSizeY $eleSizeZ..>
 </code>
 </div>
 <p>The mesh scheme for 1D and 2D sections are illustrated in the following fiugre, where N<sub>i</sub> represents the heat transfer node, and E<sub>i</sub> indicates an element. Note that e<sub>_x</sub> is the element size along x axis, while e<sub>_y</sub> is for y direction</p>.
-    
-<img src="../images/HTMesh.png"  style="width:600px;">    
-<center><small>Figure 2:  Default mesh scheme for HTEntites</small></center> 
-<br>   
-    
+
+<img src="../images/HTMesh.png"  style="width:600px;">
+<center><small>Figure 2:  Default mesh scheme for HTEntites</small></center>
+<br>
+
 For an <b>HTEntity</b> which consists of only two materials such as a composite beam, the second material tag should be specfied as well as the phase change parameter (0 or 1). The Mesh control parameters specified as element sizes following the <i>-MeshCtrls</i> should be given to configure the mesh scheme. A few examples are shown as below:
 <div class="box">
 <code>
@@ -169,7 +170,7 @@ HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02; #for block<br>
 HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
 </code>
 </div>
-    
+
 <br>
 <hr>
 <!HTMesh command---------------------------------------------------------------------->
@@ -178,13 +179,13 @@ HTMaterial ConcreteEC2 3 $density $specificHeat $conductivity; <br>
 
 <div class="box">
 <code>
-HTMeshAll; 
+HTMeshAll;
 </code>
 </div>
-    
+
 <br>
-<hr>   
-    
+<hr>
+
 <!HTMesh command---------------------------------------------------------------------->
 <h4> <a name = "HTNodeSet">HTNodeSet </a> </h4>
 <b>HTNodeSet</b> command is used to select a range of nodes which may be nodes on a specified surface of an HTEntity or nodes based on the specified coordinates. The command should be wrriten as:
@@ -194,8 +195,8 @@ HTMeshAll;
 HTNodeSet $NodeSetTag -Entity $EntityTag -Face $faceTag;  <br>
 HTNodeSet $NodeSetTag -Locx $locxMin <$locxMax> <-Locy $locyMin $locyMax> <-Locz $loczMin $loczMax>;  <br>
 </code>
-</div> 
-    
+</div>
+
 The example scripts are shown as below:
 <div class="box">
 <code>
@@ -204,10 +205,10 @@ HTNodeSet 2 -Locx 0.01 0.02 -Locy 0.0 0.2; <br>
 </code>
 </div>
 
-<hr>  
+<hr>
 <br>
 
-    
+
 <!HTMesh command---------------------------------------------------------------------->
 <h4> <a name = "HTEleSet">HTEleSet </a> </h4>
 <b>HTEleSet</b> command is used to select a range of elements which may be elements on a specified surface of an HTEntity or elemnts that contain given nodes on one user-defined face. The command should be wrriten as:
@@ -215,10 +216,10 @@ HTNodeSet 2 -Locx 0.01 0.02 -Locy 0.0 0.2; <br>
 <div class="box">
 <code>
 HTEleSet $EleSetTag -Entity $EntityTag -Face $faceTag;  <br>
-HTEleSet $EleSetTag -NodeSet $NodeSetTag -Face $faceTag; 
+HTEleSet $EleSetTag -NodeSet $NodeSetTag -Face $faceTag;
 </code>
-</div> 
-    
+</div>
+
 The example scripts are shown as below:
 <div class="box">
 <code>
@@ -227,9 +228,9 @@ HTEleSet 2 -NodeSet 2 -face 2; <br>
 </code>
 </div>
 
-<hr>  
+<hr>
 <br>
-    
+
 <small><p>This page is created by Liming Jiang, 2016</p></small>
 </section>
     <footer>
@@ -238,6 +239,6 @@ HTEleSet 2 -NodeSet 2 -face 2; <br>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+
   </body>
 </html>
