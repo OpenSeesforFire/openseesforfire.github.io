@@ -13,10 +13,10 @@
     <![endif]-->
   </head>
   <body>
-            <nav> 
+            <nav>
       <center><img src="../images/banner.png" style="height:50px;"></center>
       </nav>
-      
+
       <div class="wrapper">
       <header>
 
@@ -25,7 +25,7 @@
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
           <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
-        
+
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
@@ -34,12 +34,13 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="underconstruction.html">SIFBuilder Examples</a><img src="images/New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>   
+         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
       </header>
 <section>
-      
+
 <h2>Commands for Using Sifbuilder</h2>
     <hr>
 <p>
@@ -72,8 +73,8 @@ or <br>
 SIFBuilder frame <br>
 </code>
 </div>
-    
-    
+
+
 <hr>
 <h3> Geometry Commands </h3>
 <hr>
@@ -83,7 +84,7 @@ SIFBuilder frame <br>
 
 <div class="box">
 <code>
-SIFXBay $XBay1 <$XBay2 $XBay3..> 
+SIFXBay $XBay1 <$XBay2 $XBay3..>
 </code>
 </div>
 
@@ -91,18 +92,18 @@ Similarly, <b>SIFZBay</b> and <b>SIFStorey</b>commands are used to define ZBays 
 <div class="box">
 <code>
 SIFZBay $ZBay1 <$ZBay2 $ZBay3..> <br>
-SIFStorey $Storey1 <$Storey2 $Storey3..> 
+SIFStorey $Storey1 <$Storey2 $Storey3..>
 </code>
 </div>
-    
-    
+
+
 For example, to creat a 2X2X2 frame, of dimensions as shown as below:
 <center>
-<img src="../images/demoframe.png"  style="width:400px;"> 
-</center> 
+<img src="../images/demoframe.png"  style="width:400px;">
+</center>
 <center>
 <small>Figure 1:  Dimension of 2x2x2 frame</small>
-</center> 
+</center>
 
 <div class="box">
 <code>
@@ -113,8 +114,8 @@ SIFStorey 5 4; <br>
 </div>
 <br>
 <hr>
-    
-<!AddMaterial command---------------------------------------------------------------------->    
+
+<!AddMaterial command---------------------------------------------------------------------->
 <h4><a name = "AddMaterial">AddMaterial</a></h4>
 <b>AddMaterial</b> command is used to create a structural material, such as concrete and steel and PFP materials:
 
@@ -129,13 +130,13 @@ Currently it's possible to define masterials such as steel, concrete in accordan
 <div class="box">
 <code>
 AddMaterial  steel   1   -type EC3  2.75e8 2e11;<br>
-AddMaterial concrete 2 -type EC2 0.0 30e6; 
+AddMaterial concrete 2 -type EC2 0.0 30e6;
 </code>
-</div>  
-<br>    
-<hr>    
+</div>
+<br>
+<hr>
 
-<!AddSection command---------------------------------------------------------------------->    
+<!AddSection command---------------------------------------------------------------------->
 <h4><a name = "AddSection">AddSection</a></h4>
 <b>AddSection</b> command is used to create a structural member section, such as rectangular and I sections:
 
@@ -150,13 +151,13 @@ Currently it's possible to define structural sections such as rectangular or I s
 <div class="box">
 <code>
 AddSection  Rect   1  2  0.4 0.4 0.4 0.4;<br>
-AddSection  ISection   2  1 0.355 0.1715 0.0074 0.0115;; 
+AddSection  ISection   2  1 0.355 0.1715 0.0074 0.0115;;
 </code>
-</div>  
-<br>    
-<hr>  
-    
-<!AssignSection command---------------------------------------------------------------------->    
+</div>
+<br>
+<hr>
+
+<!AssignSection command---------------------------------------------------------------------->
 <h4><a name = "AssignSection">AssignSection</a></h4>
 <b>AssignSection</b> command is used to assign sections to the specified structural members, which include Xbeams, Zbeams, Columns, Slabs. And it also allows the user to change the sections for the sepcific members which are identified through XBay and ZBay locations.
 
@@ -175,32 +176,32 @@ AssignSection Zbeams 1 ; <br>
 AssignSection Zbeams 1 -ZBay 1; <br>
 AssignSection Zbeams 2 -ZBay 2; <br>
 AssignSection columns 4; <br>
-AssignSection slabs 5; 
+AssignSection slabs 5;
 </code>
-</div>  
-<br>    
+</div>
+<br>
 <hr>
 
 <h3> Basic Commands </h3>
 <hr>
 <!SetBC command---------------------------------------------------------------------->
 <h4> <a name = "SetBC">SetBC</a> </h4>
-<b>SetBC</b> command is responsible to define the boundary conditions of the SIFModel. Currently the boundary conditions are defined on SIFJoints which are selected according to their global coordinates. Two types of joint connection can be assigned: a pinned joint or a fixed joint. The global coordinates are specifed in terms of <i>locx</i>, <i>locy</i>, and <i>locz</i> which are corresppinding to the x,y,z coordinate. Notice that each keyword can be written as <i>locx</i>, <i>Locx</i> or <i>-Locx</i>, and it is followed by lower bound and upper bound of the coordinate or a single specified value of the coordinate. 
+<b>SetBC</b> command is responsible to define the boundary conditions of the SIFModel. Currently the boundary conditions are defined on SIFJoints which are selected according to their global coordinates. Two types of joint connection can be assigned: a pinned joint or a fixed joint. The global coordinates are specifed in terms of <i>locx</i>, <i>locy</i>, and <i>locz</i> which are corresppinding to the x,y,z coordinate. Notice that each keyword can be written as <i>locx</i>, <i>Locx</i> or <i>-Locx</i>, and it is followed by lower bound and upper bound of the coordinate or a single specified value of the coordinate.
 
 <div class="box">
 <code>
 SetBC -pinnedJoint -Locx $locxLB <$locxUB> <-Locy $locyLB <$locyUB> > <-Locz $loczLB <$loczUB> > <br>
 SetBC -fixedJoint -Locx $locxLB <$locxUB> <-Locy $locyLB <$locyUB> > <-Locz $loczLB <$loczUB> > <br>
 </code>
-</div>    
+</div>
 
 <p>An example of using <b>SetBC</b> is shown as below, which is intending to create fixed connections at the base of the structure.</p>
 <div class="box">
 <code>
 SetBC fixedJoint -Locy 0;<br>
 </code>
-</div>   
-<hr>    
+</div>
+<hr>
 <!AddLoad command---------------------------------------------------------------------->
 <h4> <a name = "AddLoad">AddLoad</a> </h4>
 <b>AddLoad</b> command is used to apply mechanic load which includes point loads on <i>SIFJoints</i>, distributed loads on <i>SIFMembers</i>. The prototype of defining loads using this command is shown as below:
@@ -211,7 +212,7 @@ AddLoad -Joint $JointTag -load $loadVal1 <$loadVal2> <$loadVal3> <$loadVal4> <$l
 AddLoad -Member AllSlabs -load $loadVal1 <$loadVal2> <$loadVal3> <br>
 AddLoad -Member AllBeams -load $loadVal1 <$loadVal2> <$loadVal3> <br>
 </code>
-</div>    
+</div>
 
 <p>An example of using <b>AddLoad</b> is shown as below, which will apply a point load on the node primarily assigned to the SIFJoint tagged as 2202, and a UDL on all the slabs.</p>
 <div class="box">
@@ -219,9 +220,9 @@ AddLoad -Member AllBeams -load $loadVal1 <$loadVal2> <$loadVal3> <br>
 AddLoad -joint 2202 -load 0 600000 0; <br>
 AddLoad -member allslabs -load 0 -6000 0;<br>
 </code>
-</div>    
-<hr>    
-    
+</div>
+<hr>
+
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
      <footer>
@@ -230,6 +231,6 @@ AddLoad -member allslabs -load 0 -6000 0;<br>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+
   </body>
 </html>
