@@ -13,10 +13,10 @@
     <![endif]-->
   </head>
   <body>
-            <nav> 
+            <nav>
       <center><img src="../images/banner.png" style="height:50px;"></center>
       </nav>
-      
+
       <div class="wrapper">
       <header>
 
@@ -25,7 +25,7 @@
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
           <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
-        
+
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
@@ -34,16 +34,17 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="underconstruction.html">SIFBuilder Examples</a><img src="images/New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>   
+         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
       </header>
 <section>
-      
+
 <h2>SIFBuilder Project</h2>
     <hr>
 <h4> Introduction to this tool</h4>
-<center><img src="../images/SIFBuilder.png" alt="OPS_logo" style="width:840px;"></center>  
+<center><img src="../images/SIFBuilder.png" alt="OPS_logo" style="width:840px;"></center>
 <center><small>Figure 1:  SIFBuilder project</small></center>
 <br>
 <p>
@@ -56,13 +57,13 @@ It would potentially also become a testbed to foster a wide range of future deve
 For modelling structures subjected to fire loading, the heat transfer analyses and the subsequent definitions of thermal actions presents a much greater level of complexity. C++ based process is thus adopted, taking advantage of its object-oriented property and the generalised application interfaces (APIs) to the OpenSees classes.  </p>
 <p>
 As an individual project in OpenSees, SIFBuilder is designed to be a hub that communicates with different modules and controls the integrated analysis based on user instructions via the Tcl interpreter. Here new Tcl commands are specially developed for SIFBuilder, and have been kept simple in terms of the grammar and intuitive in terms of the architecture. </p>
-  
+
 <hr>
 <h4> SIFBuilder workflow</h4>
 
-<center><img src="../images/workflowSif.png" alt="OPS_logo" style="width:840px;"></center>    
-<center><small>Figure 2:  Workflow of using SIFBuilder</small></center>   
-<br>   
+<center><img src="../images/workflowSif.png" alt="OPS_logo" style="width:840px;"></center>
+<center><small>Figure 2:  Workflow of using SIFBuilder</small></center>
+<br>
 <p>Unlike commercial packages, neither OpenSees nor SIFBuilder have a graphical user interface (GUI). However, there is a script based user input capability based on Tcl, which provides considerable flexibility and scope due to its programmable nature. Similar to other commonly used FEM software, SIFBuilder requires the user to input basic structural information for generating the structural model. Procedural scripts are written to specify geometry, materials, loads, heat transfer parameters, fire type, analysis procedures, solution algorithm and output requirements using Tcl commands. A <i>SIFModel</i> is firstly created to store the building information, for which the typical user input script includes:</p>
 
 <ol class="a">
@@ -77,13 +78,13 @@ Following the <b>SIFModel</b> generation, a user may define:
 <li>and thereafter the fire loading information.</li>
 <br>
 The mechanical load and fire action are stored in the <b>SIFModel</b>, out of which a finite element model can be created as:
-<li>building FE model with mesh control specified.</li> 
+<li>building FE model with mesh control specified.</li>
 <br>
 Data output after creating FE model can be requested as:
-<li>a variety of <b>SIFRecorder</b>s which captures the nodal displacement or elemental forces.</li> 
+<li>a variety of <b>SIFRecorder</b>s which captures the nodal displacement or elemental forces.</li>
 <br>
 Finally the full set of loading can be set up and executed by:
-<li><b>SIFAnalyze</b> command followed by incremental step and number of steps that are defined for each corresponding analysis.</li> 
+<li><b>SIFAnalyze</b> command followed by incremental step and number of steps that are defined for each corresponding analysis.</li>
 </ol>
 <hr>
 <h4> SIFModel</h4>
@@ -104,16 +105,16 @@ rate, coordinates of fire origin, and so on. The above information is embedded i
 SIFModel, and can be read and extracted from the associated objects to create
 finite element based structural model for thermo-mechanical analysis.</p>
 
- <center><img src="../images/SIFModel.jpg" alt="OPS_logo" style="width:400px;"></center>  
-<center><small>Figure 3:  SIFModel to store structural info</small></center>   
-<br>       
-    
+ <center><img src="../images/SIFModel.jpg" alt="OPS_logo" style="width:400px;"></center>
+<center><small>Figure 3:  SIFModel to store structural info</small></center>
+<br>
+
 <hr>
 <h4> Demo of using SIFBuilder</h4>
 <code>
 source DisplayPlane.tcl;<br>
 source DisplayModel2D.tcl;<br>
-source DisplayModel3D.tcl;<br>  
+source DisplayModel3D.tcl;<br>
 SIFBuilder; <br>
 SIFXBay 6 9 ; <br>
 SIFZBay 6 9;<br>
@@ -135,10 +136,10 @@ DisplayModel3D DeformedShape 1 50 50 800 800 0;<br>
 SIFAnalyze Load -dt 0.2 Fire -dt 30 -duration 1800 -output HTData; <br>
 </code>
 
-<center><img src="../images/DemoModel.PNG" alt="OPS_logo" style="width:400px;"></center>  
-<center><small>Figure 4:  Demo example model</small></center>   
-<br>  
-    
+<center><img src="../images/DemoModel.PNG" alt="OPS_logo" style="width:400px;"></center>
+<center><small>Figure 4:  Demo example model</small></center>
+<br>
+
 <br>
 <hr>
 <small><p>This page is created by Liming Jiang, 2016</p></small>
@@ -149,6 +150,6 @@ SIFAnalyze Load -dt 0.2 Fire -dt 30 -duration 1800 -output HTData; <br>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+
   </body>
 </html>
