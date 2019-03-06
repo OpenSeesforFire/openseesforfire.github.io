@@ -13,10 +13,10 @@
     <![endif]-->
   </head>
   <body>
-            <nav> 
+            <nav>
       <center><img src="../images/banner.png" style="height:50px;"></center>
       </nav>
-      
+
       <div class="wrapper">
       <header>
 
@@ -25,7 +25,7 @@
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
           <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
-        
+
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
@@ -34,52 +34,53 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="underconstruction.html">SIFBuilder Examples</a><img src="images/New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>  
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
       </header>
 <section>
-      
+
 <h2>Getting started with OpenSees for Fire</h2>
     <hr>
 <p>
  In this section, basic guidance will be presented to help users get started with OpenSees for Fire. The following topics are discussed</p>
- 
+
 <ul class="a">
-<li> <a href="#DownloadRun"><b> Download and Run OpenSees</b></a>  </li> 
+<li> <a href="#DownloadRun"><b> Download and Run OpenSees</b></a>  </li>
 <li> <a href="#RunTMA"><b>Run Thermo-mechanical Analysis in OpenSees</b></a> </li>
 <li> <a href="#RunHT"><b>Run Heat Transfer Analysis in OpenSees</b></a> </li>
 <li> <a href="#RunSIF"><b>Model 'structure in fire' using SIFBuilder in OpenSees</b></a> </li>
-</ul>   
+</ul>
 <br>
 <hr>
 <!Download and Run---------------------------------------------------------------------->
 <h3><a name = "DownloadRun"> Download and Run OpenSees </a></h3>
-<p>For users of OpenSeesThermal, the executable binary file is required to be downloaded, either with Tcl/Tk being installed in the right place in your operating system. 
+<p>For users of OpenSeesThermal, the executable binary file is required to be downloaded, either with Tcl/Tk being installed in the right place in your operating system.
 The latest version of OpenSeesThermal could be downloaded from the <a href= "../download.html">Download page </a>. also the web-link for downloading Tcl/Tk could be found over there.</p>
 <p>Tcl should be installed properly in user's computer before running OpenSees. The installation should be directed to the directory as shwon as below;</p>
-    <img src="../images/ActiveTclInstall.jpg"  style="width:600px;">  
+    <img src="../images/ActiveTclInstall.jpg"  style="width:600px;">
 
 <p>Users are allowed to input their commands through the command line window directly,or use "source" command, which is highly recommended for its convenience. <br>
 When using "source" method, it is better to place the OpenSees.exe and the tcl command files in the same folder then you have a relatively short file path. </p>
-    <img src="../images/OpenSees-1.jpg"  style="width:600px;">  
+    <img src="../images/OpenSees-1.jpg"  style="width:600px;">
 <br>
 <hr>
 <!Run TMA---------------------------------------------------------------------->
 <h3> <a name = "RunTMA">Run Thermo-mechanical Analysis</a></h3>
     <p><a href = "/Download/GettingStartedwithTM.zip" > [Download the example package </a> for Thermo-mechanical analysis]</p>
     <p>Let's start from the "example-SteelBeam-uniform.tcl" which models a simply supported steel beam subjected to UDL and thermal action varying with time. The model configuration is shown as below:</p>
-    <img src="../images/Drawing1-Model.jpg"  style="width:500px;">  
+    <img src="../images/Drawing1-Model.jpg"  style="width:500px;">
 <ul class="a">
-<li> <b>Model Builder</b> </li> 
+<li> <b>Model Builder</b> </li>
     <p>A basic model builder command is used here to initialise the model environmrnt, which will be created in a two dimensional plane and for each node it has three degrees of freedom.</p>
-    <code>model BasicBuilder -ndm 2 -ndf 3;<br></code> 
+    <code>model BasicBuilder -ndm 2 -ndf 3;<br></code>
     <br>
     <p>Two external Tcl files are employed to visualise the model, which are pre-written by other developers and have been vastly used.</p>
     <code>
     source DisplayPlane.tcl;<br>
     source  DisplayModel2D.tcl;<br>
-    </code> 
+    </code>
     <br>
     <hr>
 <li> <b>Nodal definition</b> </li>
@@ -102,7 +103,7 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
     <p>A uniaxial material including thermo-mechanial properties is defined according to Eurocode 3 steel material. Then a fibre based section can be defined. Noticed the keyword for thermo-mechanical fiber section should be written as <i>fiberSecThermal</i> which can be found in Wsection definition or explicitly in the main script. </p>
     <code>
     uniaxialMaterial SteelECThermal 1 308 2.1e5;<br>
-  
+
     set d 355;	# depth <br>
     set bf 171.5;	# flange width <br>
     set tf 11.5;	# flange thickness <br>
@@ -131,36 +132,36 @@ When using "source" method, it is better to place the OpenSees.exe and the tcl c
     </code><br>
     <p>where the <code>fileName</code> is referred as to the data file which shoudl be written with first column to specify the time step and the rest of columns for the temperature histories corresponding to the certain locations across the section.</p>
 </ul>
-    
-    
+
+
 <hr>
-    
+
 <!Run TMA---------------------------------------------------------------------->
 <h3> <a name = "RunHT">Run Heat Transfer analysis</a></h3>
 <p><a href = "/Download/HTDemo.tcl" > [Download the example script </a> for Heat Transfer analysis]</p>
 
 <p>This example is to demonstrate the usage of heat transfer commands in OpenSees. A composite section exposed to standard fire is modelled as shown as below: </p>
-<img src="../images/HTDemo1.png"  style="width:300px;">  
+<img src="../images/HTDemo1.png"  style="width:300px;">
 
 <ul class="a">
-<li> <b>HTModel Builder</b> </li> 
+<li> <b>HTModel Builder</b> </li>
 <p>Firstly the <i>HeatTransfer</i> command is used to initialise the 2D (or 3D) environment for heat transfer analysis.</p>
 <code>HeatTransfer 2D;</code>
 <br> <hr>
-<li> <b>HTMaterials</b> </li> 
+<li> <b>HTMaterials</b> </li>
 <p>Then we start to define heat transfer materials using <i>HTMaterial</i> command:</p>
 <code>HTMaterial CarbonSteelEC3 1;<br>
 HTMaterial ConcreteEC2 2 0.0;
 </code>
 <br><hr>
-<li> <b>HTEntities</b> </li> 
+<li> <b>HTEntities</b> </li>
 <p>HTEntities here can be defined to define the dimensions of slab and I section for this heat transfer problem. The <i>HTEntity</i> command specifies the type of section and its tag, which are followed by the centroid coordinates in the user-defined coordinate system and the dimensions</p>
 <code>
 HTEntity Isection 1 0.0 0.2 0.20 0.40 0.02 0.02;<br>
-HTEntity Block 2 0.0 0.45 0.6 
+HTEntity Block 2 0.0 0.45 0.6
 </code>
 <br><hr>
-<li> <b>HTMeshes</b> </li> 
+<li> <b>HTMeshes</b> </li>
 <p>Since the HTEntities have been defined, it is possible to implement the mesh scheme over these HTEntities. </p>
 <code>
 HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.014;<br>
@@ -171,16 +172,16 @@ HTMeshAll;<br>
 </code>
 The above <i>HTRefineMesh</i> command is used to refine the mesh seed distribution on rectangular blocks because it may be desirable to have nodal distribution compatible with HTIsection.
 <hr>
-<li> <b>Boundary Conditions</b> </li> 
+<li> <b>Boundary Conditions</b> </li>
 <p>The initial temperature and coupled surface are defined.</p>
 </ul>
 <hr>
-    
-<!Run SIFBuilder---------------------------------------------------------------------->    
+
+<!Run SIFBuilder---------------------------------------------------------------------->
 <h3> <a name = "RunSIF"> Using SIFBuilder</a> </h3>
 <p><a href = "/Download/STestSt.tcl" > [Download the example script </a> for SIFBuilder aided analysis]</p>
 
-    
+
 
 <br>
 <hr>
@@ -192,6 +193,6 @@ The above <i>HTRefineMesh</i> command is used to refine the mesh seed distributi
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+
   </body>
 </html>
