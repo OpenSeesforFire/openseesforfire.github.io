@@ -13,10 +13,10 @@
     <![endif]-->
   </head>
   <body>
-            <nav> 
+            <nav>
       <center><img src="../images/banner.png" style="height:50px;"></center>
       </nav>
-      
+
       <div class="wrapper">
       <header>
 
@@ -25,7 +25,7 @@
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
           <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
-        
+
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
@@ -34,12 +34,13 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="underconstruction.html">SIFBuilder Examples</a><img src="images/New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>   
+         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
       </header>
 <section>
-      
+
 <h2>Material Commands for Thermo-Mechanical analysis in OpenSees</h2>
     <hr>
 <p>
@@ -73,7 +74,7 @@ uniaxialMaterial Steel02Thermal $matTag $Fy $E0 $b $R0 $cR1 $cR2 <$a1 $a1 $a1 $a
 
 <br>
 <hr>
-    
+
 <!SteelECThermal command---------------------------------------------------------------------->
 <h4> <a name = "SteelEC">SteelECThermal</a> </h4>
 <b>SteeelECThermal</b> is developed for modelling steel material at elevated temperature, and provding different types of steel material definition according to EN1992,EN1993.
@@ -85,7 +86,7 @@ uniaxialMaterial SteelECThermal $matTag <$steelType> $Fy $E0
 </div>
 
 
-<br>   
+<br>
 <hr>
 <!Concrete02Thermal command---------------------------------------------------------------------->
 <h4> <a name = "Concrete02">Concrete02Thermal</a> </h4>
@@ -97,8 +98,8 @@ uniaxialMaterial Concrete02Thermal $matTag $Fy $E0 <$a1 $a1 $a1 $a1>
 </code>
 </div>
 
-<br>   
-<hr>    
+<br>
+<hr>
 <!ConcreteECThermal command---------------------------------------------------------------------->
 <h4> <a name = "ConcreteEC">ConcreteECThermal</a> </h4>
 <b>ConcreteECThermal</b> is derived by modification of the existing concrete material class "Concrete02" and "Concrete02Thermal" to include the temperature-dependent properties according to EN 1992-1-2 about concrete with siliceous aggregates at elevated temperature.
@@ -119,11 +120,11 @@ set epsU -0.02;<br>
 set lambda 0.1;<br>
 set ft 0.0;<br>
 set Ets [expr $ft/0.002];<br>
- 
+
 uniaxialMaterial ConcreteECThermal 2 $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets;
 </code>
-</div>    
-<br>   
+</div>
+<br>
 <hr>
     <center><b>Thermo-mechaical nD Materials</b></center>
 <hr>
@@ -137,10 +138,10 @@ nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Therma
 </code>
 </div>
 
-<br>   
-<hr>  
-    
-    
+<br>
+<hr>
+
+
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
      <footer>
@@ -149,6 +150,6 @@ nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Therma
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+
   </body>
 </html>
