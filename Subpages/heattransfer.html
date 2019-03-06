@@ -13,10 +13,10 @@
     <![endif]-->
   </head>
   <body>
-            <nav> 
+            <nav>
       <center><img src="../images/banner.png" style="height:50px;"></center>
       </nav>
-      
+
       <div class="wrapper">
       <header>
 
@@ -25,7 +25,7 @@
           <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
           <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
         </ul>
-        
+
         <h4> <p class="view"><a href="../about.html">About </a></p></h4>
         <h4><p class="view"><a href="../people.html">People</a></p></h4>
         <h4><p class="view"><a href="../user.html">Users </a></p></h4>
@@ -33,12 +33,13 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="underconstruction.html">SIFBuilder Examples</a><img src="images/New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
-          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>  
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
       </header>
 <section>
-      
+
 <h2>Heat Transfer in OpenSees</h2>
     <hr>
 <h4> Introduction</h4>
@@ -47,33 +48,33 @@
 Tcl command library has been added to facilitate the script based usage of OpenSees. Since the fire and heat transfer modules were developed, it is desirable to have corresponding Tcl commands for performing heat transfer analyses in OpenSees. This will significantly reduce the complexity in constructing a heat transfer model without requiring knowledge of C++ programming as a user. </p>
 <p>
 Heat transfer analysis in OpenSees is based on the finite element method to solve the transient governing equations. Therefore a mesh tool becomes necessary to discretise the model into nodes and elements.</p>
-  
+
 <hr>
 <h4> Heat Transfer Workflow</h4>
 
-     <img src="../images/TclforHTfolowchart0.png"  style="width:840px;">    
-<center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>   
-    
+     <img src="../images/TclforHTfolowchart0.png"  style="width:840px;">
+<center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
+
 <p>For users who want to conduct heat transfer analysis with OpenSees, it is necessary to follow the flowchart shown in Figure 1 when organising the Tcl commands and creating the script.</p>
 
 <p>
-First and foremost, the module is activated by <i>HeatTransfer</i> to enable the application of the relevant commands and facilities. Notice that the argument following the <i>HeatTransfer</i> command shall define the number of dimensions that can be either 1D or 2D or 3D, which is useful in the cases that dimensional reduction is applied. 
+First and foremost, the module is activated by <i>HeatTransfer</i> to enable the application of the relevant commands and facilities. Notice that the argument following the <i>HeatTransfer</i> command shall define the number of dimensions that can be either 1D or 2D or 3D, which is useful in the cases that dimensional reduction is applied.
 </p>
 <ol class="a">
 <li>
-<b>HTMesh</b> shall be in association with <b>HTMaterial</b> and <b>HTEntity</b>, which accepts a wide range of entity types that are linked to the subclasses in the SimpleEntity family. The available types of entities and their usage can be found in detail in the later section. Seed distribution for the mesh can be refined if necessary by providing a vector containing element size and number. The final mesh is completed once <b>HTMeshAll</b> is detected. 
+<b>HTMesh</b> shall be in association with <b>HTMaterial</b> and <b>HTEntity</b>, which accepts a wide range of entity types that are linked to the subclasses in the SimpleEntity family. The available types of entities and their usage can be found in detail in the later section. Seed distribution for the mesh can be refined if necessary by providing a vector containing element size and number. The final mesh is completed once <b>HTMeshAll</b> is detected.
 </li>
 <li>
-This is followed by a few commands to declare the appropriate boundary conditions, as either fixed (<b>HTSetT</b>) or coupled (<b>HTcoupleT</b>) temperatures. Constants shall be defined before the heat flux boundary conditions are specified which list the coefficient of convection to or from ambient, ambient air temperature and the resultant emissivity of the fire plume. 
+This is followed by a few commands to declare the appropriate boundary conditions, as either fixed (<b>HTSetT</b>) or coupled (<b>HTcoupleT</b>) temperatures. Constants shall be defined before the heat flux boundary conditions are specified which list the coefficient of convection to or from ambient, ambient air temperature and the resultant emissivity of the fire plume.
 </li>
 <li>
-<b>HTPattern</b> is then used in association with <b>AmbientBC</b> for describing the heat loss to the ambient environment, while the keyword <b>FireExp</b> is to invoke fire exposure defined as a specified fire model ranging from uniform fire action to localised fire exposure. Before proceeding to heat transfer analysis definition, heat transfer results can be requested via HTRecorder command. 
+<b>HTPattern</b> is then used in association with <b>AmbientBC</b> for describing the heat loss to the ambient environment, while the keyword <b>FireExp</b> is to invoke fire exposure defined as a specified fire model ranging from uniform fire action to localised fire exposure. Before proceeding to heat transfer analysis definition, heat transfer results can be requested via HTRecorder command.
 </li>
 <li>
 Heat transfer analysis is finally completed after receiving <b>HTAnalyze</b> and thereafter the model can be wiped out using command <b>wipeHT</b>.
 </li>
 </ol>
-   
+
 <hr>
 <h4> HeatTransfer script demo</h4>
 <code>
@@ -83,7 +84,7 @@ HTMaterial ConcreteEC2 2 0.0; <br>
 HTEntity Isection 1 0.0 0.2 0.4 0.20 0.02 0.02;<br>
 HTEntity  Block   2    0.0      0.45     0.6    0.1;<br>
 HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.0198;<br>
-HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02;<br> 
+HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02;<br>
 HTRefineMesh -Entity 2 -SeedTag 1 4 -space 0.02 10 0.01 9 0.005 4 0.01 9 0.02 10;<br>
 HTMeshAll;<br>
 <br>
@@ -95,7 +96,7 @@ HTConstants 1 4.0 293.15 0.7 5.67e-8 0.7;<br>
 HTConstants 2 25.0 293.15 0.7 5.67e-8 0.7;<br>
 <br>
 HTPattern AmbientBC 1 { <br>
-	HeatFluxBC -HTEntity 2 -faceTag 4 -type ConvecAndRad -HTConstants 1; <br>	
+	HeatFluxBC -HTEntity 2 -faceTag 4 -type ConvecAndRad -HTConstants 1; <br>
 }<br>
 FireModel standard 1; <br>
 HTNodeSet 3 -Entity 2 -Locx -0.3 -0.1;<br>
@@ -110,8 +111,8 @@ HTPattern fire 2 model 1 {<br>
 HTRecorder -file temp0.out -NodeSet 1;<br>
 HTRecorder -file temp1.out -NodeSet 2;<br>
 HTAnalysis HeatTransfer<br>
-HTAnalyze 20 30;<br>	
-wipeHT; <br> 
+HTAnalyze 20 30;<br>
+wipeHT; <br>
 </code>
 <br>
 <hr>
@@ -123,6 +124,6 @@ wipeHT; <br>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+
   </body>
 </html>
