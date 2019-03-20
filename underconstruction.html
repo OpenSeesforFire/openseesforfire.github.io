@@ -1,93 +1,34 @@
 <!DOCTYPE html>
-<html>
+<!-- saved from url=(0055)http://openseesforfire.github.io/Subpages/examples.html -->
+
+<!doctype html>
+<title>Site Maintenance</title>
 <style>
-body, html {
-  height: 100%;
-  margin: 0;
-}
-
-.bgimg {
-  background-image: url('/images/Picture1.png');
-  height: 100%;
-  background-position: center;
-  background-size: cover;
-  position: relative;
-  color: black;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 25px;
-}
-
-.topleft {
-  position: absolute;
-  top: 0;
-  left: 16px;
-}
-
-.bottomleft {
-  position: absolute;
-  bottom: 0;
-  left: 16px;
-}
-
-.middle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-}
-
-hr {
-  margin: auto;
-  width: 40%;
-}
+  body { text-align: center; padding: 150px; }
+  h1 { font-size: 50px; }
+  body { font: 20px Helvetica, sans-serif; color: #333; }
+  article { display: block; text-align: left; width: 650px; margin: 0 auto; }
+  a { color: #dc8100; text-decoration: none; }
+  a:hover { color: #333; text-decoration: none; }
 </style>
-<body>
 
-<div class="bgimg">
-  <div class="topleft">
-    <p>SIFBuilder Examples</p>
-  </div>
-  <div class="middle">
-    <h1>This page is under construction</h1>
-    <hr>
-    <p id="demo" style="font-size:30px"></p>
-  </div>
-  <div class="bottomleft">
+<article>
+    <h1>Coming soon!</h1>
+    <div>
+        <p>We are working on this at the moment. You can contact us at <a href="mailto:#">domada.ramakanth@connect.polyu.hk</a></p>
 
-  </div>
-</div>
+    </div>
+</article>
 
-<script>
-// Set the date we're counting down to
-var countDownDate = new Date("Mar 30, 2019 12:00:00").getTime();
 
-// Update the count down every 1 second
-var countdownfunction = setInterval(function() {
+<br>
+<hr>
+<small><p>This page is being developed by D.V.V. Ramakanth at PolyU (Hong Kong), 2019</p></small><br>
+        <small>Hosted on GitHub Pages</small></p>
+      </footer>
+    </div>
+    <script src="./OpenSees for Fire_files/scale.fix.js"></script>
 
-  // Get todays date and time
-  var now = new Date().getTime();
 
-  // Find the distance between now an the count down date
-  var distance = countDownDate - now;
 
-  // Time calculations for days, hours, minutes and seconds
-  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-  // Output the result in an element with id="demo"
-  document.getElementById("demo").innerHTML = days + "d " + hours + "h "
-  + minutes + "m " + seconds + "s ";
-
-  // If the count down is over, write some text
-  if (distance < 0) {
-    clearInterval(countdownfunction);
-    document.getElementById("demo").innerHTML = "EXPIRED";
-  }
-}, 1000);
-</script>
-
-</body>
-</html>
+</body></html>
