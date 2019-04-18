@@ -45,9 +45,9 @@
 <h4> Introduction</h4>
 
 <p>
-Figure E.6-1 shows a 10 building model with storey height of 50mm and beam span of 300mm. The cross sections of the beam and column are 10 X 2 mm and 10mm X 2mm made with Aluminium. An uniform loading of 0.01N/mm has been applied over the beams and a point load of 10N applied over the column. Floors 4,5 and 6 have been subjected to a thermal action of 600<sup>0</sup>C applied linearly. 
+Figure E.6-1 shows a 10 building model with storey height of 50mm and beam span of 300mm. The cross sections of the beam and column are 10 X 2 mm and 10mm X 2mm made with Aluminium. An uniform loading of 0.01N/mm has been applied over the beams and a point load of 10N applied over the column. Floors 4,5 and 6 have been subjected to a thermal action of 600<sup>0</sup>C applied linearly.
 </p>
-<p>Downloading the Example package <a href= "../Download/Shellbeam.tcl"> <strong>Here</strong></a></p>
+<p>Downloading the Example package <a href= "../Download/alframe.tcl"> <strong>Here</strong></a></p>
 <hr>
 <h4> Geometry</h4>
 
@@ -55,7 +55,7 @@ Figure E.6-1 shows a 10 building model with storey height of 50mm and beam span 
  <center><small>Figure 1: A cantilever beam </small></center>
 
 
-<p>This cantilever beam is 2m long. It is made of a rectangual section which is 0.4m in width and 0.1m in thickness. </p>
+<p>The beams of the frame are assumed to be spanning between strong central core and outer peripheral columns. Therefore the right support is extremely rigid and left support is provided by the columns.</p>
 
 
 <p>
@@ -64,7 +64,7 @@ Figure E.6-1 shows a 10 building model with storey height of 50mm and beam span 
 
 
 <hr>
-<h4> Tcl script for modelling cantilevel beam using shell elements</h4>
+<h4> Tcl script for modelling the building frame using beam elements</h4>
 <code>
 wipe; <br>
 set ANALYSIS "HasPoint"; <br>
@@ -163,7 +163,7 @@ analyze 100;<br>
 <center><img src="../images/CaseImgs/ConslabMaterialNon.png"  style="width:500px;"> </center>
  <center><small>Figure 3: Free-tip dispalcement under thermal action </small></center>
 <hr>
-<small><p>This page is created by Liming Jiang, 2016</p></small>
+<small><p>This page is created by D.V.V. Ramakanth, 2019</p></small>
       </section>
 <footer>
         <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
