@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6304 $
-// $Date: 2016-07-07 14:18:22 +0800 (Thu, 07 Jul 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/TripleFrictionPendulum.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef TripleFrictionPendulum_h
 #define TripleFrictionPendulum_h
@@ -65,7 +65,7 @@ public:
     // method to get class type
     const char *getClassType() const {return "TripleFrictionPendulum";};
     
-    // public methods to obtain inforrmation about dof & connectivity
+    // public methods to obtain information about dof & connectivity
     int getNumExternalNodes() const;
     const ID &getExternalNodes();
     Node **getNodePtrs();

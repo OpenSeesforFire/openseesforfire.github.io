@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/adapter/Adapter.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 09/07
@@ -665,7 +665,7 @@ int Adapter::displaySelf(Renderer &theViewer,
 void Adapter::Print(OPS_Stream &s, int flag)
 {
     int i;
-    if (flag == 0)  {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
         // print everything
         s << "Element: " << this->getTag() << endln;
         s << "  type: Adapter";
@@ -679,8 +679,23 @@ void Adapter::Print(OPS_Stream &s, int flag)
             s << "  mb: " << *mb << endln;
         // determine resisting forces in global system
         s << "  resisting force: " << this->getResistingForce() << endln;
-    } else if (flag == 1)  {
-        // does nothing
+    }
+
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"Adapter\", ";
+        s << "\"nodes\": [";
+        for (i = 0; i < numExternalNodes - 1; i++)
+            s << connectedExternalNodes(i) << ", ";
+        s << connectedExternalNodes(numExternalNodes) << "], ";
+        s << "\"kb\": [" << kb << "], ";
+        s << "\"ipPort\": " << ipPort << ", ";
+        s << "\"addRayleigh\": " << addRayleigh;
+        if (mb != 0)
+            s << ", \"mb\": [" << *mb << "]}";
+        else
+            s << "}";
     }
 }
 

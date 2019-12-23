@@ -19,6 +19,8 @@ public:
     int GetNumofNodes(void);
 	 int GetNumofEles(void);
 	const ID& GetNumCtrlID(void);
+	int GenerateNodes(HeatTransferDomain*, int, const Vector&);
+	int GenerateEles(HeatTransferDomain*, const ID&, HeatTransferMaterial*, HeatTransferMaterial* = 0);
 private:
 	 Vector Seeds1;
 	 Vector Seeds2;

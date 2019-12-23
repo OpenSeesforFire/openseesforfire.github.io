@@ -78,6 +78,7 @@ Journal of Structural Engineering, Approved for publication, February 2007.
 #include <CompositeResponse.h>
 #include <ElementalLoad.h>
 #include <ElementIter.h>
+#include <map>
 
 Matrix ForceBeamColumn2d::theMatrix(6,6);
 Vector ForceBeamColumn2d::theVector(6);
@@ -137,7 +138,151 @@ void* OPS_ForceBeamColumn2d()
     }
 
     // check transf
-    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    CrdTransf* theTransf = OPS_getCrdTransf(iData[3]);
+    if(theTransf == 0) {
+	opserr<<"coord transfomration not found\n";
+	return 0;
+    }
+
+    // check beam integrataion
+    BeamIntegrationRule* theRule = OPS_getBeamIntegrationRule(iData[4]);
+    if(theRule == 0) {
+	opserr<<"beam integration not found\n";
+	return 0;
+    }
+    BeamIntegration* bi = theRule->getBeamIntegration();
+    if(bi == 0) {
+	opserr<<"beam integration is null\n";
+	return 0;
+    }
+
+    // check sections
+    const ID& secTags = theRule->getSectionTags();
+    SectionForceDeformation** sections = new SectionForceDeformation *[secTags.Size()];
+    for(int i=0; i<secTags.Size(); i++) {
+	sections[i] = OPS_getSectionForceDeformation(secTags(i));
+	if(sections[i] == 0) {
+	    opserr<<"section "<<secTags(i)<<"not found\n";
+	    delete [] sections;
+	    return 0;
+	}
+    }
+
+    Element *theEle =  new ForceBeamColumn2d(iData[0],iData[1],iData[2],secTags.Size(),sections,
+					     *bi,*theTransf,mass,maxIter,tol);
+    delete [] sections;
+    return theEle;
+}
+
+void* OPS_ForceBeamColumn2d(const ID &info)
+{
+    // data
+    int iData[5];
+    int numData;
+    double mass = 0.0, tol=1e-12;
+    int maxIter = 10;
+
+    // regular element, not in a mesh, get tags
+    if (info.Size() == 0) {
+	if(OPS_GetNumRemainingInputArgs() < 5) {
+	    opserr<<"insufficient arguments:eleTag,iNode,jNode,transfTag,integrationTag\n";
+	    return 0;
+	}
+
+	int ndm = OPS_GetNDM();
+	int ndf = OPS_GetNDF();
+	if(ndm != 2 || ndf != 3) {
+	    opserr<<"ndm must be 2 and ndf must be 3\n";
+	    return 0;
+	}
+
+	// inputs:
+	numData = 3;
+	if(OPS_GetIntInput(&numData,&iData[0]) < 0) {
+	    opserr << "WARNING invalid int inputs\n";
+	    return 0;
+	}
+    }
+
+    // regular element, or in a mesh
+    if (info.Size()==0 || info(0)==1) {
+	if(OPS_GetNumRemainingInputArgs() < 2) {
+	    opserr<<"insufficient arguments: transfTag,integrationTag\n";
+	    return 0;
+	}
+
+	numData = 2;
+	if(OPS_GetIntInput(&numData,&iData[3]) < 0) {
+	    opserr << "WARNING invalid int inputs\n";
+	    return 0;
+	}
+
+	// options
+	numData = 1;
+	while(OPS_GetNumRemainingInputArgs() > 0) {
+	    const char* type = OPS_GetString();
+	    if(strcmp(type,"-iter") == 0) {
+		if(OPS_GetNumRemainingInputArgs() > 1) {
+		    if(OPS_GetIntInput(&numData,&maxIter) < 0) {
+			opserr << "WARNING invalid maxIter\n";
+			return 0;
+		    }
+		    if(OPS_GetDoubleInput(&numData,&tol) < 0) {
+			opserr << "WARNING invalid tol\n";
+			return 0;
+		    }
+		}
+	    } else if(strcmp(type,"-mass") == 0) {
+		if(OPS_GetNumRemainingInputArgs() > 0) {
+		    if(OPS_GetDoubleInput(&numData,&mass) < 0) {
+			opserr << "WARNING invalid mass\n";
+			return 0;
+		    }
+		}
+	    }
+	}
+    }
+
+    // store data for different mesh
+    static std::map<int, Vector> meshdata;
+    if (info.Size()>0 && info(0)==1) {
+	if (info.Size() < 2) {
+	    opserr << "WARNING: need info -- inmesh, meshtag\n";
+	    return 0;
+	}
+
+	// save the data for a mesh
+	Vector& mdata = meshdata[info(1)];
+	mdata.resize(5);
+	mdata(0) = iData[3];
+	mdata(1) = iData[4];
+	mdata(2) = mass;
+	mdata(3) = tol;
+	mdata(4) = maxIter;
+	return &meshdata;
+
+    } else if (info.Size()>0 && info(0)==2) {
+	if (info.Size() < 5) {
+	    opserr << "WARNING: need info -- inmesh, meshtag, eleTag, nd1, nd2\n";
+	    return 0;
+	}
+
+	// get the data for a mesh
+	Vector& mdata = meshdata[info(1)];
+	if (mdata.Size() < 5) return 0;
+
+	iData[0] = info(2);
+	iData[1] = info(3);
+	iData[2] = info(4);
+	iData[3] = mdata(0);
+	iData[4] = mdata(1);
+	mass = mdata(2);
+	tol = mdata(3);
+	maxIter = mdata(4);
+    }
+
+    // check transf
+    CrdTransf* theTransf = OPS_getCrdTransf(iData[3]);
     if(theTransf == 0) {
 	opserr<<"coord transfomration not found\n";
 	return 0;
@@ -204,7 +349,7 @@ int OPS_ForceBeamColumn2d(Domain& theDomain, const ID& elenodes, ID& eletags)
     }
 
     // check transf
-    CrdTransf* theTransf = OPS_GetCrdTransf(iData[0]);
+    CrdTransf* theTransf = OPS_getCrdTransf(iData[0]);
     if(theTransf == 0) {
 	opserr<<"coord transfomration not found\n";
 	return -1;
@@ -246,7 +391,7 @@ int OPS_ForceBeamColumn2d(Domain& theDomain, const ID& elenodes, ID& eletags)
 	theEle = new ForceBeamColumn2d(--currTag,elenodes(2*i),elenodes(2*i+1),secTags.Size(),
 				       sections,*bi,*theTransf,mass,maxIter,tol);
 	if (theEle == 0) {
-	    opserr<<"WARING: run out of memory for creating element\n";
+	    opserr<<"WARNING: run out of memory for creating element\n";
 	    return -1;
 	}
 	if (theDomain.addElement(theEle) == false) {
@@ -271,9 +416,11 @@ ForceBeamColumn2d::ForceBeamColumn2d():
   kv(NEBD,NEBD), Se(NEBD),
   kvcommit(NEBD,NEBD), Secommit(NEBD),
   fs(0), vs(0), Ssr(0), vscommit(0), 
-  numEleLoads(0), sizeEleLoads(0), eleLoads(0), eleLoadFactors(0),
+  numEleLoads(0), sizeEleLoads(0), eleLoads(0), eleLoadFactors(0), load(6),
   Ki(0), parameterID(0)
 {
+  load.Zero();
+
   theNodes[0] = 0;  
   theNodes[1] = 0;
 
@@ -733,8 +880,13 @@ ForceBeamColumn2d::getResistingForce(void)
 
   if (numEleLoads > 0)
     this->computeReactions(p0);
+  // Compute the current resisting force
+  theVector = crdTransf->getGlobalResistingForce(Se, p0Vec);
+  
+  if (rho != 0)
+    theVector.addVector(1.0, load, -1.0);
 
-  return crdTransf->getGlobalResistingForce(Se, p0Vec);
+  return theVector;
 }
 
 void
@@ -813,13 +965,13 @@ ForceBeamColumn2d::update()
 
   maxSubdivisions = 4;
 
-  // fmk - modification to get compatable ele forces and deformations 
+  // fmk - modification to get compatible ele forces and deformations 
   //   for a change in deformation dV we try first a newton iteration, if
   //   that fails we try an initial flexibility iteration on first iteration 
   //   and then regular newton, if that fails we use the initial flexiblity
   //   for all iterations.
   //
-  //   if they both fail we subdivide dV & try to get compatable forces
+  //   if they both fail we subdivide dV & try to get compatible forces
   //   and deformations. if they work and we have subdivided we apply
   //   the remaining dV.
 
@@ -1517,12 +1669,10 @@ ForceBeamColumn2d::addInertiaLoadToUnbalance(const Vector &accel)
   double m = 0.5*rho*L;
 
   // Should be done through p0[0]
-  /*
   load(0) -= m*Raccel1(0);
   load(1) -= m*Raccel1(1);
   load(3) -= m*Raccel2(0);
   load(4) -= m*Raccel2(1);
-  */
 
   return 0;
 }
@@ -2258,16 +2408,16 @@ ForceBeamColumn2d::Print(OPS_Stream &s, int flag)
 
   if (flag == OPS_PRINT_PRINTMODEL_JSON) {
     s << "\t\t\t{";
-	s << "\"name\": \"" << this->getTag() << "\", ";
+	s << "\"name\": " << this->getTag() << ", ";
 	s << "\"type\": \"ForceBeamColumn2d\", ";
-    s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+    s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
     s << "\"sections\": [";
     for (int i = 0; i < numSections-1; i++)
       s << "\"" << sections[i]->getTag() << "\", ";
     s << "\"" << sections[numSections-1]->getTag() << "\"], ";
     s << "\"integration\": ";
     beamIntegr->Print(s, flag);
-	s << ", \"rho\": " << rho << ", ";
+	s << ", \"massperlength\": " << rho << ", ";
 	s << "\"crdTransformation\": \"" << crdTransf->getTag() << "\"}";
   }  
 }

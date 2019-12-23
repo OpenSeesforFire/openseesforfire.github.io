@@ -205,7 +205,7 @@ const Vector& J2ThreeDimensionalThermal :: getStress( )
   stress_vec(4) = stress(1,2) ;
   
   stress_vec(5) = stress(2,0) ;
-  //opserr << stress_vec(0) << " " << stress_vec(1) << endln;
+
   return stress_vec ;
 }
 

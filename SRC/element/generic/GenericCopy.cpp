@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/generic/GenericCopy.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 11/06

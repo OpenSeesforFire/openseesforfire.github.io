@@ -73,10 +73,6 @@ class BilinearOilDamper : public UniaxialMaterial
     int commitState(void);
     int revertToLastCommit(void);    
     int revertToStart(void);        
-    double sgn(double dVariable);
-    int DormandPrince(double vel0, double vel1, double y0, double h, double& yt, double& eps, double& error);
-    double f(double v, double fd);
-    
         
     UniaxialMaterial *getCopy(void);
     
@@ -85,6 +81,9 @@ class BilinearOilDamper : public UniaxialMaterial
                  FEM_ObjectBroker &theBroker);    
     
     void Print(OPS_Stream &s, int flag =0);
+
+    int setParameter(const char **argv, int argc, Parameter &param);
+    int updateParameter(int parameterID, Information &info);
     
   protected:
     
@@ -115,6 +114,10 @@ class BilinearOilDamper : public UniaxialMaterial
     double CVel;    // Committed velocity
     double Cpugr;	// Committed gap initiation displacement
     double Cnugr;   // Trial gap initiation displacement
+
+    double sgn(double dVariable);
+    int DormandPrince(double vel0, double vel1, double y0, double h, double& yt, double& eps, double& error);
+    double f(double v, double fd);    
 };
 
 

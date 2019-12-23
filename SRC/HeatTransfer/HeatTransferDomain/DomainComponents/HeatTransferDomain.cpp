@@ -149,7 +149,7 @@ HeatTransferDomain::~HeatTransferDomain()
 //	Method to add an element to the model.
 
 
-bool
+int
 HeatTransferDomain::addElement(HeatTransferElement* element)
 {
     int eleTag = element->getTag();
@@ -163,7 +163,7 @@ HeatTransferDomain::addElement(HeatTransferElement* element)
 			// NOTE: NEED TO DO SOMETHING TO THE OVERLOADED << OPERATOR
 			opserr << "WARNING HeatTransferDomain::addElement - In element " << *element;
 			opserr << "\n no Node " << nodeTag << " exists in the HeatTransferDomain\n";
-			return false;
+			return -1;
 			}
 		numDOF += nodePtr->getNumberDOF();
 		}   
@@ -172,7 +172,7 @@ HeatTransferDomain::addElement(HeatTransferElement* element)
     TaggedObject* other = theElements->getComponentPtr(eleTag);
     if (other != 0) {
 		opserr << "HeatTransferDomain::addElement - element with tag " << eleTag << "already exists in model\n"; 
-		return false;
+		return -1;
 		}
 
     // add the element to the container object for the elements
@@ -190,20 +190,22 @@ HeatTransferDomain::addElement(HeatTransferElement* element)
       return false;
     }
 #endif      
-
 	// mark the Domain as having been changed
 	this->domainChange();
-		} else 
-			opserr << "HeatTransferDomain::addElement - element " << eleTag << "could not be added to container\n";      
-
-		return result;
+	} 
+	else {
+		opserr << "HeatTransferDomain::addElement - element " << eleTag << "could not be added to container\n";
+	}
+			     
+	 
+		return 0;
 }
 
 
 // void addNode(Node *);
 //	Method to add a Node to the model.
 
-bool
+int
 HeatTransferDomain::addNode(HeatTransferNode* node)
 {
     int nodTag = node->getTag();
@@ -239,10 +241,13 @@ HeatTransferDomain::addNode(HeatTransferNode* node)
 			if (z > theBounds(5)) theBounds(5) = z;	  
 			}
 
-		} else
-    opserr << "HeatTransferDomain::addNode - node with tag " << nodTag << "could not be added to container\n";
+		} 
+	else {
+		opserr << "HeatTransferDomain::addNode - node with tag " << nodTag << "could not be added to container\n";
+		return -1;
+	}
 
-    return result;
+    return 0;
 }
 
 

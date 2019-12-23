@@ -72,9 +72,7 @@ OPS_SSPquad(void)
 
   	int iData[6];
   	const char *theType;
-	double dData[3];
-	dData[1] = 0.0;
-	dData[2] = 0.0;
+    double dData[3] = { 1.0,0.0,0.0 };
 
   	int numData = 6;
   	if (OPS_GetIntInput(&numData, iData) != 0) {
@@ -83,7 +81,6 @@ OPS_SSPquad(void)
   	}
 
 	theType = OPS_GetString();
-
 
 	numData = 1;
 	if (OPS_GetDoubleInput(&numData, dData) != 0) {
@@ -413,7 +410,7 @@ SSPquad::addInertiaLoadToUnbalance(const Vector &accel)
 	const Vector &Raccel4 = theNodes[3]->getRV(accel);
 
 	if (2 != Raccel1.Size() || 2 != Raccel2.Size() || 2 != Raccel3.Size() || 2 != Raccel4.Size()) {
-    	opserr << "FourNodeQuad::addInertiaLoadToUnbalance matrix and vector sizes are incompatable\n";
+    	opserr << "FourNodeQuad::addInertiaLoadToUnbalance matrix and vector sizes are incompatible\n";
     	return -1;
 	}
 
@@ -674,12 +671,26 @@ SSPquad::displaySelf(Renderer &theViewer, int displayMode, float fact, const cha
 void
 SSPquad::Print(OPS_Stream &s, int flag)
 {
-	opserr << "SSPquad, element id:  " << this->getTag() << endln;
-	opserr << "   Connected external nodes:  ";
-	for (int i = 0; i < SSPQ_NUM_NODE; i++) {
-		opserr << mExternalNodes(i) << " ";
-	}
-	return;
+    if (flag == OPS_PRINT_CURRENTSTATE) {
+        opserr << "SSPquad, element id:  " << this->getTag() << endln;
+        opserr << "   Connected external nodes:  ";
+        for (int i = 0; i < SSPQ_NUM_NODE; i++) {
+            opserr << mExternalNodes(i) << " ";
+        }
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"SSPquad\", ";
+        s << "\"nodes\": [" << mExternalNodes(0) << ", ";
+        s << mExternalNodes(1) << ", ";
+        s << mExternalNodes(2) << ", ";
+        s << mExternalNodes(3) << "], ";
+        s << "\"thickness\": " << mThickness << ", ";
+        s << "\"bodyForces\": [" << b[0] << ", " << b[1] << "], ";
+        s << "\"material\": \"" << theMaterial->getTag() << "\"}";
+    }
 }
 
 Response*

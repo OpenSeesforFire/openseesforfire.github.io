@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6607 $
-// $Date: 2017-07-27 12:48:46 +0800 (Thu, 27 Jul 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/dispBeamColumn/DispBeamColumn3d.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: MHS
 // Created: Feb 2001
@@ -87,7 +87,7 @@ void* OPS_DispBeamColumn3d()
     }
 
     // check transf
-    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    CrdTransf* theTransf = OPS_getCrdTransf(iData[3]);
     if(theTransf == 0) {
 	opserr<<"coord transfomration not found\n";
 	return 0;
@@ -810,7 +810,7 @@ DispBeamColumn3d::addInertiaLoadToUnbalance(const Vector &accel)
   const Vector &Raccel2 = theNodes[1]->getRV(accel);
   
   if (6 != Raccel1.Size() || 6 != Raccel2.Size()) {
-    opserr << "DispBeamColumn3d::addInertiaLoadToUnbalance matrix and vector sizes are incompatable\n";
+    opserr << "DispBeamColumn3d::addInertiaLoadToUnbalance matrix and vector sizes are incompatible\n";
     return -1;
   }
   
@@ -826,6 +826,7 @@ DispBeamColumn3d::addInertiaLoadToUnbalance(const Vector &accel)
     Q(6) -= m*Raccel2(0);
     Q(7) -= m*Raccel2(1);
     Q(8) -= m*Raccel2(2);
+
   } else  {
     // use matrix vector multip. for consistent mass matrix
     static Vector Raccel(12);
@@ -900,6 +901,10 @@ DispBeamColumn3d::getResistingForce()
   // Transform forces
   Vector p0Vec(p0, 5);
   P = crdTransf->getGlobalResistingForce(q, p0Vec);
+
+  // Subtract other external nodal loads ... P_res = P_int - P_ext
+  if (rho != 0)
+    P.addVector(1.0, Q, -1.0);
   
   return P;
 }
@@ -908,9 +913,6 @@ const Vector&
 DispBeamColumn3d::getResistingForceIncInertia()
 {
   P = this->getResistingForce();
-  
-  // Subtract other external nodal loads ... P_res = P_int - P_ext
-  P.addVector(1.0, Q, -1.0);
   
   if (rho != 0.0) {
     const Vector &accel1 = theNodes[0]->getTrialAccel();
@@ -1253,8 +1255,8 @@ DispBeamColumn3d::Print(OPS_Stream &s, int flag)
 		beamInt->Print(s, flag);
 
 		for (int i = 0; i < numSections; i++) {
-			opserr << "Section Type: " << theSections[i]->getClassTag() << endln;
-			//    theSections[i]->Print(s,flag);
+		  //opserr << "Section Type: " << theSections[i]->getClassTag() << endln;
+		  theSections[i]->Print(s,flag);
 		}
 		//  if (rho != 0)
 		//    opserr << "Mass: \n" << this->getMass();
@@ -1262,16 +1264,16 @@ DispBeamColumn3d::Print(OPS_Stream &s, int flag)
 
 	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
 		s << "\t\t\t{";
-		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"name\": " << this->getTag() << ", ";
 		s << "\"type\": \"DispBeamColumn3d\", ";
-		s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+		s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
 		s << "\"sections\": [";
 		for (int i = 0; i < numSections - 1; i++)
 			s << "\"" << theSections[i]->getTag() << "\", ";
 		s << "\"" << theSections[numSections - 1]->getTag() << "\"], ";
 		s << "\"integration\": ";
 		beamInt->Print(s, flag);
-		s << ", \"rho\": " << rho << ", ";
+		s << ", \"massperlength\": " << rho << ", ";
 		s << "\"crdTransformation\": \"" << crdTransf->getTag() << "\"}";
 	}
 }
@@ -1392,7 +1394,12 @@ DispBeamColumn3d::setResponse(const char **argv, int argc, OPS_Stream &output)
     theResponse =  new ElementResponse(this, 12, P);
 
   }   
+    else if (strcmp(argv[0],"integrationPoints") == 0)
+      theResponse = new ElementResponse(this, 10, Vector(numSections));
 
+    else if (strcmp(argv[0],"integrationWeights") == 0)
+      theResponse = new ElementResponse(this, 11, Vector(numSections));
+    
   // section response -
   else if (strstr(argv[0],"sectionX") != 0) {
       if (argc > 2) {
@@ -1534,6 +1541,26 @@ DispBeamColumn3d::getResponse(int responseID, Information &eleInfo)
     return eleInfo.setVector(vp);
   }
 
+  else if (responseID == 10) {
+    double L = crdTransf->getInitialLength();
+    double pts[maxNumSections];
+    beamInt->getSectionLocations(numSections, L, pts);
+    Vector locs(numSections);
+    for (int i = 0; i < numSections; i++)
+      locs(i) = pts[i]*L;
+    return eleInfo.setVector(locs);
+  }
+
+  else if (responseID == 11) {
+    double L = crdTransf->getInitialLength();
+    double wts[maxNumSections];
+    beamInt->getSectionWeights(numSections, L, wts);
+    Vector weights(numSections);
+    for (int i = 0; i < numSections; i++)
+      weights(i) = wts[i]*L;
+    return eleInfo.setVector(weights);
+  }
+  
   else
     return -1;
 }

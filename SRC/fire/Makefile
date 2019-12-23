@@ -4,9 +4,8 @@ OBJS       = FireModel.o  UserDefinedFire.o
 
 all:         $(OBJS)
 	@$(CD) $(FE)/fire/CFD_Interface; $(MAKE);
-	@$(CD) $(FE)/fire/EmpericalCompartmentFire; $(MAKE);
-	@$(CD) $(FE)/fire/EmpericalLocalizedFire; $(MAKE);
-	@$(CD) $(FE)/fire/NorminalFire; $(MAKE);
+	@$(CD) $(FE)/fire/Idealised_Uniform_Fires; $(MAKE);
+	@$(CD) $(FE)/fire/Idealised_Nonuniform_fires; $(MAKE);
 	@$(CD) $(FE)/fire/ZoneModel; $(MAKE);
 	
 
@@ -19,9 +18,8 @@ clean: tidy
 
 spotless: clean
 	@$(CD) $(FE)/fire/CFD_Interface; $(MAKE) wipe;
-	@$(CD) $(FE)/fire/EmpericalCompartmentFire; $(MAKE) wipe;
-	@$(CD) $(FE)/fire/EmpericalLocalizedFire; $(MAKE) wipe;
-	@$(CD) $(FE)/fire/NorminalFire; $(MAKE) wipe;
+	@$(CD) $(FE)/fire/Idealised_Uniform_Fires; $(MAKE) wipe;
+	@$(CD) $(FE)/fire/Idealised_Nonuniform_fires; $(MAKE) wipe;
 	@$(CD) $(FE)/fire/ZoneModel; $(MAKE) wipe;
 
 wipe: spotless

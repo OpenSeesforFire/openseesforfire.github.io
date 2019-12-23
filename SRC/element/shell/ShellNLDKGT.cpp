@@ -76,7 +76,7 @@ OPS_ShellNLDKGT(void)
     return 0;
   }
 
-  SectionForceDeformation *theSection = OPS_GetSectionForceDeformation(iData[4]);
+  SectionForceDeformation *theSection = OPS_getSectionForceDeformation(iData[4]);
 
   if (theSection == 0) {
     opserr << "ERROR:  element ShellNLDKGT " << iData[0] << "section " << iData[4] << " not found\n";
@@ -113,7 +113,7 @@ double ShellNLDKGT::wg[4] ;
 
 //null constructor
 ShellNLDKGT::ShellNLDKGT( ) :                              
-Element( 0, ELE_TAG_ShellDKGQ ),
+Element( 0, ELE_TAG_ShellNLDKGT ),
 connectedExternalNodes(3), CstrainGauss(32),TstrainGauss(32),load(0), Ki(0)
 { 
   for (int i = 0 ;  i < 4; i++ ) 
@@ -150,7 +150,7 @@ ShellNLDKGT::ShellNLDKGT(  int tag,
                          int node2,
    	                     int node3,
 	                     SectionForceDeformation &theMaterial ) :
-Element( tag, ELE_TAG_ShellDKGQ ),
+Element( tag, ELE_TAG_ShellDKGT ),
 connectedExternalNodes(3), CstrainGauss(32),TstrainGauss(32),load(0), Ki(0)
 {
   int i;
@@ -338,7 +338,7 @@ void  ShellNLDKGT::Print( OPS_Stream &s, int flag )
         s << endln;
     }
     
-    else if (flag < -1) {
+    if (flag < -1) {
         
         int counter = (flag + 1) * -1;
         int eleTag = this->getTag();
@@ -369,10 +369,10 @@ void  ShellNLDKGT::Print( OPS_Stream &s, int flag )
     
     if (flag == OPS_PRINT_PRINTMODEL_JSON) {
         s << "\t\t\t{";
-        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"name\": " << this->getTag() << ", ";
         s << "\"type\": \"ShellNLDKGT\", ";
-        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\", ";
-        s << "\"" << connectedExternalNodes(2) << "\"], ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << ", ";
+        s << connectedExternalNodes(2) << "], ";
         s << "\"section\": \"" << materialPointers[0]->getTag() << "\"}";
     }
 }
@@ -1189,11 +1189,11 @@ ShellNLDKGT::formResidAndTangent( int tang_flag )
 	static Vector dstrain_li(nstress); //linear incr strain
 	static Vector dstrain_nl(3);//geometric nonlinear strain
 
-	static double shp[3][numnodes]; //shape fuction 2d at a gauss point
+	static double shp[3][numnodes]; //shape function 2d at a gauss point
 
 	static double shpDrill[4][numnodes]; //shape function drilling dof at a gauss point
 
-	static double shpBend[6][9]; //shape fuction - bending part at a gauss point
+	static double shpBend[6][9]; //shape function - bending part at a gauss point
 
 	static Vector residJ(ndf); //nodeJ residual, global coordinates
 

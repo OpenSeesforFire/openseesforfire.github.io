@@ -20,16 +20,16 @@
 #include <Vector.h>
 #include <stdlib.h>
 
-#include <Domain.h>
+//#include <Domain.h>
 #include <HeatTransferDomain.h>
-#include <Node.h>
+//#include <Node.h>
 #include <HeatTransferNode.h>
 #include <NDMaterial.h>
 #include <HeatTransferMaterial.h>
 #include <QuadFour.h>
 #include <BrickEight.h>
 #include <LineTwo.h>
-#include <FourNodeQuad.h>
+//#include <FourNodeQuad.h>
 #include <OPS_Globals.h>
 #include <TemperatureBC.h>
 #include <BoundaryPattern.h>
@@ -56,10 +56,10 @@ public:
 	~Simple_Mesh();
     int GetNumOfNodes();
 	int GetNumOfEles();
-  int SetOriginLocs(const Vector& originLocs);
-  int SetEleParameters(const ID& eleParameters);
+	int SetOriginLocs(const Vector& originLocs);
+	int SetEleParameters(const ID& eleParameters);
   
-	bool GeneratingNodes(const Vector& originLocs=0);
+	int GeneratingNodes(const Vector& originLocs=0);
 	int GeneratingEles(const ID& EleParameters=0);
 	
     int SelectingNodes(ID& NodesRange, int crdTag,double MinValue, double MaxValue, double Tolerance=0.00001 );
@@ -87,7 +87,7 @@ private:
   Vector OriginLocs;
   ID EleParameters;
 	
-	Domain* theDomain;
+	//Domain* theDomain;
 	HeatTransferDomain* theHTDomain;
 	
 

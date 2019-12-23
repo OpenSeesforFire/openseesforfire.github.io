@@ -1977,7 +1977,7 @@ SIFBuilderDomain::applyFireAction(int thePatternTag, double timeStep, double fir
 	}
 
 	//if(theTest == 0)
-	theTest = new CTestNormDispIncr(1e-3, 500, 1);
+	theTest = new CTestNormDispIncr(5e-3, 2000, 1);
 	//theTest = new CTestNormUnbalance(1e-3, 200, 1, 2);
 
 
@@ -1986,7 +1986,7 @@ SIFBuilderDomain::applyFireAction(int thePatternTag, double timeStep, double fir
 
 	if (theHandler == 0)
 		//theHandler  = new PlainHandler();
-		theHandler = new PenaltyConstraintHandler(1.0e12, 1.0e12);
+		theHandler = new PenaltyConstraintHandler(1.0e10, 1.0e10);
 
 	if (theNumberer == 0) {
 		RCM *theRCM = new RCM(false);

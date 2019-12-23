@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 5182 $
-// $Date: 2013-01-09 08:08:32 +0800 (Wed, 09 Jan 2013) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/material/uniaxial/ElasticMultiLinear.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef ElasticMultiLinear_h
 #define ElasticMultiLinear_h

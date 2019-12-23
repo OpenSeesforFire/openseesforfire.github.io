@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6049 $
-// $Date: 2015-07-17 12:56:36 +0800 (Fri, 17 Jul 2015) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/dispBeamColumn/DispBeamColumn3d.h $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: MHS
 // Created: Feb 2001
@@ -111,7 +111,7 @@ class DispBeamColumn3d : public Element
 
     int numSections;
     SectionForceDeformation **theSections; // pointer to the ND material objects
-    CrdTransf *crdTransf;        // pointer to coordinate tranformation object 
+    CrdTransf *crdTransf;        // pointer to coordinate transformation object 
 
     BeamIntegration *beamInt;
 

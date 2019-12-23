@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/adapter/Adapter.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef Adapter_h
 #define Adapter_h

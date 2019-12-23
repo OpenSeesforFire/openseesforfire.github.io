@@ -3,6 +3,7 @@
 #include <Matrix.h>
 #include <Vector.h>
 #include <math.h>
+#include <QuadFour.h>
 
 Simple_Block::Simple_Block(int tag, double a1, double b1, double a3, double b3,double a2, double b2, double a4, double b4)
 :Simple_Entity(tag,0),a1(a1), b1(b1), a3(a3), b3(b3), a2(a2), b2(b2), a4(a4), b4(b4),NumCtrlID(2),Seeds1(1),Seeds2(1),Seeds3(1),Seeds4(1)
@@ -178,4 +179,104 @@ int Simple_Block::GetNumofEles(void)
 	return NumCtrlID(0)*NumCtrlID(1);
 }
 
+int Simple_Block::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const Vector& OriginLocs)
+{
+	double OriginLoc1 = 0;
+	double OriginLoc2 = 0;
+	if (OriginLocs.Size() == 1) {
+		OriginLoc1 = OriginLocs(0);
+	}
+	else if (OriginLocs.Size() == 2) {
+		OriginLoc1 = OriginLocs(0);
+		OriginLoc2 = OriginLocs(1);
+	}
 
+	int OriginNodeTag = theHTDomain->getNumNodes() + 1;
+
+	int NumCtrX = this->GetNumCtrlID()(0);
+	int NumCtrY = this->GetNumCtrlID()(1);
+
+	for (int i = 0; i <= NumCtrY; i++) {
+		for (int j = 0; j <= NumCtrX; j++) {
+			double NodeCrdX = 0;
+			double NodeCrdY = 0;
+			if (this->GetSeeds(1)(j) == this->GetSeeds(4)(j))
+				NodeCrdX = this->GetSeeds(1)(j);
+			else
+				opserr << "Block should be a rectangular one so far" << endln;
+
+			if (fabs(NodeCrdX) < 1e-10)
+				NodeCrdX = 0;
+
+			if ((this->GetSeeds(2))(i) == (this->GetSeeds(3))(i))
+				NodeCrdY = (this->GetSeeds(2))(i);
+			else
+				opserr << "Block should be a rectangular one so far" << endln;
+
+
+			if (fabs(NodeCrdY) < 1e-10)
+				NodeCrdY = 0;
+
+			HeatTransferNode* TempNode = 0;
+			if (OriginLocs.Size() == 1) {
+				TempNode = new HeatTransferNode(OriginNodeTag + (NumCtrX + 1) * i + j, nDoF, NodeCrdX, NodeCrdY, OriginLoc1);
+			}
+			else {
+				TempNode = new HeatTransferNode(OriginNodeTag + (NumCtrX + 1) * i + j, nDoF, NodeCrdX, NodeCrdY);
+			}
+			if (theHTDomain->addNode(TempNode) < 0) {
+				opserr << "HTDomain failed to generate node with coordinates: " << NodeCrdX << ", " << NodeCrdY << endln;
+				return -1;
+			}
+			
+
+		}
+	}
+
+
+}
+
+
+
+int Simple_Block::GenerateEles(HeatTransferDomain* theHTDomain, const ID& EleParameters, HeatTransferMaterial* theHTMaterial, HeatTransferMaterial* theHTMaterial1)
+{
+	bool PhaseTransformation = false;
+	bool PhaseTransformation1 = false;
+
+	if (EleParameters != 0) {
+		if (EleParameters(0) == 1) {
+			PhaseTransformation = true;
+		}
+		else {
+			if (theHTMaterial1 != 0 && EleParameters.Size() > 1) {
+				if (EleParameters(1) == 1)
+					PhaseTransformation1 = true;
+			}
+		}
+	}
+
+	int OriginNodeTag = theHTDomain->getNumNodes() - (this->GetNumofNodes())+1;
+	int OriginEleTag = theHTDomain->getNumElements() + 1;
+
+	int NumCtrX = this->GetNumCtrlID()(0);
+	int NumCtrY = this->GetNumCtrlID()(1);
+	int EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4;
+	for (int i = 0; i < NumCtrY; i++) {
+		for (int j = 0; j < NumCtrX; j++) {
+			EleTag = NumCtrX * i + j;
+			NodeTag1 = OriginNodeTag + (NumCtrX + 1) * i + j;
+			NodeTag2 = OriginNodeTag + (NumCtrX + 1) * i + j + 1;
+			NodeTag3 = OriginNodeTag + (NumCtrX + 1) * (i + 1) + j + 1;
+			NodeTag4 = OriginNodeTag + (NumCtrX + 1) * (i + 1) + j;
+			HeatTransferElement* TempEle = 0;
+			TempEle = new QuadFour(OriginEleTag + EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial, PhaseTransformation);
+
+			if (theHTDomain->addElement(TempEle) < 0) {
+				opserr << "HeatTransferDomain failed to add element" << OriginEleTag + EleTag << endln;
+				return -1;
+			}
+			
+		}
+	}
+	return 0;
+}

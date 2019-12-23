@@ -3,6 +3,7 @@
 #include <Matrix.h>
 #include <Vector.h>
 #include <math.h>
+#include <BrickEight.h>
 
 Simple_Brick::Simple_Brick(int tag, double CenterX, double CenterY, double CenterZ, double Breadth_X, double Height_Y,double Length_Z)
 :Simple_Entity(tag,2),Breadth(Breadth_X), Height(Height_Y),Length(Length_Z),NumCtrlID(3),Seeds1(1),Seeds2(1),Seeds3(1)
@@ -162,4 +163,115 @@ int Simple_Brick::GetNumofEles(void)
 	return NumCtrlID(0)*NumCtrlID(1)*NumCtrlID(2);
 }
 
+int Simple_Brick::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const Vector& OriginLocs)
+{
+	double OriginLoc1 = 0;
+	double OriginLoc2 = 0;
+	if (OriginLocs.Size() == 1) {
+		OriginLoc1 = OriginLocs(0);
+	}
+	else if (OriginLocs.Size() == 2) {
+		OriginLoc1 = OriginLocs(0);
+		OriginLoc2 = OriginLocs(1);
+	}
 
+	int OriginNodeTag = theHTDomain->getNumNodes() + 1;
+
+	int NumCtrX = this->GetNumCtrlID()(0);
+	int NumCtrY = this->GetNumCtrlID()(1);
+	int NumCtrZ = this->GetNumCtrlID()(2);
+	int NodeTag;
+
+	for (int k = 0; k <= NumCtrZ; k++) {
+		for (int j = 0; j <= NumCtrY; j++) {
+			for (int i = 0; i <= NumCtrX; i++) {
+				double NodeCrdX = 0;
+				double NodeCrdY = 0;
+				double NodeCrdZ = 0;
+
+
+				NodeCrdX = (this->GetSeeds(1))(i);
+				NodeCrdY = (this->GetSeeds(2))(j);
+				NodeCrdZ = (this->GetSeeds(3))(k);
+
+				if (fabs(NodeCrdX) < 1e-10)
+					NodeCrdX = 0;
+
+				if (fabs(NodeCrdY) < 1e-10)
+					NodeCrdY = 0;
+
+				if (fabs(NodeCrdZ) < 1e-10)
+					NodeCrdZ = 0;
+
+
+
+				NodeTag = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * k + (NumCtrX + 1) * j + i;
+				HeatTransferNode* TempNode = new HeatTransferNode(NodeTag, nDoF, NodeCrdX, NodeCrdY, NodeCrdZ);
+				if (theHTDomain->addNode(TempNode) < 0)
+					return -1;
+			}
+		}
+
+
+	}
+	opserr << "Seed 1" << this->GetSeeds(1) << endln << "Seed 2" << this->GetSeeds(2) << endln << "Seed 3" << this->GetSeeds(3) << endln;
+	return 0;
+}
+
+
+
+int Simple_Brick::GenerateEles(HeatTransferDomain* theHTDomain, const ID& EleParameters, HeatTransferMaterial* theHTMaterial, HeatTransferMaterial* theHTMaterial1)
+{
+	bool PhaseTransformation = false;
+	bool PhaseTransformation1 = false;
+
+	if (EleParameters != 0) {
+		if (EleParameters(0) == 1) {
+			PhaseTransformation = true;
+		}
+		else {
+			if (theHTMaterial1 != 0 && EleParameters.Size() > 1) {
+				if (EleParameters(1) == 1)
+					PhaseTransformation1 = true;
+			}
+		}
+	}
+
+	int OriginNodeTag = theHTDomain->getNumNodes() - (this->GetNumofNodes()) + 1;
+	int OriginEleTag = theHTDomain->getNumElements() + 1;
+
+	int NumCtrX = this->GetNumCtrlID()(0);
+	int NumCtrY = this->GetNumCtrlID()(1);
+	int NumCtrZ = this->GetNumCtrlID()(2);
+	int EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, NodeTag5, NodeTag6, NodeTag7, NodeTag8;
+
+	for (int k = 0; k < NumCtrZ; k++) {
+		for (int j = 0; j < NumCtrY; j++) {
+			for (int i = 0; i < NumCtrX; i++) {
+				EleTag = OriginEleTag + NumCtrX * NumCtrY * k + NumCtrX * j + i;
+				NodeTag1 = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * k + (NumCtrX + 1) * j + i;
+				NodeTag2 = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * k + (NumCtrX + 1) * j + i + 1;
+				NodeTag3 = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * k + (NumCtrX + 1) * (j + 1) + i + 1;
+				NodeTag4 = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * k + (NumCtrX + 1) * (j + 1) + i;
+				NodeTag5 = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * (k + 1) + (NumCtrX + 1) * j + i;
+				NodeTag6 = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * (k + 1) + (NumCtrX + 1) * j + i + 1;
+				NodeTag7 = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * (k + 1) + (NumCtrX + 1) * (j + 1) + i + 1;
+				NodeTag8 = OriginNodeTag + (NumCtrX + 1) * (NumCtrY + 1) * (k + 1) + (NumCtrX + 1) * (j + 1) + i;
+
+				
+				HeatTransferElement* TempEle = 0;
+
+				//TempEle = new BrickEight  (EleTag,NodeTag3,NodeTag4,NodeTag1,NodeTag2,NodeTag7,NodeTag8,NodeTag5,NodeTag6,*theHTMaterial, PhaseTransformation);
+				TempEle = new BrickEight(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, NodeTag5, NodeTag6, NodeTag7, NodeTag8, *theHTMaterial, PhaseTransformation);
+
+				if (theHTDomain->addElement(TempEle) < 0) {
+					opserr << "HeatTransferDomain failed to add element" << OriginEleTag + EleTag << endln;
+					return -1;
+				}
+				
+			}
+		}
+	}
+
+	return 0;
+}

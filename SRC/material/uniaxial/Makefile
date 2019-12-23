@@ -44,12 +44,14 @@ OBJS       = UniaxialMaterial.o \
 	InitStressMaterial.o \
 	SimpleFractureMaterial.o \
 	MinMaxMaterial.o \
+	TensionOnlyMaterial.o \
         PathIndependentMaterial.o \
 	CableMaterial.o \
 	ENTMaterial.o \
 	FedeasMaterial.o \
 	DrainMaterial.o \
-	BoucWenMaterial.o \
+	BoucWenOriginal.o \
+    BoucWenMaterial.o \
 	SecantConcrete.o \
 	HardeningMaterial2.o \
 	Pinching4Material.o \
@@ -58,6 +60,7 @@ OBJS       = UniaxialMaterial.o \
 	SteelMP.o \
 	SmoothPSConcrete.o \
 	Steel02.o \
+	GNGMaterial.o \
 	Concrete02.o \
 	Steel03.o \
 	MultiLinear.o \
@@ -108,6 +111,7 @@ OBJS       = UniaxialMaterial.o \
 	ElasticMaterialThermal.o \
 	StainlessECThermal.o \
 	SteelECThermal.o \
+	DamperMaterial.o \
         TclModelBuilderUniaxialMaterialCommand.o
 
 all:         $(OBJS)

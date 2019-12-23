@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6493 $
-// $Date: 2016-11-22 04:01:40 +0800 (Tue, 22 Nov 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elastomericBearing/HDR.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef HDR_h
 #define HDR_h

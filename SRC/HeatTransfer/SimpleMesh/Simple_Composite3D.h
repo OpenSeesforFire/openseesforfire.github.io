@@ -19,12 +19,14 @@ public:
                               double HTI_Bf, double HTI_Tf, double HTI_Hw, double HTI_Tw, double HTI_Len,double slabW,double slabH);
 	~Simple_Composite3D();
 
-	virtual int InitialMeshCtrl(Vector& MeshCtrls);
-    virtual bool InitialSeeds(void); 
-    virtual const Vector& GetSeeds(int SeedTag);
-    virtual int GetNumofNodes(void);
-	virtual int GetNumofEles(void);
-	virtual const ID& GetNumCtrlID(void);
+	int InitialMeshCtrl(Vector& MeshCtrls);
+    bool InitialSeeds(void); 
+    const Vector& GetSeeds(int SeedTag);
+    int GetNumofNodes(void);
+	int GetNumofEles(void);
+	const ID& GetNumCtrlID(void);
+	int GenerateNodes(HeatTransferDomain*, int, const Vector&);
+	int GenerateEles(HeatTransferDomain*, const ID&, HeatTransferMaterial*, HeatTransferMaterial* = 0);
 private:
 	 Vector Seeds1;
 	 Vector Seeds2;

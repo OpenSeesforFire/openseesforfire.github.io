@@ -48,8 +48,15 @@ FireModel::setDomain(HeatTransferDomain* theDomain)
     the_domain = theDomain;
 }
 
+
 int 
 FireModel::getFireTypeTag()
 {
 	return FireTypeTag;
+}
+
+void 
+FireModel::Print(OPS_Stream& s, int i)
+{
+	opserr << "it should not be called here" << endln;
 }

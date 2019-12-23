@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6420 $
-// $Date: 2016-09-10 10:30:46 +0800 (Sat, 10 Sep 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/truss/TrussSection.h $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
                                                                         
 #ifndef TrussSection_h
@@ -32,7 +32,7 @@
 //
 // Description: This file contains the class definition for Truss. A Truss 
 // object provides the abstraction of the small deformation bar element. 
-// Each truss object is assocaited with a section object. This Truss element 
+// Each truss object is associated with a section object. This Truss element 
 // will work in 1d, 2d or 3d problems.
 //
 // What: "@(#) Truss.h, revA"
@@ -59,7 +59,7 @@ class TrussSection : public Element
 
     const char *getClassType(void) const {return "TrussSection";};
 
-    // public methods to obtain inforrmation about dof & connectivity    
+    // public methods to obtain information about dof & connectivity    
     int getNumExternalNodes(void) const;
     const ID &getExternalNodes(void);
     Node **getNodePtrs(void);

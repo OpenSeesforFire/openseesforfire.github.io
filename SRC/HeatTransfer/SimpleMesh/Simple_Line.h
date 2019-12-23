@@ -8,6 +8,7 @@
 #include <vector>
 #include <stdlib.h>
 
+
 class Simple_Line : public Simple_Entity
 {
 public:
@@ -19,10 +20,12 @@ public:
 	virtual bool InitialSeeds();
 	//virtual bool RefineSeeds(int SeedTag, const Vector& RefinedSeedsInfo);
 
-	virtual const Vector& GetSeeds(int SeedTag);
-    virtual const ID& GetNumCtrlID();
-	virtual int GetNumofNodes();
-	virtual int GetNumofEles();
+	const Vector& GetSeeds(int SeedTag);
+    const ID& GetNumCtrlID();
+	int GetNumofNodes();
+	int GetNumofEles();
+	int GenerateNodes(HeatTransferDomain*, int, const Vector&);
+	int GenerateEles(HeatTransferDomain*, const ID&, HeatTransferMaterial*, HeatTransferMaterial* = 0);
 	//virtual int GetSectionTag();
 
 private:

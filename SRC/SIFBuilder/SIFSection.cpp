@@ -242,7 +242,7 @@ SIFSection::DefineBeamSection(bool isElastic)
 		
 		double Breadth = theSectionPars(0);
 		double Height = theSectionPars(1);
-		int numSubdivY = 4;				// number of subdivisions (fibers) in the local y direction;
+		int numSubdivY = 8;				// number of subdivisions (fibers) in the local y direction;
 		int numSubdivZ = 4;				// number of subdivisions (fibers) in the local z direction;
 		if(SectionTypeTag==10){
 			Breadth = theSectionPars(1);
@@ -300,7 +300,7 @@ SIFSection::DefineBeamSection(bool isElastic)
          }
 
 		 // create 3d section      
-		double GJ =20000;
+		double GJ =2e11;
 		 theSection =  new FiberSectionGJThermal(sectionTag, numFibers, fiber,GJ);
 		 // Delete fibers
 		for (i = 0; i < numFibers; i++)

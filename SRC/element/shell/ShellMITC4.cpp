@@ -49,6 +49,7 @@
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
 #include <elementAPI.h>
+#include <map>
 
 #define min(a,b) ( (a)<(b) ? (a):(b) )
 
@@ -96,6 +97,95 @@ OPS_ShellMITC4(void)
 			      iData[4], *theSection, updateBasis);
 
   return theElement;
+}
+
+void *
+OPS_ShellMITC4(const ID& info)
+{
+
+    if (info.Size() == 0) {
+	opserr << "WARNING: info is empty -- ShellMITC4\n";
+	return 0;
+    }
+
+    // save data
+    static std::map<int,Vector> meshdata;
+    if (info(0) == 1) {
+
+	// check input
+	if (info.Size() < 2) {
+	    opserr << "WARNING: need info -- inmesh, meshtag\n";
+	    return 0;
+	}
+	if (OPS_GetNumRemainingInputArgs() < 1) {
+	    opserr << "WARNING: insuficient arguments -- secTag <-updateBasis>\n";
+	    return 0;
+	}
+
+	// save data
+	Vector& mdata = meshdata[info(1)];
+	mdata.resize(2);
+	mdata.Zero();
+
+	// get secTag
+	int numdata = 1;
+	int secTag;
+	if (OPS_GetIntInput(&numdata, &secTag) < 0) {
+	    opserr << "WARNING: failed to get section tag -- ShellMITC4\n";
+	    return 0;
+	}
+	mdata(0) = (double)secTag;
+
+	// update basis
+	if (OPS_GetNumRemainingInputArgs() > 0) {
+	    const char* type = OPS_GetString();
+	    if (strcmp(type, "-updateBasis") == 0) {
+		mdata(1) = 1;
+	    }
+	}
+
+	return &meshdata;
+    }
+
+    // load data
+    if (info(0) == 2) {
+	if (numShellMITC4 == 0) {
+//    opserr << "Using ShellMITC4 - Developed by: Leopoldo Tesser, Diego A. Talledo, Véronique Le Corvec\n";
+	    numShellMITC4++;
+	}
+
+	if (info.Size() < 7) {
+	    opserr << "WARNING: need info -- inmesh, meshtag, eleTag, nd1, nd2, nd3, nd4\n";
+	    return 0;
+	}
+	int eleTag = info(2);
+
+	// get data
+	Vector& mdata = meshdata[info(1)];
+	if (mdata.Size() < 2) {
+	    return 0;
+	}
+
+	// get section
+	int secTag = (int)mdata(0);
+	SectionForceDeformation *theSection = OPS_getSectionForceDeformation(secTag);
+	if (theSection == 0) {
+	    opserr << "ERROR:  element ShellMITC4 " << info(2) << "section " << secTag << " not found\n";
+	    return 0;
+	}
+
+	// update basis
+	bool updateBasis = false;
+	if (mdata(1) == 1) {
+	    updateBasis = true;
+	}
+
+	return new ShellMITC4(info(2), info(3), info(4), info(5),
+			      info(6), *theSection, updateBasis);
+    }
+    
+
+    return 0;
 }
 
 
@@ -339,7 +429,7 @@ void  ShellMITC4::Print( OPS_Stream &s, int flag )
         s << endln;
     }
     
-    else if (flag < -1) {
+    if (flag < -1) {
         
         int counter = (flag + 1) * -1;
         int eleTag = this->getTag();
@@ -371,10 +461,10 @@ void  ShellMITC4::Print( OPS_Stream &s, int flag )
     
     if (flag == OPS_PRINT_PRINTMODEL_JSON) {
         s << "\t\t\t{";
-        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"name\": " << this->getTag() << ", ";
         s << "\"type\": \"ShellMITC4\", ";
-        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\", ";
-        s << "\"" << connectedExternalNodes(2) << "\", \"" << connectedExternalNodes(3) << "\"], ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << ", ";
+        s << connectedExternalNodes(2) << ", " << connectedExternalNodes(3) << "], ";
         s << "\"section\": \"" << materialPointers[0]->getTag() << "\"}";
     }
 }

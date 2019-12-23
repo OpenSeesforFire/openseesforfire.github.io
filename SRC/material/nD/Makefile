@@ -3,7 +3,9 @@ include ../../../Makefile.def
 #	ElasticCrossAnisotropic.o \
 
 ifdef DAMAGE2P_FLAG
-	DAMAGE_2P = Damage2p.o Damage2p3D.o Damage2ppstress.o 
+	DAMAGE_2P = Damage2p.o Damage2p3D.o Damage2ppstress.o \
+	Concrete.o CPlaneStress.o CPlaneStrain.o CPlaneStress2d.o \
+	CThreeDimensional.o
 else
 	DAMAGE_2P =
 endif
@@ -23,6 +25,11 @@ OBJS       = NDMaterial.o \
 	PlasticDamageConcrete3d.o \
 	LinearCap.o \
 	eig3.o \
+	Faria1998.o \
+	Faria1998PlaneStrain.o \
+	Faria1998PlaneStress.o \
+	Faria1998PlaneStress2d.o \
+	Faria1998ThreeDimensional.o \
 	FSAM.o \
 	AcousticMedium.o \
 	ElasticIsotropicAxiSymm.o\
@@ -77,10 +84,9 @@ OBJS       = NDMaterial.o \
 	ElasticIsotropicMaterialThermal.o \
 	J2PlasticityThermal.o \
 	J2ThreeDimensionalThermal.o \
-	PlasticDamageConcretePlaneStressThermal.o \
 	PlateFiberMaterialThermal.o \
 	PlateFromPlaneStressMaterialThermal.o \
-	PlateRebarMaterialThermal.o 
+	PlateRebarMaterialThermal.o
 
 
 all: $(OBJS) 

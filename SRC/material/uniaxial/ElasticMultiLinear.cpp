@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6593 $
-// $Date: 2017-06-15 06:17:10 +0800 (Thu, 15 Jun 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/material/uniaxial/ElasticMultiLinear.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 12/11

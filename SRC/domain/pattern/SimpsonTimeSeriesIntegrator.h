@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6225 $
-// $Date: 2016-03-04 05:07:01 +0800 (Fri, 04 Mar 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/domain/pattern/SimpsonTimeSeriesIntegrator.h $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 05/15

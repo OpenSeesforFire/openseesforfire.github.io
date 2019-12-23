@@ -319,7 +319,7 @@ setTrialSectionDeformation( const Vector &strainResultant_from_element)
 
   double z ;
 
- #ifdef _SDEBUG
+ #ifdef _DEBUG
 	  if (strainResultant(8) ==111)
 	  opserr<< "Sec strain  "<<strainResultant<<endln;
 	#endif

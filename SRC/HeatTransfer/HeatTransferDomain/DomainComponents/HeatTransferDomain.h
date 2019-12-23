@@ -62,8 +62,8 @@ class HeatTransferDomain
     virtual ~HeatTransferDomain();    
 
     // methods to populate a domain
-    virtual  bool addElement(HeatTransferElement* );
-    virtual  bool addNode(HeatTransferNode* );
+    virtual  int addElement(HeatTransferElement* );
+    virtual  int addNode(HeatTransferNode* );
     virtual  bool addTemperatureBC(TemperatureBC* );
     virtual  bool addBoundaryPattern(BoundaryPattern* ); 
 	virtual  bool addMP_TemperatureBC(MP_TemperatureBC* );  // Added by Liming for MP_TempBC

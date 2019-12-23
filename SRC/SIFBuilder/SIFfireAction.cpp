@@ -182,6 +182,13 @@ SIFfireAction::UpdateFireModel(int MemberType)
 
 	  return 0;
 	 }
+  else if (FireModelType == 21) {
+	  // ParametricFireEC1(int tag, double I, double Av, double H, double At, double Af, double Qf, double tlim, double startTime = 0);
+	  if (theFireModel == 0)
+		  theFireModel = new NorminalFireEC1(this->getTag(), 5, StartTime);
+
+	  return 0;
+  }
   else if(FireModelType==3){
       int centreLineTag;
 	  double fireLocx, fireLocy, fireLocz, D, Q;
@@ -691,7 +698,7 @@ SIFfireAction::RunHTforMember(SIFMember* theMember,int LoadPatternTag)
     //----------------------Data transaction---------------------
     int NumofSeries;
 
-    if(FireModelType ==1 ||FireModelType ==2 )
+    if(FireModelType ==1 ||FireModelType ==2 ||FireModelType == 21)
     {
       NumofSeries = 1;
     }

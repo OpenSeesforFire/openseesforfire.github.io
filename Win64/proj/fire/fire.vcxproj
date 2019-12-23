@@ -17,13 +17,13 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -50,7 +50,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\SRC\system_of_eqn\linearSOE\sparseSYM;..\..\..\SRC\system_of_eqn\linearSOE\bandSPD;..\..\..\SRC\system_of_eqn\linearSOE;..\..\..\SRC\system_of_eqn\linearSOE\bandGEN;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferDOFNumber;..\..\..\OTHER\SuperLU;..\..\..\OTHER\SuperLU_3.0;..\..\..\OTHER\SuperLU_MT;..\..\..\OTHER\AMD;..\..\..\OTHER\SuperLU_4.1\src;..\..\..\OTHER\ARPACK;..\..\..\OTHER\BLAS;..\..\..\OTHER\METIS;..\..\..\OTHER\SuperLU_DIST_2.0;..\..\..\OTHER\CBLAS;..\..\..\OTHER\UMFPACK;..\..\..\OTHER\ITPACK;..\..\..\OTHER\LAPACK;..\..\..\SRC\actor\channel;..\..\..\SRC\HeatTransfer\HeatTransferMaterial;..\..\..\SRC\element;..\..\..\SRC\domain\pattern;..\..\..\SRC\graph\numberer;..\..\..\SRC\graph\graph;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis;..\..\..\SRC\tagged\storage;..\..\..\SRC\graph;..\..\..\SRC\nDarray;..\..\..\SRC\fire;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents;..\..\..\SRC\HeatTransfer\HeatTransferDomain;..\..\..\SRC\fire\New Folder;..\..\..\SRC\tagged;..\..\..\SRC\actor\actor;..\..\..\SRC\handler;..\..\..\SRC;..\..\..\SRC\fire\EmpericalLocalizedFire;..\..\..\SRC\fire\NorminalFire;..\..\..\SRC\matrix;..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferDomain\TimeSeries;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\MP_TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferNode;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement;..\..\..\SRC\fire\EmpericalCompartmentFire;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler;..\..\..\SRC\HeatTransfer\KDTree\src;..\..\..\SRC\HeatTransfer\HTRecorder;..\..\..\SRC\HeatTransfer\HTModelBuilder;..\..\..\SRC\HeatTransfer\KDTree;..\..\..\SRC\HeatTransfer\HTSTRCInterface;..\..\..\SRC\HeatTransfer\SimpleMesh;..\..\..\SRC\HeatTransfer\Tcl;c:\Program Files\Tcl\include;c:\Program Files\tcl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\SRC\system_of_eqn\linearSOE\sparseSYM;..\..\..\SRC\system_of_eqn\linearSOE\bandSPD;..\..\..\SRC\system_of_eqn\linearSOE;..\..\..\SRC\system_of_eqn\linearSOE\bandGEN;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferDOFNumber;..\..\..\OTHER\SuperLU;..\..\..\OTHER\SuperLU_3.0;..\..\..\OTHER\SuperLU_MT;..\..\..\OTHER\AMD;..\..\..\OTHER\SuperLU_4.1\src;..\..\..\OTHER\ARPACK;..\..\..\OTHER\BLAS;..\..\..\OTHER\METIS;..\..\..\OTHER\SuperLU_DIST_2.0;..\..\..\OTHER\CBLAS;..\..\..\OTHER\UMFPACK;..\..\..\OTHER\ITPACK;..\..\..\OTHER\LAPACK;..\..\..\SRC\actor\channel;..\..\..\SRC\HeatTransfer\HeatTransferMaterial;..\..\..\SRC\element;..\..\..\SRC\domain\pattern;..\..\..\SRC\graph\numberer;..\..\..\SRC\graph\graph;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis;..\..\..\SRC\tagged\storage;..\..\..\SRC\graph;..\..\..\SRC\nDarray;..\..\..\SRC\fire;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents;..\..\..\SRC\HeatTransfer\HeatTransferDomain;..\..\..\SRC\fire\New Folder;..\..\..\SRC\tagged;..\..\..\SRC\actor\actor;..\..\..\SRC\handler;..\..\..\SRC;..\..\..\SRC\fire\Idealised_Uniform_Fires;..\..\..\SRC\fire\NorminalFire;..\..\..\SRC\matrix;..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferDomain\TimeSeries;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\MP_TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferNode;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement;..\..\..\SRC\fire\Idealised_Nonuniform_fires;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler;..\..\..\SRC\HeatTransfer\KDTree\src;..\..\..\SRC\HeatTransfer\HTRecorder;..\..\..\SRC\HeatTransfer\HTModelBuilder;..\..\..\SRC\HeatTransfer\KDTree;..\..\..\SRC\HeatTransfer\HTSTRCInterface;..\..\..\SRC\HeatTransfer\SimpleMesh;..\..\..\SRC\HeatTransfer\Tcl;c:\Program Files\Tcl\include;c:\Program Files\tcl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_HEATTRANSFER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -67,7 +67,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\SRC\system_of_eqn\linearSOE\sparseSYM;..\..\..\SRC\system_of_eqn\linearSOE\bandSPD;..\..\..\SRC\system_of_eqn\linearSOE;..\..\..\SRC\system_of_eqn\linearSOE\bandGEN;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferDOFNumber;..\..\..\OTHER\SuperLU;..\..\..\OTHER\SuperLU_3.0;..\..\..\OTHER\SuperLU_MT;..\..\..\OTHER\AMD;..\..\..\OTHER\ARPACK;..\..\..\OTHER\BLAS;..\..\..\OTHER\METIS;..\..\..\OTHER\SuperLU_DIST_2.0;..\..\..\OTHER\CBLAS;..\..\..\OTHER\UMFPACK;..\..\..\OTHER\ITPACK;..\..\..\OTHER\LAPACK;..\..\..\SRC\actor\channel;..\..\..\SRC\HeatTransfer\HeatTransferMaterial;..\..\..\SRC\element;..\..\..\SRC\domain\pattern;..\..\..\SRC\graph\numberer;..\..\..\SRC\graph\graph;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis;..\..\..\SRC\tagged\storage;..\..\..\SRC\graph;..\..\..\SRC\nDarray;..\..\..\SRC\fire;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents;..\..\..\SRC\HeatTransfer\HeatTransferDomain;..\..\..\SRC\fire\New Folder;..\..\..\SRC\tagged;..\..\..\SRC\actor\actor;..\..\..\SRC\handler;..\..\..\SRC;..\..\..\SRC\fire\EmpericalLocalizedFire;..\..\..\SRC\fire\NorminalFire;..\..\..\SRC\matrix;..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferDomain\TimeSeries;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\MP_TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferNode;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement;..\..\..\SRC\fire\EmpericalCompartmentFire;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler;..\..\..\SRC\HeatTransfer\KDTree\src;..\..\..\SRC\HeatTransfer\HTRecorder;..\..\..\SRC\HeatTransfer\HTModelBuilder;..\..\..\SRC\HeatTransfer\KDTree;..\..\..\SRC\HeatTransfer\HTSTRCInterface;..\..\..\SRC\HeatTransfer\SimpleMesh;..\..\..\SRC\HeatTransfer\Tcl;c:\Program Files\Tcl\include;c:\Program Files\tcl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\SRC\system_of_eqn\linearSOE\sparseSYM;..\..\..\SRC\system_of_eqn\linearSOE\bandSPD;..\..\..\SRC\system_of_eqn\linearSOE;..\..\..\SRC\system_of_eqn\linearSOE\bandGEN;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferDOFNumber;..\..\..\OTHER\SuperLU;..\..\..\OTHER\SuperLU_3.0;..\..\..\OTHER\SuperLU_MT;..\..\..\OTHER\AMD;..\..\..\OTHER\ARPACK;..\..\..\OTHER\BLAS;..\..\..\OTHER\METIS;..\..\..\OTHER\SuperLU_DIST_2.0;..\..\..\OTHER\CBLAS;..\..\..\OTHER\UMFPACK;..\..\..\OTHER\ITPACK;..\..\..\OTHER\LAPACK;..\..\..\SRC\actor\channel;..\..\..\SRC\HeatTransfer\HeatTransferMaterial;..\..\..\SRC\element;..\..\..\SRC\domain\pattern;..\..\..\SRC\graph\numberer;..\..\..\SRC\graph\graph;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis;..\..\..\SRC\tagged\storage;..\..\..\SRC\graph;..\..\..\SRC\nDarray;..\..\..\SRC\fire;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents;..\..\..\SRC\HeatTransfer\HeatTransferDomain;..\..\..\SRC\fire\New Folder;..\..\..\SRC\tagged;..\..\..\SRC\actor\actor;..\..\..\SRC\handler;..\..\..\SRC;..\..\..\SRC\fire\Idealised_Nonuniform_Fires;..\..\..\SRC\fire\NorminalFire;..\..\..\SRC\matrix;..\..\..\SRC\HeatTransfer\HeatTransferDomain\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferDomain\TimeSeries;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\MP_TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\TemperatureBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\BoundaryPattern;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferNode;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatFluxBC;..\..\..\SRC\HeatTransfer\HeatTransferDomain\DomainComponents\HeatTransferElement;..\..\..\SRC\fire\Idealised_Uniform_Fires;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\Iterator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferAnalysisModel;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferIntegrator;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\ConvergenceTest;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\HeatTransferSolutionAlgorithm;..\..\..\SRC\HeatTransfer\HeatTransferAnalysis\TemperatureBCHandler;..\..\..\SRC\HeatTransfer\KDTree\src;..\..\..\SRC\HeatTransfer\HTRecorder;..\..\..\SRC\HeatTransfer\HTModelBuilder;..\..\..\SRC\HeatTransfer\KDTree;..\..\..\SRC\HeatTransfer\HTSTRCInterface;..\..\..\SRC\HeatTransfer\SimpleMesh;..\..\..\SRC\HeatTransfer\Tcl;c:\Program Files\Tcl\include;c:\Program Files\tcl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -81,30 +81,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\EmpericalCompartmentFire\EmpericalCompartmentFire.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\EmpericalCompartmentFire\ParametricFireEC1.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\AlpertCeilingJetModel.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\Idealised_Local_Fire.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireEC1.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireSFPE.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\EmpericalLocalizedFire\MovingLocalizedFireEC1.cpp" />
     <ClCompile Include="..\..\..\SRC\fire\FireModel.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\NorminalFire\NorminalFireEC1.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\UserDefinedFire.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\MovingLocalizedFireEC1.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\NorminalFireEC1.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\ParametricFireEC1.cpp" />
+    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\UserDefinedFire.cpp" />
     <ClCompile Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.h" />
-    <ClInclude Include="..\..\..\SRC\fire\EmpericalCompartmentFire\EmpericalCompartmentFire.h" />
-    <ClInclude Include="..\..\..\SRC\fire\EmpericalCompartmentFire\ParametricFireEC1.h" />
-    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\AlpertCeilingJetModel.h" />
-    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\Idealised_Local_Fire.h" />
-    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireEC1.h" />
-    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\LocalizedFireSFPE.h" />
-    <ClInclude Include="..\..\..\SRC\fire\EmpericalLocalizedFire\MovingLocalizedFireEC1.h" />
     <ClInclude Include="..\..\..\SRC\fire\FireModel.h" />
-    <ClInclude Include="..\..\..\SRC\fire\NorminalFire\NorminalFireEC1.h" />
-    <ClInclude Include="..\..\..\SRC\fire\UserDefinedFire.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\MovingLocalizedFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\NorminalFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\ParametricFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\UserDefinedFire.h" />
     <ClInclude Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

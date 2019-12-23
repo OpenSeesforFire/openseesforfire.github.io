@@ -35,10 +35,12 @@
 #include <SIFMaterial.h>
 #include <CarbonSteelEC3.h>
 #include <ConcreteEC2.h>
+#include <Concrete02Thermal.h>
 #include <SimpleMaterial.h>
 #include <HeatTransferMaterial.h>
 #include <UniaxialMaterial.h>
 #include <SteelECThermal.h>
+#include <Steel01Thermal.h>
 #include <StainlessSteelEC.h>
 #include <StainlessECThermal.h>
 #include <ConcreteECThermal.h>
@@ -137,10 +139,12 @@ SIFMaterial::getUniaxialMaterial(bool isElastic)
     //Steel material, default EC thermal properties will be defined
 	double fy = MaterialPars(0);
 	double E0= MaterialPars(1);
-	  if(isElastic)
-		theuniMaterial = new ElasticMaterialThermal(tag, E0,1.2e-5);
-	  else 
-		theuniMaterial = new SteelECThermal(tag,3,fy, E0);
+	if (isElastic)
+		theuniMaterial = new ElasticMaterialThermal(tag, E0, 1.2e-5);
+	else
+		//theuniMaterial = new SteelECThermal(tag,3,fy, E0);
+		theuniMaterial = new Steel01Thermal(tag, fy, E0, 0.05);
+		 // Steel01Thermal(int tag, double fy, double E0, double b,
   }
   else if (MaterialTypeTag == 301) {
 	  //StainlessECThermal(int tag, int grade, double Fy, double E, double Fu,double sigInit)
@@ -157,7 +161,7 @@ SIFMaterial::getUniaxialMaterial(bool isElastic)
   else if(MaterialTypeTag==220){
    //ConcreteECThermal::ConcreteECThermal(int tag, double _fc, double _epsc0, double _fcu,
 				     //double _epscu, double _rat, double _ft, double _Ets):
-	  isElastic = true;
+	  //isElastic = true;
 	    double fc= MaterialPars(0);
 		double epsc0 = MaterialPars(1) ;
 		double fcu = MaterialPars(2) ;
@@ -170,6 +174,7 @@ SIFMaterial::getUniaxialMaterial(bool isElastic)
 		theuniMaterial = new ElasticMaterialThermal(tag, 3e10,1.4e-5, true);
 		else
 		theuniMaterial = new ConcreteECThermal(tag,fc, epsc0, fcu, epsc, rat, ft, Ets);
+		//theuniMaterial = new Concrete02Thermal(tag, fc, epsc0, fcu, epsc, rat, ft, Ets);
 		// ElasticMaterialThermal(int tag, double E, double alpha, double eta = 0.0);
 		//theuniMaterial = new ElasticMaterialThermal(tag,3e10, 1.4e-5);
 		

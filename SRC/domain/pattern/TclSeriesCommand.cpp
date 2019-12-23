@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6475 $
-// $Date: 2016-09-23 15:00:15 +0800 (Fri, 23 Sep 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/domain/pattern/TclSeriesCommand.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: fmk 
 // Created: 11/00

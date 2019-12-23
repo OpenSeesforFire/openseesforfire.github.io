@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6593 $
-// $Date: 2017-06-15 06:17:10 +0800 (Thu, 15 Jun 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/truss/CorotTrussSection.cpp $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
 // Written: MHS 
 // Created: May 2001
@@ -891,10 +891,10 @@ CorotTrussSection::Print(OPS_Stream &s, int flag)
 
     if (flag == OPS_PRINT_PRINTMODEL_JSON) {
         s << "\t\t\t{";
-        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"name\": " << this->getTag() << ", ";
         s << "\"type\": \"CorotTrussSection\", ";
-        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
-        s << "\"rho\": " << rho << ", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"massperlength\": " << rho << ", ";
         s << "\"material\": \"" << theSection->getTag() << "\"}";
     }
 }

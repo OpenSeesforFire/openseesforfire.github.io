@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6593 $
-// $Date: 2017-06-15 06:17:10 +0800 (Thu, 15 Jun 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elasticBeamColumn/ModElasticBeam2d.cpp $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
 // Written: fmk 11/95
 // Revised: Dimitrios G. Lignos 01/31/2011
@@ -141,7 +141,7 @@ OPS_ModElasticBeam2d()
     numRemainingArgs = OPS_GetNumRemainingInputArgs();      
   }
 
-  CrdTransf *theTransf = OPS_GetCrdTransf(iData[3]);
+  CrdTransf *theTransf = OPS_getCrdTransf(iData[3]);
   if (theTransf == 0) {
     opserr << "WARNING error could not find a transformation with tag: " << iData[3] << "element ElasticBeamColumn2d " << eleTag << endln;
     return 0;
@@ -537,7 +537,7 @@ ModElasticBeam2d::addInertiaLoadToUnbalance(const Vector &accel)
   const Vector &Raccel2 = theNodes[1]->getRV(accel);
 	
   if (3 != Raccel1.Size() || 3 != Raccel2.Size()) {
-    opserr << "ModElasticBeam2d::addInertiaLoadToUnbalance matrix and vector sizes are incompatable\n";
+    opserr << "ModElasticBeam2d::addInertiaLoadToUnbalance matrix and vector sizes are incompatible\n";
     return -1;
   }
     
@@ -793,16 +793,16 @@ ModElasticBeam2d::Print(OPS_Stream &s, int flag)
   
   if (flag == OPS_PRINT_PRINTMODEL_JSON) {
       s << "\t\t\t{";
-      s << "\"name\": \"" << this->getTag() << "\", ";
+      s << "\"name\": " << this->getTag() << ", ";
       s << "\"type\": \"ModElasticBeam2d\", ";
-      s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+      s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
       s << "\"E\": " << E << ", ";
       s << "\"A\": " << A << ", ";
       s << "\"Iz\": " << I << ", ";
       s << "\"K11\": " << K11 << ", ";
       s << "\"K33\": " << K33 << ", ";
       s << "\"K44\": " << K44 << ", ";
-      s << "\"rho\": " << rho << ", ";
+      s << "\"massperlength\": " << rho << ", ";
       s << "\"crdTransformation\": \"" << theCoordTransf->getTag() << "\"}";
   }
 }

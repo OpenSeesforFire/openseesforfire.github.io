@@ -23,6 +23,8 @@ public:
   const ID& GetNumCtrlID();
   int GetNumofNodes();
   int GetNumofEles();
+  int GenerateNodes(HeatTransferDomain*, int, const Vector&);
+  int GenerateEles(HeatTransferDomain*, const ID&, HeatTransferMaterial*, HeatTransferMaterial* = 0);
 	//virtual int GetSectionTag();
 
 private:

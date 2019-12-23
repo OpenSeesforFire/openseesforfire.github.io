@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/SingleFPSimple3d.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 02/06
@@ -1054,7 +1054,7 @@ int SingleFPSimple3d::displaySelf(Renderer &theViewer,
 
 void SingleFPSimple3d::Print(OPS_Stream &s, int flag)
 {
-    if (flag == 0)  {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
         // print everything
         s << "Element: " << this->getTag(); 
         s << "  type: SingleFPSimple3d  iNode: " << connectedExternalNodes(0);
@@ -1070,8 +1070,26 @@ void SingleFPSimple3d::Print(OPS_Stream &s, int flag)
         s << "  maxIter: " << maxIter << "  tol: " << tol << endln;
         // determine resisting forces in global system
         s << "  resisting force: " << this->getResistingForce() << endln;
-    } else if (flag == 1)  {
-        // does nothing
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"SingleFPSimple3d\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"frictionModel\": \"" << theFrnMdl->getTag() << "\", ";
+        s << "\"Reff\": " << Reff << ", ";
+        s << "\"kInit\": " << kInit << ", ";
+        s << "\"materials\": [\"";
+        s << theMaterials[0]->getTag() << "\", \"";
+        s << theMaterials[1]->getTag() << "\", \"";
+        s << theMaterials[2]->getTag() << "\", \"";
+        s << theMaterials[3]->getTag() << "\"], ";
+        s << "\"shearDistI\": " << shearDistI << ", ";
+        s << "\"addRayleigh\": " << addRayleigh << ", ";
+        s << "\"mass\": " << mass << ", ";
+        s << "\"maxIter\": " << maxIter << ", ";
+        s << "\"tol\": " << tol << "}";
     }
 }
 
@@ -1270,7 +1288,7 @@ void SingleFPSimple3d::setUp()
         exit(-1);
     }
     
-    // establish orientation of element for the tranformation matrix
+    // establish orientation of element for the transformation matrix
     // z = x cross y
     static Vector z(3);
     z(0) = x(1)*y(2) - x(2)*y(1);

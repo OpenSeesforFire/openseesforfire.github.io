@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4952 $
-// $Date: 2012-08-09 13:56:05 +0800 (Thu, 09 Aug 2012) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/frictionModel/VelDepMultiLinear.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef VelDepMultiLinear_h
 #define VelDepMultiLinear_h

@@ -24,10 +24,10 @@
                                                                         
 // Written: MHS
 // Created: Feb 2001
-// Modified: Jian Zhang[Univeristy of Edinburgh]
-// Modified: Panagiotis Kotsovinos[Univeristy of Edinburgh]
-// Modified: Jian Jiang[Univeristy of Edinburgh]
-// Modified: Liming Jiang[Univeristy of Edinburgh,2014
+// Modified: Jian Zhang[University of Edinburgh]
+// Modified: Panagiotis Kotsovinos[University of Edinburgh]
+// Modified: Jian Jiang[University of Edinburgh]
+// Modified: Liming Jiang[University of Edinburgh,2014
 
 
 
@@ -92,7 +92,7 @@ void* OPS_DispBeamColumn2dThermal()
     }
 
     // check transf
-    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    CrdTransf* theTransf = OPS_getCrdTransf(iData[3]);
     if(theTransf == 0) {
 	opserr<<"coord transfomration not found\n";
 	return 0;
@@ -1122,7 +1122,7 @@ DispBeamColumn2dThermal::addInertiaLoadToUnbalance(const Vector &accel)
 	const Vector &Raccel2 = theNodes[1]->getRV(accel);
 
     if (3 != Raccel1.Size() || 3 != Raccel2.Size()) {
-      opserr << "DispBeamColumn2dThermal::addInertiaLoadToUnbalance matrix and vector sizes are incompatable\n";
+      opserr << "DispBeamColumn2dThermal::addInertiaLoadToUnbalance matrix and vector sizes are incompatible\n";
       return -1;
     }
 
@@ -1527,25 +1527,42 @@ opserr << "DispBeamColumn2dThermal::recvSelf() - out of memory creating sections
 void
 DispBeamColumn2dThermal::Print(OPS_Stream &s, int flag)
 {
-  s << "\nDispBeamColumn2dThermal, element id:  " << this->getTag() << endln;
-  s << "\tConnected external nodes:  " << connectedExternalNodes;
-  s << "\tCoordTransf: " << crdTransf->getTag() << endln;
-  s << "\tmass density:  " << rho << endln;
-  
-  double L = crdTransf->getInitialLength();
-  double P  = q(0);
-  double M1 = q(1);
-  double M2 = q(2);
-  double V = (M1+M2)/L;
-  s << "\tEnd 1 Forces (P V M): " << -P+p0[0]
-    << " " << V+p0[1] << " " << M1 << endln;
-  s << "\tEnd 2 Forces (P V M): " << P
-    << " " << -V+p0[2] << " " << M2 << endln;
+    if (flag == OPS_PRINT_CURRENTSTATE) {
+        s << "\nDispBeamColumn2dThermal, element id:  " << this->getTag() << endln;
+        s << "\tConnected external nodes:  " << connectedExternalNodes;
+        s << "\tCoordTransf: " << crdTransf->getTag() << endln;
+        s << "\tmass density:  " << rho << endln;
 
-  beamInt->Print(s, flag);
+        double L = crdTransf->getInitialLength();
+        double P = q(0);
+        double M1 = q(1);
+        double M2 = q(2);
+        double V = (M1 + M2) / L;
+        s << "\tEnd 1 Forces (P V M): " << -P + p0[0]
+            << " " << V + p0[1] << " " << M1 << endln;
+        s << "\tEnd 2 Forces (P V M): " << P
+            << " " << -V + p0[2] << " " << M2 << endln;
 
-  for (int i = 0; i < numSections; i++)
-    theSections[i]->Print(s,flag);
+        beamInt->Print(s, flag);
+
+        for (int i = 0; i < numSections; i++)
+            theSections[i]->Print(s, flag);
+    }
+
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"DispBeamColumn2dThermal\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"sections\": [";
+        for (int i = 0; i < numSections - 1; i++)
+            s << "\"" << theSections[i]->getTag() << "\", ";
+        s << "\"" << theSections[numSections - 1]->getTag() << "\"], ";
+        s << "\"integration\": ";
+        beamInt->Print(s, flag);
+        s << ", \"massperlength\": " << rho << ", ";
+        s << "\"crdTransformation\": \"" << crdTransf->getTag() << "\"}";
+    }
 }
 
 

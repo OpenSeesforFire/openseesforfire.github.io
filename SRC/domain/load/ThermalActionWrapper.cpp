@@ -346,7 +346,7 @@ ThermalActionWrapper::getIntData(const Vector& locs)
   double constEnd =1.0;
   
 #ifdef _DEBUG
-	 opserr<<locs<<endln;
+	 //opserr<<locs<<endln;
 #endif
 
   double sQdistInt =0;double sQr=0 ;double sQr1=0; 

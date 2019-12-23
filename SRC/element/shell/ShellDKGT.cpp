@@ -83,7 +83,7 @@ OPS_ShellDKGT(void)
     return 0;
   }
 
-  SectionForceDeformation *theSection = OPS_GetSectionForceDeformation(iData[4]);
+  SectionForceDeformation *theSection = OPS_getSectionForceDeformation(iData[4]);
 
   if (theSection == 0) {
     opserr << "ERROR:  element ShellDKGT " << iData[0] << "section " << iData[4] << " not found\n";
@@ -120,7 +120,7 @@ double ShellDKGT::wg[4] ;
 
 //null constructor
 ShellDKGT::ShellDKGT( ) :                            
-Element( 0, ELE_TAG_ShellDKGQ ),
+Element( 0, ELE_TAG_ShellDKGT ),
 connectedExternalNodes(3), load(0), Ki(0)
 { 
   for (int i = 0 ;  i < 4; i++ ) 
@@ -158,7 +158,7 @@ ShellDKGT::ShellDKGT(  int tag,
                          int node2,
    	                     int node3,
 	                     SectionForceDeformation &theMaterial ) :
-Element( tag, ELE_TAG_ShellDKGQ ),
+Element( tag, ELE_TAG_ShellDKGT ),
 connectedExternalNodes(3), load(0), Ki(0)
 {
   int i;
@@ -366,10 +366,11 @@ void  ShellDKGT::Print( OPS_Stream &s, int flag )
 
     if (flag == OPS_PRINT_PRINTMODEL_JSON) {
         s << "\t\t\t{";
-        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"name\": " << this->getTag() << ", ";
         s << "\"type\": \"ShellDKGT\", ";
-        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\", ";
-        s << "\"" << connectedExternalNodes(2) << "\"], ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", ";
+        s << connectedExternalNodes(1) << ", ";
+        s << connectedExternalNodes(2) << "], ";
         s << "\"section\": \"" << materialPointers[0]->getTag() << "\"}";
     }
 }
@@ -1044,11 +1045,11 @@ ShellDKGT::formResidAndTangent( int tang_flag )
 
 	static Vector strain(nstress); //strain
 
-	static double shp[3][numnodes]; //shape fuction 2d at a gauss point
+	static double shp[3][numnodes]; //shape function 2d at a gauss point
 
 	static double shpDrill[4][numnodes]; //shape function drilling dof at a gauss point
 
-	static double shpBend[6][9]; //shape fuction - bending part at a gauss point
+	static double shpBend[6][9]; //shape function - bending part at a gauss point
 
 	static Vector residJ(ndf); //nodeJ residual, global coordinates
 
@@ -1557,7 +1558,7 @@ int  ShellDKGT::sendSelf (int commitTag, Channel &theChannel)
 
 int  ShellDKGT::recvSelf (int commitTag, 
 		       Channel &theChannel, 
-		       FEM_ObjectBroker &theBroker)      //idDataºóÃæµÄ±àºÅÊÇÊ²Ã´ÒâË¼
+		       FEM_ObjectBroker &theBroker)      //idDataï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½Ê²Ã´ï¿½ï¿½Ë¼
 {
   int res = 0;
   

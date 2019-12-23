@@ -6,6 +6,9 @@
 #include <MovableObject.h>
 #include <Vector.h>
 #include <ID.h>
+#include <HeatTransferDomain.h>
+#include <HeatTransferNode.h>
+#include <HeatTransferMaterial.h>
 
 class ID;
 
@@ -22,7 +25,8 @@ public:
   virtual void setMeshTag(int meshTag);
   virtual int getMeshTag(void);
   virtual int RefineSeeds(int SeedTag, const Vector&RefinedSeedsInfo);
-
+  virtual int GenerateNodes(HeatTransferDomain*, int, const Vector& );
+  virtual int GenerateEles(HeatTransferDomain* , const ID& , HeatTransferMaterial*  , HeatTransferMaterial* =0);
   
    // virtual int getTag(void);
 	virtual int InitialMeshCtrl(Vector&);

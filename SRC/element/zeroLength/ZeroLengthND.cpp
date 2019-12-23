@@ -102,7 +102,7 @@ void* OPS_ZeroLengthND()
     const char* type = OPS_GetString();
     Vector x(3); x(0) = 1.0; x(1) = 0.0; x(2) = 0.0;
     Vector y(3); y(0) = 0.0; y(1) = 1.0; y(2) = 0.0;
-    if (strcmp(type,"orient") == 0) {
+    if (strcmp(type,"-orient") == 0) {
 	if (OPS_GetNumRemainingInputArgs() < 6) {
 	    opserr<<"WARNING: insufficient orient values\n";
 	    return 0;
@@ -781,9 +781,9 @@ ZeroLengthND::Print(OPS_Stream &s, int flag)
     
     if (flag == OPS_PRINT_PRINTMODEL_JSON) {
         s << "\t\t\t{";
-        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"name\": " << this->getTag() << ", ";
         s << "\"type\": \"ZeroLengthND\", ";
-        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
         s << "\"ndMaterial\": \"" << theNDMaterial->getTag() << "\", ";
         if (the1DMaterial != 0)
             s << "\"uniaxialMaterial\": \"" << the1DMaterial->getTag() << "\", ";
@@ -932,7 +932,7 @@ ZeroLengthND::setUp(int Nd1, int Nd2, const Vector &x, const Vector &yp)
 		opserr << "ZeroLengthND -- incorrect dimension of orientation vectors\n";
 	exit(-1);
 	}
-    // establish orientation of element for the tranformation matrix
+    // establish orientation of element for the transformation matrix
     // z = x cross yp
     static Vector z(3);
     z(0) = x(1)*yp(2) - x(2)*yp(1);

@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 4967 $
-// $Date: 2012-08-13 13:39:44 +0800 (Mon, 13 Aug 2012) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/adapter/TclActuatorCorotCommand.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 09/07
@@ -123,6 +123,6 @@ int TclModelBuilder_addActuatorCorot(ClientData clientData, Tcl_Interp *interp, 
         return TCL_ERROR;
     }
     
-    // if get here we have sucessfully created the corotActuator and added it to the domain
+    // if get here we have successfully created the corotActuator and added it to the domain
     return TCL_OK;
 }

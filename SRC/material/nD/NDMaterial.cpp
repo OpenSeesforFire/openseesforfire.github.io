@@ -59,6 +59,16 @@ bool OPS_addNDMaterial(NDMaterial *newComponent)
     return theNDMaterialObjects.addComponent(newComponent);
 }
 
+bool OPS_removeNDMaterial(int tag)
+{
+    TaggedObject* obj = theNDMaterialObjects.removeComponent(tag);
+    if (obj != 0) {
+	delete obj;
+	return true;
+    }
+    return false;
+}
+
 NDMaterial *OPS_getNDMaterial(int tag)
 {
   TaggedObject *theResult = theNDMaterialObjects.getComponentPtr(tag);
@@ -310,9 +320,6 @@ NDMaterial::getResponse (int responseID, Information &matInfo)
     
   case 2:
     return matInfo.setVector(this->getStrain());
-
-  case 3:	  
-	return matInfo.setVector(this->getTempAndElong());
     
   default:
     return -1;

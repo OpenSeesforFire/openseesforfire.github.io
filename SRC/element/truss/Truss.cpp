@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6593 $
-// $Date: 2017-06-15 06:17:10 +0800 (Thu, 15 Jun 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/truss/Truss.cpp $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
                                                                         
 // Written: fmk 
@@ -672,7 +672,7 @@ Truss::addInertiaLoadToUnbalance(const Vector &accel)
 #ifdef _G3DEBUG    
   if (nodalDOF != Raccel1.Size() || nodalDOF != Raccel2.Size()) {
     opserr <<"Truss::addInertiaLoadToUnbalance " <<
-      "matrix and vector sizes are incompatable\n";
+      "matrix and vector sizes are incompatible\n";
     return -1;
   }
 #endif
@@ -724,7 +724,7 @@ Truss::addInertiaLoadSensitivityToUnbalance(const Vector &accel, bool somethingR
 #ifdef _G3DEBUG    
     if (nodalDOF != Raccel1.Size() || nodalDOF != Raccel2.Size()) {
       opserr << "Truss::addInertiaLoadToUnbalance " <<
-	"matrix and vector sizes are incompatable\n";
+	"matrix and vector sizes are incompatible\n";
       return -1;
     }
 #endif
@@ -758,7 +758,7 @@ Truss::addInertiaLoadSensitivityToUnbalance(const Vector &accel, bool somethingR
 #ifdef _G3DEBUG    
     if (nodalDOF != Raccel1.Size() || nodalDOF != Raccel2.Size()) {
       opserr << "Truss::addInertiaLoadToUnbalance " <<
-	"matrix and vector sizes are incompatable\n";
+	"matrix and vector sizes are incompatible\n";
       return -1;
     }
 #endif
@@ -803,8 +803,11 @@ Truss::getResistingForce()
       (*theVector)(i) = -temp;
       (*theVector)(i+numDOF2) = temp;
     }
+
+  // subtract external load
+  (*theVector) -= *theLoad;
     
-    return *theVector;
+  return *theVector;
 }
 
 
@@ -812,9 +815,6 @@ const Vector &
 Truss::getResistingForceIncInertia()
 {	
   this->getResistingForce();
-  
-  // subtract external load
-  (*theVector) -= *theLoad;
   
   // now include the mass portion
   if (L != 0.0 && rho != 0.0) {
@@ -1098,11 +1098,11 @@ Truss::Print(OPS_Stream &s, int flag)
     
 	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
 		s << "\t\t\t{";
-		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"name\": " << this->getTag() << ", ";
 		s << "\"type\": \"Truss\", ";
-		s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+		s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
 		s << "\"A\": " << A << ", ";
-		s << "\"rho\": " << rho << ", ";
+		s << "\"massperlength\": " << rho << ", ";
 		s << "\"material\": \"" << theMaterial->getTag() << "\"}";
 	}
 }
@@ -1204,13 +1204,15 @@ int
 Truss::getResponse(int responseID, Information &eleInfo)
 {
     double strain;
+    static Vector fVec(1);
 
     switch (responseID) {
     case 1:
         return eleInfo.setVector(this->getResistingForce());
 
     case 2:
-        return eleInfo.setDouble(A * theMaterial->getStress());
+      fVec(0) = A*theMaterial->getStress();
+      return eleInfo.setVector(fVec);
 
     case 3:
         if (L == 0.0) {
@@ -1218,7 +1220,8 @@ Truss::getResponse(int responseID, Information &eleInfo)
         } else {
             strain = theMaterial->getStrain();
         }
-        return eleInfo.setDouble(L * strain);
+	fVec(0) = L*strain;
+        return eleInfo.setVector(fVec);
 
     default:
         return 0;

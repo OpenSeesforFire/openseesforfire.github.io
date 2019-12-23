@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/adapter/ActuatorCorot.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 09/07
@@ -326,7 +326,7 @@ void ActuatorCorot::setDomain(Domain *theDomain)
     const Vector &end1Crd = theNodes[0]->getCrds();
     const Vector &end2Crd = theNodes[1]->getCrds();	
     
-    // initalize the cosines
+    // initialize the cosines
     double cosX[3];
     cosX[0] = cosX[1] = cosX[2] = 0.0;
     for (int i=0; i<numDIM; i++)
@@ -802,7 +802,7 @@ int ActuatorCorot::displaySelf(Renderer &theViewer,
 
 void ActuatorCorot::Print(OPS_Stream &s, int flag)
 {
-    if (flag == 0)  {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
         // print everything
         s << "Element: " << this->getTag() << endln;
         s << "  type: ActuatorCorot, iNode: " << connectedExternalNodes(0)
@@ -813,8 +813,19 @@ void ActuatorCorot::Print(OPS_Stream &s, int flag)
         s << "  mass per unit length: " << rho << endln;
         // determine resisting forces in global system
         s << "  resisting force: " << this->getResistingForce() << endln;
-    } else if (flag == 1)  {
-        // does nothing
+    }
+
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"ActuatorCorot\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"EA\": " << EA << ", ";
+        s << "\"L\": " << L << ", ";
+        s << "\"Ln\": " << Ln << ", ";
+        s << "\"ipPort\": " << ipPort << ", ";
+        s << "\"addRayleigh\": " << addRayleigh << ", ";
+        s << "\"massperlength\": " << rho << "}";
     }
 }
 

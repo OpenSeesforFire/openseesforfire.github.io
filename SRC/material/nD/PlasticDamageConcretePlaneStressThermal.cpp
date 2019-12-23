@@ -121,8 +121,8 @@ PlasticDamageConcretePlaneStressThermal::PlasticDamageConcretePlaneStressThermal
 	sigeP.Zero();
 	Ce.Zero();
 
-	fc = _fc / 1.503296;  //for maximum stress
-	fc0 = _fc / 1.503296;  //for maximum stress
+	fc = _fc / 1.562491022;  //for maximum stress
+	fc0 = _fc / 1.562491022;  //for maximum stress
 
 	//  some useful constants
 	//  shear modulus
@@ -246,6 +246,12 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(Vector const&v1, Vector 
 int
 PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 {
+	//double tempT= 580;
+	//double ET;
+	//double Elong;
+	//this->setThermalTangentAndElongation(tempT, ET, Elong);
+
+
 	double tol = 1.0e-6;
 	double xi = 0;
 	double f2c = 1.16 * fc;
@@ -274,7 +280,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 
 	//f2c = 1.16*fc;
 	double alpha = (1.16 - 1) / (2 * 1.16 - 1);
-	double alphap = 0.2;
+	double alphap = 0.01;
 
 
 	double dtotal; // overall consideration of tensile and compressive damage
@@ -803,7 +809,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 
 
 	tempSigPr.Zero();
-
+	//dt = 0; dc = 0;
 
 	 if (sigPr(0) > 0 && sigPr(1) > 0)
 		 sigPr = (1 - dt)*sigPr;
@@ -842,10 +848,12 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 
 	///////////////////////////////////////////////output for debug//////////////////////////////
 	//#ifdef _DEBUG
-	if (this->getTag() == 8512) {
-		opserr << sig(0) << " " << sig(1) << " " << sig(2) << endln;
-	}
-  if (this->getTag() == 8512|| this->getTag() == 112|| this->getTag() == 8513||this->getTag() == 8112) {
+	//if (this->getTag() == 8512) {
+		//opserr << sig(0) << " " << sig(1) << " " << sig(2) << endln;
+	//}
+
+#ifdef _DEBUG
+  if (this->getTag() == 179|| this->getTag() == 4667|| this->getTag() == 4403) {
 	  
 	std::string recorder = "material/Concrete";
 	std::string recorderSuffix = ".out";
@@ -877,7 +885,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 	
   }
   ///////////////////////////////////////////////output for debug////////////////////////////// 
-  //#endif
+ #endif
   
    if (sig(0) != sig(0))
 	   opserr << "invalid sig" <<sig(0)<< endln;
@@ -890,8 +898,8 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 		opserr << "invalid sig" << sig(0) << endln;
 
 	// TempAndElong(0) = kc;
-	//TempAndElong(0) = dt;
-	//TempAndElong(1) = dc;
+	TempAndElong(0) = dt;
+	TempAndElong(1) = dc;
 
 
 	//-================================
@@ -994,7 +1002,7 @@ PlasticDamageConcretePlaneStressThermal::getCopy(const char *type)
 		//for debugging
 		matTag++;
 		PlasticDamageConcretePlaneStressThermal *theCopy =
-			new PlasticDamageConcretePlaneStressThermal(matTag, E0, nu, ft0, fc0*1.503296,gt,gc, At, Ac, Dbart, Dbarc);
+			new PlasticDamageConcretePlaneStressThermal(matTag, E0, nu, ft0, fc0*1.562491022,gt,gc, At, Ac, Dbart, Dbarc);
 		return theCopy;
 	}
 	else {
@@ -1006,7 +1014,7 @@ NDMaterial*
 PlasticDamageConcretePlaneStressThermal::getCopy(void)
 {
 	PlasticDamageConcretePlaneStressThermal *theCopy =
-		new PlasticDamageConcretePlaneStressThermal(this->getTag(), E0, nu, ft0, fc0*1.503296, gt,gc,At, Ac, Dbart, Dbarc);
+		new PlasticDamageConcretePlaneStressThermal(this->getTag(), E0, nu, ft0, fc0*1.562491022, gt,gc,At, Ac, Dbart, Dbarc);
 	return theCopy;
 }
 
@@ -1075,6 +1083,7 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 
 	Temp = tempT;
 	double epsc0 = -0.0025;
+	double epscu = -0.02;
 	if (Temp <= 80) {
 		ft = ft0;
 	}
@@ -1091,7 +1100,7 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 		//ft = 0;
 		//Ets = 0;
 	}
-
+	
 	// compression strength, at elevated temperature
 	//   strain at compression strength, at elevated temperature
 	//   ultimate (crushing) strain, at elevated temperature
@@ -1099,78 +1108,115 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 		fc = fc0;
 		epsc0 = -0.0025;
 		//fcu = fcuT;
-		//epscu = -0.02;
+		epscu = -0.02;
 		//Ets = EtsT;  jz what is there the statement?
 	}
 	else if (Temp <= 80) {
 		fc = fc0;
 		epsc0 = -(0.0025 + (0.004 - 0.0025)*(Temp - 0) / (80 - 0));
+		epscu = -(0.02 + (0.025 - 0.02)*(Temp - 0) / (80 - 0));
 	}
 	else if (Temp <= 180) {
 		fc = fc0*(1 - (Temp - 80)*0.05 / 100);
 		epsc0 = -(0.0040 + (0.0055 - 0.0040)*(Temp - 80) / 100);
+		epscu = -(0.0225 + (0.025 - 0.0225)*(Temp - 80) / 100);
 	}
 	else if (Temp <= 280) {
 		fc = fc0*(0.95 - (Temp - 180)*0.1 / 100);
 		epsc0 = -(0.0055 + (0.0070 - 0.0055)*(Temp - 180) / 100);
+		epscu = -(0.025 + (0.0275 - 0.025)*(Temp - 180) / 100);
 
 	}
 	else if (Temp <= 380) {
 		fc = fc0*(0.85 - (Temp - 280)*0.1 / 100);
 		epsc0 = -(0.0070 + (0.0100 - 0.0070)*(Temp - 280) / 100);
+		epscu = -(0.0275 + (0.03 - 0.0275)*(Temp - 280) / 100);
 	}
 	else if (Temp <= 480) {
 		fc = fc0*(0.75 - (Temp - 380)*0.15 / 100);
 		epsc0 = -(0.0100 + (0.0150 - 0.0100)*(Temp - 380) / 100);
-
+		epscu = -(0.03 + (0.0325 - 0.03)*(Temp - 380) / 100);
 	}
 	else if (Temp <= 580) {
 		fc = fc0*(0.60 - (Temp - 480)*0.15 / 100);
 		epsc0 = -(0.0150 + (0.0250 - 0.0150)*(Temp - 480) / 100);
+		epscu = -(0.0325 + (0.035 - 0.0325)*(Temp - 480) / 100);
+
 	}
 	else if (Temp <= 680) {
 		fc = fc0*(0.45 - (Temp - 580)*0.15 / 100);
 		epsc0 = -0.0250;
+		epscu = -(0.035 + (0.0375 - 0.035)*(Temp - 580) / 100);
 	}
 	else if (Temp <= 780) {
 		fc = fc0*(0.30 - (Temp - 680)*0.15 / 100);
 		epsc0 = -0.0250;
+		epscu = -(0.0375 + (0.04 - 0.0375)*(Temp - 680) / 100);
 
 	}
 	else if (Temp <= 880) {
 		fc = fc0*(0.15 - (Temp - 780)*0.07 / 100);
 		epsc0 = -0.0250;
+		epscu = -(0.04 + (0.0425 - 0.04)*(Temp - 780) / 100);
 	}
 	else if (Temp <= 980) {
 		fc = fc0*(0.08 - (Temp - 880)*0.04 / 100);
 		epsc0 = -0.0250;
+		epscu = -(0.0425 + (0.045 - 0.0425)*(Temp - 880) / 100);
 	}
 	else if (Temp <= 1080) {
 		fc = fc0*(0.04 - (Temp - 980)*0.03 / 100);
 		epsc0 = -0.0250;
+		epscu = -(0.045 + (0.0475 - 0.045)*(Temp - 980) / 100);
 	}
 	else {
 		opserr << "the temperature is invalid\n";
 
 	}
-
+	
 	double ThermalElongation = 0;
-	if (Temp <= 1) {
-		ThermalElongation = Temp  * 9.213e-6;
+	int matType =1;
+	if (matType == 1) {
+		if (Temp <= 1) {
+			ThermalElongation = Temp  * 9.213e-6;
+		}
+		else if (Temp <= 680) {
+			ThermalElongation = -1.8e-4 + 9e-6 *(Temp + 20) + 2.3e-11 *(Temp + 20)*(Temp + 20)*(Temp + 20);
+		}
+		else if (Temp <= 1180) {
+			ThermalElongation = 14e-3;
+		}
+		else {
+			opserr << "the temperature is invalid\n";
+		}
 	}
-	else if (Temp <= 680) {
-		ThermalElongation = -1.8e-4 + 9e-6 *(Temp + 20) + 2.3e-11 *(Temp + 20)*(Temp + 20)*(Temp + 20);
+	else if(matType ==2){
+		if (Temp <= 1) {
+			ThermalElongation = Temp  * 6e-6;
+		}
+		else if (Temp <= 680) {
+			ThermalElongation = -1.2e-4 + 6e-6 *(Temp + 20) + 1.4e-11 *(Temp + 20)*(Temp + 20)*(Temp + 20);
+		}
+		else if (Temp <= 1180) {
+			ThermalElongation = 12e-3;
+		}
+		else {
+			opserr << "the temperature is invalid\n";
+		}
+	
 	}
-	else if (Temp <= 1180) {
-		ThermalElongation = 14e-3;
-	}
-	else {
-		opserr << "the temperature is invalid\n";
-	}
+	
 	//ThermalElongation = Temp*1.0e-5;
-	E = -fc*0.0025 / epsc0 / fc0*E0;
-	//ThermalElongation = 0;
+	double stif = -fc*0.0025 / epsc0 / fc0;
+
+	E = (1-1.0*(1-stif))*E0;
+//if (E < 0)
+	//	E = 1e-4*E0;
+
+		//E = -fc*0.0025 / epsc0 / fc0*E0;
+	//Elong = (1 - dt)* ThermalElongation;
 	//Es = -fc*0.0025/epsc0/fc0*Es0;
+	//ThermalElongation = 0;
 	Elong = ThermalElongation;
 	// this->setTempInitials();
 	// E = E0;
@@ -1178,9 +1224,11 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 	//fc = fc0;
 	//ft = ft0;
 	gt = gt0*ft / ft0*E0 / E;
-	gc = gc0*fc / fc0*E0 / E;
+	gc = gc0*fc*epscu / fc0/(-0.02);
+	
 	TempAndElong(0) = Temp;
 	TempAndElong(1) = ThermalElongation;
+	//TempAndElong(1) = E;
 	ET = E;
 	Tchange = 1;
 

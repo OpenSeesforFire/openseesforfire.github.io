@@ -56,8 +56,8 @@ OPS_J2PlaneStressThermal(void)
 
 	int numArgs = OPS_GetNumRemainingInputArgs();
 
-	if (numArgs < 5 || numArgs > 11) {
-		opserr << "Want: nDMaterial J2PlaneStressThermal $tag $E $nu $ft $fc <$beta $Ap $An $Bn>\n";
+	if (numArgs < 5) {
+		opserr << "Want: nDMaterial J2PlaneStressThermal $tag $E $nu $fy $fyinf \n";
 		return 0;
 	}
 
@@ -65,7 +65,7 @@ OPS_J2PlaneStressThermal(void)
 	double dData[10];
 	dData[4] = 0;
 	dData[5] = 0;
-	dData[6] = 0.0;
+	
 
 
 	int numData = 1;
@@ -135,6 +135,10 @@ J2PlaneStressThermal::J2PlaneStressThermal(int tag,
 	Tchange = 0;
 	Temp = 0;
 	TempT = 0;
+	fyt = fy_0;
+
+	kxi = 0;
+	kxi_Commit = 0;
 
 	this->commitState();
 }
@@ -219,6 +223,7 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 {
 	double tol = 1.0e-6;
 	double xi = 0;
+	
 
 	double Fres = 0;
 
@@ -270,7 +275,7 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 	//int findex =0;  //index of yielding criteria: 0: elastic; 1: Prinicipal sigma; 2: Drucker Prager
 
 	this->StrsPr(sige_tr, Peig, SigtrPr);
-
+	//opserr <<  "  sigmaPr1:" << SigtrPr << endln;
 
 	//determine beta (considering updated strength)
 
@@ -279,7 +284,7 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 
 	sigmaVM = sqrt(SigtrPr(0)*SigtrPr(0) + SigtrPr(1)*SigtrPr(1) - SigtrPr(0)*SigtrPr(1));
 
-	fyield = sigmaVM - fy;
+	fyield = sigmaVM - fyt;
 
 
 	if (fyield > tol) {
@@ -354,7 +359,7 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 		//iteration to determine lamda
 		//-----------------------------------------------------------------------
 		//variables
-		double newbeta;
+		
 		for (int i = 0; i < 40; i++) {
 
 			//residual of X = xi*(s+2*G*lamda)-s;
@@ -433,6 +438,13 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 		}
 		//end of determining lamda, principal stresses;
 
+		kxi = kxi_Commit + lamda * sqrt(2.0/3.0);
+		if (kxi > 1)
+			kxi = 1.0;
+
+
+
+		fyt = fy_inf+ (fy - fy_inf)*exp(-d*kxi)+ H*kxi;
 
 		//now determine damage variables
 		//-----------------------------------------------------------------------
@@ -466,7 +478,7 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 
 
 		Deps_p(0) = Depspn1(0, 0); Deps_p(1) = Depspn1(1, 1); Deps_p(2) = Depspn1(0, 1);
-
+		
 #ifdef _SDEBUG
 		if (this->getTag() == 62) {
 			opserr << "lamda" << lamda << "  sigmaPr1:" << sigPr << endln;
@@ -540,8 +552,8 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 		opserr << "  Sig: " << sig << " DeltaPeps " << delta_epsPr << endln;
 	}
 #endif
-
-	
+	//TempAndElong(0) = fy;
+	//TempAndElong(1) = fyt;
 	///////////////////////////////////////////////output for debug////////////////////////////// 
 	//#endif
 
@@ -550,13 +562,11 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 
 /*
 //hardening function
-	double J2PlaneStressThermal::q(double xi)
+	double J2PlaneStressThermal::q(double kxi)
 	{
 		//  q(xi) = simga_infty + (sigma_0 - sigma_infty)*exp(-delta*xi) + H*xi 
 
-		return    sigma_infty
-			+ (sigma_0 - sigma_infty)*exp(-delta*xi)
-			+ Hard*xi;
+		return    
 	}
 
 
@@ -617,6 +627,7 @@ J2PlaneStressThermal::commitState(void)
 	sigeCommit = sige;
 	eps_pCommit = eps_p;
 	sigePCommit = sige;
+	kxi_Commit = kxi;
 	if (Cchange >0)
 		Cchange = 0;
 	return 0;
@@ -627,7 +638,7 @@ J2PlaneStressThermal::revertToLastCommit(void)
 {
 	C = Ccommit;
 	E = ECommit;
-
+	kxi = kxi_Commit;
 	eps = epsCommit;
 	sig = sigCommit;
 	sige = sigeCommit;
@@ -656,7 +667,7 @@ J2PlaneStressThermal::getCopy(const char *type)
 		//for debugging
 		matTag++;
 		J2PlaneStressThermal *theCopy =
-			new J2PlaneStressThermal(matTag, E0, nu, fy, fy,d,H);
+			new J2PlaneStressThermal(matTag, E0, nu, fy0, fy0_inf,d,H);
 		return theCopy;
 	}
 	else {
@@ -668,7 +679,7 @@ NDMaterial*
 J2PlaneStressThermal::getCopy(void)
 {
 	J2PlaneStressThermal *theCopy =
-		new J2PlaneStressThermal(this->getTag(), E0, nu, fy0, fy0,d,H);
+		new J2PlaneStressThermal(this->getTag(), E0, nu, fy0, fy0_inf,d,H);
 	return theCopy;
 }
 
@@ -734,117 +745,120 @@ J2PlaneStressThermal::getTempAndElong(void)
 double
 J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, double&Elong)
 {
-
-	double TempT = tempT + 20;
+	int typeTag = 21;
+	double TempT = tempT;
 	double E00; //Initial tangent 
-	ET = 2E11;
-	E00 = 2E11;
+	ET = E0;
+	
+	
+	// EN 1992&1993
+	//typeTag:3   EC3 Structural Steel
+	//typeTag:21  EC2 Reinforcing Steel EC2 NHotRolled
+	//typeTag:22  EC2 Reinforcing Steel EC2 NCold formed
+	//typeTag:23  EC2 Reinforcing Steel EC2 X
 
-	// EN 1992 pt 1-2-1. Class N hot rolled  reinforcing steel at elevated temperatures
-
-	if (TempT <= 100) {
-
-	}
-	else if (TempT <= 200) {
-
-		E = E0*(1 - (TempT - 100)*0.1 / 100);
-		
-		fy = fy0;
-
-		H = 0.01*E / 2.8;
-
-	}
-	else if (TempT <= 300) {
-
-		E = E0*(0.9 - (TempT - 200)*0.1 / 100);
-
-		fy = fy0;
-		
-		H = 0.01*E / 2.8;
+	double FyRfactors[12];
+	double FpRfactors[12];
+	double E0Rfactors[12];
+	
+	if (typeTag == 0 || typeTag == 3) {
+		double FyRfEC3[12] = { 1.0, 1.0 ,1.0, 1.0 ,0.78, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
+		double FpRfEC3[12] = { 1.0, 0.807 ,0.613, 0.420 ,0.36, 0.18, 0.075, 0.050, 0.0375, 0.025 ,0.0125, 0.0 };
+		double E0RfEC3[12] = { 1.0, 0.9, 0.8 ,0.7, 0.6 ,0.31, 0.13, 0.09, 0.0675, 0.045, 0.0225 , 0.0 };
+		for (int i = 0; i<12; i++) {
+			FyRfactors[i] = FyRfEC3[i];
+			FpRfactors[i] = FpRfEC3[i];
+			E0Rfactors[i] = E0RfEC3[i];
+		}
 
 	}
-	else if (TempT <= 400) {
-		E = E0*(0.8 - (TempT - 300)*0.1 / 100);
-		
-		fy = fy0;
+	else if (typeTag == 21) {
+		double FyRfEC21[12] = { 1.0, 1.0 ,1.0, 1.0 ,0.78, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
+		double FpRfEC21[12] = { 1.0, 0.81 ,0.61, 0.42 ,0.36, 0.18, 0.07, 0.05, 0.04, 0.02 ,0.01, 0.0 };
+		double E0RfEC21[12] = { 1.0, 0.9, 0.8 ,0.7, 0.6 ,0.31, 0.13, 0.09, 0.07, 0.04, 0.02 , 0.0 };
+		for (int i = 0; i<12; i++) {
+			FyRfactors[i] = FyRfEC21[i];
+			FpRfactors[i] = FpRfEC21[i];
+			E0Rfactors[i] = E0RfEC21[i];
+		}
 
-		H = 0.01*E / 2.8;
 	}
-	else if (TempT <= 500) {
-		E = E0*(0.7 - (TempT - 400)*0.1 / 100);
-
-
-		fy = fy0*(1 - (TempT - 400)*0.22 / 100);
-
-		H = 0.01*E / 2.8;
+	else if (typeTag == 22) {
+		double FyRfEC22[12] = { 1.0, 1.0 ,1.0, 0.94 ,0.67, 0.40, 0.12, 0.11, 0.08, 0.05 ,0.03, 0.0 };
+		double FpRfEC22[12] = { 0.96 ,0.92, 0.81 ,0.63, 0.44, 0.26, 0.08, 0.06, 0.05 ,0.03, 0.02, 0.0 };
+		double E0RfEC22[12] = { 1.0, 0.87, 0.72 ,0.56, 0.40 ,0.24, 0.08, 0.06, 0.05, 0.03, 0.02 , 0.0 };
+		for (int i = 0; i<12; i++) {
+			FyRfactors[i] = FyRfEC22[i];
+			FpRfactors[i] = FpRfEC22[i];
+			E0Rfactors[i] = E0RfEC22[i];
+		}
 	}
-	else if (TempT <= 600) {
-		E = E0*(0.6 - (TempT - 500)*0.29 / 100);
-
-		fy = fy0*(0.78 - (TempT - 500)*0.31 / 100);
-
-		H = 0.01*E / 2.8;
+	else if (typeTag == 23) {
+		double FyRfEC23[12] = { 1.0, 1.0 ,1.0, 0.90 ,0.70, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
+		double FpRfEC23[12] = { 1.00 ,0.87, 0.74 ,0.70, 0.51, 0.18, 0.07, 0.05, 0.04 ,0.02, 0.01, 0.0 };
+		double E0RfEC23[12] = { 1.0, 0.95, 0.90 ,0.75, 0.60 ,0.31, 0.13, 0.09, 0.07, 0.04, 0.02 , 0.0 };
+		for (int i = 0; i<12; i++) {
+			FyRfactors[i] = FyRfEC23[i];
+			FpRfactors[i] = FpRfEC23[i];
+			E0Rfactors[i] = E0RfEC23[i];
+		}
 	}
-	else if (TempT <= 700) {
-		E = E0*(0.31 - (TempT - 600)*0.18 / 100);
+	else
+		opserr << "WARNING SteelECThermal received an invalid typeTag: " << typeTag << endln;
 
-
-		fy = fy0*(0.47 - (TempT - 600)*0.24 / 100);
-
-		H = 0.01*E / 2.8;
+	//Now Updating modulus, strengths
+	for (int i = 0; i<13; i++) {
+		if (TempT <= 80 + 100 * i)
+		{
+			if (i == 0) {
+				fy = fy0*(1.0 - TempT*(1.0 - FyRfactors[0]) / 80);
+				E = E0*(1.0 - TempT*(1.0 - E0Rfactors[0]) / 80);
+			}
+			else if (i == 12) {
+				opserr << "Warning:The temperature " << TempT << " for SteelECthermal is out of range\n";
+				return -1;
+			}
+			else {
+				fy = fy0*(FyRfactors[i - 1] - (TempT + 20 - 100 * i)*(FyRfactors[i - 1] - FyRfactors[i]) / 100);
+				E = E0*(E0Rfactors[i - 1] - (TempT + 20 - 100 * i)*(E0Rfactors[i - 1] - E0Rfactors[i]) / 100);
+			}
+			break;
+		}
 	}
-	else if (TempT <= 800) {
-		E = E0*(0.13 - (TempT - 700)*0.04 / 100);
-
-
-		fy = fy0*(0.23 - (TempT - 700)*0.12 / 100);
-
-		H = 0.01*E / 2.8;
-	}
-	else if (TempT <= 900) {
-		E = E0*(0.09 - (TempT - 800)*0.02 / 100);
-
-
-		fy = fy0*(0.11 - (TempT - 800)*0.05 / 100);
-
-		H = 0.01*E / 2.8;
-	}
-	else if (TempT <= 1000) {
-		E = E0*(0.0675 - (TempT - 900)*(0.00675 - 0.0045) / 100);
-
-
-		fy = fy0*(0.06 - (TempT - 900)*0.02 / 100);
-
-		H = 0.01*E / 2.8;
-	}
-
-	else {
-		opserr << "the temperature is invalid\n";
-	}
+#ifdef _BDEBUG
+	//opserr<<", TempT:"<<TempT<< " fy: "<< fy<< " fp: "<< fp <<" E0T:  "<< E0<<endln;
+#endif
+	//E = E0;
+	// caculation of thermal elongation
 	double ThermalElongation = 0;
-	// Calculate thermal elongation 
-	if (TempT <= 20) {
-		ThermalElongation = 0.0;
+	if (TempT <= 1) {
+		ThermalElongation = TempT * 1.2164e-5;
 	}
-	else if (TempT <= 750) {
-		ThermalElongation = -2.416e-4 + 1.2e-5 *TempT + 0.4e-8 *TempT*TempT;
-
+	else if (TempT <= 730) {
+		ThermalElongation = -2.416e-4 + 1.2e-5 *(TempT + 20) + 0.4e-8 *(TempT + 20)*(TempT + 20);
 	}
-	else if (TempT <= 860) {
+	else if (TempT <= 840) {
 		ThermalElongation = 11e-3;
-
 	}
-	else if (TempT <= 1200) {
-		ThermalElongation = -6.2e-3 + 2e-5*TempT;
-
+	else if (TempT <= 1180) {
+		ThermalElongation = -6.2e-3 + 2e-5*(TempT + 20);
 	}
 	else {
-		opserr << "the temperature is invalid\n";
+		opserr << " SteelEC Temperature " << TempT << " is invalid\n";
+		return -1;
 	}
 
-	//ThermalElongation = 0;
-	TempAndElong(0) = Temp;
-	TempAndElong(1) = ThermalElongation;
+	
+	fy_inf = fy / fy0*fy0_inf;
+	//H = 0;
+	fyt = fy_inf + (fy - fy_inf)*exp(-d*kxi_Commit) + H*kxi_Commit;
+	
+	
+
+	//ThermalElongation = ThermalElongation;
+	//(TempT -20)*1.0e-5;
+	TempAndElong(0) = tempT;
+	//TempAndElong(1) = fy;
 	//bulk = bulk_0;
 	//shear = shear_0;
 	//sigma_y = sigma_0;
@@ -852,8 +866,11 @@ J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, d
 	//ET = 2E11;
 	//ET = E;  
 	//ET = 3.84e10;
+	//ThermalElongation = 0;
 	Elong = ThermalElongation;
 	//this->plastic_integrator();
+   // TempAndElong(0) = Temp;
+	TempAndElong(1) = C(0,0);
 	Tchange++;
 	return 0;
 }

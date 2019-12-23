@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6049 $
-// $Date: 2015-07-17 12:56:36 +0800 (Fri, 17 Jul 2015) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elasticBeamColumn/ElasticBeam2d.h $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
                                                                         
 // Written: fmk 11/95

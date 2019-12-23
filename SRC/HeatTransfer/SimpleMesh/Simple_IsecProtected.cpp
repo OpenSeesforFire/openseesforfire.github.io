@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <Matrix.h>
 #include <Vector.h>
+#include <math.h>'
+#include <QuadFour.h>
 
 
 Simple_IsecProtected::Simple_IsecProtected(int tag, double HTI_centerX, double HTI_centerY, double HTI_Bf, double HTI_Tf, double HTI_Tw, double HTI_Hw, double HTI_coat)
@@ -258,4 +260,260 @@ int Simple_IsecProtected::GetNumofEles(void)
 }
 
 
+int Simple_IsecProtected::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const Vector& OriginLocs)
+{
+	double OriginLoc1 = 0;
+	double OriginLoc2 = 0;
+	if (OriginLocs.Size() == 1) {
+		OriginLoc1 = OriginLocs(0);
+	}
+	else if (OriginLocs.Size() == 2) {
+		OriginLoc1 = OriginLocs(0);
+		OriginLoc2 = OriginLocs(1);
+	}
 
+	int OriginNodeTag = theHTDomain->getNumNodes() + 1;
+
+	int NumCtrX = this->GetNumCtrlID()(0);
+	int NumCtrY = this->GetNumCtrlID()(1);
+	int NumCtrX_Web = this->GetNumCtrlID()(2);
+	int NumCtrY_Web = this->GetNumCtrlID()(3);
+	int NumCtr_Coat = this->GetNumCtrlID()(4);
+
+	int NumX = NumCtrX;
+	int NumY = NumCtrY + NumCtr_Coat * 2;
+	int NumXweb = NumCtrX_Web + NumCtr_Coat * 2;
+	int NumYweb = NumCtrY_Web - NumCtr_Coat * 2;
+
+	double NodeCrdX, NodeCrdY;
+	Vector Seeds1 = this->GetSeeds(1);
+	Vector Seeds2 = this->GetSeeds(2);
+	//Generating Nodes for Lower great Flange
+	for (int i = 0; i <= NumY; i++) {
+		for (int j = 0; j <= NumX; j++) {
+			int NodeTag = (NumX + 1) * i + j;
+			NodeCrdX = Seeds1(j);
+			if (fabs(NodeCrdX) < 1e-10)
+				NodeCrdX = 0;
+
+			NodeCrdY = Seeds2(i);
+			if (fabs(NodeCrdY) < 1e-10)
+				NodeCrdY = 0;
+
+			HeatTransferNode* TempNode = 0;
+			if (OriginLocs.Size() == 1) {
+				TempNode = new HeatTransferNode(OriginNodeTag + NodeTag, nDoF, NodeCrdX, NodeCrdY, OriginLoc1);
+			}
+			else {
+				TempNode = new HeatTransferNode(OriginNodeTag + NodeTag, nDoF, NodeCrdX, NodeCrdY);
+			}
+
+			if (theHTDomain->addNode(TempNode) < 0) {
+				opserr << "HTDomain failed to generate node with coordinates: " << NodeCrdX << ", " << NodeCrdY << endln;
+				return -1;
+			}
+
+
+		}
+	}
+
+	//Generating Nodes for Web
+	for (int i = 0; i < NumYweb - 1; i++) {
+		for (int j = 0; j <= NumXweb; j++) {
+
+			int NodeTag = (NumXweb + 1) * i + j + (NumX + 1) * (NumY + 1);
+			NodeCrdX = Seeds1(j + (NumX - NumXweb) / 2);
+			if (fabs(NodeCrdX) < 1e-10)
+				NodeCrdX = 0;
+
+			NodeCrdY = Seeds2(i + NumY + 1);
+			if (fabs(NodeCrdY) < 1e-10)
+				NodeCrdY = 0;
+
+			HeatTransferNode* TempNode = 0;
+			if (OriginLocs.Size() == 1) {
+				TempNode = new HeatTransferNode(OriginNodeTag + NodeTag, nDoF, NodeCrdX, NodeCrdY, OriginLoc1);
+			}
+			else {
+				TempNode = new HeatTransferNode(OriginNodeTag + NodeTag, nDoF, NodeCrdX, NodeCrdY);
+			}
+
+			if (theHTDomain->addNode(TempNode) < 0) {
+				opserr << "HTDomain failed to generate node with coordinates: " << NodeCrdX << ", " << NodeCrdY << endln;
+				return -1;
+			}
+
+		}
+	}
+
+	//Generating Nodes for UpperFlange
+	for (int i = 0; i <= NumY; i++) {
+		for (int j = 0; j <= NumX; j++) {
+			int NodeTag = (NumX + 1) * i + j + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (NumYweb - 1);
+			NodeCrdX = Seeds1(j);
+			if (fabs(NodeCrdX) < 1e-10)
+				NodeCrdX = 0;
+
+			NodeCrdY = Seeds2(i + NumY + NumYweb);
+			if (fabs(NodeCrdY) < 1e-10)
+				NodeCrdY = 0;
+
+			HeatTransferNode* TempNode = 0;
+			if (OriginLocs.Size() == 1) {
+				TempNode = new HeatTransferNode(OriginNodeTag + NodeTag, nDoF, NodeCrdX, NodeCrdY, OriginLoc1);
+			}
+			else {
+				TempNode = new HeatTransferNode(OriginNodeTag + NodeTag, nDoF, NodeCrdX, NodeCrdY);
+			}
+			if (theHTDomain->addNode(TempNode) < 0) {
+				opserr << "HTDomain failed to generate node with coordinates: " << NodeCrdX << ", " << NodeCrdY << endln;
+				return -1;
+			}
+		}
+	}
+
+	return 0;
+
+}
+
+
+
+int Simple_IsecProtected::GenerateEles(HeatTransferDomain* theHTDomain, const ID& EleParameters, HeatTransferMaterial* theHTMaterial, HeatTransferMaterial* theHTMaterial1)
+{
+	bool PhaseTransformation = false;
+	bool PhaseTransformation1 = false;
+
+	if (EleParameters != 0) {
+		if (EleParameters(0) == 1) {
+			PhaseTransformation = true;
+		}
+		else {
+			if (theHTMaterial1 != 0 && EleParameters.Size() > 1) {
+				if (EleParameters(1) == 1)
+					PhaseTransformation1 = true;
+			}
+		}
+	}
+
+	int OriginNodeTag = theHTDomain->getNumNodes() - (this->GetNumofNodes()) + 1;
+	int OriginEleTag = theHTDomain->getNumElements() + 1;
+	HeatTransferElement* TempEle = 0;
+
+	int NumCtrX = this->GetNumCtrlID()(0);
+	int NumCtrY = this->GetNumCtrlID()(1);
+	int NumCtrX_Web = this->GetNumCtrlID()(2);
+	int NumCtrY_Web = this->GetNumCtrlID()(3);
+	int NumCtr_Coat = this->GetNumCtrlID()(4);
+
+	int NumX = NumCtrX;
+	int NumY = NumCtrY + NumCtr_Coat * 2;
+	int NumXweb = NumCtrX_Web + NumCtr_Coat * 2;
+	int NumYweb = NumCtrY_Web - NumCtr_Coat * 2;
+
+	//Generating Elements for LowerFlange
+	int EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4;
+
+	for (int i = 0; i < NumY; i++) {
+		for (int j = 0; j < NumX; j++) {
+			EleTag = OriginEleTag + NumX * i + j;
+			NodeTag1 = OriginNodeTag + (NumX + 1) * i + j;
+			NodeTag2 = OriginNodeTag + (NumX + 1) * i + j + 1;
+			NodeTag3 = OriginNodeTag + (NumX + 1) * (i + 1) + j + 1;
+			NodeTag4 = OriginNodeTag + (NumX + 1) * (i + 1) + j;
+
+			
+
+			if (i >= NumCtr_Coat && i < NumY - NumCtr_Coat)
+				TempEle = new QuadFour(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial, PhaseTransformation);
+			else if ((i >= NumY - NumCtr_Coat) && ((j >= (NumCtrX - NumCtrX_Web) / 2) && (j < (NumCtrX + NumCtrX_Web) / 2)))
+				TempEle = new QuadFour(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial, PhaseTransformation);
+			else
+				TempEle = new QuadFour(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial1, PhaseTransformation);
+
+			if (theHTDomain->addElement(TempEle) < 0) {
+				opserr << "HeatTransferDomain failed to add element" << OriginEleTag + EleTag << endln;
+				return -1;
+			}
+
+		}
+	}
+
+	//Generating Elements for Web
+	int JunctionLTag = OriginNodeTag + (NumX + 1) * (NumY + 1) - (NumX + 1) + (NumX - NumXweb) / 2;
+	int JunctionUTag = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (NumYweb - 1) + (NumX - NumXweb) / 2;
+
+	for (int i = 0; i < NumYweb; i++) {
+		for (int j = 0; j < NumXweb; j++) {
+			EleTag = OriginEleTag + NumXweb * i + j + NumX * NumY;
+
+			if (i == 0)
+			{
+				NodeTag1 = JunctionLTag + j;
+				NodeTag2 = JunctionLTag + j + 1;
+				NodeTag3 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * i + j + 1;
+				NodeTag4 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * i + j;
+			}
+			else if (i == NumYweb - 1)
+			{
+				NodeTag1 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (i - 1) + j;
+				NodeTag2 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (i - 1) + j + 1;
+				NodeTag3 = JunctionUTag + j + 1;
+				NodeTag4 = JunctionUTag + j;
+
+			}
+			else
+			{
+				NodeTag1 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (i - 1) + j;
+				NodeTag2 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (i - 1) + j + 1;
+				NodeTag3 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * i + j + 1;
+				NodeTag4 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * i + j;
+
+			}
+
+
+			
+			if ((j >= NumCtr_Coat) && (j < NumXweb - NumCtr_Coat))
+				TempEle = new QuadFour(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial, PhaseTransformation);
+			else
+				TempEle = new QuadFour(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial1, PhaseTransformation);
+
+			if (theHTDomain->addElement(TempEle) < 0) {
+				opserr << "HeatTransferDomain failed to add element" << OriginEleTag + EleTag << endln;
+				return -1;
+			}
+
+
+		}
+	}
+
+	//Generating Elements for UpperFlange
+
+	for (int i = 0; i < NumY; i++) {
+		for (int j = 0; j < NumX; j++) {
+			EleTag = OriginEleTag + NumX * i + j + NumX * NumY + NumXweb * NumYweb;
+			NodeTag1 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (NumYweb - 1) + (NumX + 1) * i + j;
+			NodeTag2 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (NumYweb - 1) + (NumX + 1) * i + j + 1;
+			NodeTag3 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (NumYweb - 1) + (NumX + 1) * (i + 1) + j + 1;
+			NodeTag4 = OriginNodeTag + (NumX + 1) * (NumY + 1) + (NumXweb + 1) * (NumYweb - 1) + (NumX + 1) * (i + 1) + j;
+
+
+			
+
+			if ((i < NumCtr_Coat) && (j >= (NumCtrX - NumCtrX_Web) / 2) && (j < (NumCtrX + NumCtrX_Web) / 2))
+				TempEle = new QuadFour(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial, PhaseTransformation);
+			else if (i >= NumCtr_Coat && i < NumY - NumCtr_Coat)
+				TempEle = new QuadFour(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial, PhaseTransformation);
+			else
+				TempEle = new QuadFour(EleTag, NodeTag1, NodeTag2, NodeTag3, NodeTag4, *theHTMaterial1, PhaseTransformation);
+
+			if (theHTDomain->addElement(TempEle) < 0) {
+				opserr << "HeatTransferDomain failed to add element" << OriginEleTag + EleTag << endln;
+				return -1;
+			}
+
+		}
+	}
+	//end of for(int i=0;i<NumY; i++);
+
+	return 0;
+}

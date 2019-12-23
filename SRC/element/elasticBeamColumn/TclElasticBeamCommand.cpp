@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6461 $
-// $Date: 2016-09-22 10:17:43 +0800 (Thu, 22 Sep 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elasticBeamColumn/TclElasticBeamCommand.cpp $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
 // Written: fmk 
 // Created: 07/99
@@ -365,6 +365,6 @@ TclModelBuilder_addElasticBeam(ClientData clientData, Tcl_Interp *interp, int ar
     return TCL_ERROR;
   }
 
-  // if get here we have sucessfully created the node and added it to the domain
+  // if get here we have successfully created the node and added it to the domain
   return TCL_OK;
 }

@@ -112,7 +112,7 @@ double ShellNLDKGQ::wg[4] ;
 
 //null constructor
 ShellNLDKGQ::ShellNLDKGQ( ) :
-Element( 0, ELE_TAG_ShellNLDKGQ ),
+Element( 0, ELE_TAG_ShellNLDKGQ),
 connectedExternalNodes(4), CstrainGauss(32),TstrainGauss(32),load(0), Ki(0)  //modify for geometric nonlinearity
 { 
   for (int i = 0 ;  i < 4; i++ ) 
@@ -324,7 +324,7 @@ void  ShellNLDKGQ::Print( OPS_Stream &s, int flag )
         s << endln;
     }
     
-    else if (flag < -1) {
+    if (flag < -1) {
         
         int counter = (flag + 1) * -1;
         int eleTag = this->getTag();
@@ -356,10 +356,10 @@ void  ShellNLDKGQ::Print( OPS_Stream &s, int flag )
     
     if (flag == OPS_PRINT_PRINTMODEL_JSON) {
         s << "\t\t\t{";
-        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"name\": " << this->getTag() << ", ";
         s << "\"type\": \"ShellNLDKGQ\", ";
-        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\", ";
-        s << "\"" << connectedExternalNodes(2) << "\", \"" << connectedExternalNodes(3) << "\"], ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << ", ";
+        s << connectedExternalNodes(2) << ", " << connectedExternalNodes(3) << "], ";
         s << "\"section\": \"" << materialPointers[0]->getTag() << "\"}";
     }
 }
@@ -583,11 +583,11 @@ const Matrix&  ShellNLDKGQ::getInitialStiff( )
 	static Vector dstrain_li(nstress); //linear incr strain
 	static Vector dstrain_nl(3);//geometric nonlinear strain
 
-	static double shp[3][numnodes]; //shape fuction 2d at a gauss point
+	static double shp[3][numnodes]; //shape function 2d at a gauss point
 
 	static double shpDrill[4][numnodes]; //shape function drilling dof at a gauss point
 
-	static double shpBend[6][12]; //shape fuction - bending part at a gauss point
+	static double shpBend[6][12]; //shape function - bending part at a gauss point
 
 	//static Vector residJ(ndf); //nodeJ residual, global coordinates
 
@@ -1241,11 +1241,11 @@ ShellNLDKGQ::formResidAndTangent( int tang_flag )
 	static Vector dstrain_li(nstress); //linear incr strain
 	static Vector dstrain_nl(3);//geometric nonlinear strain
 
-	static double shp[3][numnodes]; //shape fuction 2d at a gauss point
+	static double shp[3][numnodes]; //shape function 2d at a gauss point
 
 	static double shpDrill[4][numnodes]; //shape function drilling dof at a gauss point
 
-	static double shpBend[6][12]; //shape fuction - bending part at a gauss point
+	static double shpBend[6][12]; //shape function - bending part at a gauss point
 
 	static Vector residJ(ndf); //nodeJ residual, global coordinates
 
@@ -1990,7 +1990,7 @@ ShellNLDKGQ::shape2d( double ss, double tt,
  // static double sx[2][2] ;  //have been defined before
 
   for ( i = 0; i < 4; i++ ) {
-      shp[2][i] = ( 0.5 + s[i]*ss )*( 0.5 + t[i]*tt ) ; //shape fuction for 2d isoparametric element
+      shp[2][i] = ( 0.5 + s[i]*ss )*( 0.5 + t[i]*tt ) ; //shape function for 2d isoparametric element
       shp[0][i] = s[i] * ( 0.5 + t[i]*tt ) ; // derivative to isoparametric coordinates 1
       shp[1][i] = t[i] * ( 0.5 + s[i]*ss ) ; // derivative to isoparametric coordinates 2
   } // end for i

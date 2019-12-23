@@ -150,6 +150,8 @@ int TclSIFBuilderCommand_addSkew_Angle(ClientData clientData, Tcl_Interp *interp
 int TclSIFBuilderCommand_addStorey(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 
 int TclSIFBuilderCommand_addSecBeam(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
+int TclSIFBuilderCommand_delMember(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
+
 int TclSIFBuilderCommand_addFireAction(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 int TclSIFBuilderCommand_applyAndanalyze(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 int TclSIFBuilderCommand_addFirePars(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
@@ -188,6 +190,9 @@ TclSIFBuilder::TclSIFBuilder(Domain &Domain, Tcl_Interp* interp, int displayinde
   Tcl_CreateCommand(interp, "AssignSection", (Tcl_CmdProc* )TclSIFBuilderCommand_assignSection,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "SIFXBay", (Tcl_CmdProc* )TclSIFBuilderCommand_addXBay,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "AddSecBeam", (Tcl_CmdProc* )TclSIFBuilderCommand_addSecBeam,(ClientData)NULL, NULL);
+  
+  Tcl_CreateCommand(interp, "DelMember", (Tcl_CmdProc*)TclSIFBuilderCommand_delMember, (ClientData)NULL, NULL);
+
   Tcl_CreateCommand(interp, "SIFZBay", (Tcl_CmdProc* )TclSIFBuilderCommand_addYBay,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "SIFStorey", (Tcl_CmdProc* )TclSIFBuilderCommand_addStorey,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "AddSkew_Angle", (Tcl_CmdProc* )TclSIFBuilderCommand_addSkew_Angle,(ClientData)NULL, NULL);
@@ -996,9 +1001,60 @@ TclSIFBuilderCommand_addSecBeam(ClientData clientData, Tcl_Interp *interp, int a
 	return TCL_OK;
 }
 
+//-----------------delete member----------------
+int
+TclSIFBuilderCommand_delMember(ClientData clientData, Tcl_Interp *interp, int argc,
+	TCL_Char **argv)
+{
+
+	if (theSIFDomain == 0) {
+		opserr << "WARNING no active SIFBuilder Domain - HTMaterial\n";
+		return TCL_ERROR;
+	}
+
+	if (SIFModelStatus == 0) {
+		if (TclSIFBuilderCommand_BuildSIFModel() == TCL_OK) {
+			SIFModelStatus++;
+		}
+		else
+			opserr << "WARNING::SIFModel has not been built before adding secondary beams" << endln;
+	}
+
+	int theCompTag;
+	int Membertype;
+	int numBeams;
+	int count = 1;
+	int SectionTag;
+
+	if (strcmp(argv[count], "column") == 0 || strcmp(argv[count], "column") == 0) {
+		Membertype = 1;
+		count++;
+	}
+	else if (strcmp(argv[count], "xbeam") == 0 || strcmp(argv[count], "XBeam") == 0) {
+		Membertype = 2;
+		count++;
+	}
+	else if (strcmp(argv[count], "zbeam") == 0 || strcmp(argv[count], "ZBeam") == 0) {
+		Membertype = 3;
+		count++;
+	}
+	else
+		opserr << "SIFBuilder::wrong member type tag" << argv[count] << endln;
+
+	//select members based on ranges of bays and storeys
+	if (strcmp(argv[count], "xbay") == 0 || strcmp(argv[count], "-xbay") == 0 || strcmp(argv[count], "-XBay") == 0) {
+		count++;
+		if (Tcl_GetInt(interp, argv[count], &theCompTag) != TCL_OK) {
+			opserr << "WARNING:: invalid compartment tag for Adding SIFSecBeams: " << argv[count] << "\n";
+			return TCL_ERROR;
+		}
+		count++;
+	}
+
+	return TCL_OK;
 
 
-
+}
 
 //-----------------Add SIFSection----------------
 int
@@ -1763,7 +1819,7 @@ TclSIFBuilderCommand_addMaterial(ClientData clientData, Tcl_Interp *interp, int 
 						// double Ets, double moisture)
 	   fc = (-1)*fc;
 	   double epsc0 =-0.0025; double fcu=0.2*fc; double epscu=-0.02; 
-	   double  rat=0.1; double ft=-0.1*fc; double Ets=ft/0.002;
+	   double  rat=0.1; double ft=-0.1*fc; double Ets=ft/0.004;
 	theSIFMaterial = new SIFMaterial(SIFMaterialTag,SIFMaterialTypeTag, fc, epsc0, fcu, epscu, rat, ft, Ets, moist);
 	}
 	//End of aading concrete material
@@ -2470,6 +2526,9 @@ TclSIFBuilderCommand_addFireAction(ClientData clientData, Tcl_Interp *interp, in
 		}
 		else if (strcmp(argv[count],"Parametric") == 0 ||strcmp(argv[count],"parametric") == 0) {
 			FireTypeTag=2;
+		}
+		else if (strcmp(argv[count], "Exponent") == 0 || strcmp(argv[count], "exp") == 0) {
+			FireTypeTag = 21;
 		}
 		else if (strcmp(argv[count],"EC1Localised") == 0 ||strcmp(argv[count],"EC1Local") == 0) {
 			FireTypeTag=3;

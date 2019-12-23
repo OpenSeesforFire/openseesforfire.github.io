@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6484 $
-// $Date: 2016-10-19 09:18:14 +0800 (Wed, 19 Oct 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elastomericBearing/TclElastomericBearingPlasticityCommand.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 02/06
@@ -510,6 +510,6 @@ int TclModelBuilder_addElastomericBearingPlasticity(ClientData clientData,
         return TCL_ERROR;
     }
     
-    // if get here we have sucessfully created the elastomericBearing and added it to the domain
+    // if get here we have successfully created the elastomericBearing and added it to the domain
     return TCL_OK;
 }

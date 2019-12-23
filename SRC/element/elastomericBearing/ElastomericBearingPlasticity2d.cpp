@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elastomericBearing/ElastomericBearingPlasticity2d.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 02/06
@@ -839,7 +839,7 @@ int ElastomericBearingPlasticity2d::displaySelf(Renderer &theViewer,
 
 void ElastomericBearingPlasticity2d::Print(OPS_Stream &s, int flag)
 {
-    if (flag == 0)  {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
         // print everything
         s << "Element: " << this->getTag() << endln; 
         s << "  type: ElastomericBearingPlasticity2d\n";
@@ -853,8 +853,24 @@ void ElastomericBearingPlasticity2d::Print(OPS_Stream &s, int flag)
             << addRayleigh << "  mass: " << mass << endln;
         // determine resisting forces in global system
         s << "  resisting force: " << this->getResistingForce() << endln;
-    } else if (flag == 1)  {
-        // does nothing
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"ElastomericBearingPlasticity2d\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"k0\": " << k0 << ", ";
+        s << "\"qYield\": " << qYield << ", ";
+        s << "\"k2\": " << k2 << ", ";
+        s << "\"k3\": " << k3 << ", ";
+        s << "\"mu\": " << mu << ", ";
+        s << "\"materials\": [\"";
+        s << theMaterials[0]->getTag() << "\", \"";
+        s << theMaterials[1]->getTag() << "\"], ";
+        s << "\"shearDistI\": " << shearDistI << ", ";
+        s << "\"addRayleigh\": " << addRayleigh << ", ";
+        s << "\"mass\": " << mass << "}";
     }
 }
 
@@ -1024,7 +1040,7 @@ void ElastomericBearingPlasticity2d::setUp()
         exit(-1);
     }
     
-    // establish orientation of element for the tranformation matrix
+    // establish orientation of element for the transformation matrix
     // z = x cross y
     static Vector z(3);
     z(0) = x(1)*y(2) - x(2)*y(1);

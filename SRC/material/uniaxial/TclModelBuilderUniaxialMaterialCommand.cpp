@@ -106,6 +106,7 @@ extern void *OPS_InitStressMaterial(void);
 extern void *OPS_pyUCLA(void);
 extern void *OPS_Maxwell(void);
 extern void *OPS_ViscousDamper(void);
+extern void *OPS_DamperMaterial(void);
 extern void *OPS_BilinearOilDamper(void);
 extern void *OPS_Cast(void);
 extern void *OPS_Dodd_Restrepo(void);
@@ -148,7 +149,8 @@ extern void *OPS_ConcreteCM(void); // K Kolozvari
 extern void *OPS_Bond_SP01(void); // K Kolozvari
 extern void *OPS_Steel4(void);
 extern void *OPS_PySimple3(void);
-
+extern void *OPS_BoucWenOriginal(void);
+extern void *OPS_GNGMaterial(void);
 
 //extern int TclCommand_ConfinedConcrete02(ClientData clientData, Tcl_Interp *interp, int argc, 
 //					 TCL_Char **argv, TclModelBuilder *theTclBuilder);
@@ -268,6 +270,13 @@ TclModelBuilderUniaxialMaterialCommand (ClientData clientData, Tcl_Interp *inter
       else 
 	return TCL_ERROR;
 
+    } else if (strcmp(argv[1],"GNG") == 0) {
+      void *theMat = OPS_GNGMaterial();
+      if (theMat != 0) 
+	theMaterial = (UniaxialMaterial *)theMat;
+      else 
+	return TCL_ERROR;
+
     } else if (strcmp(argv[1],"PySimle3") == 0) {
       void *theMat = OPS_PySimple3();
       if (theMat != 0) 
@@ -341,6 +350,13 @@ TclModelBuilderUniaxialMaterialCommand (ClientData clientData, Tcl_Interp *inter
 
     } else if ((strcmp(argv[1],"ViscousDamper") == 0)) {
       void *theMat = OPS_ViscousDamper();
+      if (theMat != 0) 
+	theMaterial = (UniaxialMaterial *)theMat;
+      else 
+	return TCL_ERROR;
+
+    } else if ((strcmp(argv[1],"DamperMaterial") == 0)) {
+      void *theMat = OPS_DamperMaterial();
       if (theMat != 0) 
 	theMaterial = (UniaxialMaterial *)theMat;
       else 
@@ -498,12 +514,19 @@ TclModelBuilderUniaxialMaterialCommand (ClientData clientData, Tcl_Interp *inter
       else 
 	return TCL_ERROR;
 
-    } else if (strcmp(argv[1],"BWBN") == 0) {
-      void *theMat = OPS_BWBN();
-      if (theMat != 0) 
-	theMaterial = (UniaxialMaterial *)theMat;
-      else 
-	return TCL_ERROR;
+    } else if (strcmp(argv[1], "BoucWenOriginal") == 0) {
+        void *theMat = OPS_BoucWenOriginal();
+        if (theMat != 0)
+            theMaterial = (UniaxialMaterial *)theMat;
+        else
+            return TCL_ERROR;
+
+    } else if (strcmp(argv[1], "BWBN") == 0) {
+        void *theMat = OPS_BWBN();
+        if (theMat != 0)
+            theMaterial = (UniaxialMaterial *)theMat;
+        else
+            return TCL_ERROR;
 
     } else if (strcmp(argv[1],"ModIMKPeakOriented") == 0) {
       void *theMat = OPS_ModIMKPeakOriented();

@@ -84,7 +84,7 @@ OPS_ShellNLDKGQThermal(void)
     return 0;
   }
 
-  SectionForceDeformation *theSection = OPS_GetSectionForceDeformation(iData[5]);
+  SectionForceDeformation *theSection = OPS_getSectionForceDeformation(iData[5]);
 
   if (theSection == 0) {
     opserr << "ERROR:  element ShellNLDKGQThermal " << iData[0] << "section " << iData[5] << " not found\n";
@@ -325,47 +325,59 @@ int  ShellNLDKGQThermal::revertToStart( )
 }
 
 //print out element data
-void  ShellNLDKGQThermal::Print( OPS_Stream &s, int flag )
+void  ShellNLDKGQThermal::Print(OPS_Stream &s, int flag)
 {
-  if (flag == -1) {
-    int eleTag = this->getTag();
-    s << "EL_ShellNLDKGQThermal\t" << eleTag << "\t";
-    s << eleTag << "\t" << 1; 
-    s  << "\t" << connectedExternalNodes(0) << "\t" << connectedExternalNodes(1);
-    s  << "\t" << connectedExternalNodes(2) << "\t" << connectedExternalNodes(3) << "\t0.00";
-    s << endln;
-    s << "PROP_3D\t" << eleTag << "\t";
-    s << eleTag << "\t" << 1; 
-    s  << "\t" << -1 << "\tSHELL\t1.0\0.0";
-    s << endln;
-  }  else if (flag < -1) {
+    if (flag == -1) {
+        int eleTag = this->getTag();
+        s << "EL_ShellNLDKGQThermal\t" << eleTag << "\t";
+        s << eleTag << "\t" << 1;
+        s << "\t" << connectedExternalNodes(0) << "\t" << connectedExternalNodes(1);
+        s << "\t" << connectedExternalNodes(2) << "\t" << connectedExternalNodes(3) << "\t0.00";
+        s << endln;
+        s << "PROP_3D\t" << eleTag << "\t";
+        s << eleTag << "\t" << 1;
+        s << "\t" << -1 << "\tSHELL\t1.0\0.0";
+        s << endln;
+    }
+    else if (flag < -1) {
 
-     int counter = (flag + 1) * -1;
-     int eleTag = this->getTag();
-     int i,j;
-     for ( i = 0; i < 4; i++ ) {
-       const Vector &stress = materialPointers[i]->getStressResultant();
-       
-       s << "STRESS\t" << eleTag << "\t" << counter << "\t" << i << "\tTOP";
-       for (j=0; j<6; j++)
-	 s << "\t" << stress(j);
-       s << endln;
-     }
+        int counter = (flag + 1) * -1;
+        int eleTag = this->getTag();
+        int i, j;
+        for (i = 0; i < 4; i++) {
+            const Vector &stress = materialPointers[i]->getStressResultant();
 
-   } else {
-    s << endln ;
-    s << "NLDKGQ Non-Locking Four Node Shell \n" ;
-    s << "Element Number: " << this->getTag() << endln ;
-    s << "Node 1 : " << connectedExternalNodes(0) << endln ;
-    s << "Node 2 : " << connectedExternalNodes(1) << endln ;
-    s << "Node 3 : " << connectedExternalNodes(2) << endln ;
-    s << "Node 4 : " << connectedExternalNodes(3) << endln ;
+            s << "STRESS\t" << eleTag << "\t" << counter << "\t" << i << "\tTOP";
+            for (j = 0; j < 6; j++)
+                s << "\t" << stress(j);
+            s << endln;
+        }
+
+    }
     
-    s << "Material Information : \n " ;
-    materialPointers[0]->Print( s, flag ) ;
+    if (flag == OPS_PRINT_CURRENTSTATE) {
+        s << endln;
+        s << "NLDKGQ Non-Locking Four Node Shell \n";
+        s << "Element Number: " << this->getTag() << endln;
+        s << "Node 1 : " << connectedExternalNodes(0) << endln;
+        s << "Node 2 : " << connectedExternalNodes(1) << endln;
+        s << "Node 3 : " << connectedExternalNodes(2) << endln;
+        s << "Node 4 : " << connectedExternalNodes(3) << endln;
+
+        s << "Material Information : \n ";
+        materialPointers[0]->Print(s, flag);
+
+        s << endln;
+    }
     
-    s << endln ;
-  }
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"ShellNLDKGQThermal\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << ", ";
+        s << connectedExternalNodes(2) << ", " << connectedExternalNodes(3) << "], ";
+        s << "\"section\": \"" << materialPointers[0]->getTag() << "\"}";
+    }
 }
 
 Response*
@@ -588,11 +600,11 @@ const Matrix&  ShellNLDKGQThermal::getInitialStiff( )
 	static Vector dstrain_li(nstress); //linear incr strain
 	static Vector dstrain_nl(3);//geometric nonlinear strain
 
-	static double shp[3][numnodes]; //shape fuction 2d at a gauss point
+	static double shp[3][numnodes]; //shape function 2d at a gauss point
 
 	static double shpDrill[4][numnodes]; //shape function drilling dof at a gauss point
 
-	static double shpBend[6][12]; //shape fuction - bending part at a gauss point
+	static double shpBend[6][12]; //shape function - bending part at a gauss point
 
 	//static Vector residJ(ndf); //nodeJ residual, global coordinates
 
@@ -1450,11 +1462,11 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
 	static Vector dstrain_li(nstress); //linear incr strain
 	static Vector dstrain_nl(3);//geometric nonlinear strain
 
-	static double shp[3][numnodes]; //shape fuction 2d at a gauss point
+	static double shp[3][numnodes]; //shape function 2d at a gauss point
 
 	static double shpDrill[4][numnodes]; //shape function drilling dof at a gauss point
 
-	static double shpBend[6][12]; //shape fuction - bending part at a gauss point
+	static double shpBend[6][12]; //shape function - bending part at a gauss point
 
 	static Vector residJ(ndf); //nodeJ residual, global coordinates
 
@@ -1581,7 +1593,7 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
 	Tmat(5,3) = g3[0];
 	Tmat(5,4) = g3[1];
 	Tmat(5,5) = g3[2];
-#ifdef _SDEBUG
+#ifdef _DEBUG
 	if(this->getTag()==10)
 		opserr<<"ShellNL : Disp "<<nodePointers[2]->getIncrDisp( )<<endln;
 #endif
@@ -1714,7 +1726,7 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
 		}//end for q
 #ifdef _SDEBUG
 		if(this->getTag()==1&&i==3)
-			opserr<<"ShellNLDKGQ "<<i<< " strain  "<<strain<<endln;
+			opserr<<"ShellNLDKGQ "<<this->getTag()<< " strain  "<<strain<<endln;
 #endif
 				Vector newStrain = Vector(9);
 		newStrain.Zero();
@@ -1723,13 +1735,13 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
   if(this->getTag()==1&&i==1)
      newStrain(8)=111;
 	
- // if(counterTemperature !=1&&counterTemperature !=2){
+  if(counterTemperature !=1&&counterTemperature !=2){
 #ifdef _SDEBUG
 		opserr<< "Element  "<<this->getTag()<<" Int "<<i<<endln;	  
 #endif
 		success = materialPointers[i]->setTrialSectionDeformation(newStrain);
 
- //}
+  }
 
 		//compute the stress
 		stress = materialPointers[i]->getStressResultant( );
@@ -1746,7 +1758,7 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
 	   stress(3) = Bendstress1- residThermal[2*i+1];
 	   stress(4) = Bendstress2- residThermal[2*i+1];
 	}
-
+	
 
 		//add for geometric nonlinearity
 		//update strain in gauss points
@@ -2264,7 +2276,7 @@ ShellNLDKGQThermal::shape2d( double ss, double tt,
  // static double sx[2][2] ;  //have been defined before
 
   for ( i = 0; i < 4; i++ ) {
-      shp[2][i] = ( 0.5 + s[i]*ss )*( 0.5 + t[i]*tt ) ; //shape fuction for 2d isoparametric element
+      shp[2][i] = ( 0.5 + s[i]*ss )*( 0.5 + t[i]*tt ) ; //shape function for 2d isoparametric element
       shp[0][i] = s[i] * ( 0.5 + t[i]*tt ) ; // derivative to isoparametric coordinates 1
       shp[1][i] = t[i] * ( 0.5 + s[i]*ss ) ; // derivative to isoparametric coordinates 2
   } // end for i
@@ -2320,7 +2332,7 @@ ShellNLDKGQThermal::shapefn2d( double ss, double tt ,int i)
 	   case 4:
 		   shpVal = 0.25*(1-ss)*(1+tt);break;
 	   default:
-		   opserr<<"ShellNLDKGQThermal::shapefn2d recieved an invalid i: "<<i <<endln ;
+		   opserr<<"ShellNLDKGQThermal::shapefn2d received an invalid i: "<<i <<endln ;
 	   }
    return shpVal;
 }

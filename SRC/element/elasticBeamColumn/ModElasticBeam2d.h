@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6593 $
-// $Date: 2017-06-15 06:17:10 +0800 (Thu, 15 Jun 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elasticBeamColumn/ModElasticBeam2d.h $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: fmk 11/95
 // Revised: Dimitrios G. Lignos, 01/31/2011

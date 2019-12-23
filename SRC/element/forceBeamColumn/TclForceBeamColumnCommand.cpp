@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6587 $
-// $Date: 2017-06-13 16:19:38 +0800 (Tue, 13 Jun 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/forceBeamColumn/TclForceBeamColumnCommand.cpp $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
 // Written: MHS
 // Created: Feb 2001
@@ -131,7 +131,7 @@ TclModelBuilder_addForceBeamColumn(ClientData clientData, Tcl_Interp *interp,
   TCL_Char **argv;
 
   if (Tcl_SplitList(interp, List, &argc, &argv) != TCL_OK) {
-    opserr <<  "WARNING - TclModelBuilder_addForceBeamColumn - problem spliting list\n";
+    opserr <<  "WARNING - TclModelBuilder_addForceBeamColumn - problem splitting list\n";
     return TCL_ERROR;
   }
   Tcl_Free ((char *)List);
@@ -1356,7 +1356,7 @@ TclModelBuilder_addForceBeamColumn(ClientData clientData, Tcl_Interp *interp,
     return TCL_ERROR;
   }
 
-  // if get here we have sucessfully created the element and added it to the domain
+  // if get here we have successfully created the element and added it to the domain
   Tcl_Free((char *)argv);
 	     
   return TCL_OK;

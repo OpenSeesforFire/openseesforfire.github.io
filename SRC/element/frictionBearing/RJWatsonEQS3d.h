@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6347 $
-// $Date: 2016-08-21 05:15:42 +0800 (Sun, 21 Aug 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/RJWatsonEQS3d.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef RJWatsonEQS3d_h
 #define RJWatsonEQS3d_h

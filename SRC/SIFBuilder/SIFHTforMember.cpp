@@ -975,8 +975,17 @@ SIFHTforMember::BuildHTModel1D(const Vector& SecCentroids, int SecTag)
 			Boundary1->GeneratingHeatFluxBC(FireExpEles,facetag,1,k+2,FireHeatFluxConstants);
 			Boundary1->GeneratingHeatFluxBC(FireExpEles,facetag,2,k+2,FireHeatFluxConstants);
 		}
+		else if ( FireModelType == 21) {
+			//This can be improved later(under development)
+			//This should be checked for different nominal fire
+			double FireHFConstants[6] = { 35.0, 293.15, 0.7, 5.67e-8,0.7, 418.738 };
+			Vector FireHeatFluxConstants(FireHFConstants, 6);
+
+			Boundary1->GeneratingHeatFluxBC(FireExpEles, facetag, 1, k + 2, FireHeatFluxConstants);
+			Boundary1->GeneratingHeatFluxBC(FireExpEles, facetag, 2, k + 2, FireHeatFluxConstants);
+		}
 		//Uniform fire exposrure
-		if(FireModelType==3||FireModelType==5||FireModelType==6||FireModelType==7){
+		else if(FireModelType==3||FireModelType==6||FireModelType==7){
 			//This can be improved later(under development)
 			double FireHFConstants[6] = {35.0, 293.15, 0.7, 5.67e-8,0.7, 418.738};
 			Vector FireHeatFluxConstants(FireHFConstants,6);

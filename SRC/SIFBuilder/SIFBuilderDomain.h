@@ -67,7 +67,7 @@
 
 #include <SectionForceDeformation.h>
 #include <CrdTransf.h>
-
+#include <Domain.h>
 class OPS_Stream;
 class TaggedObjectStorage;
 class SIFMaterial;

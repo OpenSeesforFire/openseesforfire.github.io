@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elastomericBearing/HDR.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Manish Kumar (mkumar2@buffalo.edu)
 // Created: 02/12
@@ -185,7 +185,7 @@ void *OPS_HDR()
             opserr << "WARNING invalid ndf: " << ndf;
             opserr << ", for space problem need 6 - HDR \n"; 
         }
-        theEle = new HDR(iData[0], iData[1], iData[2], dData[0], dData[1], dData[2], dData[3], dData[4], dData[5], dData[6], dData[7], dData[8], 
+        theEle = new HDR(iData[0], iData[1], iData[2], dData[0], dData[1], dData[2], dData[3], dData[4], dData[5], int(dData[6]), dData[7], dData[8], 
             dData[9], dData[10], dData[11], dData[12], dData[13], dData[14], dData[15], dData[16], y, x, kl, phi, al, sDratio, m, tc1);
     }
     
@@ -1016,7 +1016,7 @@ int HDR::displaySelf(Renderer &theViewer,
 
 void HDR::Print(OPS_Stream &s, int flag)
 {
-    if (flag == 0)  {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
         // print everything
         s << "************************************************************" << endln;
         s << "Element: " << this->getTag();
@@ -1036,8 +1036,35 @@ void HDR::Print(OPS_Stream &s, int flag)
         // determine resisting forces in global system
         s << "  resisting force: " << this->getResistingForce() << endln;
         s << "************************************************************" << endln;
-    } else if (flag == 1)  {
-        // does nothing
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"HDR\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"D1\": " << D1 << ", ";
+        s << "\"D2\": " << D2 << ", ";
+        s << "\"L\": " << L << ", ";
+        s << "\"Tr\": " << Tr << ", ";
+        s << "\"n\": " << n << ", ";
+        s << "\"A\": " << A << ", ";
+        s << "\"G\": " << G << ", ";
+        s << "\"kc\": " << kc << ", ";
+        s << "\"ac\": " << ac << ", ";
+        s << "\"PhiM\": " << PhiM << ", ";
+        s << "\"shearDistI\": " << shearDistI << ", ";
+        s << "\"mass\": " << mass << ", ";
+        s << "\"a1\": " << a1 << ", ";
+        s << "\"a2\": " << a2 << ", ";
+        s << "\"a3\": " << a3 << ", ";
+        s << "\"b1\": " << b1 << ", ";
+        s << "\"b2\": " << b2 << ", ";
+        s << "\"b3\": " << b3 << ", ";
+        s << "\"c1\": " << c1 << ", ";
+        s << "\"c2\": " << c2 << ", ";
+        s << "\"c3\": " << c3 << ", ";
+        s << "\"c4\": " << c4 << "}";
     }
 }
 
@@ -1272,7 +1299,7 @@ void HDR::setUp()
         exit(-1);
     }
     
-    // establish orientation of element for the tranformation matrix
+    // establish orientation of element for the transformation matrix
     // z = x cross y
     Vector z(3);
     z(0) = x(1)*y(2) - x(2)*y(1);

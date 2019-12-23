@@ -185,11 +185,11 @@ void* OPS_ReinforcingSteel()
     
 }
 
-ReinforcingSteel::ReinforcingSteel(int tag, double fy, double fsu, double Es, double Esh_, double esh_, double esu, 
+ReinforcingSteel::ReinforcingSteel(int tag, double fy_, double fsu_, double Es_, double Esh_, double esh_, double esu_, 
                                    int buckModel, double slenderness, double alpha, double r, double gama, 
                                    double Fatigue1, double Fatigue2, double Degrade, double rc1, double rc2, double rc3, 
                                    double A1, double HardLim)
-  :UniaxialMaterial(tag,MAT_TAG_ReinforcingSteel), esh(esh_), Esh(Esh_), a1(A1), hardLim(HardLim),
+  :UniaxialMaterial(tag,MAT_TAG_ReinforcingSteel), fy(fy_), fsu(fsu_), Es(Es_), Esh(Esh_), esh(esh_), esu(esu_), a1(A1), hardLim(HardLim),
   BuckleModel(buckModel),LDratio(slenderness),beta(alpha),fsu_fraction(gama),Fat1(Fatigue1),RC1(rc1),RC2(rc2),RC3(rc3)
 { 
   if((r>=0.0) & (r<=1.0)) 
@@ -866,27 +866,30 @@ ReinforcingSteel::recvSelf(int cTag, Channel &theChannel,
 void 
 ReinforcingSteel::Print(OPS_Stream &s, int flag)
 {
-	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
-		s << "\t\t\t{";
-		s << "\"name\": \"" << this->getTag() << "\", ";
-		s << "\"type\": \"ReinforcingSteel\", ";
-		s << "\"E\": " << "" << ", ";
-		s << "\"Eh\": " << Esh << ", ";
-		s << "\"fy\": " << "" << ", ";
-		s << "\"fu\": " << "" << "}";
-	}
-	
-	if(flag == 3) {
-		s << CStrain << "  " << CStress << "  " << CTangent << endln;
-	
-	} else {
-		s << "ReinforcingSteel, tag: " << this->getTag() << endln;
-		s << "  N2p: " << CFatDamage << endln;
-		//s << "  sigmaY: " << sigmaY << endln;
-		//s << "  Hiso: " << Hiso << endln;
-		//s << "  Hkin: " << Hkin << endln;
-		//s << "  eta: " << eta << endln;
-	}
+    if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+        s << "ReinforcingSteel, tag: " << this->getTag() << endln;
+        s << "  N2p: " << CFatDamage << endln;
+        //s << "  sigmaY: " << sigmaY << endln;
+        //s << "  Hiso: " << Hiso << endln;
+        //s << "  Hkin: " << Hkin << endln;
+        //s << "  eta: " << eta << endln;
+    }
+    
+    if (flag == 3) {
+        s << CStrain << "  " << CStress << "  " << CTangent << endln;
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"type\": \"ReinforcingSteel\", ";
+        s << "\"E\": " << Es << ", ";
+        s << "\"Eh\": " << Esh << ", ";
+        s << "\"fy\": " << fy << ", ";
+        s << "\"fu\": " << fsu << ", ";
+        s << "\"epsh\": " << esh << ", ";
+        s << "\"epsu\": " << esu << "}";
+    }
 }
 
 int
@@ -916,89 +919,122 @@ ReinforcingSteel::MPfunc(double a)
 int
 ReinforcingSteel::SetMP()
 {
-  double Rmin;
-  double a=0.01;
-  double ao;
-  double da;
-  bool notConverge(true);
+    double Rmin;
+    double a = 0.01;
+    double ao, ao_last;
+    double da;
+    int numIter;
+    int maxIter = 50;
+    bool converged;
 
-  
-	if (TEb-TEsec == 0.0) {
-	  TQ=1.0;
-	  Tfch=Tfb;
-  } else {
-    if (TEsec!=TEa) {
-      Rmin = (TEb-TEsec)/(TEsec-TEa);
-	    if (Rmin < 0.0) {
-		    opserr << "R is negative in ReinforcingSteel::SetMP()\n";
-		    Rmin = 0.0;
-	    }
-	    if (TR <= Rmin) TR=Rmin + 0.01;
-	    while(notConverge) {
-      if (1.0-a != 1.0) {
-	      if (MPfunc(a)*MPfunc(1.0-a)>0.0) 
-		      a=a/2.0;
-	      else
-		      notConverge=false;
-      } else
-		    notConverge=false;
-	  }
-  	
-	    ao= Rmin/TR;
-      if (ao >= 1.0) ao=0.999999; 
-	    notConverge=true;
-	    while(notConverge) {
-      if (1.0-a != 1.0) {
-	      if (MPfunc(ao)*MPfunc(1.0-a)<0.0) 
-		      ao=sqrt(ao);
-	      else
-		      notConverge=false;
-      } else
-        notConverge=false;
-      if(ao > 0.999999) notConverge=false;
-	  }
+    if (TEb - TEsec == 0.0) {
+        TQ = 1.0;
+        Tfch = Tfb;
+    }
+    else {
+        if (TEsec != TEa) {
+            Rmin = (TEb - TEsec) / (TEsec - TEa);
+            if (Rmin < 0.0) {
+                opserr << "R is negative in ReinforcingSteel::SetMP()\n";
+                Rmin = 0.0;
+            }
+            if (TR <= Rmin)
+                TR = Rmin + 0.01;
+            
+            numIter = 0;
+            converged = false;
+            while (converged == false && numIter < maxIter) {
+                numIter++;
+                if (a > DBL_EPSILON) {
+                    if (MPfunc(a)*MPfunc(1.0 - a) > 0.0)
+                        a = a / 2.0;
+                    else
+                        converged = true;
+                }
+                else
+                    converged = true;
+            }
+            if (numIter >= maxIter) {
+                opserr << "WARNING: ReinforcingSteel::SetMP() - did not converge finding a\n";
+                return -1;
+            }
 
-	    notConverge=true;
-	    if (ao >= 1.0) ao=0.999999;
-	    while(notConverge) {
-      double ao_last=ao;
+            ao = Rmin / TR;
+            if (ao >= 1.0)
+                ao = 0.999999;
 
-	    da=0.49*(1-ao);
-      if (da>ao/10.0) da=ao/10.0;
-      if (ao+da>=1.0) da = (1.0-ao)/10.0;
-  	  
-      double tempdenom = MPfunc(ao+da)-MPfunc(ao-da);
-      if (tempdenom != 0.0){
-	      ao=ao-2*MPfunc(ao)*da/tempdenom;
-        if (ao>0.99999999999) ao=0.99999999999;
-        if (ao < 0.0) {
-          ao = 0.0;
-          notConverge=false;
+            numIter = 0;
+            converged = false;
+            while (converged == false && numIter < maxIter) {
+                numIter++;
+                if (a > DBL_EPSILON) {
+                    if (MPfunc(ao)*MPfunc(1.0 - a) < 0.0)
+                        ao = sqrt(ao);
+                    else
+                        converged = true;
+                }
+                else
+                    converged = true;
+
+                if (ao > 0.999999)
+                    converged = true;
+            }
+            if (numIter >= maxIter) {
+                opserr << "WARNING: ReinforcingSteel::SetMP() - did not converge finding ao\n";
+                return -2;
+            }
+            if (ao >= 1.0)
+                ao = 0.999999;
+
+            numIter = 0;
+            converged = false;
+            while (converged == false && numIter < maxIter) {
+                numIter++;
+                ao_last = ao;
+
+                da = 0.49*(1 - ao);
+                if (da > ao / 10.0)
+                    da = ao / 10.0;
+                if (ao + da >= 1.0)
+                    da = (1.0 - ao) / 10.0;
+
+                double tempdenom = MPfunc(ao + da) - MPfunc(ao - da);
+                if (tempdenom != 0.0) {
+                    ao = ao - 2 * MPfunc(ao)*da / tempdenom;
+                    if (ao > 0.99999999999)
+                        ao = 0.99999999999;
+                    if (ao < 0.0) {
+                        ao = 0.0;
+                        converged = true;
+                    }
+                }
+                if (fabs(ao_last - ao) < 1.0E-4)
+                    converged = true;
+            }
+            if (numIter >= maxIter) {
+                opserr << "WARNING: ReinforcingSteel::SetMP() - did not converge finding da and ao\n";
+                da = da / 100.0;
+                ao = ao_last;
+                ao = ao - 2 * MPfunc(ao)*da / (MPfunc(ao + da) - MPfunc(ao - da));
+                return -3;
+            }
+            if (ao > 0.99999999)
+                ao = 0.99999999;
         }
-      }
-  #ifdef _WIN32
-      if(_fpclass(ao)< 8 || _fpclass(ao)==512) {
-        opserr << "Stuck in infinite loop, return error, ReinforcingSteel::SetMP()\n";
-        da=da/100.0;
-        ao=ao_last;
-        ao=ao-2*MPfunc(ao)*da/(MPfunc(ao+da)-MPfunc(ao-da));
-        return -1;
-      }
-  #endif
-      if(fabs(ao_last-ao)<0.0001) notConverge=false;
-	  }
-	    if (ao>0.99999999) ao=0.99999999;
-    } else
-      ao=0.99999999;
-    TQ=(TEsec/TEa-ao)/(1-ao);
-	  double temp1 = pow(ao,TR);
-    double temp2 = pow(1.0-temp1,1.0/TR);
-	  double b=temp2/ao;
-	  Tfch=Tfa+TEa/b*(Teb-Tea);
-  }
-  if(fabs(Teb-Tea)<1.0e-7)
-    TQ = 1.0;
-  return 0;
+        else
+            ao = 0.99999999;
+
+        TQ = (TEsec / TEa - ao) / (1 - ao);
+        double temp1 = pow(ao, TR);
+        double temp2 = pow(1.0 - temp1, 1.0 / TR);
+        double b = temp2 / ao;
+        Tfch = Tfa + TEa / b*(Teb - Tea);
+    }
+
+    if (fabs(Teb - Tea) < 1.0E-7)
+        TQ = 1.0;
+
+    return 0;
 }
 
 double

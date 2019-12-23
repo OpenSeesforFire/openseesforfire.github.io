@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6607 $
-// $Date: 2017-07-27 12:48:46 +0800 (Thu, 27 Jul 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elasticBeamColumn/ElasticBeam3d.cpp $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
                                                                         
 // File: ~/model/ElasticBeam3d.C
@@ -89,7 +89,7 @@ void* OPS_ElasticBeam3d(void)
 	    opserr<<"no section is found\n";
 	    return 0;
 	}
-	theTrans = OPS_GetCrdTransf(transfTag);
+	theTrans = OPS_getCrdTransf(transfTag);
 	if(theTrans == 0) {
 	    opserr<<"no CrdTransf is found\n";
 	    return 0;
@@ -99,7 +99,7 @@ void* OPS_ElasticBeam3d(void)
 	if(OPS_GetDoubleInput(&numData,&data[0]) < 0) return 0;
 	numData = 1;
 	if(OPS_GetIntInput(&numData,&transfTag) < 0) return 0;
-	theTrans = OPS_GetCrdTransf(transfTag);
+	theTrans = OPS_getCrdTransf(transfTag);
 	if(theTrans == 0) {
 	    opserr<<"no CrdTransf is found\n";
 	    return 0;
@@ -594,7 +594,7 @@ ElasticBeam3d::addInertiaLoadToUnbalance(const Vector &accel)
   const Vector &Raccel2 = theNodes[1]->getRV(accel);
 	
   if (6 != Raccel1.Size() || 6 != Raccel2.Size()) {
-    opserr << "ElasticBeam3d::addInertiaLoadToUnbalance matrix and vector sizes are incompatable\n";
+    opserr << "ElasticBeam3d::addInertiaLoadToUnbalance matrix and vector sizes are incompatible\n";
     return -1;
   }
 
@@ -630,8 +630,6 @@ const Vector &
 ElasticBeam3d::getResistingForceIncInertia()
 {	
   P = this->getResistingForce(); 
-  // subtract external load P = P - Q
-  P.addVector(1.0, Q, -1.0);
   
   // add the damping forces if rayleigh damping
   if (alphaM != 0.0 || betaK != 0.0 || betaK0 != 0.0 || betaKc != 0.0)
@@ -704,7 +702,9 @@ ElasticBeam3d::getResistingForce()
 
   P = theCoordTransf->getGlobalResistingForce(q, p0Vec);
 
-  // opserr << P;
+  // subtract external load P = P - Q
+  if (rho != 0)
+    P.addVector(1.0, Q, -1.0);
   
   return P;
 }
@@ -939,16 +939,16 @@ ElasticBeam3d::Print(OPS_Stream &s, int flag)
 	
 	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
 		s << "\t\t\t{";
-		s << "\"name\": \"" << this->getTag() << "\", ";
+		s << "\"name\": " << this->getTag() << ", ";
 		s << "\"type\": \"ElasticBeam3d\", ";
-		s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+		s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
 		s << "\"E\": " << E << ", ";
 		s << "\"G\": " << G << ", ";
 		s << "\"A\": " << A << ", ";
 		s << "\"Jx\": " << Jx << ", ";
 		s << "\"Iy\": " << Iy << ", ";
 		s << "\"Iz\": " << Iz << ", ";
-		s << "\"rho\": " << rho << ", ";
+		s << "\"massperlength\": " << rho << ", ";
 		s << "\"crdTransformation\": \"" << theCoordTransf->getTag() << "\"}";
 	}
 }

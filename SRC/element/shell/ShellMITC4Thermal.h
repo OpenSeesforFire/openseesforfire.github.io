@@ -185,7 +185,6 @@ class ShellMITC4Thermal : public Element {
     // vector for applying loads
     Vector *load;
     Matrix *Ki;
-	bool Geolinear;
 	
 	double *dataMix; //J.Jiang
 	int counterTemperature;//J.Jiang

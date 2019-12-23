@@ -285,22 +285,34 @@ int  BbarBrickWithSensitivity::revertToStart( )
 //print out element data
 void  BbarBrickWithSensitivity::Print( OPS_Stream &s, int flag )
 {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
+        s << "Element Number: " << this->getTag();
+        s << "     Node 1 : " << connectedExternalNodes(0);
+        s << "     Node 2 : " << connectedExternalNodes(1);
+        s << "     Node 3 : " << connectedExternalNodes(2);
+        s << "     Node 4 : " << connectedExternalNodes(3);
+        s << "     Node 5 : " << connectedExternalNodes(4);
+        s << "     Node 6 : " << connectedExternalNodes(5);
+        s << "     Node 7 : " << connectedExternalNodes(6);
+        s << "     Node 8 : " << connectedExternalNodes(7) << endln;
+        
+        //s << "Material Information : \n " ;
+        //materialPointers[0]->Print( s, flag ) ;
+        
+        //s << endln ;
+    }
 
-  s << "Element Number: " << this->getTag()  ;
-  s << "     Node 1 : " << connectedExternalNodes(0)  ;
-  s << "     Node 2 : " << connectedExternalNodes(1)  ;
-  s << "     Node 3 : " << connectedExternalNodes(2)  ;
-  s << "     Node 4 : " << connectedExternalNodes(3)  ;
-  s << "     Node 5 : " << connectedExternalNodes(4)  ;
-  s << "     Node 6 : " << connectedExternalNodes(5)  ;
-  s << "     Node 7 : " << connectedExternalNodes(6)  ;
-  s << "     Node 8 : " << connectedExternalNodes(7) << endln ;
-
-
-  //s << "Material Information : \n " ;
-  //materialPointers[0]->Print( s, flag ) ;
-
-  //s << endln ;
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"BbarBrickWithSensitivity\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", ";
+        for (int i = 1; i < 6; i++)
+            s << connectedExternalNodes(i) << ", ";
+        s << connectedExternalNodes(7) << "], ";
+        s << "\"bodyForces\": [" << b[0] << ", " << b[1] << ", " << b[2] << "], ";
+        s << "\"material\": \"" << materialPointers[0]->getTag() << "\"}";
+    }
 }
 
 //return stiffness matrix
@@ -530,7 +542,7 @@ BbarBrickWithSensitivity::addLoad(ElementalLoad *theLoad, double loadFactor)
       appliedB[2] += loadFactor * b[2];
     return 0;
   } else if (type == LOAD_TAG_SelfWeight) {
-      // added compatability with selfWeight class implemented for all continuum elements, C.McGann, U.W.
+      // added compatibility with selfWeight class implemented for all continuum elements, C.McGann, U.W.
       applyLoad = 1;
 	  appliedB[0] += loadFactor*data(0)*b[0];
 	  appliedB[1] += loadFactor*data(1)*b[1];
@@ -567,7 +579,7 @@ BbarBrickWithSensitivity::addInertiaLoadToUnbalance(const Vector &accel)
   int tangFlag = 1 ;
   formInertiaTerms( tangFlag ) ;
 
-  // store computed RV fro nodes in resid vector
+  // store computed RV for nodes in resid vector
   int count = 0;
   for (i=0; i<numberNodes; i++) {
     const Vector &Raccel = nodePointers[i]->getRV(accel);

@@ -3,6 +3,7 @@
 #include <Matrix.h>
 #include <Vector.h>
 #include <math.h>
+#include <LineTwo.h>
 
 
 Simple_Line::Simple_Line(int tag, double centerX, double lengthX)
@@ -161,3 +162,83 @@ int Simple_Line::GetNumofEles(void)
 }
 
 
+int Simple_Line::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const Vector& OriginLocs)
+{
+	double OriginLoc1 = 0;
+	double OriginLoc2 = 0;
+	if (OriginLocs.Size() == 1) {
+		OriginLoc1 = OriginLocs(0);
+	}
+	else if (OriginLocs.Size() == 2) {
+		OriginLoc1 = OriginLocs(0);
+		OriginLoc2 = OriginLocs(1);
+	}
+
+	int OriginNodeTag = theHTDomain->getNumNodes() + 1;
+	int NumCtrX = this->GetNumCtrlID()(0);
+	for (int i = 0; i <= NumCtrX; i++) {
+		double NodeCrdX = 0;
+		NodeCrdX = (this->GetSeeds(1))(i);
+		if (fabs(NodeCrdX) < 1e-10)
+			NodeCrdX = 0;
+
+		HeatTransferNode* TempNode = 0;
+		if (OriginLocs.Size() == 1) {
+			TempNode = new HeatTransferNode(OriginNodeTag + i, nDoF, OriginLoc1, NodeCrdX);
+		}
+		else if (OriginLocs.Size() == 2) {
+			TempNode = new HeatTransferNode(OriginNodeTag + i, nDoF, OriginLoc1, OriginLoc2, NodeCrdX);
+		}
+		else {
+			TempNode = new HeatTransferNode(OriginNodeTag + i, nDoF, NodeCrdX);
+		}
+
+		if (theHTDomain->addNode(TempNode) < 0)
+			return -1;
+		else
+			return 0;
+
+	}
+
+}
+
+
+int Simple_Line::GenerateEles(HeatTransferDomain* theHTDomain, const ID& EleParameters, HeatTransferMaterial* theHTMaterial, HeatTransferMaterial* theHTMaterial1)
+{
+	bool PhaseTransformation = false;
+	bool PhaseTransformation1 = false;
+
+	if (EleParameters != 0) {
+		if (EleParameters(0) == 1) {
+			PhaseTransformation = true;
+		}
+		else {
+			if (theHTMaterial1 != 0 && EleParameters.Size() > 1) {
+				if (EleParameters(1) == 1)
+					PhaseTransformation1 = true;
+			}
+		}
+	}
+
+	int OriginNodeTag = theHTDomain->getNumNodes() - (this->GetNumofNodes())+1;
+	int OriginEleTag = theHTDomain->getNumElements() + 1;
+	HeatTransferElement* TempEle =0;
+
+	int NumCtrX = this->GetNumCtrlID()(0);
+	int EleTag, NodeTag1, NodeTag2;
+	for (int i = 0; i < NumCtrX; i++) {
+		EleTag = i;
+		NodeTag1 = OriginNodeTag + i;
+		NodeTag2 = OriginNodeTag + i + 1;
+
+		
+		TempEle = new LineTwo(OriginEleTag + EleTag, NodeTag1, NodeTag2, *theHTMaterial, PhaseTransformation);
+
+		if (theHTDomain->addElement(TempEle) < 0) {
+			opserr << "HeatTransferDomain failed to add element" << OriginEleTag + EleTag << endln;
+			return -1;
+		}
+	}
+
+	return 0;
+}

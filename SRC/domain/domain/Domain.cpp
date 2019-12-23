@@ -376,6 +376,9 @@ Domain::~Domain()
   if (theEigenvalues != 0)
     delete theEigenvalues;
 
+  if (theLoadPatternIter != 0)
+      delete theLoadPatternIter;
+
   if (theModalDampingFactors != 0)
     delete theModalDampingFactors;
   
@@ -888,14 +891,6 @@ Domain::addNodalLoad(NodalLoad *load, int pattern)
     }
 
     load->setDomain(this);    // done in LoadPattern::addNodalLoad()
-							  //Added by Liming for ThermalNodeAction;UOE2013
-	int type;
-	const Vector &data = load->getData(type);
-	if (type == LOAD_TAG_NodalThermalAction) {
-		res->setNodalThermalActionPtr((NodalThermalAction*) load);
-	}
-	//Added by Liming for ThermalNodeAction;UOE2013
-
     this->domainChange();
 
     return result;
@@ -2191,7 +2186,6 @@ Domain::Print(OPS_Stream &s, int flag)
 {
   if (flag == OPS_PRINT_PRINTMODEL_JSON) {
 
-    s << "{\n";
     s << "\t\"properties\": {\n";
 
     OPS_printUniaxialMaterial(s, flag);
@@ -2236,7 +2230,8 @@ Domain::Print(OPS_Stream &s, int flag)
 
 	s << "\t}\n";
 	s << "}\n";
-    
+    s << "}\n";
+
 	return;
   }
       

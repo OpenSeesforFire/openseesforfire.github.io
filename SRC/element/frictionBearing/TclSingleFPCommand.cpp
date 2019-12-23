@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6347 $
-// $Date: 2016-08-21 05:15:42 +0800 (Sun, 21 Aug 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/TclSingleFPCommand.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 02/06
@@ -574,6 +574,6 @@ int TclModelBuilder_addSingleFPBearing(ClientData clientData, Tcl_Interp *interp
         return TCL_ERROR;
     }
     
-    // if get here we have sucessfully created the singleFPBearing and added it to the domain
+    // if get here we have successfully created the singleFPBearing and added it to the domain
     return TCL_OK;
 }

@@ -146,7 +146,7 @@ class ElasticForceBeamColumn2d: public Element
   BeamIntegration *beamIntegr;
   int numSections;
   SectionForceDeformation *sections[maxNumSections];          // array of pointers to sections
-  CrdTransf *crdTransf;        // pointer to coordinate tranformation object 
+  CrdTransf *crdTransf;        // pointer to coordinate transformation object 
   // (performs the transformation between the global and basic system)
   double rho;                    // mass density per unit length
   
@@ -161,7 +161,9 @@ class ElasticForceBeamColumn2d: public Element
   enum {NEBD = 3};         // number of element dof's in the basic system
 
   int numEleLoads; // Number of element load objects
-  ElementalLoad *eleLoads[maxNumEleLoads];
+  int sizeEleLoads;
+  ElementalLoad **eleLoads;
+  double *eleLoadFactors;
 
   static Matrix theMatrix;
   static Vector theVector;

@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6225 $
-// $Date: 2016-03-04 05:07:01 +0800 (Fri, 04 Mar 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/domain/pattern/PathSeries.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef PathSeries_h
 #define PathSeries_h

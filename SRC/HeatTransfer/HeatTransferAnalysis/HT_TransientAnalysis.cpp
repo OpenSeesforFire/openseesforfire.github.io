@@ -92,7 +92,8 @@ void
 HT_TransientAnalysis::clearAll(void)
 {
   // invoke the destructor on all the objects in the aggregation
-    if (analysis_model != 0)     
+
+	if (analysis_model != 0)     
 		delete analysis_model;
     if (temp_bc_handler != 0) 
 		delete temp_bc_handler;

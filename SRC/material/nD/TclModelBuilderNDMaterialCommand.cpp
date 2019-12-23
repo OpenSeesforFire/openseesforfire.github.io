@@ -99,7 +99,9 @@ extern  void *OPS_ContactMaterial3DMaterial(void);
 extern  void *OPS_InitialStateAnalysisWrapperMaterial(void);
 extern  void *OPS_ManzariDafaliasMaterial(void);
 extern  void *OPS_ManzariDafaliasMaterialRO(void);
-extern  void *OPS_PM4Sand(void);
+extern  void *OPS_PM4SandMaterial(void);
+extern  void *OPS_PM4SiltMaterial(void);
+extern  void *OPS_J2CyclicBoundingSurfaceMaterial(void);
 extern  void *OPS_CycLiqCPMaterial(void);
 extern  void *OPS_CycLiqCPSPMaterial(void);
 extern  void *OPS_InitStressNDMaterial(void);
@@ -115,10 +117,10 @@ extern void *OPS_AcousticMedium(void);
 extern  void *OPS_ElasticIsotropicMaterialThermal(void);  //L.Jiang [SIF]
 extern  void *OPS_DruckerPragerMaterialThermal(void);//L.Jiang [SIF]
 extern  void *OPS_PlasticDamageConcretePlaneStressThermal(void);//L.Jiang [SIF]
-extern  void *OPS_J2PlaneStressThermal(void);  //L.Jiang [SIF]
+extern  void* OPS_J2PlaneStressThermal(void);  //L.Jiang [SIF]
 
 #ifdef _HAVE_Faria1998
-extern void *OPS_Faria1998(void);
+//extern void *OPS_Faria1998(void);
 #endif
 
 extern  void *OPS_FSAMMaterial(void); // K Kolozvari      
@@ -250,13 +252,13 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
     }
 
 #ifdef _HAVE_Faria1998
-    else if (strcmp(argv[1],"Faria1998") == 0) {
-      void *theMat = OPS_Faria1998();
-      if (theMat != 0) 
-        theMaterial = (NDMaterial *)theMat;
-      else 
-	return TCL_ERROR;
-    }
+    //    else if (strcmp(argv[1],"Faria1998") == 0) {
+    //      void *theMat = OPS_Faria1998();
+    //      if (theMat != 0) 
+    //        theMaterial = (NDMaterial *)theMat;
+    //      else 
+    //	return TCL_ERROR;
+    //    }
 #endif
 
     else if ((strcmp(argv[1],"FAReinforceConcretePlaneStress") == 0) || (strcmp(argv[1],"FAReinforcedConcretePlaneStress") == 0)) {
@@ -437,12 +439,30 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
 
     else if ((strcmp(argv[1],"PM4Sand") == 0)){
 
-      void *theMat = OPS_PM4Sand();
+      void *theMat = OPS_PM4SandMaterial();
       if (theMat != 0) 
 	theMaterial = (NDMaterial *)theMat;
       else 
 	return TCL_ERROR;
     }
+
+	else if ((strcmp(argv[1], "J2CyclicBoundingSurface") == 0)) {
+
+		void *theMat = OPS_J2CyclicBoundingSurfaceMaterial();
+		if (theMat != 0)
+			theMaterial = (NDMaterial *)theMat;
+		else
+			return TCL_ERROR;
+	}
+	
+	else if ((strcmp(argv[1], "PM4Silt") == 0)) {
+
+		void *theMat = OPS_PM4SiltMaterial();
+		if (theMat != 0)
+			theMaterial = (NDMaterial *)theMat;
+		else
+			return TCL_ERROR;
+	}
 
     else if ((strcmp(argv[1],"ContactMaterial2D") == 0)){
 
@@ -471,7 +491,7 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
 	return TCL_ERROR;
     }
 
-    else if ((strcmp(argv[1],"StressDensityModel") == 0)){
+    else if ((strcmp(argv[1],"stressDensity") == 0) || (strcmp(argv[1],"StressDensity") == 0)) {
       
       void *theMat = OPS_StressDensityMaterial();
       if (theMat != 0)
@@ -1744,7 +1764,7 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
 		else
 			return TCL_ERROR;
 	}
-   
+    
 	//-------------------------------------------------------------
 	else if (strcmp(argv[1], "PlateFromPlaneStressThermal") == 0 ) {
 		if (argc < 5) {
@@ -1884,6 +1904,14 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
 		theMaterial = new J2PlasticityThermal(tag, 0, K, G, sig0, sigInf,
 			delta, H, eta);
 	}
+	else if ((strcmp(argv[1], "J2PlaneStressThermal") == 0) || (strcmp(argv[1], "J2PlaneStressThermal") == 0)) {
+
+	void* theMat = OPS_J2PlaneStressThermal();
+	if (theMat != 0)
+		theMaterial = (NDMaterial*)theMat;
+	else
+		return TCL_ERROR;
+	}
 	else if (strcmp(argv[1], "PlateFiberMaterialThermal") == 0 ||
 		strcmp(argv[1], "PlateFiberThermal") == 0) {
 		if (argc < 4) {
@@ -1915,15 +1943,6 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
 		}
 
 		theMaterial = new PlateFiberMaterialThermal(tag, *threeDMaterial);
-	}
-	//--------End of adding PlateFiberMaterialThermal
-	else if ((strcmp(argv[1], "J2PlaneStressThermal") == 0) || (strcmp(argv[1], "J2PlaneStressThermal") == 0)) {
-
-		void *theMat = OPS_J2PlaneStressThermal();
-		if (theMat != 0)
-			theMaterial = (NDMaterial *)theMat;
-		else
-			return TCL_ERROR;
 	}
 	//--------End of adding PlateFiberMaterialThermal
 	else if ( (strcmp(argv[1], "ElasticIsotropicThermal") == 0) || (strcmp(argv[1], "ElasticIsotropic3DThermal") == 0)) {

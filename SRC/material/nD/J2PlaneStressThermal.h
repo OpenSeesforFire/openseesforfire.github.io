@@ -75,7 +75,7 @@ public:
 	void StrsPr(const Vector&sig, Matrix &Peig, Vector &sigPr);
 	const Vector& getTempAndElong(void);  ///L. Jiang [SIF]
 
-	//double q(double xi);
+	double q(double xi);
 	//double qprime(double xi);
 
 	int commitState(void);
@@ -102,6 +102,7 @@ private:
 	double fy_inf;    // compressive yield strength
 	double ECommit;    //Commited Modulus;
 
+	double fyt;
 	double E0;     // elastic modulus
 	double fy0;    // tensile yield strength
 	double fy0_inf;    // compressive yield strength
@@ -119,6 +120,8 @@ private:
 	double Temp;
 	double TempT;
 
+	double kxi;
+	double kxi_Commit;
 	Vector epsCommit;
 	Vector sigCommit;
 	Vector sigeCommit;

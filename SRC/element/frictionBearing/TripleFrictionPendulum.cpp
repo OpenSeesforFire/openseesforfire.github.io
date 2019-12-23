@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/TripleFrictionPendulum.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // TripleFrictionPendulum element
 // Written by Nhan Dao, nhan.unr@gmail.com
@@ -201,7 +201,7 @@ TripleFrictionPendulum::TripleFrictionPendulum(int tag,
     v3Fact = L2/(L2 - L1);
     v5Fact = L3/(L3 - L1);
     
-    Gap2 = 2*(L1/L3*Ubar3 + Ubar1);
+    Gap2 = 2.0*(L1/L3*Ubar3 + Ubar1);
     Gap4 = Ubar2*(1 - L1/L2);
     Gap6 = Ubar3*(1 - L1/L3);
     
@@ -385,9 +385,9 @@ int TripleFrictionPendulum::revertToStart()
     Fy3 = theFrnMdls[1]->getFrictionCoeff();
     Fy5 = theFrnMdls[2]->getFrictionCoeff();
     
-    E1 = E2 = 3*Fy1/Uy;
-    E3 = E4 = 3*Fy1/Uy;
-    E5 = E6 = 3*Fy1/Uy;
+    E1 = E2 = 3.0*Fy1/Uy;
+    E3 = E4 = 3.0*Fy1/Uy;
+    E5 = E6 = 3.0*Fy1/Uy;
     
     double E1p = 1.0/(2.0*L1);
     double E3p = 1.0/(L2 - L1);
@@ -439,9 +439,6 @@ int TripleFrictionPendulum::update()
     // get current time
     Domain *theDomain = this->getDomain();
     double time = theDomain->getCurrentTime();
-    
-    //if (time >= 6.6)
-    //    opserr << "time = " << time << endln;
     
     const Vector &duNd1 = theNodes[0]->getIncrDisp();
     const Vector &duNd2 = theNodes[1]->getIncrDisp();
@@ -933,7 +930,7 @@ int TripleFrictionPendulum::displaySelf(Renderer &theViewer,
 
 void TripleFrictionPendulum::Print(OPS_Stream &s, int flag)
 {
-    if (flag == 0)  {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
         // print everything
         s << "Element: " << this->getTag(); 
         s << "  type: TripleFrictionPendulum, iNode: " << externalNodes(0);
@@ -948,8 +945,31 @@ void TripleFrictionPendulum::Print(OPS_Stream &s, int flag)
         s << "  uy: " << Uy << ", kvt: " << Kvt << ",  minFv: " << MinFv << endln;
         // determine resisting forces in global system
         s << "  resisting force: " << this->getResistingForce() << endln;
-    } else if (flag == 1)  {
-        // does nothing
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"TripleFrictionPendulum\", ";
+        s << "\"nodes\": [" << externalNodes(0) << ", " << externalNodes(1) << "], ";
+        s << "\"frictionModels\": [\"";
+        s << theFrnMdls[0]->getTag() << "\", \"";
+        s << theFrnMdls[1]->getTag() << "\", \"";
+        s << theFrnMdls[2]->getTag() << "\"], ";
+        s << "\"materials\": [\"";
+        s << theMaterials[0]->getTag() << "\", \"";
+        s << theMaterials[1]->getTag() << "\", \"";
+        s << theMaterials[2]->getTag() << "\", \"";
+        s << theMaterials[3]->getTag() << "\"], ";
+        s << "\"L1\": " << L1 << ", ";
+        s << "\"L2\": " << L2 << ", ";
+        s << "\"L3\": " << L3 << ", ";
+        s << "\"d1\": " << Ubar1 << ", ";
+        s << "\"d2\": " << Ubar2 << ", ";
+        s << "\"d3\": " << Ubar3 << ", ";
+        s << "\"uy\": " << Uy << ", ";
+        s << "\"kvt\": " << Kvt << ", ";
+        s << "\"minFv\": " << MinFv << "}";
     }
 }
 
@@ -990,15 +1010,15 @@ Response* TripleFrictionPendulum::setResponse(const char **argv, int argc,
     else if (strcmp(argv[0],"localForce") == 0 ||
         strcmp(argv[0],"localForces") == 0)
     {
-        output.tag("ResponseType","N_ 1");
+        output.tag("ResponseType","N_1");
         output.tag("ResponseType","Vy_1");
         output.tag("ResponseType","Vz_1");
         output.tag("ResponseType","T_1");
         output.tag("ResponseType","My_1");
-        output.tag("ResponseType","Tz_1");
+        output.tag("ResponseType","Mz_1");
         output.tag("ResponseType","N_2");
-        output.tag("ResponseType","Py_2");
-        output.tag("ResponseType","Pz_2");
+        output.tag("ResponseType","Vy_2");
+        output.tag("ResponseType","Vz_2");
         output.tag("ResponseType","T_2");
         output.tag("ResponseType","My_2");
         output.tag("ResponseType","Mz_2");

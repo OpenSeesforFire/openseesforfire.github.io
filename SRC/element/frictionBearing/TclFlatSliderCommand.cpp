@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6347 $
-// $Date: 2016-08-21 05:15:42 +0800 (Sun, 21 Aug 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/TclFlatSliderCommand.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 02/06
@@ -539,6 +539,6 @@ int TclModelBuilder_addFlatSliderBearing(ClientData clientData,
         return TCL_ERROR;
     }
     
-    // if get here we have sucessfully created the flatSliderBearing and added it to the domain
+    // if get here we have successfully created the flatSliderBearing and added it to the domain
     return TCL_OK;
 }

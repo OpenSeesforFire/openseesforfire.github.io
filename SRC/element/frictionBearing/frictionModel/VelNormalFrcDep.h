@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 5818 $
-// $Date: 2014-09-19 01:12:23 +0800 (Fri, 19 Sep 2014) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/frictionModel/VelNormalFrcDep.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef VelNormalFrcDep_h
 #define VelNormalFrcDep_h

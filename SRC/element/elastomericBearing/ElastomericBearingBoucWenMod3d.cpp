@@ -9,7 +9,7 @@
 // $Date: 2015-10-12 18:46:30 $
 // $URL: 
 
-// Written: Ping Tan £¨Guangzhou University, China£©
+// Written: Ping Tan ï¿½ï¿½Guangzhou University, Chinaï¿½ï¿½
 // Created: 2015-10-12 18:46:30
 // Revision: A
 //
@@ -61,7 +61,7 @@ OPS_ElastomericBearingBoucWenMod3d(void)
     return 0;	
   }
   int tag;
-  int iNode, jNode, argi, i, j;
+  int iNode, jNode;
   double kInit, fy, alpha1, Gr, Kbulk, D1, D2, ts, tr;
   int n;
 
@@ -471,7 +471,7 @@ int ElastomericBearingBoucWenMod3d::update()
 			qb(0)=kb(0,0)*ub(0);
     
     // 2) calculate shear forces and stiffnesses in basic y- and z-direction
-    // get displacement increments (trial - commited)
+    // get displacement increments (trial - committed)
     Vector delta_ub = ub - ubC;
 	// calculate dependency parameters
 	double alphaT = b1+b2*T+b3*pow(T,2)+b4*pow(T,3);
@@ -922,7 +922,7 @@ int ElastomericBearingBoucWenMod3d::displaySelf(Renderer &theViewer,
 
 void ElastomericBearingBoucWenMod3d::Print(OPS_Stream &s, int flag)
 {
-    if (flag == 0)  {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
         // print everything
         s << "Element: " << this->getTag() << endln; 
         s << "  type: ElastomericBearingBoucWenMod3d\n";
@@ -936,8 +936,24 @@ void ElastomericBearingBoucWenMod3d::Print(OPS_Stream &s, int flag)
         s << "  maxIter: " << maxIter << "  tol: " << tol << endln;
         // determine resisting forces in global system
         s << "  resisting force: " << this->getResistingForce() << endln;
-    } else if (flag == 1)  {
-        // does nothing
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"ElastomericBearingBoucWenMod3d\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"k0\": " << k0 << ", ";
+        s << "\"qYield\": " << qYield << ", ";
+        s << "\"k2\": " << k2 << ", ";
+        s << "\"k3\": " << k3 << ", ";
+        s << "\"mu\": " << mu << ", ";
+        s << "\"eta\": " << eta << ", ";
+        s << "\"beta\": " << beta << ", ";
+        s << "\"gamma\": " << gamma << ", ";
+        s << "\"shearDistI\": " << shearDistI << ", ";
+        s << "\"addRayleigh\": " << addRayleigh << ", ";
+        s << "\"mass\": " << mass << "}";
     }
 }
 
@@ -1132,7 +1148,7 @@ void ElastomericBearingBoucWenMod3d::setUp()
         exit(-1);
     }
     
-    // establish orientation of element for the tranformation matrix
+    // establish orientation of element for the transformation matrix
     // z = x cross y
     Vector z(3);
     z(0) = x(1)*y(2) - x(2)*y(1);

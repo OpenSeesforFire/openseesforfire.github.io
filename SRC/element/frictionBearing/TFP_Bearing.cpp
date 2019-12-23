@@ -497,7 +497,7 @@ TFP_Bearing::kt3Drma(double *v, double *vp, double *Fr, double A, double *P, dou
     //opserr << "ks: " << ks;
 
     // restrainer contact stiffness
-    double vt=sqrt(v[i]*v[i]+v[z]*v[z]); //local displacment of surface
+    double vt=sqrt(v[i]*v[i]+v[z]*v[z]); //local displacement of surface
     double rt=(dOut[i]-dIn[i])/2.0;  //restrainer distance
     double del=0.1;
 
@@ -880,9 +880,18 @@ TFP_Bearing::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theB
 void
 TFP_Bearing::Print(OPS_Stream &s, int flag)
 {
-  s << "Element: " << this->getTag(); 
-  s << " type: TFP_Bearing  iNode: " << externalNodes(0);
-  s << " jNode: " << externalNodes(1) << endln;
+    if (flag == OPS_PRINT_CURRENTSTATE) {
+        s << "Element: " << this->getTag();
+        s << " type: TFP_Bearing  iNode: " << externalNodes(0);
+        s << " jNode: " << externalNodes(1) << endln;
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"TFP_Bearing\", ";
+        s << "\"nodes\": [" << externalNodes(0) << ", " << externalNodes(1) << "]}";
+    }
 }
 
 

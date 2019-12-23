@@ -140,7 +140,7 @@ void* OPS_ForceBeamColumnCBDI2d()
     }
 
     // check transf
-    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    CrdTransf* theTransf = OPS_getCrdTransf(iData[3]);
     if(theTransf == 0) {
 	opserr<<"coord transfomration not found\n";
 	return 0;
@@ -227,7 +227,7 @@ void* OPS_ForceBeamColumnCSBDI2d()
     }
 
     // check transf
-    CrdTransf* theTransf = OPS_GetCrdTransf(iData[3]);
+    CrdTransf* theTransf = OPS_getCrdTransf(iData[3]);
     if(theTransf == 0) {
 	opserr<<"coord transfomration not found\n";
 	return 0;
@@ -813,13 +813,13 @@ ForceBeamColumnCBDI2d::update()
     SsrSubdivide[i] = Ssr[i];
   }
 
-  // fmk - modification to get compatable ele forces and deformations 
+  // fmk - modification to get compatible ele forces and deformations 
   //   for a change in deformation dV we try first a newton iteration, if
   //   that fails we try an initial flexibility iteration on first iteration 
   //   and then regular newton, if that fails we use the initial flexiblity
   //   for all iterations.
   //
-  //   if they both fail we subdivide dV & try to get compatable forces
+  //   if they both fail we subdivide dV & try to get compatible forces
   //   and deformations. if they work and we have subdivided we apply
   //   the remaining dV.
 
@@ -2797,16 +2797,16 @@ ForceBeamColumnCBDI2d::Print(OPS_Stream &s, int flag)
 
   if (flag == OPS_PRINT_PRINTMODEL_JSON) {
 	  s << "\t\t\t{";
-	  s << "\"name\": \"" << this->getTag() << "\", ";
+	  s << "\"name\": " << this->getTag() << ", ";
 	  s << "\"type\": \"ForceBeamColumnCBDI2d\", ";
-	  s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+	  s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
 	  s << "\"sections\": [";
 	  for (int i = 0; i < numSections - 1; i++)
 		  s << "\"" << sections[i]->getTag() << "\", ";
 	  s << "\"" << sections[numSections - 1]->getTag() << "\"], ";
 	  s << "\"integration\": ";
 	  beamIntegr->Print(s, flag);
-	  s << ", \"rho\": " << rho << ", ";
+	  s << ", \"massperlength\": " << rho << ", ";
 	  s << "\"crdTransformation\": \"" << crdTransf->getTag() << "\"}";
   }
 }

@@ -46,11 +46,11 @@ class FireModel: public TaggedObject
 	  virtual void applyFluxBC(HeatFluxBC* theFlux, double time) = 0;
 
 	  virtual int getFireTypeTag(void);
-	  virtual void  Print(OPS_Stream&, int = 0) {return;};
+	  virtual void  Print(OPS_Stream&, int = 0);
 
 	protected:
 		HeatTransferDomain* the_domain; // The domain pointer here associates a FireModel object and a HT_Domain
-		int FireTypeTag;                       // object thus enables a FireModel object fetch information from the 
+		int FireTypeTag;  // object thus enables a FireModel object fetch information from the 
 		                                // domain.
     private:
 

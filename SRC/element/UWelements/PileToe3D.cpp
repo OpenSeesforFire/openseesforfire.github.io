@@ -99,7 +99,7 @@ OPS_PileToe3D(void)
   }
 
   int transfTag = iData[4];
-  CrdTransf *theTransf = OPS_GetCrdTransf(transfTag);
+  CrdTransf *theTransf = OPS_getCrdTransf(transfTag);
   if (theTransf == 0) {
     opserr << "WARNING element PileToe3D " << iData[0] << endln;
     opserr << " coordTransf: " << transfTag << "not found\n";
@@ -245,7 +245,7 @@ PileToe3D::setDomain(Domain *theDomain)
 	//mNodeCrd(0,0) = mIcrd_1(0);  
   }
 
-  //Initialize Coordinate Tranformation
+  //Initialize Coordinate Transformation
   if (crdTransf->initialize(theBNodes[0], theBNodes[1])) {
 	  // Add some error check
   }

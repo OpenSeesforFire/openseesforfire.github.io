@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6049 $
-// $Date: 2015-07-17 12:56:36 +0800 (Fri, 17 Jul 2015) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/frictionBearing/FlatSliderSimple2d.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef FlatSliderSimple2d_h
 #define FlatSliderSimple2d_h

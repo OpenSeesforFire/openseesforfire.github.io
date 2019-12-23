@@ -44,6 +44,7 @@
 #include <ElementResponse.h>
 #include <ElementIter.h>
 #include <elementAPI.h>
+#include <map>
 
 double Tri31::matrixData[36];
 Matrix Tri31::K(matrixData, 6, 6);
@@ -57,7 +58,7 @@ double Tri31::wts[1];
 static int num_Tri31 = 0;
 
 OPS_Export void *
-OPS_Tri31(void)
+OPS_Tri31()
 {
   if (num_Tri31 == 0) {
     num_Tri31++;
@@ -136,6 +137,147 @@ OPS_Tri31(void)
   return theElement;
 }
 
+void *
+OPS_Tri31(const ID &info)
+{
+    if (num_Tri31 == 0) {
+	num_Tri31++;
+	opserr<<"Tri31 - Written by Roozbeh G. Mikola and N.Sitar, UC Berkeley\n";
+	//OPS_Error("Tri31 - Written by Roozbeh G. Mikola and N.Sitar, UC Berkeley\n",1);
+    }
+
+    int iData[5];
+    char *theType = (char*) "PlaneStress";
+    double dData[5];
+    dData[1] = 0.0;
+    dData[2] = 0.0;
+    dData[3] = 0.0;
+    dData[4] = 0.0;
+    int numData;
+
+    // Pointer to an element that will be returned
+    Element *theElement = 0;
+
+    // regular element, not in a mesh, get tags
+    if (info.Size() == 0) {
+	int numRemainingInputArgs = OPS_GetNumRemainingInputArgs();
+
+	if (numRemainingInputArgs < 4) {
+	    opserr << "Invalid #args, want: element element Tri31 eleTag? iNode? jNode? kNode?\n";
+	    return 0;
+	}
+
+	numData = 4;
+	if (OPS_GetIntInput(&numData, iData) != 0) {
+	    opserr << "WARNING invalid integer data: element Tri31\n";
+	    return 0;
+	}
+    }
+
+    // regular element, or in a mesh
+    if (info.Size()==0 || info(0)==1) {
+	if(OPS_GetNumRemainingInputArgs() < 3) {
+	    opserr<<"insufficient arguments: thk? type? matTag? <pressure? rho? b1? b2?>\n";
+	    return 0;
+	}
+
+	numData = 1;
+	if (OPS_GetDoubleInput(&numData, dData) != 0) {
+	    opserr << "WARNING invalid thickness data: element Tri31 " << endln;
+	    return 0;
+	}
+
+	// if (OPS_GetStringCopy(&theType) != 0) {
+	//   opserr << "WARNING invalid type, want: ""PlaneStress"" or ""PlaneStrain""  element SSPquad " << iData[0] << endln;
+	//   return 0;
+	// }
+	theType = (char*)OPS_GetString();
+
+	numData = 1;
+	if (OPS_GetIntInput(&numData, &iData[4]) != 0) {
+	    opserr << "WARNING invalid integer data: element Tri31\n";
+	    return 0;
+	}
+
+	if (OPS_GetNumRemainingInputArgs() == 4) {
+	    numData = 4;
+	    if (OPS_GetDoubleInput(&numData, &dData[1]) != 0) {
+		opserr << "WARNING invalid optional data: element Tri31 " << endln;
+		return 0;
+	    }
+	}
+    }
+
+    // store data for different mesh
+    static std::map<int, Vector> meshdata;
+    if (info.Size()>0 && info(0)==1) {
+	if (info.Size() < 2) {
+	    opserr << "WARNING: need info -- inmesh, meshtag\n";
+	    return 0;
+	}
+
+	// save the data for a mesh
+	Vector& mdata = meshdata[info(1)];
+	mdata.resize(7);
+	for (int i=0; i<5; ++i) {
+	    mdata(i) = dData[i];
+	}
+	mdata(5) = iData[4];
+	if (strcmp(theType,"PlaneStrain") == 0 ||
+	    strcmp(theType,"PlaneStrain2D") == 0) {
+	    mdata(6) = 1;
+	} else if (strcmp(theType,"PlaneStress") == 0 ||
+		   strcmp(theType,"PlaneStress2D") == 0) {
+	    mdata(6) = 2;
+	}
+
+	return &meshdata;
+
+    } else if (info.Size()>0 && info(0)==2) {
+	if (info.Size() < 6) {
+	    opserr << "WARNING: need info -- inmesh, meshtag, eleTag, nd1, nd2, nd3\n";
+	    return 0;
+	}
+
+	// get the data for a mesh
+	Vector& mdata = meshdata[info(1)];
+	if (mdata.Size() < 7) return 0;
+
+	for (int i=0; i<5; ++i) {
+	    dData[i] = mdata(i);
+	}
+	for (int i=0; i<4; ++i) {
+	    iData[i] = info(2+i);
+	}
+	iData[4] = mdata(5);
+	if (mdata(6) == 1) {
+	    theType = (char*)"PlaneStrain";
+	} else if (mdata(6) == 2) {
+	    theType = (char*)"PlaneStress";
+	}
+    }
+
+    int matID = iData[4];
+    NDMaterial *theMaterial = OPS_getNDMaterial(matID);
+    if (theMaterial == 0) {
+	opserr << "WARNING element Tri31 " << iData[0] << endln;
+	opserr << " Material: " << matID << "not found\n";
+	return 0;
+    }
+
+    // parsing was successful, allocate the element
+    theElement = new Tri31(iData[0], iData[1], iData[2], iData[3],
+			   *theMaterial, theType,
+			   dData[0], dData[1], dData[2], dData[3], dData[4]);
+
+    if (theElement == 0) {
+	opserr << "WARNING could not create element of type Tri31\n";
+	return 0;
+    }
+
+    return theElement;
+}
+
 int OPS_Tri31(Domain& theDomain, const ID& elenodes, ID& eletags)
 {
     // get inputs
@@ -198,7 +340,7 @@ int OPS_Tri31(Domain& theDomain, const ID& elenodes, ID& eletags)
 			   *theMaterial, theType, thk,
 			   dData[0], dData[1], dData[2], dData[3]);
 	if (theEle == 0) {
-	    opserr<<"WARING: run out of memory for creating element\n";
+	    opserr<<"WARNING: run out of memory for creating element\n";
 	    return -1;
 	}
 	if (theDomain.addElement(theEle) == false) {
@@ -641,7 +783,7 @@ Tri31::addInertiaLoadToUnbalance(const Vector &accel)
 	const Vector &Raccel3 = theNodes[2]->getRV(accel);
 
 	if (2 != Raccel1.Size() || 2 != Raccel2.Size() || 2 != Raccel3.Size()) {
-		opserr << "Tri31::addInertiaLoadToUnbalance matrix and vector sizes are incompatable\n";
+		opserr << "Tri31::addInertiaLoadToUnbalance matrix and vector sizes are incompatible\n";
 	    return -1;
 	}
 
@@ -934,52 +1076,68 @@ Tri31::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
 void
 Tri31::Print(OPS_Stream &s, int flag)                                                                 
 {
-	if (flag == 2) {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
+        s << "\nTri31, element id:  " << this->getTag() << endln;
+        s << "\tConnected external nodes:  " << connectedExternalNodes;
+        s << "\tthickness:  " << thickness << endln;
+        s << "\tsurface pressure:  " << pressure << endln;
+        s << "\tmass density:  " << rho << endln;
+        s << "\tbody forces:  " << b[0] << " " << b[1] << endln;
+        theMaterial[0]->Print(s, flag);
+        s << "\tStress (xx yy xy)" << endln;
+        for (int i = 0; i<numgp; i++) s << "\t\tGauss point " << i + 1 << ": " << theMaterial[i]->getStress();
+    }
 
-		s << "#Tri31\n";
+    if (flag == 2) {
 
-		int i;
-		const int numNodes = numnodes;
-		const int nstress = numgp ;
+        s << "#Tri31\n";
 
-		for (i=0; i<numNodes; i++) {
-			const Vector &nodeCrd = theNodes[i]->getCrds();
-			const Vector &nodeDisp = theNodes[i]->getDisp();
-			s << "#NODE " << nodeCrd(0) << " " << nodeCrd(1) << " " << endln;
-		}
+        int i;
+        const int numNodes = numnodes;
+        const int nstress = numgp;
 
-		// spit out the section location & invoke print on the scetion
-		const int numMaterials = numgp;
+        for (i = 0; i < numNodes; i++) {
+            const Vector &nodeCrd = theNodes[i]->getCrds();
+            const Vector &nodeDisp = theNodes[i]->getDisp();
+            s << "#NODE " << nodeCrd(0) << " " << nodeCrd(1) << " " << endln;
+        }
 
-		static Vector avgStress(nstress);
-		static Vector avgStrain(nstress);
-		avgStress.Zero();
-		avgStrain.Zero();
-		for (i=0; i<numMaterials; i++) {
-			avgStress += theMaterial[i]->getStress();
-			avgStrain += theMaterial[i]->getStrain();
-		}
-		avgStress /= numMaterials;
-		avgStrain /= numMaterials;
+        // spit out the section location & invoke print on the scetion
+        const int numMaterials = numgp;
 
-		s << "#AVERAGE_STRESS ";
-		for (i=0; i<nstress; i++) s << avgStress(i) << " " ;
-		s << endln;
+        static Vector avgStress(nstress);
+        static Vector avgStrain(nstress);
+        avgStress.Zero();
+        avgStrain.Zero();
+        for (i = 0; i < numMaterials; i++) {
+            avgStress += theMaterial[i]->getStress();
+            avgStrain += theMaterial[i]->getStrain();
+        }
+        avgStress /= numMaterials;
+        avgStrain /= numMaterials;
 
-		s << "#AVERAGE_STRAIN ";
-		for (i=0; i<nstress; i++) s << avgStrain(i) << " " ;
-		s << endln;
+        s << "#AVERAGE_STRESS ";
+        for (i = 0; i < nstress; i++) s << avgStress(i) << " ";
+        s << endln;
 
-	} else {
-		s << "\nTri31, element id:  " << this->getTag() << endln;
-	    s << "\tConnected external nodes:  " << connectedExternalNodes;
-	    s << "\tthickness:  " << thickness << endln;
-	    s << "\tsurface pressure:  " << pressure << endln;
-	    s << "\tbody forces:  " << b[0] << " " << b[1] << endln;
-	    theMaterial[0]->Print(s,flag);
-	    s << "\tStress (xx yy xy)" << endln;
-	    for (int i = 0; i<numgp; i++) s << "\t\tGauss point " << i+1 << ": " << theMaterial[i]->getStress();
-	}
+        s << "#AVERAGE_STRAIN ";
+        for (i = 0; i < nstress; i++) s << avgStrain(i) << " ";
+        s << endln;
+    }
+
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"Tri31\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", ";
+        s << connectedExternalNodes(1) << ", ";
+        s << connectedExternalNodes(2) << "], ";
+        s << "\"thickness\": " << thickness << ", ";
+        s << "\"surfacePressure\": " << pressure << ", ";
+        s << "\"masspervolume\": " << rho << ", ";
+        s << "\"bodyForces\": [" << b[0] << ", " << b[1] << "], ";
+        s << "\"material\": \"" << theMaterial[0]->getTag() << "\"}";
+    }
 }
 
 int

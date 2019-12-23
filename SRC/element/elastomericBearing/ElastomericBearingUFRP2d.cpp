@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6501 $
-// $Date: 2016-12-15 10:09:33 +0800 (Thu, 15 Dec 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elastomericBearing/ElastomericBearingUFRP2d.cpp $
+// $Revision$
+// $Date$
+// $URL$
 
 // Written: Andreas Schellenberg (andreas.schellenberg@gmail.com)
 // Created: 10/13
@@ -468,7 +468,7 @@ int ElastomericBearingUFRP2d::update()
     kb(0,0) = theMaterials[0]->getTangent();
     
     // 2) calculate shear force and stiffness in basic y-direction
-    // get displacement increment (trial - commited)
+    // get displacement increment (trial - committed)
     double delta_ub = ub(1) - ubC(1);
     if (fabs(delta_ub) > 0.0)  {
         
@@ -896,7 +896,7 @@ int ElastomericBearingUFRP2d::displaySelf(Renderer &theViewer,
 
 void ElastomericBearingUFRP2d::Print(OPS_Stream &s, int flag)
 {
-    if (flag == 0)  {
+    if (flag == OPS_PRINT_CURRENTSTATE) {
         // print everything
         s << "Element: " << this->getTag() << endln; 
         s << "  type: ElastomericBearingUFRP2d\n";
@@ -905,7 +905,7 @@ void ElastomericBearingUFRP2d::Print(OPS_Stream &s, int flag)
         s << "  uy: " << uy << endln;
         s << "  a1: " << a1 << "  a2: " << a2 << "  a3: " << a3;
         s << "  a4: " << a4 << "  a5: " << a5 << endln;
-        s << "  b: " << a4 << "  c: " << a5 << endln;
+        s << "  b: " << b << "  c: " << c << endln;
         s << "  eta: " << eta << "  beta: " << beta << "  gamma: " << gamma << endln;
         s << "  Material ux: " << theMaterials[0]->getTag();
         s << "  Material rz: " << theMaterials[1]->getTag() << endln;
@@ -914,8 +914,30 @@ void ElastomericBearingUFRP2d::Print(OPS_Stream &s, int flag)
         s << "  maxIter: " << maxIter << "  tol: " << tol << endln;
         // determine resisting forces in global system
         s << "  resisting force: " << this->getResistingForce() << endln;
-    } else if (flag == 1)  {
-        // does nothing
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"ElastomericBearingUFRP2d\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"uy\": " << uy << ", ";
+        s << "\"a1\": " << a1 << ", ";
+        s << "\"a2\": " << a2 << ", ";
+        s << "\"a3\": " << a3 << ", ";
+        s << "\"a4\": " << a4 << ", ";
+        s << "\"a5\": " << a5 << ", ";
+        s << "\"b\": " << b << ", ";
+        s << "\"c\": " << c << ", ";
+        s << "\"eta\": " << eta << ", ";
+        s << "\"beta\": " << beta << ", ";
+        s << "\"gamma\": " << gamma << ", ";
+        s << "\"materials\": [\"";
+        s << theMaterials[0]->getTag() << "\", \"";
+        s << theMaterials[1]->getTag() << "\"], ";
+        s << "\"shearDistI\": " << shearDistI << ", ";
+        s << "\"addRayleigh\": " << addRayleigh << ", ";
+        s << "\"mass\": " << mass << "}";
     }
 }
 
@@ -1086,7 +1108,7 @@ void ElastomericBearingUFRP2d::setUp()
         exit(-1);
     }
     
-    // establish orientation of element for the tranformation matrix
+    // establish orientation of element for the transformation matrix
     // z = x cross y
     static Vector z(3);
     z(0) = x(1)*y(2) - x(2)*y(1);

@@ -22,7 +22,7 @@
 // $Date: 2011/03/10 22:51:21 $
 // $Source: /usr/local/cvs/OpenSees/SRC/element/shell/ShellMITC4Thermal.cpp,v $
 
-// Written: Leopoldo Tesser, Diego A. Talledo, Véronique Le Corvec
+// Written: Leopoldo Tesser, Diego A. Talledo, Vï¿½ronique Le Corvec
 //
 // Bathe MITC 4 four node shell element with membrane and drill
 // Ref: Dvorkin,Bathe, A continuum mechanics based four node shell
@@ -190,8 +190,6 @@ connectedExternalNodes(4), load(0), Ki(0)
   
   counterTemperature = 0;
 
-  Geolinear = true;
-
  }
 //******************************************************************
 
@@ -334,47 +332,58 @@ int  ShellMITC4Thermal::revertToStart( )
 }
 
 //print out element data
-void  ShellMITC4Thermal::Print( OPS_Stream &s, int flag )
+void  ShellMITC4Thermal::Print(OPS_Stream &s, int flag)
 {
-  if (flag == -1) {
-    int eleTag = this->getTag();
-    s << "EL_ShellMITC4Thermal\t" << eleTag << "\t";
-    s << eleTag << "\t" << 1; 
-    s  << "\t" << connectedExternalNodes(0) << "\t" << connectedExternalNodes(1);
-    s  << "\t" << connectedExternalNodes(2) << "\t" << connectedExternalNodes(3) << "\t0.00";
-    s << endln;
-    s << "PROP_3D\t" << eleTag << "\t";
-    s << eleTag << "\t" << 1; 
-    s  << "\t" << -1 << "\tSHELL\t1.0\0.0";
-    s << endln;
-  }  else if (flag < -1) {
-
-     int counter = (flag + 1) * -1;
-     int eleTag = this->getTag();
-     int i,j;
-     for ( i = 0; i < 4; i++ ) {
-       const Vector &stress = materialPointers[i]->getStressResultant();
-       
-       s << "STRESS\t" << eleTag << "\t" << counter << "\t" << i << "\tTOP";
-       for (j=0; j<6; j++)
-	 s << "\t" << stress(j);
-       s << endln;
-     }
-
-   } else {
-    s << endln ;
-    s << "MITC4 Non-Locking Four Node Shell \n" ;
-    s << "Element Number: " << this->getTag() << endln ;
-    s << "Node 1 : " << connectedExternalNodes(0) << endln ;
-    s << "Node 2 : " << connectedExternalNodes(1) << endln ;
-    s << "Node 3 : " << connectedExternalNodes(2) << endln ;
-    s << "Node 4 : " << connectedExternalNodes(3) << endln ;
+    if (flag == -1) {
+        int eleTag = this->getTag();
+        s << "EL_ShellMITC4Thermal\t" << eleTag << "\t";
+        s << eleTag << "\t" << 1;
+        s << "\t" << connectedExternalNodes(0) << "\t" << connectedExternalNodes(1);
+        s << "\t" << connectedExternalNodes(2) << "\t" << connectedExternalNodes(3) << "\t0.00";
+        s << endln;
+        s << "PROP_3D\t" << eleTag << "\t";
+        s << eleTag << "\t" << 1;
+        s << "\t" << -1 << "\tSHELL\t1.0\0.0";
+        s << endln;
+    }
     
-    s << "Material Information : \n " ;
-    materialPointers[0]->Print( s, flag ) ;
+    if (flag < -1) {
+        int counter = (flag + 1) * -1;
+        int eleTag = this->getTag();
+        int i, j;
+        for (i = 0; i < 4; i++) {
+            const Vector &stress = materialPointers[i]->getStressResultant();
+
+            s << "STRESS\t" << eleTag << "\t" << counter << "\t" << i << "\tTOP";
+            for (j = 0; j < 6; j++)
+                s << "\t" << stress(j);
+            s << endln;
+        }
+    }
     
-    s << endln ;
-  }
+    if (flag == OPS_PRINT_CURRENTSTATE) {
+        s << endln;
+        s << "MITC4 Non-Locking Four Node Shell \n";
+        s << "Element Number: " << this->getTag() << endln;
+        s << "Node 1 : " << connectedExternalNodes(0) << endln;
+        s << "Node 2 : " << connectedExternalNodes(1) << endln;
+        s << "Node 3 : " << connectedExternalNodes(2) << endln;
+        s << "Node 4 : " << connectedExternalNodes(3) << endln;
+
+        s << "Material Information : \n ";
+        materialPointers[0]->Print(s, flag);
+
+        s << endln;
+    }
+    
+    if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+        s << "\t\t\t{";
+        s << "\"name\": " << this->getTag() << ", ";
+        s << "\"type\": \"ShellMITC4Thermal\", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << ", ";
+        s << connectedExternalNodes(2) << ", " << connectedExternalNodes(3) << "], ";
+        s << "\"section\": \"" << materialPointers[0]->getTag() << "\"}";
+    }
 }
 
 Response*
@@ -1106,15 +1115,9 @@ const Vector&  ShellMITC4Thermal::getResistingForce( )
   if (load != 0)
     resid -= *load;
 
-#ifdef _sDEBUG
-  if (this->getTag() == 1||this->getTag() == 3||this->getTag() == 15) {
-	    opserr << "ShellMITC4Thermal: " << this->getTag() << " Resid: " << endln
-		  << resid << endln;
-	}
-
-  if (resid(0) != resid(0)|| resid(1) != resid(1))
-	  opserr << "ShellMITC4Thermal: " << this->getTag() << " Resid: " << endln
-	  << resid << endln;
+#ifdef _SDEBUG
+  opserr<< "ShellMITC4Thermal: "<<this->getTag()<< " Resid: "<<endln
+	 <<resid<<endln;
 #endif
 
   if (counterTemperature == 1)
@@ -1368,8 +1371,7 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
   resid.Zero( ) ;
   
 //start Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
-  if(!Geolinear)
-	updateBasis( );
+  updateBasis( );
 //end Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
 
   double dx34 = xl[0][2]-xl[0][3];
@@ -1503,8 +1505,8 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
       //nodal "displacements" 
       const Vector &ul = nodePointers[j]->getTrialDisp( ) ;
 
-#ifdef _sDEBUG
-	if (this->getTag() == 1||this->getTag() == 3||this->getTag() == 15) 
+#ifdef _SDEBUG
+	if((this->getTag())==1&&j==2)
 			opserr<<"Node "<<j<<" TrialDisp "<<ul<<endln;
 #endif
 	  if(ul.Norm()>1e6)
@@ -1526,11 +1528,8 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
 	      epsDrill +=  BdrillJ[p]*ul(p) ;
     } // end for j
   
-#ifdef _sDEBUG
-	if (this->getTag() == 1 && i == 3)
-		opserr << "Shell " << i << " strain  " << strain << endln;
-#endif
-    //if(counterTemperature !=1&&counterTemperature !=2)
+
+    if(counterTemperature !=1&&counterTemperature !=2)
        success = materialPointers[i]->setTrialSectionDeformation( strain ) ;
 
     //compute the stress
@@ -2146,7 +2145,7 @@ ShellMITC4Thermal::shapefn2d( double ss, double tt ,int i)
 	   case 4:
 		   shpVal = 0.25*(1-ss)*(1+tt);break;
 	   default:
-		   opserr<<"ShellMITC4Thermal::shapefn2d recieved an invalid i: "<<i <<endln ;
+		   opserr<<"ShellMITC4Thermal::shapefn2d received an invalid i: "<<i <<endln ;
 	   }
    return shpVal;
 }

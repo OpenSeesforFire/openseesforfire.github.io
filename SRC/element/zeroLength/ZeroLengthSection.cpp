@@ -582,9 +582,9 @@ ZeroLengthSection::Print(OPS_Stream &s, int flag)
     
     if (flag == OPS_PRINT_PRINTMODEL_JSON) {
         s << "\t\t\t{";
-        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"name\": " << this->getTag() << ", ";
         s << "\"type\": \"ZeroLengthSection\", ";
-        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
         s << "\"section\": \"" << theSection->getTag() << "\", ";
         s << "\"transMatrix\": [[";
         for (int i = 0; i < 3; i++) {
@@ -699,7 +699,7 @@ ZeroLengthSection::setUp(int Nd1, int Nd2, const Vector &x, const Vector &yp)
       opserr << "ZeroLengthSection::setUp -- incorrect dimension of orientation vectors\n";
 			
 
-    // establish orientation of element for the tranformation matrix
+    // establish orientation of element for the transformation matrix
     // z = x cross yp
     static Vector z(3);
     z(0) = x(1)*yp(2) - x(2)*yp(1);

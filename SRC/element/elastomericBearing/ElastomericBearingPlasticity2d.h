@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6484 $
-// $Date: 2016-10-19 09:18:14 +0800 (Wed, 19 Oct 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/elastomericBearing/ElastomericBearingPlasticity2d.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef ElastomericBearingPlasticity2d_h
 #define ElastomericBearingPlasticity2d_h

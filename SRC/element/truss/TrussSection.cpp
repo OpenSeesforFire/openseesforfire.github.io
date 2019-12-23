@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 6593 $
-// $Date: 2017-06-15 06:17:10 +0800 (Thu, 15 Jun 2017) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/truss/TrussSection.cpp $
+// $Revision$
+// $Date$
+// $URL$
                                                                         
                                                                         
 // Written: fmk 
@@ -673,7 +673,7 @@ TrussSection::addInertiaLoadToUnbalance(const Vector &accel)
 #ifdef _G3DEBUG    
   if (nodalDOF != Raccel1.Size() || nodalDOF != Raccel2.Size()) {
     opserr <<"TrussSection::addInertiaLoadToUnbalance " <<
-      "matrix and vector sizes are incompatable\n";
+      "matrix and vector sizes are incompatible\n";
     return -1;
   }
 #endif
@@ -724,6 +724,9 @@ TrussSection::getResistingForce()
       (*theVector)(i+numDOF2) = temp;
     }
 
+    // subtract external load
+    (*theVector) -= *theLoad;
+  
     return *theVector;
 }
 
@@ -733,9 +736,6 @@ const Vector &
 TrussSection::getResistingForceIncInertia()
 {	
   this->getResistingForce();
-  
-  // subtract external load
-  (*theVector) -= *theLoad;
   
   // now include the mass portion
   if (L != 0.0 && rho != 0.0) {
@@ -1062,10 +1062,10 @@ TrussSection::Print(OPS_Stream &s, int flag)
     
     if (flag == OPS_PRINT_PRINTMODEL_JSON) {
         s << "\t\t\t{";
-        s << "\"name\": \"" << this->getTag() << "\", ";
+        s << "\"name\": " << this->getTag() << ", ";
         s << "\"type\": \"TrussSection\", ";
-        s << "\"nodes\": [\"" << connectedExternalNodes(0) << "\", \"" << connectedExternalNodes(1) << "\"], ";
-        s << "\"rho\": " << rho << ", ";
+        s << "\"nodes\": [" << connectedExternalNodes(0) << ", " << connectedExternalNodes(1) << "], ";
+        s << "\"massperlength\": " << rho << ", ";
         s << "\"section\": \"" << theSection->getTag() << "\"}";
     }
 }
@@ -1622,7 +1622,7 @@ TrussSection::addInertiaLoadSensitivityToUnbalance(const Vector &accel, bool som
 #ifdef _G3DEBUG    
     if (nodalDOF != Raccel1.Size() || nodalDOF != Raccel2.Size()) {
       opserr << "Truss::addInertiaLoadToUnbalance " <<
-	"matrix and vector sizes are incompatable\n";
+	"matrix and vector sizes are incompatible\n";
       return -1;
     }
 #endif
@@ -1656,7 +1656,7 @@ TrussSection::addInertiaLoadSensitivityToUnbalance(const Vector &accel, bool som
 #ifdef _G3DEBUG    
     if (nodalDOF != Raccel1.Size() || nodalDOF != Raccel2.Size()) {
       opserr << "Truss::addInertiaLoadToUnbalance " <<
-	"matrix and vector sizes are incompatable\n";
+	"matrix and vector sizes are incompatible\n";
       return -1;
     }
 #endif

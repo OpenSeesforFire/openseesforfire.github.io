@@ -18,9 +18,9 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// $Revision: 6488 $
-// $Date: 2016-11-02 10:44:41 +0800 (Wed, 02 Nov 2016) $
-// $URL: svn://peera.berkeley.edu/usr/local/svn/OpenSees/trunk/SRC/element/twoNodeLink/TwoNodeLink.h $
+// $Revision$
+// $Date$
+// $URL$
 
 #ifndef TwoNodeLink_h
 #define TwoNodeLink_h
