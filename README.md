@@ -1,4 +1,4 @@
-# openseesforfire_Project@The Hong Kong Polytechnic University
+# OpenSeesforFire_Project@The Hong Kong Polytechnic University
 # This is a source code package for compiling OpenSess for Fire, which is added and managed by Dr.Liming Jiang
 # For more information：
 # Please refer to our Github webpage: http://openseesforfire.github.io/ 
