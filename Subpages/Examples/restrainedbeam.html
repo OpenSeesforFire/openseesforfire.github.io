@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../../stylesheets/styles.css">
+    <link rel="stylesheet" href="../../stylesheets/github-light.css">
+    <meta name="viewport" content="../../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="../heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="../sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="../commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="../examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="../sifexamples.html">SIFBuilder Examples</a><img src="../New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
+        <h4><p class="view"><a href="../../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>Restrained beam subjected to temperature rise</h2>
+    <hr>
+<h4> Introduction</h4>
+
+<p>
+Figure E1-1 shows a 2m beam, only the left half of which is subjected to a uniform temperature increment from 0oC to 1000<sup>o</sup>C. The right half of the beam keeps ambient temperature and acts as a translational spring to restrain the displacement of the left part. Two beam elements are used in the model. Material class Steel01Thermal is used and the initial modulus of elasticity at 0<sup>o</sup>C is 200GPa.
+</p>
+<p>Downloading the Example package here </p>
+<hr>
+<h4> A schematic plot of the Model</h4>
+
+ <center><img src="../../images/CaseImgs/restrained_beam.jpg"  style="width:300px;"> </center>
+ <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
+
+<hr>
+<h4> Tcl script for modelling a restrained beam using 2D beam-column elements</h4>
+<code>
+
+#define node     <br>
+node 1 0 0;        <br>
+node 2 2 0;<br>
+node 3 1 0;<br>
+
+#define boundary condition;<br>
+fix 1 1 1 1;<br>
+fix 2 1 1 1;<br>
+fix 3 0 1 1;<br>
+
+#define an elastic material with Tag=1 and E=2e11. <br>
+uniaxialMaterial Steel01Thermal 1 2e11 2e11 0.01;<br>
+
+#define fibred section; Two fibres: fiber $yLoc $zLoc $A $matTag<br>
+set secTag 1;      <br>
+   section FiberThermal $secTag { <br>
+    fiber -0.025 0 0.005 1; <br>
+    fiber 0.025 0 0.005 1; <br>
+    };
+
+#define coordinate transforamtion: geomTransf $type $TransfTag; <br>
+#three transformation types can be chosen: Linear, PDelta, Corotational)<br>
+geomTransf Linear 1 ; <br>
+
+#define beam element: dispBeamColumnThermal $eleTag $iNode $jNode $numIntgrPts $secTag $TransfTag;<br>
+#"numIntgrPts" is the number of integration points along the element; <br>
+#"TransfTag" is pre-defined coordinate-transformation; <br>
+element dispBeamColumnThermal 1 1 3 3 1 1; <br>
+element dispBeamColumnThermal 2 3 2 3 1 1; <br>
+pattern Plain 1 Linear { <br>
+eleLoad -ele 1 -type -beamThermal 1000 -50 1000 50 <br>
+#eleLoad -ele 2 -type -beamThermal 0 -0.05 0 0.05 <br>
+}; <br>
+</code>
+
+<h4> Tcl script for modelling a restrained beam using 3D beam-column elements</h4>
+<code>
+wipe;                  <br>
+#file mkdir Data;           # create data directory            <br>
+model BasicBuilder -ndm 3 -ndf 6;# 2 dimension and 3 dofs per node <br>
+#source DisplayPlane.tcl;       # procedure for displaying a plane in model<br>
+#source DisplayModel2D.tcl;     # procedure for displaying 2D perspective of model<br>
+
+#define node<br>
+node 1 0 0 0;<br>
+node 2 2000 0 0;<br>
+node 3 1000 0 0;<br>
+
+#define boundary condition;<br>
+fix 1 1 1 1 1 1 1;<br>
+fix 2 1 1 1 1 1 1;<br>
+fix 3 0 1 1 1 1 1;<br>
+
+#define an elastic material with Tag=1 and E=2e11.    <br>
+#uniaxialMaterial SteelECThermal 1 300 2e5 0.01;<br>
+uniaxialMaterial Steel01Thermal 1 1000 2e5 0.01;<br>
+#define fibred section; Two fibres: fiber $yLoc $zLoc $A $matTag<br>
+set secTag 1;<br>
+section FiberThermal $secTag {<br>
+    fiber -25 -25 2500 1;<br>
+    fiber -25 25 2500 1;<br>
+    fiber 25 -25 2500 1;<br>
+    fiber 25 25 2500 1;<br>
+ };<br>
+
+#define coordinate transforamtion: geomTransf $type $TransfTag;<br>
+#three transformation types can be chosen: Linear, PDelta, Corotational)<br>
+geomTransf Linear 1 0 1 0;<br>
+
+#define beam element:
+#element dispBeamColumnThermal $eleTag $iNode $jNode $numIntgrPts $secTag $TransfTag;<br>
+element dispBeamColumnThermal  1 1 3 3 1 1;<br>
+element dispBeamColumnThermal  2 3 2 3 1 1;<br>
+#"numIntgrPts" is the number of integration points along the element;<br><br>
+#"TransfTag" is pre-defined coordinate-transformation;<br>
+
+#define output
+recorder Node -file RBDFree31.out -time -node 3 -dof 1 disp;        # displacements of free nodes<br>
+recorder Element -file RBElement1Sec.out -time -ele 1 section 1 fiber -25 25 stressStrain<br>
+recorder Element -file RBElement1SecFibre.out -time -ele 1 section 2 fiber -25 25 TempElong;<br>
+recorder Element -file RBElement2LF.out -time -ele 2 localForce;<br>
+
+
+#define thermal load (i.e. temperature distribution in section)<br>
+#-beamThermal $T1 $LocY1 $T2 LocY2....; two temperature means uniform or linear temperature distribution<br>
+#T1=bottom temperature;T2=top temperature<br>
+pattern Plain 1 Linear {<br>
+eleLoad -ele 1 -type -beamThermal 1000 -50 1000 50<br>
+};<br>
+</code>
+<br>
+
+<h4> Displacement of mid-node</h4>
+    <p>The varation of the mid-node displacement is shown in the following figure, where the node moves towards the right-hand direction due to thermal expansion and moves back because of material degradation</p>
+ <center><img src="../../images/CaseImgs/Thermal_Expansion22.jpg"  style="width:500px;"> </center>
+ <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
+<hr>
+<small><p>This page is created by Liming Jiang, 2016</p></small>
+      </section>
+<footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>
