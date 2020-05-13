@@ -41,149 +41,96 @@
       </header>
 <section>
 
-<h2>Material Commands for Thermo-Mechanical analysis in OpenSees</h2>
+<h2>Thermo-Mechanical Elements in OpenSees</h2>
     <hr>
 <p>
-This page introduces the developed commands for performing thermo-mechanical analysis in OpenSees.
+This page introduces the commands of using various elements for thermo-mechanical analysis in OpenSees.
  </p>
 <hr>
-    <center><b>Thermo-mechaical Unixal Materials</b></center>
+    <center><b>Thermo-mechaical beam-column Elements</b></center>
+
 <hr>
-<!Steel01Thermal command---------------------------------------------------------------------->
-<h4><a name = "Steel01"> Steel01Thermal</a></h4>
-This class is derived by modification of the existing steel material class "Steel01" to include the temperature-dependent properties according to EN 1993-1-2 carbon steel at elevated temperature. The definition of the parameters of Steel01Thermal material in OpenSees Command language Manual:
+
+<!Disp based beam-column element command---------------------------------------------------------------------->
+<h4><a name = "DispBeamEles"> dispBeamColumnThermal</a></h4>
+<p>Thermo-mechanical displacement based beam-column elements are derived by modifying the existing elements to include the interface for thermal action. The definition of thermo-mechanical beam-column elements for 2d and 3d model in OpenSees can be scripted as follows:</p>
 
 <div class="box">
 <code>
-uniaxialMaterial Steel01Thermal $matTag $Fy $E0 $b <$a1 $a2 $a3 $a4>
+element dispBeamColumnThermal $eleID $NodeTag0 $NodeTag1 $NumInts $secTag $TransfTag;
 </code>
 </div>
 
 
 <hr>
 
-<!Steel02Thermal command---------------------------------------------------------------------->
-<h4> <a name = "Steel02">Steel02Thermal</a> </h4>
-<b>Steeel02Thermal</b> is derived from "Steel02", which incorprates with a smooth transition from elastic to plastic behaviour.
+<!force based beam column element command---------------------------------------------------------------------->
+<h4> <a name = "forceBeamEles">forceBeamColumnThermal</a> </h4>
+<p><b>ForceBeamColumnThermal</b> is used for using force based thermo-mechanical elements.</p>
 
 <div class="box">
 <code>
-uniaxialMaterial Steel02Thermal $matTag $Fy $E0 $b $R0 $cR1 $cR2 <$a1 $a1 $a1 $a1>
+element forceBeamColumnThermal $eleID $NodeTag0 $NodeTag1 $NumInts $secTag $TransfTag;
 </code>
 </div>
 
 <br>
 <hr>
 
-<!SteelECThermal command---------------------------------------------------------------------->
-<h4> <a name = "SteelEC">SteelECThermal</a> </h4>
-<b>SteeelECThermal</b> is developed for modelling steel material at elevated temperature, and provding different types of steel material definition according to EN1992,EN1993. <br>
---EC2NH and EC2NC are correponding to the hot-rolled and cold-formed steel rebars in Eurocode 2. EC3 is scorreponding to the carbon steel in EC3. 
-
-<div class="box">
-<code>
-uniaxialMaterial SteelECThermal $matTag <$steelType> $Fy $E0
-</code>
-</div>
-
-<p>A sample is shown as below: </p>
-<div class="box">
-<code>
-uniaxialMaterial SteelECThermal 1 EC2NH 5.65e8 2e11;
-</code>
-</div>
-
-<br>
 <hr>
-<!Concrete02Thermal command---------------------------------------------------------------------->
-<h4> <a name = "Concrete02">Concrete02Thermal</a> </h4>
-<b>Concrete02Thermal</b> is created for modelling concrete, which is derived from the standard "Concrete02" material and incorprates with temperature dependent properties sugggested in Eurocode 2 (EN1992-1-2).
-
-<div class="box">
-<code>
-uniaxialMaterial Concrete02Thermal $matTag $Fy $E0 <$a1 $a1 $a1 $a1>
-</code>
-</div>
-
-<br>
-<hr>
-<!ConcreteECThermal command---------------------------------------------------------------------->
-<h4> <a name = "ConcreteEC">ConcreteECThermal</a> </h4>
-<b>ConcreteECThermal</b> is derived by modification of the existing concrete material class "Concrete02" and "Concrete02Thermal" to include the temperature-dependent properties according to EN 1992-1-2 about concrete with siliceous aggregates at elevated temperature.
-
-<div class="box">
-<code>
-uniaxialMaterial ConcreteECThermal $matTag $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets
-</code>
-</div>
-
-<p>Example is shown as below: </p>
-<div class="box">
-<code>
-set fpc -30;<br>
-set epsc0 -0.003;<br>
-set fpcu [expr $fpc*0.05];<br>
-set epsU -0.02;<br>
-set lambda 0.1;<br>
-set ft 0.0;<br>
-set Ets [expr $ft/0.002];<br>
-
-uniaxialMaterial ConcreteECThermal 2 $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets;
-</code>
-</div>
-<br>
-<hr>
-    <center><b>Thermo-mechaical nD Materials</b></center>
+    <center><b>Thermo-mechaical Shell Elements</b></center>
 <hr>
 <!Multi-axis ElasticIsotropicThermal command---------------------------------------------------------------------->
-<h4> <a name = "ShellElas">ElasticIsotropicThermal</a> </h4>
-<b>ElasticIsotropicThermal</b> is created for analyses using shell elements in OpenSees, which could either be defined with constant thermal expansion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.
+<h4> <a name = "ShellMITC4">ShellMITC4Thermal</a> </h4>
+<p><b>ElasticIsotropicThermal</b> is created for analyses using shell elements in OpenSees, which could either be defined with constant thermal expansion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.</p>
 
 <div class="box">
 <code>
-nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Thermal_expansion_ratio <-cSoft/-sSoft>;
-</code>
-</div>
-
-<br>
-<hr>
-<h4> <a name = "ShellJ2">J2PlaneStressThermal</a> </h4>
-<p><b>J2PlaneStressThermal</b> is created for analyses using shell elements in OpenSees, which represents a J2 plasiticty material (Von-Mises stress yielding principle) suitable for steel materials, using reduction factors and thermal exapnasion properties defined in Eurocode 2 and Eurocode 3. H1 and H2 and hardening factors for kinematic and isotropic hardening after yielding.</p>
-
-<div class="box">
-<code>
-nDMaterial J2PlaneStressThermal $matTag $typeTag $E0 $Poisson_ratio $fy $fyu $H1 $H2;
+element ShellMITC4Thermal $eleTag $iNode $jNode $kNode $lNode $secTag;
 </code>
 </div>
     
 <p>A sample is shown as below: </p>
 <div class="box">
 <code>
-nDMaterial  J2PlaneStressThermal 11 22 2e11 0.3 5.65e8 6.65e8 10 2e10;
+block2D $nx $ny 1 1 ShellMITC4Thermal  5 { <br>
+    1   0. 0. 0. <br>
+    2   4.15 0. 0. <br>
+    3  4.15 3.15 0. <br>
+    4   0. 3.15 0. <br>
+}
 </code>
 </div>
 
 <br>
 <hr>
-<h4> <a name = "ShellCDP">CDPPlaneStressThermal</a> </h4>
-<p><b>CDPPlaneStressThermal</b> is created for analyses using shell elements in OpenSees, which represents a concrete damage plasiticty material suitable for concrete materials, using reduction factors and thermal exapnasion properties defined in Eurocode 2. gt and gc are the fracture energy associated with the crack and crush of concrete material.</p>
+<h4> <a name = "ShellNLDKGQ">ShellNLDKGQThermal</a> </h4>
+<p><b>ShellNLDKGQThermal</b> is created for analyses using shell elements in OpenSees, which can co-work with a layered shell section. </p>
 
 <div class="box">
 <code>
-nDMaterial CDPPlaneStressThermal $matTag $E0 $Poisson_ratio $ft $fc $gt $gc;
+element ShellNLDKGQThermal $eleTag $iNode $jNode $kNode $lNode $secTag;
 </code>
 </div>
     
 <p>A sample is shown as below: </p>
 <div class="box">
 <code>
-nDMaterial  CDPPlaneStressThermal 101 2.2e10 0.2 3e6 30e6 $gt $gc;
+block2D $nx $ny 1 1 ShellNLDKGQThermal  5 { <br>
+    1   0. 0. 0. <br>
+    2   4.15 0. 0. <br>
+    3  4.15 3.15 0. <br>
+    4   0. 3.15 0. <br>
+}
 </code>
 </div>
 
 <br>
-<hr>
-
+<hr>    
+    
+    
+    
+    
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
      <footer>
