@@ -77,7 +77,8 @@ uniaxialMaterial Steel02Thermal $matTag $Fy $E0 $b $R0 $cR1 $cR2 <$a1 $a1 $a1 $a
 
 <!SteelECThermal command---------------------------------------------------------------------->
 <h4> <a name = "SteelEC">SteelECThermal</a> </h4>
-<b>SteeelECThermal</b> is developed for modelling steel material at elevated temperature, and provding different types of steel material definition according to EN1992,EN1993.
+<b>SteeelECThermal</b> is developed for modelling steel material at elevated temperature, and provding different types of steel material definition according to EN1992,EN1993. <br>
+--EC2NH and EC2NC are correponding to the hot-rolled and cold-formed steel rebars in Eurocode 2. EC3 is scorreponding to the carbon steel in EC3. 
 
 <div class="box">
 <code>
@@ -85,6 +86,12 @@ uniaxialMaterial SteelECThermal $matTag <$steelType> $Fy $E0
 </code>
 </div>
 
+<p>Example is shown as below: </p>
+<div class="box">
+<code>
+uniaxialMaterial SteelECThermal 1 EC2NH 5.65e8 2e11;
+</code>
+</div>
 
 <br>
 <hr>
