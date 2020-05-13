@@ -51,7 +51,69 @@ This page introduces the commands of using various sections for thermo-mechanica
 
 <hr>
 
+<!FiberSecThermal command---------------------------------------------------------------------->
+<h4><a name = "FiberSec"> FiberSecThermal</a></h4>
+<p>This section is derived by modifying the existing fiber based section to include the interface for thermal action. The definition of FiberSecThermal for 2d and 3d model in OpenSees can be scripted as follows:</p>
+
+<div class="box">
+<code>
+section fiberSecThermal $secTag {
+    fiber $fiberLocy $fiberLocz $fiberArea $matTag;
+}
+</code>
+</div>
+
+
+<hr>
+
+<!FiberSecGJThermal command---------------------------------------------------------------------->
+<h4> <a name = "FiberGJ">FiberGJThermal</a> </h4>
+<p><b>FiberGJThermal</b> is derived from "FiberSecGJ", which can be used for 3d beam-column elements.</p>
+
+<div class="box">
+<code>
+section fiberSecThermal $secTag -GJ $GJ {
+    fiber $fiberLocy $fiberLocz $fiberArea $matTag;
+}
+</code>
+</div>
+
+<br>
+<hr>
+
+<hr>
+    <center><b>Thermo-mechaical Sections for shell elements</b></center>
+<hr>
+<!Multi-axis ElasticIsotropicThermal command---------------------------------------------------------------------->
+<h4> <a name = "MemraneSec">ElasticIsotropicThermal</a> </h4>
+<p><b>ElasticIsotropicThermal</b> is created for analyses using shell elements in OpenSees, which could either be defined with constant thermal expansion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.</p>
+
+<div class="box">
+<code>
+nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Thermal_expansion_ratio;
+</code>
+</div>
+
+<br>
+<hr>
+<h4> <a name = "LayerSection">LayeredShellThermal</a> </h4>
+<p><b>LayeredShellThermal</b> is created for analyses using shell elements in OpenSees, which can be used for slabs of multiple layer. Each layer can be assigned with a thickness and a material type</p>
+
+<div class="box">
+<code>
+section LayeredShellThermal $SecTag $NumLayers $layerThickness1 $matTag1 $layerThickness2 $matTag2....;
+</code>
+</div>
     
+<p>A sample is shown as below: </p>
+<div class="box">
+<code>
+section LayeredShellThermal   1  13 4  0.01 4  0.01  4 0.005 3 0.000198 5 0.000198 4 0.004604  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
+</code>
+</div>
+
+<br>
+<hr>    
     
     
     
