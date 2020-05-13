@@ -86,7 +86,7 @@ uniaxialMaterial SteelECThermal $matTag <$steelType> $Fy $E0
 </code>
 </div>
 
-<p>Example is shown as below: </p>
+<p>A sample is shown as below: </p>
 <div class="box">
 <code>
 uniaxialMaterial SteelECThermal 1 EC2NH 5.65e8 2e11;
@@ -137,7 +137,7 @@ uniaxialMaterial ConcreteECThermal 2 $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets;
 <hr>
 <!Multi-axis ElasticIsotropicThermal command---------------------------------------------------------------------->
 <h4> <a name = "ShellElas">ElasticIsotropicThermal</a> </h4>
-<b>ElasticIsotropicThermal</b> is created for analysis using shell elements in OpenSees, which could either be defined with constant thermal exapnasion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.
+<b>ElasticIsotropicThermal</b> is created for analyses using shell elements in OpenSees, which could either be defined with constant thermal expansion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.
 
 <div class="box">
 <code>
@@ -147,7 +147,42 @@ nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Therma
 
 <br>
 <hr>
+<h4> <a name = "ShellJ2">J2PlaneStressThermal</a> </h4>
+<p><b>J2PlaneStressThermal</b> is created for analyses using shell elements in OpenSees, which represents a J2 plasiticty material (Von-Mises stress yielding principle) suitable for steel materials, using reduction factors and thermal exapnasion properties defined in Eurocode 2 and Eurocode 3. H1 and H2 and hardening factors for kinematic and isotropic hardening after yielding.</p>
 
+<div class="box">
+<code>
+nDMaterial J2PlaneStressThermal $matTag $typeTag $E0 $Poisson_ratio $fy $fyu $H1 $H2;
+</code>
+</div>
+    
+<p>A sample is shown as below: </p>
+<div class="box">
+<code>
+nDMaterial  J2PlaneStressThermal 11 22 2e11 0.3 5.65e8 6.65e8 10 2e10;
+</code>
+</div>
+
+<br>
+<hr>
+<h4> <a name = "ShellCDP">CDPPlaneStressThermal</a> </h4>
+<p><b>CDPPlaneStressThermal</b> is created for analyses using shell elements in OpenSees, which represents a concrete damage plasiticty material suitable for concrete materials, using reduction factors and thermal exapnasion properties defined in Eurocode 2. gt and gc are the fracture energy associated with the crack and crush of concrete material.</p>
+
+<div class="box">
+<code>
+nDMaterial CDPPlaneStressThermal $matTag $E0 $Poisson_ratio $ft $fc $gt $gc;
+</code>
+</div>
+    
+<p>A sample is shown as below: </p>
+<div class="box">
+<code>
+nDMaterial  CDPPlaneStressThermal 101 2.2e10 0.2 3e6 30e6 $gt $gc;
+</code>
+</div>
+
+<br>
+<hr>
 
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
