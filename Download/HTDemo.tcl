@@ -9,16 +9,17 @@ HTMaterial CarbonSteelEC3 1;       #Defining HeatTransfer Material with Material
 HTMaterial ConcreteEC2 2 0.0; 
 
 #HTEntity Isection $tag $centreX $centreY $Bf $Hb  $Tw  $Tf;
-HTEntity  Isection   1    0.0   0.15    0.3 0.30 0.02 0.02;
+HTEntity  Isection   1    0.0   0.15    0.2 0.30 0.02 0.02;
 #HTEntity Block $tag $centreX $centreY $slabB $slabH;
-HTEntity  Block   2    0.0      0.35     0.7    0.1;
+HTEntity  Block   2    0.0      0.35     0.8    0.1;
 
 
 #HTMesh $MeshTag $EntityTag  $MaterialTag -SecondMat 2
 HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.014 
 HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02 
 
-HTRefineMesh -Entity 2 -SeedTag 1 4 -space 0.02 10 0.01 9 0.005 4 0.01 9 0.02 10;
+#Refine the seed distribution for slab-steel beam interface
+HTRefineMesh -Entity 2 -SeedTag 1 4 -space 0.02 15 0.01 9 0.005 4 0.01 9 0.02 15;
 HTMeshAll;
 
 #RefineMesh 1 -seed 1 ;
