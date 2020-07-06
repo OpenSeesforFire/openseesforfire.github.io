@@ -20,7 +20,9 @@ HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02
 
 #Refine the seed distribution for slab-steel beam interface
 HTRefineMesh -Entity 2 -SeedTag 1 4 -space 0.02 15 0.01 9 0.005 4 0.01 9 0.02 15;
+puts "mesh done";
 HTMeshAll;
+
 
 #RefineMesh 1 -seed 1 ;
 SetInitialT 293.15;
@@ -38,10 +40,11 @@ HTPattern AmbientBC 1 {
 
 FireModel standard 1; 
 
-HTNodeSet 3 -Entity 2 -Locx -0.3 -0.1;
+HTNodeSet 3 -Entity 2 -face 1 -Locx -0.3 -0.1;
 HTEleSet 1 -Entity 2 -NodeSet 3 -face 1;
-HTNodeSet 4 -Entity 2 -Locx 0.1 0.3;
+HTNodeSet 4 -Entity 2 -face 1 -Locx 0.1 0.3;
 HTEleSet 2 -Entity 2 -NodeSet 4 -face 1;
+
 
 HTPattern fire 2 model 1 {
 	HeatFluxBC -HTEntity 1 -face 1 4 5 6 7 8 9 -type ConvecAndRad -HTConstants 2;	
@@ -50,8 +53,11 @@ HTPattern fire 2 model 1 {
 }
 
 #Recorder
-HTRecorder -file temp0.out -NodeSet 1;
-HTRecorder -file temp1.out -NodeSet 2;
+HTNodeSet 5 -Locx 0.0;
+
+HTRecorder -file temp0.out -NodeSet 1;    #Nodes of beam on the beam-slab interface 
+HTRecorder -file temp1.out -NodeSet 2;    #Nodes of slab on the beam-slab interface 
+HTRecorder -file temp2.out -NodeSet 5;    #All the nodes along x=0.0
 
 HTAnalysis HeatTransfer
 HTAnalyze 20 30;	
