@@ -15,7 +15,7 @@ HTEntity  Block   2    0.0      0.35     0.8    0.1;
 
 
 #HTMesh $MeshTag $EntityTag  $MaterialTag -SecondMat 2
-HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.014 
+HTMesh 1 1 1 -phaseChange 0 -MeshCtrls 0.01 0.005 0.005 0.013
 HTMesh 2 2 1 -phaseChange 1 -MeshCtrls 0.02 0.02 
 
 #Refine the seed distribution for slab-steel beam interface
