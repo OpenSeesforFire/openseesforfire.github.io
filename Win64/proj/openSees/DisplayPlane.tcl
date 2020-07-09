@@ -86,38 +86,38 @@ proc DisplayPlane {ShapeType dAmp viewPlane {nEigen 0}  {quadrant 0}} {
 	}
 	if {$viewPlane =="YZ" } {
 		vpn 1 0 0; # direction of outward normal to view plane
-		prp 10000. $uMid $vMid ; # eye location in local coord sys defined by viewing system
-		plane 10000 -10000; # distance to front and back clipping planes from eye
+		prp 15000. $uMid $vMid ; # eye location in local coord sys defined by viewing system
+		plane 15000 -15000; # distance to front and back clipping planes from eye
 	} elseif  {$viewPlane =="ZY" } {
 		vpn -1 0 0; # direction of outward normal to view plane
-		prp -10000. $vMid $uMid ; # eye location in local coord sys defined by viewing system
-		plane 10000 -10000; # distance to front and back clipping planes from eye
+		prp -15000. $vMid $uMid ; # eye location in local coord sys defined by viewing system
+		plane 15000 -15000; # distance to front and back clipping planes from eye
 	} elseif  {$viewPlane =="XY"  } {
 		vpn 0 0 1; # direction of outward normal to view plane
-		prp $uMid $vMid 10000; # eye location in local coord sys defined by viewing system
-		plane 10000 -10000; # distance to front and back clipping planes from eye
+		prp $uMid $vMid 15000; # eye location in local coord sys defined by viewing system
+		plane 15000 -15000; # distance to front and back clipping planes from eye
 	} elseif  {$viewPlane =="YX" } {
 		vpn 0 0 -1; # direction of outward normal to view plane
-		prp $uMid $vMid -10000; # eye location in local coord sys defined by viewing system
-		plane 10000 -10000; # distance to front and back clipping planes from eye
+		prp $uMid $vMid -15000; # eye location in local coord sys defined by viewing system
+		plane 15000 -15000; # distance to front and back clipping planes from eye
 	} elseif  {$viewPlane =="XZ" } {
 		vpn 0 -1 0; # direction of outward normal to view plane
-		prp $uMid -10000 $vMid ; # eye location in local coord sys defined by viewing system
-		plane 10000 -10000; # distance to front and back clipping planes from eye
+		prp $uMid -15000 $vMid ; # eye location in local coord sys defined by viewing system
+		plane 15000 -15000; # distance to front and back clipping planes from eye
 	} elseif  {$viewPlane =="ZX" } {
 		vpn 0 1 0; # direction of outward normal to view plane
-		prp $uMid 10000 $vMid ; # eye location in local coord sys defined by viewing system
-		plane 10000 -10000; # distance to front and back clipping planes from eye
+		prp $uMid 15000 $vMid ; # eye location in local coord sys defined by viewing system
+		plane 15000 -15000; # distance to front and back clipping planes from eye
 	} elseif  {$viewPlane =="3D" } {
-		vpn 1 0.25 1.25; # direction of outward normal to view plane
-		prp -100 $vMid 10000; # eye location in local coord sys defined by viewing system
-		plane 10000 -10000; # distance to front and back clipping planes from eye
+		vpn -1 0 1; # direction of outward normal to view plane
+		prp -18000 -9000 0; # eye location in local coord sys defined by viewing system
+		plane 20000 -15000; # distance to front and back clipping planes from eye
 	}  else {
 		return -1
 	}
 	# next three commands define view, all values in local coord system
 	if  {$viewPlane =="3D" } {
-		viewWindow [expr $uMin-$uWide/4] [expr $uMax/2] [expr $vMin-0.25*$vWide] [expr $vMax] 
+		viewWindow [expr 1.5*($uMin-$uWide/4)] [expr 1.5*$uMax/2] [expr 1.5*($vMin-0.25*$vWide)] [expr 1.5*$vMax] ;# ANWAR added the 1.5* to the viewwindow size
 	} else {
 		viewWindow $uMin $uMax $vMin $vMax
 	}
@@ -125,15 +125,15 @@ proc DisplayPlane {ShapeType dAmp viewPlane {nEigen 0}  {quadrant 0}} {
 	fill 1; 		# fill mode; needed only for solid elements
 
 	if {$quadrant == 0} {
-		port -1 1 -1 1 	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
+		port -1 1 -1 1; 	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
 	} elseif {$quadrant == 1} {
-		port 0 1 0 1 	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
+		port 0 1 0 1 ;	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
 	} elseif {$quadrant == 2} {
-		port -1 0 0 1 	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
+		port -1 0 0 1 ;	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
 	} elseif {$quadrant == 3} {
-		port -1 0 -1 0 	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
+		port -1 0 -1 0; 	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
 	} elseif {$quadrant == 4} {
-		port 0 1 -1 0 	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
+		port 0 1 -1 0 ;	# area of window that will be drawn into (uMin,uMax,vMin,vMax);
 	}
 
 	if {$ShapeType ==  "ModeShape" } {
@@ -141,7 +141,7 @@ proc DisplayPlane {ShapeType dAmp viewPlane {nEigen 0}  {quadrant 0}} {
 	} elseif  {$ShapeType ==  "NodeNumbers" } {
 		display 1 -1 0  ; 		# display node numbers
 	} elseif  {$ShapeType ==  "DeformedShape" }  {
-		display 1 2 $dAmp; 		# display deformed shape  the 2 makes the nodes small
+		display 1 3 $dAmp; 		# display deformed shape  the 2 makes the nodes small; (the second number is the node size)
 	}
 };                                                                                                                                                          #
 ######################################################################################

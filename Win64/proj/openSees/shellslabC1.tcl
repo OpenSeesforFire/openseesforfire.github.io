@@ -24,9 +24,9 @@ set slabB 1.829;
 set slabL 1.829;
 set UDL 1E3;
 
-nDMaterial ElasticIsotropic3DThermal 2 1.92e9 0.2 0 1.4e-5;
+#nDMaterial ElasticIsotropic3DThermal 2 1.92e9 0.2 0 1.4e-5;
 #nDMaterial DruckerPragerThermal 2 $k $G $sigY $rho $rhoBar $Kinf $K0 $delta1 $delta2 $H $theta $mDen;
-nDMaterial PlateFiberThermal 14 2;
+#nDMaterial PlateFiberThermal 14 2;
 # $secTag $matTag $thickness
 #section PlateFiberThermal 2 4 0.05;
 
@@ -42,9 +42,9 @@ nDMaterial PlateFiberThermal 14 2;
 #nDMaterial Damage2p 2 30;
 puts "3dhere0";
 #nDMaterial PlateFiberThermal 4 7;
-set gt [expr 2.08e6/1.513e10*2.08e6*2];
+set gt [expr 2.52e6/1.513e10*2.52e6*2];
 set gc [expr 25.21e6/1.513e10*25.21e6*6];
-nDMaterial  CDPPlaneStressThermal 7  1.12e10 0.2  2.08e6  25.21e6 $gt $gc;
+nDMaterial  CDPPlaneStressThermal 7  1.513e10 0.2  2.52e6  25.21e6 $gt $gc;
 nDMaterial   PlateFromPlaneStressThermal    4   7    10e9
 
 
@@ -58,14 +58,14 @@ nDMaterial PlateRebarThermal 5 1 90;
 #section LayeredShellThermal  2  14  4  0.01  4 0.009497345 3 0.000502655 5 0.000502655 4 0.009497345 4  0.01  4  0.01 4  0.01  4  0.01 4 0.009497345 5 0.000502655 3 0.000502655 4 0.009497345 4  0.01 ;
 #section LayeredShellThermal  2  10  4  0.01  4 0.01 4 0.01 4  0.01  4  0.01 4  0.01  4  0.01 4  0.01  4 0.01 4 0.01 ;
 #section LayeredShellThermal  2  11  4 0.008225  4 0.008095 24 0.00026 4 0.00685 4 0.00698  4 0.00698 4 0.00698 4 0.00685 24 0.00026 4 0.008095 4 0.008225 ;
-nDMaterial  J2PlaneStressThermal 10 2.06e11 0.3 4.5e8 5.45e8 0 0;
+nDMaterial  J2PlaneStressThermal 10 22 2.06e11 0.3 4.5e8 6.0e8 10 0;
 nDMaterial   PlateFromPlaneStressThermal    44   10   20e10;
 
-section LayeredShellThermal  2  14  4 0.009365 4 0.009105 3 0.00026 5 0.00026 4 0.005557 4 0.005817  4 0.005817 4 0.005817 4 0.005817 4 0.005557 5 0.00026 3 0.00026 4 0.006825 4 0.007085 ;
-section LayeredShellThermal  3  12  4  0.009365  4 0.009235  44 0.00026 4 0.005687 4  0.005817  4  0.005817 4 0.005817  4 0.005817  4 0.005687  44 0.00026 4 0.006955 4  0.007085;
+section LayeredShellThermal  2  14  4 0.007085 4 0.006825 3 0.00026 5 0.00026 4 0.005557 4 0.005817  4 0.005817 4 0.005817 4 0.005817 4 0.005557 5 0.00026 3 0.00026 4 0.009105 4 0.009365 ;
+section LayeredShellThermal  3  12  4  0.007085 4 0.006955 44 0.00026 4 0.005687 4  0.005817  4  0.005817 4 0.005817  4 0.005817  4 0.005687  44 0.00026 4 0.009235 4  0.009365;
 puts "here0";
 
-#section LayeredShellThermal  2  10  4  0.01 4 0.01  4 0.01  4  0.01  4 0.01 4  0.01  4  0.01 4  0.01 4  0.01 4  0.01 ;
+
 #block2D $nx $ny 1 1 ShellNLDKGQThermal 2  ShellMITC4Thermal ShellMITC4GNLThermal
 block2D $nx $ny 1 1 ShellNLDKGQThermal  2 { 
     1   0. 0. 0.
@@ -240,7 +240,7 @@ puts "Point";
 constraints Plain;
 numberer Plain;
 system BandGeneral;
-test NormDispIncr 1e-3  600 1;
+test NormDispIncr 1e-4  300 1;
 algorithm Newton;
 integrator LoadControl 0.5;	
 analysis Static;			

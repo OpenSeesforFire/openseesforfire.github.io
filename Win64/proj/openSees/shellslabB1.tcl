@@ -19,32 +19,17 @@ source DisplayModel3D.tcl
 #these should both be even, number of elements per edge
 set nx 10;
 set ny 10;
-set slabT 0.0678;
+set slabT 0.0682;
 set slabB 1.829;
 set slabL 2.745;
 set UDL 1E3;
 
-nDMaterial ElasticIsotropic3DThermal 2 1.92e9 0.2 0 1.4e-5;
-#nDMaterial DruckerPragerThermal 2 $k $G $sigY $rho $rhoBar $Kinf $K0 $delta1 $delta2 $H $theta $mDen;
-nDMaterial PlateFiberThermal 14 2;
-# $secTag $matTag $thickness
-#section PlateFiberThermal 2 4 0.05;
 
-
-#set k 2.13e10;set G 1.6e10;set sigY 6.05e6;set rho 0.174;set rhoBar 0.174;set Kinf 0;set K0 0;set delta1 1;set H 1.75e10;set theta 1;set delta2 0;set mDen 2400;
-#nDMaterial DruckerPragerThermal 7 $k $G $sigY $rho $rhoBar $Kinf $K0 $delta1 $delta2 $H $theta $mDen $sigT;
-#nDMaterial CapPlasticityThermal 2    3    2400  $G  $k  0.5032e8 4.6412e-10 0.42 4.43 12.4e6    0.33 6.3816e-8 5.6614e7 -1.0684e6 1.0e-6
-#nDMaterial Damage2p 2 30;
+puts "here0";
 #nDMaterial PlateFiberThermal 4 7;
-#          CapPlasticity $tag $ndm  $rho     $G    $K  $X  $D  $W   $R  $lambda  $theta  $beta   $alpha    $T       $tol
-#nDMaterial CapPlasticityThermal 2    3    2400  $G  $k  0.5032e8 4.6412e-10 0.42 4.43 7.9979e6 0.11 6.3816e-8 2.6614e7 -2.0684e6 1.0e-8
-#nDMaterial J2Plasticity 2 $k $G $sigY $sigY 0 0
-#nDMaterial Damage2p 2 30;
-puts "3dhere0";
-#nDMaterial PlateFiberThermal 4 7;
-set gt [expr 1.6e6/1.12e10*1.6e6*2];
+set gt [expr 1.87e6/1.12e10*1.87e6*2];
 set gc [expr 18.7e6/1.12e10*18.7e6*6];
-nDMaterial  CDPPlaneStressThermal 7  1.12e10 0.2  1.6e6  18.7e6 $gt $gc;
+nDMaterial  CDPPlaneStressThermal 7  1.12e10 0.2  1.87e6  18.7e6 $gt $gc;
 nDMaterial   PlateFromPlaneStressThermal    4   7    100e9
 
 
@@ -53,8 +38,8 @@ uniaxialMaterial SteelECThermal 1 EC2NH 4.50e8 2e11;
 nDMaterial PlateRebarThermal 3 1 0;
 nDMaterial PlateRebarThermal 5 1 90;
 
-#nDMaterial  J2PlaneStressThermal 10 2.06e11 0.3 4.5e8 5.45e8 0 0;
-#nDMaterial   PlateFromPlaneStressThermal    44   10   20e10;
+nDMaterial  J2PlaneStressThermal 10 22 2.06e11 0.3 4.5e8 5.45e8 0.1 0;
+nDMaterial   PlateFromPlaneStressThermal    44   10   20e10;
 
 # $secTag $matTag $thickness
 #section PlateFiberThermal 2 4 $slabT;
@@ -63,9 +48,9 @@ nDMaterial PlateRebarThermal 5 1 90;
 #section LayeredShellThermal  2  10  4  0.01  4 0.01 4 0.01 4  0.01  4  0.01 4  0.01  4  0.01 4  0.01  4 0.01 4 0.01 ;
 #section LayeredShellThermal  2  11  4 0.008225  4 0.008095 24 0.00026 4 0.00685 4 0.00698  4 0.00698 4 0.00698 4 0.00685 24 0.00026 4 0.008095 4 0.008225 ;
 #due to the section defition in ShellNLDKGQ, the layer order is reversed
-section LayeredShellThermal  2  14  4 0.009565  4 0.009305 3 0.00026 5 0.00026 4 0.00519 4 0.00545  4 0.00545 4 0.00545 4 0.00545 4 0.00519 5 0.00026 3 0.00026 4 0.007925 4 0.008185 ;
-#section LayeredShellThermal  3 12  4 0.009565  4 0.009435 44 0.00026  4 0.00532 4 0.00545  4 0.00545 4 0.00545 4 0.00545 4 0.00532 44 0.00026 4 0.008055 4 0.008185 ;
-puts "here0";
+section LayeredShellThermal  2  14  4 0.008185  4 0.007925 3 0.00026 5 0.00026 4 0.00519 4 0.00545  4 0.00545 4 0.00545 4 0.00545 4 0.00519 5 0.00026 3 0.00026 4 0.009305 4 0.009565;
+section LayeredShellThermal  3 12  4 0.008185  4 0.008055 44 0.00026  4 0.00532 4 0.00545  4 0.00545 4 0.00545 4 0.00545 4 0.00532 44 0.00026 4 0.009435 4 0.009565 ;
+puts "here1";
 
 #section LayeredShellThermal  2  10  4  0.01 4 0.01  4 0.01  4  0.01  4 0.01 4  0.01  4  0.01 4  0.01 4  0.01 4  0.01 ;
 #block2D $nx $ny 1 1 ShellNLDKGQThermal 2  ShellMITC4Thermal ShellMITC4GNLThermal
@@ -253,7 +238,7 @@ test NormDispIncr 1e-3  300 1;
 algorithm Newton;
 integrator LoadControl 0.5;	
 analysis Static;			
-analyze 100;
+analyze 200;
 loadConst -time 0.0
 }
 

@@ -214,7 +214,10 @@ int Simple_Brick::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const
 
 
 	}
+
+#ifdef _DEBUG
 	opserr << "Seed 1" << this->GetSeeds(1) << endln << "Seed 2" << this->GetSeeds(2) << endln << "Seed 3" << this->GetSeeds(3) << endln;
+#endif
 	return 0;
 }
 

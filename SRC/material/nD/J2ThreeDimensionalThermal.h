@@ -72,7 +72,7 @@ class J2ThreeDimensionalThermal : public J2PlasticityThermal {
   J2ThreeDimensionalThermal( ) ;
 
   //full constructor
-  J2ThreeDimensionalThermal(   int    tag, 
+  J2ThreeDimensionalThermal(   int    tag, int typeTag,
                    double K,
                    double G,
                    double yield0,
@@ -84,7 +84,7 @@ class J2ThreeDimensionalThermal : public J2PlasticityThermal {
 
 
   //elastic constructor
-  J2ThreeDimensionalThermal( int tag, double K, double G ) ;
+  J2ThreeDimensionalThermal( int tag, int typeTag, double K, double G ) ;
 
   //destructor
   ~J2ThreeDimensionalThermal( ) ;

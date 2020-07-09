@@ -62,7 +62,7 @@ class HT_TransientAnalysis: public HeatTransferAnalysis
 
     void clearAll(void);	    
     
-    int analyze(int numSteps, double dT);
+    int analyze(int numSteps, double dT,double& lasttime, double monitortime = 0 );
     int initialize(void);
     int domainChanged(void);
 

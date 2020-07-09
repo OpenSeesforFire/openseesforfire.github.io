@@ -1420,7 +1420,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 	}
 
 	
-	// LayeredShellFiberSectionThermal based on the LayeredShellFiberSectionThermal by Yuli Huang & Xinzheng Lu
+	// LayeredShellFiberSectionThermal based on the LayeredShellFiberSectionThermal Added by Liming Jiang
 	else if (strcmp(argv[1], "LayeredShellThermal") == 0) {
 		if (argc < 6) {
 			opserr << "WARNING insufficient arguments" << endln;
@@ -1428,20 +1428,23 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 			return TCL_ERROR;
 		}
 
+		int count = 2;;
 		int tag, nLayers, matTag;
 		double h, *thickness;
+		double offset=0;
 		NDMaterial **theMats;
 
-		if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
+		if (Tcl_GetInt(interp, argv[count], &tag) != TCL_OK) {
 			opserr << "WARNING invalid section LayeredShellThermal tag" << endln;
 			return TCL_ERROR;
 		}
-
-		if (Tcl_GetInt(interp, argv[3], &nLayers) != TCL_OK) {
+		count++;
+		if (Tcl_GetInt(interp, argv[count], &nLayers) != TCL_OK) {
 			opserr << "WARNING invalid nLayers" << endln;
 			opserr << "LayeredShellThermal section: " << tag << endln;
 			return TCL_ERROR;
 		}
+		count++;
 
 		if (nLayers < 3) {
 			opserr << "ERROR number of layers must be larger than 2" << endln;
@@ -1449,11 +1452,25 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 			return TCL_ERROR;
 		}
 
+		if (strcmp(argv[count], "-offset") == 0 || strcmp(argv[count], "offset") == 0 || strcmp(argv[count], "-Offset") == 0)
+		{
+			count++;
+			if (Tcl_GetDouble(interp, argv[count], &offset) != TCL_OK) {
+				opserr << "WARNING invalid offset" << endln;
+				opserr << "LayeredShellThermal section: " << tag << endln;
+				return TCL_ERROR;
+			}
+			else
+				count++;
+
+		}
+	
+
 		theMats = new NDMaterial*[nLayers];
 		thickness = new double[nLayers];
 
 		for (int iLayer = 0; iLayer < nLayers; iLayer++) {
-			if (Tcl_GetInt(interp, argv[4 + 2 * iLayer], &matTag) != TCL_OK) {
+			if (Tcl_GetInt(interp, argv[count + 2 * iLayer], &matTag) != TCL_OK) {
 				opserr << "WARNING invalid matTag" << endln;
 				opserr << "LayeredShellThermal section: " << tag << endln;
 				return TCL_ERROR;
@@ -1467,7 +1484,7 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 				return TCL_ERROR;
 			}
 
-			if (Tcl_GetDouble(interp, argv[5 + 2 * iLayer], &h) != TCL_OK) {
+			if (Tcl_GetDouble(interp, argv[count+1 + 2 * iLayer], &h) != TCL_OK) {
 				opserr << "WARNING invalid h" << endln;
 				opserr << "LayeredShellThermal section: " << tag << endln;
 				return TCL_ERROR;
@@ -1482,11 +1499,11 @@ TclModelBuilderSectionCommand (ClientData clientData, Tcl_Interp *interp, int ar
 			thickness[iLayer] = h;
 		}
 
-		theSection = new LayeredShellFiberSectionThermal(tag, nLayers, thickness, theMats);
+		theSection = new LayeredShellFiberSectionThermal(tag, nLayers, thickness, theMats,offset);
 		if (thickness != 0) delete thickness;
 		if (theMats != 0) delete[] theMats;
 	}
-	//end L.Jiang [SIF] added based on LayeredShellFiberSectionThermal section created by Yuli Huang & Xinzheng Lu ----
+	//end L.Jiang [SIF] added based on LayeredShellFiberSectionThermal section  ----
     
     else if (strcmp(argv[1],"Bidirectional") == 0) {
 	if (argc < 7) {

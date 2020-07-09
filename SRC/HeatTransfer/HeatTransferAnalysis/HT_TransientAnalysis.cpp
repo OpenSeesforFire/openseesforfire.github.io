@@ -45,6 +45,7 @@
 #include <Graph.h>
 #include <HeatTransferNode.h>
 #include <fstream>
+#include <elementAPI.h>
 
 
 HT_TransientAnalysis::HT_TransientAnalysis(HeatTransferDomain& theDomain,
@@ -145,12 +146,13 @@ HT_TransientAnalysis::initialize(void)
 
 
 int 
-HT_TransientAnalysis::analyze(int numSteps, double dT)
+HT_TransientAnalysis::analyze(int numSteps, double dT,double& lastTime, double monitortime)
 {
-    int result = 0;
+	int result = 0; int monitor = 0;
+	int laststep = lastTime / dT;
     HeatTransferDomain* the_domain = this->getDomainPtr();
 	
-    for (int i = 0; i < numSteps; i++) {
+    for (int i = laststep; i < numSteps; i++) {
 #ifdef _DEBUG
 		opserr<<"Current time: "<<the_domain->getCurrentTime()<<endln;
 #endif
@@ -197,15 +199,38 @@ HT_TransientAnalysis::analyze(int numSteps, double dT)
 			return -4;
 			} 
 
-        HeatTransferDomain* the_domain = this->getDomainPtr();
+        //HeatTransferDomain* the_domain = this->getDomainPtr();
+		monitor=i;
+		if (the_domain->getCurrentTime() == monitortime) {
+			lastTime = monitortime;
+			return monitor;
+		}
+	
+	}    
 
-		}    
 
+#ifdef _DEBUG
+	return monitor;
+#else
+	return result;
+#endif
 
-    return result;
 }
 
+/*
+int
+HT_TransientAnalysis::continue (int numSteps, double dT, double monitortime)
+{
+	int result = 0; int monitor = monitortime/dT;
 
+	HeatTransferDomain* the_domain = this->getDomainPtr();
+	this->analyze()
+
+	return 0;
+
+}
+
+*/
 int
 HT_TransientAnalysis::domainChanged(void)
 {

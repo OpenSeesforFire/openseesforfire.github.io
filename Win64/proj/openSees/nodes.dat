@@ -1,0 +1,735 @@
+
+ Node: 1
+	Coordinates  : 0 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 2
+	Coordinates  : -300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 3
+	Coordinates  : -600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 4
+	Coordinates  : -900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 5
+	Coordinates  : -1200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 6
+	Coordinates  : -1500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 7
+	Coordinates  : -1800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 8
+	Coordinates  : -2100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 9
+	Coordinates  : -2400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 10
+	Coordinates  : -2700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 11
+	Coordinates  : -3000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 12
+	Coordinates  : -3300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 13
+	Coordinates  : -3600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 14
+	Coordinates  : -3900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 15
+	Coordinates  : -4200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 16
+	Coordinates  : -4500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 17
+	Coordinates  : -4800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 18
+	Coordinates  : -5100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 19
+	Coordinates  : -5400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 20
+	Coordinates  : -5700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 21
+	Coordinates  : -6000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 22
+	Coordinates  : -6300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 23
+	Coordinates  : -6600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 24
+	Coordinates  : -6900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 25
+	Coordinates  : -7200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 26
+	Coordinates  : -7500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 27
+	Coordinates  : -7800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 28
+	Coordinates  : -8100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 29
+	Coordinates  : -8400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 30
+	Coordinates  : -8700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 31
+	Coordinates  : -9000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 32
+	Coordinates  : -9300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 33
+	Coordinates  : -9600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 34
+	Coordinates  : -9900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 35
+	Coordinates  : -10200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 36
+	Coordinates  : -10500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 37
+	Coordinates  : -10800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 38
+	Coordinates  : -11100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 39
+	Coordinates  : -11400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 40
+	Coordinates  : -11700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 41
+	Coordinates  : -12000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 42
+	Coordinates  : -12300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 43
+	Coordinates  : -12600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 44
+	Coordinates  : -12900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 45
+	Coordinates  : -13200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 46
+	Coordinates  : -13500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 47
+	Coordinates  : -13800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 48
+	Coordinates  : -14100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 49
+	Coordinates  : -14400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 1
+	Coordinates  : 0 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 2
+	Coordinates  : -300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 3
+	Coordinates  : -600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 4
+	Coordinates  : -900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 5
+	Coordinates  : -1200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 6
+	Coordinates  : -1500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 7
+	Coordinates  : -1800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 8
+	Coordinates  : -2100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 9
+	Coordinates  : -2400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 10
+	Coordinates  : -2700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 11
+	Coordinates  : -3000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 12
+	Coordinates  : -3300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 13
+	Coordinates  : -3600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 14
+	Coordinates  : -3900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 15
+	Coordinates  : -4200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 16
+	Coordinates  : -4500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 17
+	Coordinates  : -4800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 18
+	Coordinates  : -5100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 19
+	Coordinates  : -5400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 20
+	Coordinates  : -5700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 21
+	Coordinates  : -6000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 22
+	Coordinates  : -6300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 23
+	Coordinates  : -6600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 24
+	Coordinates  : -6900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 25
+	Coordinates  : -7200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 26
+	Coordinates  : -7500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 27
+	Coordinates  : -7800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 28
+	Coordinates  : -8100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 29
+	Coordinates  : -8400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 30
+	Coordinates  : -8700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 31
+	Coordinates  : -9000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 32
+	Coordinates  : -9300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 33
+	Coordinates  : -9600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 34
+	Coordinates  : -9900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 35
+	Coordinates  : -10200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 36
+	Coordinates  : -10500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 37
+	Coordinates  : -10800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 38
+	Coordinates  : -11100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 39
+	Coordinates  : -11400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 40
+	Coordinates  : -11700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 41
+	Coordinates  : -12000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 42
+	Coordinates  : -12300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 43
+	Coordinates  : -12600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 44
+	Coordinates  : -12900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 45
+	Coordinates  : -13200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 46
+	Coordinates  : -13500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 47
+	Coordinates  : -13800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 48
+	Coordinates  : -14100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 49
+	Coordinates  : -14400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 1
+	Coordinates  : 0 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 2
+	Coordinates  : -300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 3
+	Coordinates  : -600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 4
+	Coordinates  : -900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 5
+	Coordinates  : -1200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 6
+	Coordinates  : -1500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 7
+	Coordinates  : -1800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 8
+	Coordinates  : -2100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 9
+	Coordinates  : -2400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 10
+	Coordinates  : -2700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 11
+	Coordinates  : -3000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 12
+	Coordinates  : -3300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 13
+	Coordinates  : -3600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 14
+	Coordinates  : -3900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 15
+	Coordinates  : -4200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 16
+	Coordinates  : -4500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 17
+	Coordinates  : -4800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 18
+	Coordinates  : -5100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 19
+	Coordinates  : -5400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 20
+	Coordinates  : -5700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 21
+	Coordinates  : -6000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 22
+	Coordinates  : -6300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 23
+	Coordinates  : -6600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 24
+	Coordinates  : -6900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 25
+	Coordinates  : -7200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 26
+	Coordinates  : -7500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 27
+	Coordinates  : -7800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 28
+	Coordinates  : -8100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 29
+	Coordinates  : -8400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 30
+	Coordinates  : -8700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 31
+	Coordinates  : -9000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 32
+	Coordinates  : -9300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 33
+	Coordinates  : -9600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 34
+	Coordinates  : -9900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 35
+	Coordinates  : -10200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 36
+	Coordinates  : -10500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 37
+	Coordinates  : -10800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 38
+	Coordinates  : -11100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 39
+	Coordinates  : -11400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 40
+	Coordinates  : -11700 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 41
+	Coordinates  : -12000 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 42
+	Coordinates  : -12300 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 43
+	Coordinates  : -12600 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 44
+	Coordinates  : -12900 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 45
+	Coordinates  : -13200 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 46
+	Coordinates  : -13500 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 47
+	Coordinates  : -13800 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 48
+	Coordinates  : -14100 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+
+
+ Node: 49
+	Coordinates  : -14400 3000 -256.7 
+	Disps: 0 0 0 0 0 0 
+

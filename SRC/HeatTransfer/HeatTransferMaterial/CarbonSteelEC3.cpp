@@ -54,7 +54,7 @@ CarbonSteelEC3::~CarbonSteelEC3()
 }
 
 int 
-CarbonSteelEC3::setTrialTemperature(double temp)
+CarbonSteelEC3::setTrialTemperature(double temp, int par)
 {
     trial_temp = temp - 273.15;
     return 0;

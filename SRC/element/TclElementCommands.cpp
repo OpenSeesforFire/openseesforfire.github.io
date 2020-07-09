@@ -153,6 +153,9 @@ extern void *OPS_PFEMElement2D();
 
 extern void *OPS_ShellMITC4Thermal(void);//Added by L.Jiang [SIF]
 extern void *OPS_ShellNLDKGQThermal(void);//Added by L.Jiang [SIF]
+extern void* OPS_ShellNLComThermal(void);//Added by L.Jiang [SIF]
+extern void* OPS_BeamColumnJoint2dThermal(void);//Added by L.Jiang [SIF]
+extern void* OPS_BeamColumnJoint3dThermal(void); //Added by L.Jiang [SIF]
 
 extern  void *OPS_CatenaryCableElement(void);
 extern  void *OPS_ShellANDeS(void);
@@ -714,17 +717,47 @@ TclModelBuilderElementCommand(ClientData clientData, Tcl_Interp *interp,
       }      
     }
 
-    else if ((strcmp(argv[1], "shellNLDKGQThermal") == 0) || (strcmp(argv[1], "ShellNLDKGQThermal") == 0)) {
-      
-      void *theEle = OPS_ShellNLDKGQThermal();
+  else if ((strcmp(argv[1], "shellNLDKGQThermal") == 0) || (strcmp(argv[1], "ShellNLDKGQThermal") == 0)) {
+
+      void* theEle = OPS_ShellNLDKGQThermal();
       if (theEle != 0)
-	theElement = (Element *)theEle;
+          theElement = (Element*)theEle;
       else {
-	opserr << "TclElementCommand -- unable to create element of type : " << argv[1] << endln;
-	return TCL_ERROR;
+          opserr << "TclElementCommand -- unable to create element of type : " << argv[1] << endln;
+          return TCL_ERROR;
       }
       //end of adding thermo-mechanical shell elements by L.Jiang [SIF]  
-      
+  }
+  //-----------------[Added for SIF, by LMJ]--------------------------------------
+  else if ((strcmp(argv[1], "shellNLComThermal") == 0) || (strcmp(argv[1], "ShellNLComThermal") == 0)) {
+
+  void* theEle = OPS_ShellNLComThermal();
+  if (theEle != 0)
+      theElement = (Element*)theEle;
+  else {
+      opserr << "TclElementCommand -- unable to create element of type : " << argv[1] << endln;
+      return TCL_ERROR;
+  }
+  //end of adding thermo-mechanical shell elements by L.Jiang [SIF]  
+  }
+    else if (strcmp(argv[1], "beamColumnJointThermal") == 0) {
+    int ndm = OPS_GetNDM(); 
+    void* theEle = 0;
+    
+    if (ndm == 2)
+        theEle = OPS_BeamColumnJoint2dThermal();
+    else if (ndm == 3)
+        theEle = OPS_BeamColumnJoint3dThermal();
+    else
+        opserr << "Element command received an incorrect ndm" << endln;
+    if (theEle != 0)
+        theElement = (Element*)theEle;
+    else {
+        opserr << "TclElementCommand -- unable to create element of type : " << argv[1] << endln;
+        return TCL_ERROR;
+    }
+    opserr << "done";
+  //----------------[Added for SIF, by LMJ]--------------------------------------  
   } else if ((strcmp(argv[1],"shellNL") == 0) || (strcmp(argv[1],"ShellNL") == 0) ||
 	     (strcmp(argv[1],"shellMITC9") == 0) || (strcmp(argv[1],"ShellMITC9") == 0)) {
     
@@ -1303,7 +1336,6 @@ TclModelBuilderElementCommand(ClientData clientData, Tcl_Interp *interp,
 
     return result;
   }
-  
   // Andreas Schellenberg
   else if (strcmp(argv[1],"actuator") == 0) {
     int eleArgStart = 1;

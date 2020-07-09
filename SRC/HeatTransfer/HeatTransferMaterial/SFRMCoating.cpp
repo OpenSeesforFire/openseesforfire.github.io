@@ -54,7 +54,7 @@ SFRMCoating::~SFRMCoating()
 }
 
 int 
-SFRMCoating::setTrialTemperature(double temp)
+SFRMCoating::setTrialTemperature(double temp, int par)
 {
     trial_temp = temp - 273.15;
     return 0;

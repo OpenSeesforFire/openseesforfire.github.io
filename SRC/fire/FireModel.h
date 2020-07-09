@@ -33,6 +33,7 @@
 #include <TaggedObject.h>
 #include <MovableObject.h>
 #include <OPS_Globals.h>
+#include <Vector.h>
 class HeatTransferDomain;
 class HeatFluxBC;
 
@@ -46,6 +47,9 @@ class FireModel: public TaggedObject
 	  virtual void applyFluxBC(HeatFluxBC* theFlux, double time) = 0;
 
 	  virtual int getFireTypeTag(void);
+	  virtual double getFirePars(int parTag=0);
+	  virtual int setFirePars(double time, const Vector& firePars = 0);
+	  virtual double getFireOut(double time, const Vector& locs = 0);
 	  virtual void  Print(OPS_Stream&, int = 0);
 
 	protected:

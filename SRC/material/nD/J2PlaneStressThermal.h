@@ -47,7 +47,7 @@
 class J2PlaneStressThermal : public NDMaterial
 {
 public:
-	J2PlaneStressThermal(int tag,
+	J2PlaneStressThermal(int tag, int typeTag,
 		double e,
 		double nu,
 		double fy_0,
@@ -102,12 +102,15 @@ private:
 	double fy_inf;    // compressive yield strength
 	double ECommit;    //Commited Modulus;
 
+	int TypeTag;
+
 	double fyt;
 	double E0;     // elastic modulus
 	double fy0;    // tensile yield strength
 	double fy0_inf;    // compressive yield strength
 	double d;
 	double H;
+	double HT;
 
 	double xi_p;
 

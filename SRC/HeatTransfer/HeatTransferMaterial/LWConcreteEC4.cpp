@@ -53,7 +53,7 @@ LWConcreteEC4::~LWConcreteEC4()
 }
 
 int 
-LWConcreteEC4::setTrialTemperature(double temp)
+LWConcreteEC4::setTrialTemperature(double temp, int par)
 {
     trial_temp = temp - 273.15;
     return 0;

@@ -309,12 +309,12 @@ void SteelECThermal::determineTrialState (double dStrain)
 	  }
 	  else if (fabsTstrain <= EpsiT)
 		  {
-		  	Tstress = fy+(fabsTstrain-EpsiYT)*(1E-4)*E0;
-			Ttangent = (1E-4)*E0;
+		  	Tstress = fy+(fabsTstrain-EpsiYT)*(1E-2)*E0;
+			Ttangent = (1E-2)*E0;
 		  }	  
 	  else if (fabsTstrain <= EpsiU)
 	 	 {
-		  double fy1 = fy+(EpsiU-EpsiYT)*(1E-4)*E0;// modeified to add hardeding and avoid cinvergence problem
+		  double fy1 = fy+(EpsiU-EpsiYT)*(1E-2)*E0;// modeified to add hardeding and avoid cinvergence problem
 		  Tstress = fy1*(1- (fabsTstrain - EpsiT)/(EpsiU -EpsiT));
           //opserr<<"Error: Stiffness of SteelECthermal is negative"<<endln;
 		  Ttangent = -fy1/(EpsiU-EpsiT);
@@ -489,7 +489,7 @@ SteelECThermal::getElongTangent(double TempT, double &ET, double &Elong, double 
       ThermalElongation = -2.416e-4 + 1.2e-5 *(TempT+20) + 0.4e-8 *(TempT+20)*(TempT+20);
   }
   else if (TempT <= 840) {
-      ThermalElongation = 11e-3;
+      ThermalElongation = 11e-3; 
   }
   else if (TempT <= 1180) {
       ThermalElongation = -6.2e-3 + 2e-5*(TempT+20);

@@ -54,7 +54,7 @@ StainlessSteelEC::~StainlessSteelEC()
 }
 
 int 
-StainlessSteelEC::setTrialTemperature(double temp)
+StainlessSteelEC::setTrialTemperature(double temp, int par)
 {
     trial_temp = temp - 273.15;
     return 0;

@@ -40,7 +40,7 @@ class NWConcreteEC2: public HeatTransferMaterial
 		virtual ~NWConcreteEC2();
 
 		// method for this material to update itself according to its new parameters
-		int setTrialTemperature(double );
+		int setTrialTemperature(double T, int par = 0);
 		const Matrix& getConductivity();
 		double getRho();
 		double getSpecificHeat();
@@ -58,7 +58,7 @@ class NWConcreteEC2: public HeatTransferMaterial
     protected:
     
     private:
-		double rho, cp, enthalpy, moist;
+		double rho_a,rho, cp, enthalpy, moist;
 		double trial_temp;
 		double ini_temp;  // keep a copy of initial temperature
 		static double epsilon;

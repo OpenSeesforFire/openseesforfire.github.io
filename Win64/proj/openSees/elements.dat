@@ -1,0 +1,864 @@
+
+DispBeamColumn3dThermal, element id:  1
+	Connected external nodes:  1 2 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  2
+	Connected external nodes:  2 3 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  3
+	Connected external nodes:  3 4 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  4
+	Connected external nodes:  4 5 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  5
+	Connected external nodes:  5 6 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  6
+	Connected external nodes:  6 7 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  7
+	Connected external nodes:  7 8 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  8
+	Connected external nodes:  8 9 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  9
+	Connected external nodes:  9 10 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  10
+	Connected external nodes:  10 11 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  11
+	Connected external nodes:  11 12 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  12
+	Connected external nodes:  12 13 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  13
+	Connected external nodes:  13 14 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  14
+	Connected external nodes:  14 15 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  15
+	Connected external nodes:  15 16 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  16
+	Connected external nodes:  16 17 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  17
+	Connected external nodes:  17 18 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  18
+	Connected external nodes:  18 19 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  19
+	Connected external nodes:  19 20 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  20
+	Connected external nodes:  20 21 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  21
+	Connected external nodes:  21 22 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  22
+	Connected external nodes:  22 23 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  23
+	Connected external nodes:  23 24 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  24
+	Connected external nodes:  24 25 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  25
+	Connected external nodes:  25 26 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  26
+	Connected external nodes:  26 27 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  27
+	Connected external nodes:  27 28 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  28
+	Connected external nodes:  28 29 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  29
+	Connected external nodes:  29 30 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  30
+	Connected external nodes:  30 31 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  31
+	Connected external nodes:  31 32 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  32
+	Connected external nodes:  32 33 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  33
+	Connected external nodes:  33 34 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  34
+	Connected external nodes:  34 35 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  35
+	Connected external nodes:  35 36 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  36
+	Connected external nodes:  36 37 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  37
+	Connected external nodes:  37 38 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  38
+	Connected external nodes:  38 39 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  39
+	Connected external nodes:  39 40 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  40
+	Connected external nodes:  40 41 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  41
+	Connected external nodes:  41 42 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  42
+	Connected external nodes:  42 43 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  43
+	Connected external nodes:  43 44 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  44
+	Connected external nodes:  44 45 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  45
+	Connected external nodes:  45 46 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  46
+	Connected external nodes:  46 47 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  47
+	Connected external nodes:  47 48 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  48
+	Connected external nodes:  48 49 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  1
+	Connected external nodes:  1 2 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  2
+	Connected external nodes:  2 3 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  3
+	Connected external nodes:  3 4 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  4
+	Connected external nodes:  4 5 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  5
+	Connected external nodes:  5 6 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  6
+	Connected external nodes:  6 7 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  7
+	Connected external nodes:  7 8 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  8
+	Connected external nodes:  8 9 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  9
+	Connected external nodes:  9 10 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  10
+	Connected external nodes:  10 11 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  11
+	Connected external nodes:  11 12 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  12
+	Connected external nodes:  12 13 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  13
+	Connected external nodes:  13 14 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  14
+	Connected external nodes:  14 15 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  15
+	Connected external nodes:  15 16 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  16
+	Connected external nodes:  16 17 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  17
+	Connected external nodes:  17 18 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  18
+	Connected external nodes:  18 19 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  19
+	Connected external nodes:  19 20 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  20
+	Connected external nodes:  20 21 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  21
+	Connected external nodes:  21 22 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  22
+	Connected external nodes:  22 23 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  23
+	Connected external nodes:  23 24 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  24
+	Connected external nodes:  24 25 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  25
+	Connected external nodes:  25 26 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  26
+	Connected external nodes:  26 27 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  27
+	Connected external nodes:  27 28 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  28
+	Connected external nodes:  28 29 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  29
+	Connected external nodes:  29 30 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  30
+	Connected external nodes:  30 31 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  31
+	Connected external nodes:  31 32 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  32
+	Connected external nodes:  32 33 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  33
+	Connected external nodes:  33 34 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  34
+	Connected external nodes:  34 35 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  35
+	Connected external nodes:  35 36 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  36
+	Connected external nodes:  36 37 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  37
+	Connected external nodes:  37 38 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  38
+	Connected external nodes:  38 39 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  39
+	Connected external nodes:  39 40 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  40
+	Connected external nodes:  40 41 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  41
+	Connected external nodes:  41 42 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  42
+	Connected external nodes:  42 43 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  43
+	Connected external nodes:  43 44 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  44
+	Connected external nodes:  44 45 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  45
+	Connected external nodes:  45 46 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  46
+	Connected external nodes:  46 47 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  47
+	Connected external nodes:  47 48 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  48
+	Connected external nodes:  48 49 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  1
+	Connected external nodes:  1 2 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  2
+	Connected external nodes:  2 3 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  3
+	Connected external nodes:  3 4 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  4
+	Connected external nodes:  4 5 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  5
+	Connected external nodes:  5 6 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  6
+	Connected external nodes:  6 7 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  7
+	Connected external nodes:  7 8 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  8
+	Connected external nodes:  8 9 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  9
+	Connected external nodes:  9 10 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  10
+	Connected external nodes:  10 11 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  11
+	Connected external nodes:  11 12 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  12
+	Connected external nodes:  12 13 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  13
+	Connected external nodes:  13 14 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  14
+	Connected external nodes:  14 15 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  15
+	Connected external nodes:  15 16 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  16
+	Connected external nodes:  16 17 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  17
+	Connected external nodes:  17 18 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  18
+	Connected external nodes:  18 19 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  19
+	Connected external nodes:  19 20 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  20
+	Connected external nodes:  20 21 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  21
+	Connected external nodes:  21 22 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  22
+	Connected external nodes:  22 23 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  23
+	Connected external nodes:  23 24 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  24
+	Connected external nodes:  24 25 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  25
+	Connected external nodes:  25 26 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  26
+	Connected external nodes:  26 27 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  27
+	Connected external nodes:  27 28 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  28
+	Connected external nodes:  28 29 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  29
+	Connected external nodes:  29 30 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  30
+	Connected external nodes:  30 31 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  31
+	Connected external nodes:  31 32 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  32
+	Connected external nodes:  32 33 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  33
+	Connected external nodes:  33 34 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  34
+	Connected external nodes:  34 35 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  35
+	Connected external nodes:  35 36 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  36
+	Connected external nodes:  36 37 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  37
+	Connected external nodes:  37 38 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  38
+	Connected external nodes:  38 39 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  39
+	Connected external nodes:  39 40 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  40
+	Connected external nodes:  40 41 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  41
+	Connected external nodes:  41 42 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  42
+	Connected external nodes:  42 43 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  43
+	Connected external nodes:  43 44 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  44
+	Connected external nodes:  44 45 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  45
+	Connected external nodes:  45 46 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  46
+	Connected external nodes:  46 47 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  47
+	Connected external nodes:  47 48 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0
+
+DispBeamColumn3dThermal, element id:  48
+	Connected external nodes:  48 49 
+	mass density:  0
+	End 1 Forces (P Mz Vy My Vz T): 0 0 0 0 0 -0
+	End 2 Forces (P Mz Vy My Vz T): 0 0 0 0 0 0

@@ -78,6 +78,7 @@ class StaticAnalysis: public Analysis
     EquiSolnAlgo     *getAlgorithm(void);
     StaticIntegrator *getIntegrator(void);
     ConvergenceTest  *getConvergenceTest(void);
+	AnalysisModel    *getModel(void) ;
 
   protected: 
     

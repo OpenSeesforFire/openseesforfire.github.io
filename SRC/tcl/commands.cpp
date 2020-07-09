@@ -226,6 +226,7 @@ extern void *OPS_WilsonTheta(void);
 
 // analysis
 #include <StaticAnalysis.h>
+#include <VariableTImeStepStaticAnalysis.h>
 #include <DirectIntegrationAnalysis.h>
 #include <VariableTimeStepDirectIntegrationAnalysis.h>
 #include <PFEMAnalysis.h>
@@ -1546,15 +1547,13 @@ wipeModel(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv)
 
 #ifdef _HEATTRANSFER
   if (theTclHTModule != 0) {
-    delete theTclHTModule;
     theTclHTModule = 0;
   }
 #endif
 
  #ifdef _SIFBUILDER
   if (theTclSIFBuilder != 0) {
-    delete theTclSIFBuilder;
-    theTclSIFBuilder = 0;
+    theTclSIFBuilder =0;
   }
 #endif				  
   return TCL_OK;  
@@ -1936,11 +1935,42 @@ analyzeModel(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **arg
       return TCL_ERROR;
     }
     int numIncr;
+    if (argc < 6) {
+        if (Tcl_GetInt(interp, argv[1], &numIncr) != TCL_OK)
+            return TCL_ERROR;
 
-    if (Tcl_GetInt(interp, argv[1], &numIncr) != TCL_OK)	
-      return TCL_ERROR;	      
+        result = theStaticAnalysis->analyze(numIncr);
+    }
+    else {
+        //------------------------------------------
+        if (Tcl_GetInt(interp, argv[1], &numIncr) != TCL_OK)
+            return TCL_ERROR;
+        double dT;
+        if (Tcl_GetDouble(interp, argv[2], &dT) != TCL_OK)
+            return TCL_ERROR;
 
-    result = theStaticAnalysis->analyze(numIncr);
+        // Set global timestep variable
+        ops_Dt = dT;
+        int Jd;
+        double dtMin, dtMax;
+        if (Tcl_GetDouble(interp, argv[3], &dtMin) != TCL_OK)
+            return TCL_ERROR;
+        if (Tcl_GetDouble(interp, argv[4], &dtMax) != TCL_OK)
+            return TCL_ERROR;
+        if (Tcl_GetInt(interp, argv[5], &Jd) != TCL_OK)
+            return TCL_ERROR;
+        VariableTimeStepStaticAnalysis* theVariableStaticAnalysis = (VariableTimeStepStaticAnalysis*)theStaticAnalysis;
+        if (theVariableStaticAnalysis != 0)
+            result = theVariableStaticAnalysis->analyze(numIncr, dT, dtMin, dtMax, Jd);
+        else {
+            opserr << "WARNING analyze - no variable time step transient analysis object constructed\n";
+            return TCL_ERROR;
+        }
+
+    }
+        
+
+    //---------------------------------------------
 #ifdef _PFEM
   } else if(thePFEMAnalysis != 0) {
       result = thePFEMAnalysis->analyze();
@@ -2400,7 +2430,7 @@ specifyAnalysis(ClientData clientData, Tcl_Interp *interp, int argc,
     }
     
     // check argv[1] for type of SOE and create it
-    if (strcmp(argv[1],"Static") == 0) {
+    if (strcmp(argv[1],"Static") == 0|| strcmp(argv[1], "VariableStepStatic") == 0|| strcmp(argv[1], "VariableStatic") == 0) {
 	// make sure all the components have been built,
 	// otherwise print a warning and use some defaults
 	if (theAnalysisModel == 0) 
@@ -2442,15 +2472,27 @@ specifyAnalysis(ClientData clientData, Tcl_Interp *interp, int argc,
 	    theSOE = new ProfileSPDLinSOE(*theSolver);      
 #endif
 	}
-    
-	theStaticAnalysis = new StaticAnalysis(theDomain,
-					       *theHandler,
-					       *theNumberer,
-					       *theAnalysisModel,
-					       *theAlgorithm,
-					       *theSOE,
-					       *theStaticIntegrator,
-					       theTest);
+    if (strcmp(argv[1], "VariableStepStatic") == 0 || strcmp(argv[1], "VariableStatic") == 0) {
+        theStaticAnalysis = new VariableTimeStepStaticAnalysis(theDomain,
+            *theHandler,
+            *theNumberer,
+            *theAnalysisModel,
+            *theAlgorithm,
+            *theSOE,
+            *theStaticIntegrator,
+            theTest);
+    }
+    else {
+        theStaticAnalysis = new StaticAnalysis(theDomain,
+            *theHandler,
+            *theNumberer,
+            *theAnalysisModel,
+            *theAlgorithm,
+            *theSOE,
+            *theStaticIntegrator,
+            theTest);
+
+    }
 
 	#ifdef _PARALLEL_INTERPRETERS
 	if (setMPIDSOEFlag) {
@@ -2465,6 +2507,7 @@ specifyAnalysis(ClientData clientData, Tcl_Interp *interp, int argc,
 	}
 #endif
 // AddingSensitivity:END /////////////////////////////////
+   
 #ifdef _PFEM
     } else if(strcmp(argv[1], "PFEM") == 0) {
 

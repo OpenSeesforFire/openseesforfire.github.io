@@ -320,7 +320,10 @@ NDMaterial::getResponse (int responseID, Information &matInfo)
     
   case 2:
     return matInfo.setVector(this->getStrain());
-    
+
+ case 3:
+    return matInfo.setVector(this->getTempAndElong());
+    //end of adding output request,L.Jiang [SIF]
   default:
     return -1;
   }

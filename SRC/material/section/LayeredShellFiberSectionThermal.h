@@ -57,7 +57,7 @@ class LayeredShellFiberSectionThermal : public SectionForceDeformation{
     LayeredShellFiberSectionThermal(   int tag, 
                                 int iLayers, 
                                 double *thickness, 
-                                NDMaterial **fibers );
+                                NDMaterial **fibers, double offset=0 );
 
     const char *getClassType(void) const {return "LayeredShellFiberSectionThermal";};
 
@@ -120,6 +120,8 @@ class LayeredShellFiberSectionThermal : public SectionForceDeformation{
     //quadrature data
     double *sg;
     double *wg;
+
+    double Offset; // offset from the geometric mid-plane to neutral plane;
 
     double h ; //plate thickness
 

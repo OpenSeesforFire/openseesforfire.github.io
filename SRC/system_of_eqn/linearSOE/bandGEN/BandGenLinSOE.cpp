@@ -41,6 +41,8 @@
 #include <iostream>
 using std::nothrow;
 
+static Matrix* AMat =0;
+
 BandGenLinSOE::BandGenLinSOE(BandGenLinSolver &theSolvr)
 :LinearSOE(theSolvr, LinSOE_TAGS_BandGenLinSOE),
  size(0), numSuperD(0), numSubD(0), A(0), B(0), X(0), 
@@ -313,8 +315,8 @@ BandGenLinSOE::addA(const Matrix &m, const ID &id, double fact)
 	}  // for i
     }    
 
-    //    for (int i=0; i<Asize; i++) opserr << A[i] << " ";
-    // opserr << endln;
+     //for (int i=0; i<Asize; i++) opserr << A[i] << " ";
+     //opserr << endln;
 
     return 0;
 }
@@ -493,6 +495,21 @@ BandGenLinSOE::getB(void)
     return *vectB;
 }
 
+const Matrix*
+BandGenLinSOE::getA(void)
+{
+	opserr << Asize;
+	//opserr << A;
+	if (AMat == 0) {
+		//opserr << "FATAL BandGenLinSOE::getA - Matrix A == 0!";
+		//exit(-1);
+	}
+
+	for (int i = 0; i < Asize; i++) opserr << A[i] << " ";
+	opserr << endln;
+
+	return AMat;
+}
 
 double 
 BandGenLinSOE::normRHS(void)

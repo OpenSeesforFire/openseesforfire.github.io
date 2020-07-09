@@ -601,6 +601,12 @@ StaticAnalysis::getConvergenceTest(void)
   return theTest;
 }
 
+AnalysisModel *
+StaticAnalysis::getModel(void)
+{
+  return theAnalysisModel;
+}
+
 
 
 

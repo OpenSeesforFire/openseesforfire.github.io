@@ -1109,3 +1109,51 @@ HeatTransferDomain::removeRecorder(int tag)
   return -1;
 }
 
+
+int
+HeatTransferDomain::SelectingNodes(ID& NodesRange, int crdTag, double MinValue, double MaxValue, double Tolerance)
+{
+    //const ID& TempNodesRange = NodesRange; 
+    int iniNumOfNodes = 0;
+    bool iniSelecting = true;
+    //check if it is selecting nodes in the whole domain
+    if (NodesRange.Size() != 0)
+    {
+        iniNumOfNodes = NodesRange.Size();
+        iniSelecting = false;
+    }
+    else
+    {
+        iniNumOfNodes = this->getNumNodes();
+        iniSelecting = true;
+    }
+
+
+    vector<int> SelectedNodes;
+    int NodeTag = 0;
+    for (int i = 0; i < iniNumOfNodes; i++) {
+        
+            if (iniSelecting)
+                NodeTag = i+1;
+            else
+                NodeTag = NodesRange(i);
+           // opserr<<"nodetag"<< NodeTag<<"  "<<(this->getNode(NodeTag)->getCrds())<<"     ";
+            double NodalCrd = (this->getNode(NodeTag)->getCrds())(crdTag);
+            if ((NodalCrd <= MaxValue + Tolerance) && (NodalCrd >= MinValue - Tolerance)) {
+                SelectedNodes.push_back(NodeTag);
+            }
+       
+
+    }
+    int NewIDsize = SelectedNodes.size();
+    //opserr << "SimpleMesh::SelectingNodes has selected " << NewIDsize << " Nodes for crd" << crdTag << endln;
+
+    NodesRange.resize(NewIDsize);
+    for (int i = 0; i < NewIDsize; i++) {
+        NodesRange(i) = SelectedNodes[i];
+    }
+#ifdef _DEBUG
+    opserr << NodesRange << endln;
+#endif
+    return 0;
+}

@@ -34,7 +34,7 @@
 
 NWConcreteEC2::NWConcreteEC2(int tag, double moisture)
 :HeatTransferMaterial(tag), trial_temp(0.0), ini_temp(0.0), 
- rho(2300.0), cp(900.0), enthalpy(0.0), moist(moisture)
+ rho_a(2300.0), rho(2300.0),cp(900.0), enthalpy(0.0), moist(moisture)
 {
     if ( k == 0){
 		k = new Matrix(3,3);
@@ -53,7 +53,7 @@ NWConcreteEC2::~NWConcreteEC2()
 }
 
 int 
-NWConcreteEC2::setTrialTemperature(double temp)
+NWConcreteEC2::setTrialTemperature(double temp, int par)
 {
     trial_temp = temp - 273.15;
     return 0;
@@ -86,7 +86,18 @@ NWConcreteEC2::getConductivity(void)
 double  
 NWConcreteEC2::getRho(void)
 {
-    return rho;
+	if (trial_temp <= 115)
+		rho = rho_a;
+	else if (trial_temp <= 200)
+		rho = rho_a * (1 - 0.02 * (trial_temp - 115) / 85);
+	else if (trial_temp <= 400)
+		rho = rho_a * (0.98 - 0.03 * (trial_temp - 200) / 200);
+	else if (trial_temp <= 1200)
+		rho = rho_a * (0.95 - 0.07 * (trial_temp - 400) / 800);
+	else
+		rho = 0.88 * rho_a;
+	
+	return rho;
 }
 
 

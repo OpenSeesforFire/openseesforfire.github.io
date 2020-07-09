@@ -71,7 +71,7 @@ J2ThreeDimensionalThermal ::  J2ThreeDimensionalThermal( ) :
 
 //full constructor
 J2ThreeDimensionalThermal :: 
-J2ThreeDimensionalThermal(   int    tag, 
+J2ThreeDimensionalThermal(   int    tag, int typeTag,
 		      double K,
 		      double G,
 		      double yield0,
@@ -80,7 +80,7 @@ J2ThreeDimensionalThermal(   int    tag,
 		      double H,
 		      double viscosity,
 		      double rho) : 
-  J2PlasticityThermal( tag, ND_TAG_J2ThreeDimensionalThermal, 
+  J2PlasticityThermal( tag, ND_TAG_J2ThreeDimensionalThermal, typeTag,
 		K, G, yield0, yield_infty, d, H, viscosity, rho)
 { 
 }
@@ -88,10 +88,10 @@ J2ThreeDimensionalThermal(   int    tag,
 
 //elastic constructor
 J2ThreeDimensionalThermal :: 
-J2ThreeDimensionalThermal(   int    tag, 
+J2ThreeDimensionalThermal(   int    tag, int typeTag,
                  double K, 
                  double G ) :
-J2PlasticityThermal( tag, ND_TAG_J2ThreeDimensionalThermal, K, G )
+J2PlasticityThermal( tag, ND_TAG_J2ThreeDimensionalThermal, typeTag, K, G )
 { 
 }
 

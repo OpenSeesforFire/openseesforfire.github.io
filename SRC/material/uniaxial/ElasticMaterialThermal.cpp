@@ -455,7 +455,7 @@ ElasticMaterialThermal::getElongTangent(double TempT, double &ET, double &Elong,
 				ThermalElongation = -2.416e-4 + 1.2e-5 *(Temp + 20) + 0.4e-8 *(Temp + 20)*(Temp + 20);
 			}
 			else if (Temp <= 840) {
-				ThermalElongation = 11e-3;
+				ThermalElongation = 11e-3 ;
 			}
 			else if (Temp <= 1180) {
 				ThermalElongation = -6.2e-3 + 2e-5*(Temp + 20);

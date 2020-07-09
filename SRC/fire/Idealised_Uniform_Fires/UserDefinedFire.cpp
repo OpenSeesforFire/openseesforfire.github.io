@@ -24,7 +24,7 @@
 
 //
 // Written by Yaqiang Jiang (y.jiang@ed.ac.uk)
-//
+// Modiefied by Liming Jiang (liming.jiang@polyu.edu.hk)
 
 #include <UserDefinedFire.h>
 #include <Vector.h>
@@ -73,12 +73,11 @@ UserDefinedFire::UserDefinedFire(int tag,const Vector& theFireData, const Vector
 }
 
 
-UserDefinedFire::UserDefinedFire(int tag, const char* theFireData, const char* theTime, int typeTag)		       
+UserDefinedFire::UserDefinedFire(int tag, const char* theFireData, int typeTag)		       
 :FireModel(tag ,8),theData(0), time(0), currentTimeLoc(0), type_tag(typeTag)
 {
     // determine the number of data points
-    int numDataPoints1 =0;
-	int numDataPoints2 =0;
+    int numDataPoints =0;
 	double dataPoint;
 	ifstream theFile;
 
@@ -89,88 +88,51 @@ UserDefinedFire::UserDefinedFire(int tag, const char* theFireData, const char* t
 		opserr << " - could not open file " << theFireData << endln;
 		} else {
 			while (theFile >> dataPoint)
-				numDataPoints1++;
-		}   
+				numDataPoints++;
+		}
+
 	theFile.close();
 
-	// now open and go through file containg time
-	ifstream theFile1;
-	theFile1.open(theTime, ios::in);
-	if (theFile1.bad() || !theFile1.is_open()) {
-		opserr << "WARNING - UserDefinedFire::UserDefinedFire()";
-		opserr << " - could not open file " << theTime << endln;
-		} else {
-			while (theFile1 >> dataPoint)
-				numDataPoints2++;
-		}   
-	theFile1.close();
-
+	numDataPoints = numDataPoints / 2;
 	// check number of data entries in both are the same
-	if (numDataPoints1 != numDataPoints2) {
-		opserr << "WARNING UserDefinedFire::UserDefinedFire() - files containing data ";
-		opserr << "points for path and time do not contain same number of points\n";
-		} else {
-			// create a vector and read in the data
-			if (numDataPoints1 != 0) {
-				// now create the two vector
-				theData = new Vector(numDataPoints1);
-				time = new Vector(numDataPoints1);
 
-				// ensure did not run out of memory creating copies
-				if (theData == 0 || theData->Size() == 0 ||
-					time == 0 || time->Size() == 0) {
+	if (numDataPoints != 0) {
+		// now create the two vector
+		theData = new Vector(numDataPoints);
+		time = new Vector(numDataPoints);
 
-						opserr << "WARNING UserDefinedFire::UserDefinedFire() - out of memory\n ";
-						if (theData != 0)
-							delete theData;
-						if (time != 0)
-							delete time;
-						theData = 0;
-						time = 0;
-					}
+		// ensure did not run out of memory creating copies
+		if (theData == 0 || theData->Size() == 0 ||time == 0 || time->Size() == 0) {
 
-				// first open the file for temperature/flux and read in the data
-				ifstream theFile2;
-				theFile2.open(theFireData, ios::in);
-				if (theFile2.bad() || !theFile2.is_open()) {
-					opserr << "WARNING - UserDefinedFire::UserDefinedFire()";
-					opserr << " - could not open file " << theFireData << endln;
-					delete theData;
-					delete time;
-					theData = 0;
-					time =0;
-					} else { // read in the path data and then do the time
-						int count = 0;
-						while (theFile2 >> dataPoint) {
-							(*theData)(count) = dataPoint;
-							count++;
-							}
-
-						// finally close the file
-						theFile2.close();
-
-						// now open the time file and read in the data
-						ifstream theFile3;
-						theFile3.open(theTime, ios::in);
-						if (theFile3.bad() || !theFile3.is_open()) {
-							opserr << "WARNING - UserDefinedFire::UserDefinedFire()";
-							opserr << " - could not open file " << theTime << endln;
-							delete theData;
-							delete time;
-							theData = 0;
-							time =0;
-							} else { // read in the data
-								int count = 0;
-								while (theFile3 >> dataPoint) {
-									(*time)(count) = dataPoint;
-									count++;
-									}
-								theFile3.close();
-							} // read in the data 
-					}   // read in the path data and then do the time
-				}
+			opserr << "WARNING UserDefinedFire::UserDefinedFire() - out of memory\n ";
+			if (theData != 0)
+				delete theData;
+			if (time != 0)
+				delete time;
+			theData = 0;
+			time = 0;
 		}
+
+		// first open the file for temperature/flux and read in the data
+		
+		theFile.open(theFireData, ios::in);
+	  // read in the path data and then do the time
+			int count = 0;
+			while (theFile >> dataPoint) {
+				(*time)(count) = dataPoint;
+				theFile >> dataPoint;
+				(*theData)(count) = dataPoint;
+				count++;
+			}
+			
+			opserr << (*time)(10) << "," << (*theData)(10) << endln;
+			opserr << (*time)(180) << "," << (*theData)(180) << endln;
+			// finally close the file
+			theFile.close();
+
+	}
 }
+
 
 
 UserDefinedFire::~UserDefinedFire()
@@ -286,30 +248,31 @@ UserDefinedFire::applyFluxBC(HeatFluxBC* theFlux, double time)
 		if (flux_type == 1) {
 			Convection* convec = (Convection*) theFlux;
 			convec->setSurroundingTemp(this->getData(time)+273.15);
-			} else if (flux_type == 2) {
+			convec->applyFluxBC(time);
+		} else if (flux_type == 2) {
 				Radiation* rad = (Radiation*) theFlux;
 				double bzm = rad->getBLZMConstant();
 				double alpha = rad->getAbsorptivity();
 				double temp = this->getData(time)+273.15;
-				double qir = alpha * bzm * pow(temp, 4.0);
+				double qir = bzm * pow(temp, 4.0);
 				rad->setIrradiation(qir);
 				rad->applyFluxBC(time);
-			} else {
-				opserr << "UserDefinedFire::applyFluxBC() - incorrect flux type provided\n";
-				}
-		} else if (type_tag == 2){
-			if (flux_type == 2) {
-				Radiation* rad = (Radiation*) theFlux;
-				double qir = this->getData(time);
-				rad->setIrradiation(qir);
-				rad->applyFluxBC(time);
-				} else {
-					opserr << "UserDefinedFire::applyFluxBC() - flux_type should be 2\n";
-					exit(-1); 
-				}
 		} else {
-			opserr << "UserDefinedFire::applyFluxBC() - incorrect input type provided\n";
-			exit(-1); 
+				opserr << "UserDefinedFire::applyFluxBC() - incorrect flux type provided\n";
+		}
+	} else if (type_tag == 2){
+		if (flux_type == 2) {
+			Radiation* rad = (Radiation*) theFlux;
+			double qir = this->getData(time);
+			rad->setIrradiation(qir);
+			rad->applyFluxBC(time);
+			} else {
+				opserr << "UserDefinedFire::applyFluxBC() - flux_type should be 2\n";
+				exit(-1); 
 			}
+	} else {
+		opserr << "UserDefinedFire::applyFluxBC() - incorrect input type provided\n";
+		exit(-1); 
+	}
 }
 

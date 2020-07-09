@@ -54,7 +54,7 @@ SteelASCE::~SteelASCE()
 }
 
 int 
-SteelASCE::setTrialTemperature(double temp)
+SteelASCE::setTrialTemperature(double temp, int par)
 {
     trial_temp = temp - 273.15;
     return 0;

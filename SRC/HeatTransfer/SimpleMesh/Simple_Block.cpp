@@ -80,7 +80,7 @@ int Simple_Block::RefineSeeds(int SeedTag, const Vector& RefinedSeedsInfo)
 			opserr<<"WARNING! Simple_Block::RefineSeeds failed to refine Seeds1"<<endln;
 			result=-1;
 		}
-		//opserr<<" Refined Seeds1: "<<Seeds1;
+		opserr<<" Refined Seeds1: "<<Seeds1;
 	}
 	else if(SeedTag ==3) {
 		NumCtrlID(1)=RefinedNumCtrl;

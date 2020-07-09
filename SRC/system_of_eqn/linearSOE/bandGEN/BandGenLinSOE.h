@@ -66,6 +66,7 @@ class BandGenLinSOE : public LinearSOE
 
     virtual const Vector &getX(void);
     virtual const Vector &getB(void);
+    virtual const Matrix *getA(void);
     virtual double normRHS(void);
 
     virtual void setX(int loc, double value);    

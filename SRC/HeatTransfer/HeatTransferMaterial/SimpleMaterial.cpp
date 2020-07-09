@@ -51,7 +51,7 @@ SimpleMaterial::~SimpleMaterial()
 }
 
 int 
-SimpleMaterial::setTrialTemperature(double temp)
+SimpleMaterial::setTrialTemperature(double temp, int par)
 {
     trial_temp = temp;
     return 0;

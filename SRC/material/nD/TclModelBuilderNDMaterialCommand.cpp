@@ -118,6 +118,7 @@ extern  void *OPS_ElasticIsotropicMaterialThermal(void);  //L.Jiang [SIF]
 extern  void *OPS_DruckerPragerMaterialThermal(void);//L.Jiang [SIF]
 extern  void *OPS_PlasticDamageConcretePlaneStressThermal(void);//L.Jiang [SIF]
 extern  void* OPS_J2PlaneStressThermal(void);  //L.Jiang [SIF]
+extern  void* OPS_J2PlasticityThermal(void);  //L.Jiang [SIF]
 
 #ifdef _HAVE_Faria1998
 //extern void *OPS_Faria1998(void);
@@ -1845,72 +1846,19 @@ TclModelBuilderNDMaterialCommand (ClientData clientData, Tcl_Interp *interp, int
 	}
 	else if ((strcmp(argv[1], "J2PlasticityThermal") == 0) ||
 		(strcmp(argv[1], "J2Thermal") == 0)) {
-		if (argc < 9) {
-			opserr << "WARNING insufficient arguments\n";
-			printCommand(argc, argv);
-			opserr << "Want: nDMaterial J2PlasticityThermal tag? K? G? sig0? sigInf? delta? H? <eta?>" << endln;
+		void* theMat = OPS_J2PlasticityThermal();
+		if (theMat != 0)
+			theMaterial = (NDMaterial*)theMat;
+		else
 			return TCL_ERROR;
-		}
-
-		int tag;
-		double K, G, sig0, sigInf, delta, H;
-		double eta = 0.0;
-
-		if (Tcl_GetInt(interp, argv[2], &tag) != TCL_OK) {
-			opserr << "WARNING invalid J2PlasticityThermal tag" << endln;
-			return TCL_ERROR;
-		}
-
-		if (Tcl_GetDouble(interp, argv[3], &K) != TCL_OK) {
-			opserr << "WARNING invalid K\n";
-			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
-			return TCL_ERROR;
-		}
-
-		if (Tcl_GetDouble(interp, argv[4], &G) != TCL_OK) {
-			opserr << "WARNING invalid G\n";
-			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
-			return TCL_ERROR;
-		}
-
-		if (Tcl_GetDouble(interp, argv[5], &sig0) != TCL_OK) {
-			opserr << "WARNING invalid sig0\n";
-			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
-			return TCL_ERROR;
-		}
-
-		if (Tcl_GetDouble(interp, argv[6], &sigInf) != TCL_OK) {
-			opserr << "WARNING invalid sigInf\n";
-			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
-			return TCL_ERROR;
-		}
-
-		if (Tcl_GetDouble(interp, argv[7], &delta) != TCL_OK) {
-			opserr << "WARNING invalid delta\n";
-			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
-			return TCL_ERROR;
-		}
-		if (Tcl_GetDouble(interp, argv[8], &H) != TCL_OK) {
-			opserr << "WARNING invalid H\n";
-			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
-			return TCL_ERROR;
-		}
-		if (argc > 9 && Tcl_GetDouble(interp, argv[9], &eta) != TCL_OK) {
-			opserr << "WARNING invalid eta\n";
-			opserr << "nDMaterial J2PlasticityThermal: " << tag << endln;
-			return TCL_ERROR;
-		}
-
-		theMaterial = new J2PlasticityThermal(tag, 0, K, G, sig0, sigInf,
-			delta, H, eta);
 	}
 	else if ((strcmp(argv[1], "J2PlaneStressThermal") == 0) || (strcmp(argv[1], "J2PlaneStressThermal") == 0)) {
 
-	void* theMat = OPS_J2PlaneStressThermal();
-	if (theMat != 0)
-		theMaterial = (NDMaterial*)theMat;
-	else
-		return TCL_ERROR;
+		void* theMat = OPS_J2PlaneStressThermal();
+		if (theMat != 0)
+			theMaterial = (NDMaterial*)theMat;
+		else
+			return TCL_ERROR;
 	}
 	else if (strcmp(argv[1], "PlateFiberMaterialThermal") == 0 ||
 		strcmp(argv[1], "PlateFiberThermal") == 0) {

@@ -553,7 +553,7 @@ const Matrix&  ShellMITC4Thermal::getTangentStiff( )
   //do tangent and residual here
   formResidAndTangent( tang_flag ) ;
   
-#ifdef _SDEBUG
+#ifdef _DEBUG
   if(this->getTag()==1)
     opserr<< "ShellMITC4Thermal: "<<this->getTag()<< "Tangent stiffness: "<<endln<<stiff<<endln;
 
@@ -1115,7 +1115,7 @@ const Vector&  ShellMITC4Thermal::getResistingForce( )
   if (load != 0)
     resid -= *load;
 
-#ifdef _SDEBUG
+#ifdef _DEBUG
   opserr<< "ShellMITC4Thermal: "<<this->getTag()<< " Resid: "<<endln
 	 <<resid<<endln;
 #endif
@@ -1505,9 +1505,13 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
       //nodal "displacements" 
       const Vector &ul = nodePointers[j]->getTrialDisp( ) ;
 
-#ifdef _SDEBUG
-	if((this->getTag())==1&&j==2)
-			opserr<<"Node "<<j<<" TrialDisp "<<ul<<endln;
+#ifdef _sDEBUG
+      if ((this->getTag()) == 1 && i == 2) {
+          const Vector& incrDisp = nodePointers[j]->getIncrDisp();
+          opserr << "Node " << j << " incrDisp " << incrDisp << endln;
+          opserr << "Node " << j << " TrialDisp " << ul << endln;
+    }
+      
 #endif
 	  if(ul.Norm()>1e6)
 				return(-1);
@@ -1515,7 +1519,10 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
       //compute the strain
       //strain += (BJ*ul) ; 
       strain.addMatrixVector(1.0, BJ,ul,1.0 ) ;
-
+#ifdef _sDEBUG
+      if (this->getTag() == 1)
+          opserr << "ShellMITC4 " << this->getTag() << "i: " << i << ",j: " << j << " ul " << ul << endln << "Bbend" << Bbend << endln << "strain" << strain << endln;
+#endif
       //drilling B matrix
       drillPointer = computeBdrill( j, shp ) ;
       for (p=0; p<ndf; p++ ) {
@@ -1528,6 +1535,7 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
 	      epsDrill +=  BdrillJ[p]*ul(p) ;
     } // end for j
   
+
 
     if(counterTemperature !=1&&counterTemperature !=2)
        success = materialPointers[i]->setTrialSectionDeformation( strain ) ;
@@ -1587,7 +1595,7 @@ ShellMITC4Thermal::formResidAndTangent( int tang_flag )
 	    for (q=0; q<nstress; q++) 
 	      BJtran(p,q) = BJ(q,p) ;
       }//end for p
-
+      //opserr << "BJTran" << BJtran << endln;
       residJ.addMatrixVector(0.0, BJtran,stress,1.0 ) ;
 
       //drilling B matrix

@@ -18,8 +18,8 @@
 **                                                                    **
 ** ****************************************************************** */
 
-// Based on PlasticDamageConcretePlaneStress
-
+//Based on the work presented in Lee, J., & Fenves, G. L. (2001). Return-mapping algorithm for plastic-damage models: 3-D and plane stress formulation. 
+//International Journal for Numerical Methods in Engineering, 50(2), 487-C506. 
 // Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
 
 #include <PlasticDamageConcretePlaneStressThermal.h>           
@@ -45,6 +45,7 @@ static Matrix Id(6, 6);
 
 static int matTag;
 
+
 //static const signed char b_A[3] = { -1, 1, 0 };
 //static const signed char c_a[9] = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
 //static const signed char iv1[3] = { 0, 0, 1 };
@@ -57,7 +58,7 @@ OPS_PlasticDamageConcretePlaneStressThermal(void)
 	int numArgs = OPS_GetNumRemainingInputArgs();
 
 	if (numArgs < 5 || numArgs > 11) {
-		opserr << "Want: nDMaterial PlasticDamageConcretePlaneStressThermal $tag $E $nu $ft $fc <$beta $Ap $An $Bn>\n";
+		opserr << "Want: nDMaterial PlasticDamageConcretePlaneStressThermal $tag $E $nu $ft $fc <$gt $gc $An $Bn>\n";
 		return 0;
 	}
 
@@ -164,6 +165,7 @@ PlasticDamageConcretePlaneStressThermal::PlasticDamageConcretePlaneStressThermal
 	Tchange = 0;
 	Temp = 0;
 	TempT = 0;
+	epsLitsp = 0;
 
 	this->commitState();
 }
@@ -172,7 +174,7 @@ PlasticDamageConcretePlaneStressThermal::PlasticDamageConcretePlaneStressThermal
 	:NDMaterial(0, 0),
 	eps(3), sig(3), sige(3), eps_p(3), sigeP(3), TempAndElong(2),
 	epsCommit(3), sigCommit(3), sigeCommit(3), eps_pCommit(3), sigePCommit(3),
-	Ce(3, 3), C(3, 3), Ccommit(3, 3), At(0), Ac(0), Dbarc(0), Dbart(0)
+	Ce(3, 3), C(3, 3), Ccommit(3, 3), At(0), Ac(0), Dbarc(0), Dbart(0), epsLitsp(0)
 {
 
 }
@@ -256,6 +258,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 	double xi = 0;
 	double f2c = 1.16 * fc;
 	double Fres=0;
+	double Qnorm = 0;
 	
 
 	static Vector Deps(3);// increment of strain;
@@ -271,8 +274,8 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 
 	//  tolerance for function sign evaluation
 
-	if (this->getTag() == 109 && TempAndElong(0) > 286)
-		opserr << endln;
+//	if (this->getTag() == 109 && TempAndElong(0) > 286)
+		//opserr << endln;
 
 	double ftbar; double fcbar;  //effective uniaxial strengths
 	double dtbt, dcbc;    //constants
@@ -280,7 +283,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 
 	//f2c = 1.16*fc;
 	double alpha = (1.16 - 1) / (2 * 1.16 - 1);
-	double alphap = 0.01;
+	double alphap = 0.3;
 
 
 	double dtotal; // overall consideration of tensile and compressive damage
@@ -301,19 +304,12 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 	fit = 1 + At*(2 + At)*kt;
 	fic = 1 + Ac*(2 + Ac)*kc;
 
-	fcbar = fc; ftbar = ft;
+	//fcbar = fc; 
+	ftbar = ft;
 	//ftbar = ft*pow((1.0 / At*(1 + At - sqrt(fit))), (1.0 - dtbt))*sqrt(fit);
-	//fcbar = fc*pow((1.0 / Ac*(1 + Ac - sqrt(fic))), (1.0 - dcbc))*sqrt(fic);
+	fcbar = fc*pow((1.0 / Ac*(1 + Ac - sqrt(fic))), (1.0 - dcbc))*sqrt(fic);
 
-	/*
-	Matrix PeigT(3, 3); Matrix Product(3, 3);
-	PeigT.addMatrixTranspose(0, Peig, 1);
 
-	opserr << Peig << PeigT;
-	Product = Peig*PeigT;
-	opserr << Product;
-	opserr << SigPr;
-	*/
 	eps_p = eps_pCommit;
 	sigeP = sigePCommit;
 
@@ -397,7 +393,6 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 
 		double ft_r, fc_r;
 
-		double Qnorm;
 		double deltakt, deltakc;
 		double dQdkc, dQdkt;
 
@@ -578,7 +573,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 				//}
 
 			}
-			//end of determining lamda, principal stresses;
+			//-//---//--end of determining lamda, principal stresses------///--//--//
 
 
 			//now determine damage variables
@@ -603,7 +598,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 			gamma_sigma = hsigmaSum / sigmaSum;
 
 
-			for (int k = 0; k < 20; k++) {
+			for (int k = 0; k < 50; k++) {
 			
 				if (ktn1 < 0)
 					ktn1 = 0;
@@ -681,30 +676,23 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 				Qresc = -kcn1 + kcCommit + deltakcn1;
 				if (ktn1 != ktn1)
 					opserr << ktn1;
-#ifdef _sDEBUG
-				if (this->getTag() == 465) {
-					opserr << "Qrest" << Qrest << " ,Qresc:" << Qresc << endln;
-					opserr << "deltakt:" << deltakt << ", deltakc:" << deltakc << endln;
-					opserr << "dQdkt" << dQdkt << " ,dQdkc" << dQdkc << endln;
 
-				}
-#endif
 				Qnorm = sqrt(Qrest*Qrest + Qresc*Qresc);
 
-				if (Qnorm < 1e-4) {
+				if (Qnorm < 1e-10) {
 					//opserr << "count: " << count;
 					break;
 				}
 				//if(i>40)
-				//  opserr<<this->getTag() << " plastic iteration  "<<i;
+				 // opserr<<this->getTag() << " plastic iteration  "<<i;
 
 				//ftbar = ft*pow((1.0 / At*(1 + At - sqrt(fit))), (1.0 - dtbt))*sqrt(fit);
-				//fcbar = fc*pow((1.0 / Ac*(1 + Ac - sqrt(fic))), (1.0 - dcbc))*sqrt(fic);
-
-				
+				fcbar = fc*pow((1.0 / Ac*(1 + Ac - sqrt(fic))), (1.0 - dcbc))*sqrt(fic);
+		
 			}
 			//end of local iteration for i
 
+			//determine the damage parameters----------//
 			dt = 1.0 - 1.0/At*((1 + At)*sqrt(fit) - fit);
 			dc = 1.0 - 1.0 / Ac*((1 + Ac)*sqrt(fic) - fic);
 
@@ -720,6 +708,10 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 				sigpmp = 0;
 				beta = 0;
 			}
+
+		//	if (TempAndElong(0) > 391 &&this->getTag()==2589)
+				//opserr << "Temp " << TempAndElong(0)<< endln;
+
 			Fres = (alpha*I1 + sqrt(3.0 / 2.0)*Snorm + beta*sigpmp) / (1 - alpha) - fcbar;
 
 		if (ktn1 > kt)
@@ -809,16 +801,24 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 
 
 	tempSigPr.Zero();
+	//sigPr(0) = (1 - dt) * sigPr(0);
+	//sigPr(1) = (1 - dc) * sigPr(1);
+
 	//dt = 0; dc = 0;
 
-	 if (sigPr(0) > 0 && sigPr(1) > 0)
-		 sigPr = (1 - dt)*sigPr;
+	
+	if (sigPr(0) > 0 && sigPr(1) > 0) {
+		sigPr(0) = (1 - dt) * sigPr(0);
+		sigPr(1) = (1 - dt) * sigPr(1);
+	}
 	 else if (sigPr(0) > 0 && sigPr(1) < 0) {
 		 sigPr(0) = (1 - dt)*sigPr(0);
 		 sigPr(1) = (1 - dc)*sigPr(1);
 	 }
-	 else if (sigPr(0) < 0 && sigPr(1) < 0)
-		 sigPr = (1 - dc)*sigPr;
+	 else if (sigPr(0) < 0 && sigPr(1) < 0) {
+		sigPr(0) = (1 - dc) * sigPr(0);
+		sigPr(1) = (1 - dc) * sigPr(1);
+	}
 
 
 
@@ -836,7 +836,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 	//if (dtotal > 0.99)
 	//dtotal = 0.99;
 
-	C = Cbar;
+	C =  Cbar;
 
 #ifdef _SDEBUG
 	if (this->getTag() == 109) {
@@ -853,9 +853,9 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 	//}
 
 #ifdef _DEBUG
-  if (this->getTag() == 179|| this->getTag() == 4667|| this->getTag() == 4403) {
+  if (this->getTag() == 2589|| this->getTag() == 2599) {
 	  
-	std::string recorder = "material/Concrete";
+	std::string recorder = "ShellData/Concrete";
 	std::string recorderSuffix = ".out";
 	int Rtag = this->getTag();
 	std::stringstream f;
@@ -879,9 +879,15 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 		outpt << endln << TempAndElong(0) << endln;
 		Tchange++;
 	}
- outpt<< "kt: "<< kt << ", kc: " << kc<< "...eps:" << eps(0)<<", "<<eps(1)<<", "<<eps(2) ;
- outpt << "...epsp:" << eps_p(0) << ", " << eps_p(1) << ", " << eps_p(2) << "..Fres " << Fres<< endln;
-  outpt << "..SigPr: "<<sigPr(0)<<","<<sigPr(1)<<"...sig: " << sig(0)<<", " <<sig(1)<<", "<<sig(2)<< "...fc "<<fcbar<<"...ftbar "<<ftbar<<"..C00 "<<C(0,0)<<"..C22"<<C(2,2)<<endln;
+	
+ // outpt<< "kt: "<< kt << ", kc: " << kc<< "...eps:" << eps(0)<<", "<<eps(1)<<", "<<eps(2) ;
+	//outpt << "...epsp:" << eps_p(0) << ", " << eps_p(1) << ", " << eps_p(2) << "..Fres " << Fres << endln;
+//	outpt << "..SigPr: " << sigPr(0) << "," << sigPr(1) << "...sig: " << sig(0) << ", " << sig(1) << ", " << sig(2) << "...fc " << fcbar << "...ftbar " << ftbar << "..C00 " << C(0, 0) << "..C22" << C(2, 2) << endln;
+
+	//opserr << fyield<<" "<< kt << "  " << kc << " Fres " << Fres << " sigma " << sig(0)<< endln;
+	outpt<< fyield << " " << kt << "  " << kc<< " " << eps(0)<<" "<<eps(1)<<"  "<<eps(2) ;
+	outpt << "  " << eps_p(0) << "  " << eps_p(1) << "  " << eps_p(2) << "   " << Fres;
+  outpt << "   "<<sigPr(0)<<"  "<<sigPr(1)<<"   " << sig(0)<<"  " <<sig(1)<<"   "<<sig(2)<< "    "<<fcbar<<"   "<<ftbar<<"   "<< delta_epsPr(0)<<"   "<< delta_epsPr(1) <<"  "<< Qnorm <<endln;
 	
   }
   ///////////////////////////////////////////////output for debug////////////////////////////// 
@@ -890,7 +896,7 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
    if (sig(0) != sig(0))
 	   opserr << "invalid sig" <<sig(0)<< endln;
    
-    //TempAndElong(0) = this->getTag();
+   // TempAndElong(0) = this->getTag();
    //TempAndElong(0)= kt;
    //TempAndElong(1) = kc;
 
@@ -898,8 +904,8 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
 		opserr << "invalid sig" << sig(0) << endln;
 
 	// TempAndElong(0) = kc;
-	TempAndElong(0) = dt;
-	TempAndElong(1) = dc;
+	TempAndElong(0) = sigPr(0);
+	TempAndElong(1) = sigPr(1);
 
 
 	//-================================
@@ -973,6 +979,8 @@ PlasticDamageConcretePlaneStressThermal::revertToLastCommit(void)
 	kt = ktCommit;
 	kc = kcCommit;
 	E = ECommit ;
+	dt = dtCommit;
+	dc = dcCommit;
 
 	eps = epsCommit;
 	sig = sigCommit;
@@ -1080,7 +1088,8 @@ PlasticDamageConcretePlaneStressThermal::getTempAndElong(void)
 double
 PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, double&Elong)
 {
-
+	bool Lits = true;
+	double Eps_lits = 0;
 	Temp = tempT;
 	double epsc0 = -0.0025;
 	double epscu = -0.02;
@@ -1170,12 +1179,13 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 		epscu = -(0.045 + (0.0475 - 0.045)*(Temp - 980) / 100);
 	}
 	else {
-		opserr << "the temperature is invalid\n";
+		opserr << "Material temperature " << Temp << " is invalid\n";
 
 	}
 	
 	double ThermalElongation = 0;
-	int matType =1;
+	int matType =1; //Siliceous aggregates
+//  int matType =2;//Calcareous aggregates
 	if (matType == 1) {
 		if (Temp <= 1) {
 			ThermalElongation = Temp  * 9.213e-6;
@@ -1187,7 +1197,7 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 			ThermalElongation = 14e-3;
 		}
 		else {
-			opserr << "the temperature is invalid\n";
+			opserr << "Material temperature " << Temp << " is invalid\n";
 		}
 	}
 	else if(matType ==2){
@@ -1201,7 +1211,7 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 			ThermalElongation = 12e-3;
 		}
 		else {
-			opserr << "the temperature is invalid\n";
+			opserr << "Material temperature "<<Temp<<" is invalid\n";
 		}
 	
 	}
@@ -1209,14 +1219,31 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 	//ThermalElongation = Temp*1.0e-5;
 	double stif = -fc*0.0025 / epsc0 / fc0;
 
-	E = (1-1.0*(1-stif))*E0;
+	E = stif*E0;
 //if (E < 0)
 	//	E = 1e-4*E0;
 
 		//E = -fc*0.0025 / epsc0 / fc0*E0;
 	//Elong = (1 - dt)* ThermalElongation;
 	//Es = -fc*0.0025/epsc0/fc0*Es0;
-	//ThermalElongation = 0;
+
+	if (Lits) {
+		if (sigCommit(0) < 0 && sigCommit(1) < 0) {
+			double Sig_factor = -(sigCommit(0) + sigCommit(1)) / 2 / fc0 / 1.562491022;
+			Eps_lits = (4.12e-5 * Temp - 1.72e-7 * Temp * Temp + 3.3e-10 * Temp * Temp * Temp) * Sig_factor;
+			if (Eps_lits > epsLitsp)
+				epsLitsp = Eps_lits;
+
+		}
+		if (epsLitsp > 0)
+			ThermalElongation = ThermalElongation - epsLitsp;
+	}
+
+
+   //else
+	//	ThermalElongation = 0;
+
+
 	Elong = ThermalElongation;
 	// this->setTempInitials();
 	// E = E0;
@@ -1226,8 +1253,10 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 	gt = gt0*ft / ft0*E0 / E;
 	gc = gc0*fc*epscu / fc0/(-0.02);
 	
-	TempAndElong(0) = Temp;
-	TempAndElong(1) = ThermalElongation;
+//TempAndElong(0) = kt;
+//TempAndElong(1) = dt;
+	//TempAndElong(0) = Temp;
+	//TempAndElong(1) = ThermalElongation;
 	//TempAndElong(1) = E;
 	ET = E;
 	Tchange = 1;

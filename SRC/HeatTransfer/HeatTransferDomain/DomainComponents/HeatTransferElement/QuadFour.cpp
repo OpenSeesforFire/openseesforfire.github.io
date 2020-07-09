@@ -87,7 +87,7 @@ QuadFour::QuadFour(int tag, int nd1, int nd2, int nd3, int nd4,
     npface[3][0] = 3;
     npface[3][1] = 0;
 
-    // Allocate arrays of pointers to NDMaterials
+    // Allocate arrays of pointers to HTMaterials
     theMaterial = new HeatTransferMaterial*[4];
     
 	if (theMaterial == 0) {

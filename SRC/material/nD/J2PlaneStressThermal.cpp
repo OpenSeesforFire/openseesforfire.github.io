@@ -57,36 +57,36 @@ OPS_J2PlaneStressThermal(void)
 	int numArgs = OPS_GetNumRemainingInputArgs();
 
 	if (numArgs < 5) {
-		opserr << "Want: nDMaterial J2PlaneStressThermal $tag $E $nu $fy $fyinf \n";
+		opserr << "Want: nDMaterial J2PlaneStressThermal $tag $typeTag $E $nu $fy $fyinf \n";
 		return 0;
 	}
 
-	int iData[1];
+	int iData[2];
 	double dData[10];
 	dData[4] = 0;
 	dData[5] = 0;
 	
 
 
-	int numData = 1;
+	int numData = 2;
 	if (OPS_GetInt(&numData, iData) != 0) {
 		opserr << "WARNING invalid integer tag: nDMaterial EasticIsotropic \n";
 		return 0;
 	}
 
-	numData = numArgs - 1;;
+	numData = numArgs - 2;;
 	if (OPS_GetDouble(&numData, dData) != 0) {
 		opserr << "WARNING invalid data: nDMaterial EasticIsotropic : " << iData[0] << "\n";
 		return 0;
 	}
 
-	theMaterial = new J2PlaneStressThermal(iData[0],
+	theMaterial = new J2PlaneStressThermal(iData[0], iData[1],
 		dData[0], dData[1], dData[2], dData[3],dData[4], dData[5]);
 	matTag = iData[0];
 	return theMaterial;
 }
 
-J2PlaneStressThermal::J2PlaneStressThermal(int tag,
+J2PlaneStressThermal::J2PlaneStressThermal(int tag, int typeTag,
 	double e,
 	double nu,
 	double fy_0,
@@ -95,9 +95,9 @@ J2PlaneStressThermal::J2PlaneStressThermal(int tag,
 	double H0
 )
 	:NDMaterial(tag, 100),
-	E(e), nu(nu), fy(fy_0), fy_inf(fy_infty),
+	TypeTag(typeTag),E(e), nu(nu), fy(fy_0), fy_inf(fy_infty),
 	eps(3), sig(3), sige(3), eps_p(3), sigeP(3), TempAndElong(2),
-	epsCommit(3), sigCommit(3), sigeCommit(3), eps_pCommit(3),d(d0),H(H0),
+	epsCommit(3), sigCommit(3), sigeCommit(3), eps_pCommit(3),d(d0),H(H0),HT(H0),
 	Ce(3, 3), C(3, 3), Ce0(3, 3), Ccommit(3, 3), fy0(fy_0), fy0_inf(fy_infty), E0(e)
 {
 	eps.Zero();
@@ -221,9 +221,9 @@ J2PlaneStressThermal::setTrialStrain(Vector const&v1, Vector const&v2) {
 int
 J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 {
-	double tol = 1.0e-6;
+	double tol = 1.0e-8;
 	double xi = 0;
-	
+	double root23 = sqrt(2.0 / 3.0);
 
 	double Fres = 0;
 
@@ -258,18 +258,11 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 	sige_tr = Ce*Eeps_tr;
 	//sige_tr = sigeP+ Ce*Deps;
 
-#ifdef _sDEBUG
-	if (this->getTag() == 109) {
-		opserr << this->getTag() << "--kt--: " << kt << "--kc--: " << kc << endln;
-		opserr << "---eps:" << eps << "--epsp:" << eps_p << endln;
-	}
-
-#endif
 
 	//Spectral transforamtion;
 	Vector Sigtr(3); Vector SigtrPr(2); Matrix Peig(2, 2);
-	double fyield; double sigpmp;
-	double beta;  double lamda;
+	double fyield =0; double sigpmp;
+	double beta;  double lamda =0.0;
 	double I1tr, sigmaVM;
 
 	//int findex =0;  //index of yielding criteria: 0: elastic; 1: Prinicipal sigma; 2: Drucker Prager
@@ -283,10 +276,11 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 	I1tr = SigtrPr(0) + SigtrPr(1);
 
 	sigmaVM = sqrt(SigtrPr(0)*SigtrPr(0) + SigtrPr(1)*SigtrPr(1) - SigtrPr(0)*SigtrPr(1));
+	fyt = fy_inf + (fy - fy_inf) * exp(-d * kxi) + HT * kxi;
 
 	fyield = sigmaVM - fyt;
 
-
+	//sigmaV = sqrt(3*J2)
 	if (fyield > tol) {
 		// opserr << (alpha*I1tr + sigmaVM + beta*sigpmp) / (1 - alpha);
 		//plastic
@@ -305,155 +299,71 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 
 		double deltaxi;
 		double Xres;
-		double xia;
-		double xib;
-		double xi_a;
-		double xi_b;
+	
 
-		double ft_r, fc_r;
+
 
 		double Qnorm;
-		double deltakt, deltakc;
-		double dQdkc, dQdkt;
 
-		double Qrest, Qresc;
-		double ktn1;
-		double kcn1;
-		double deltaktn1, deltakcn1;
-
-
-		zeta1 = 0;
-		zeta2 =  - 2.0 * nuwave* fy;
-
+	
 		I1 = sigma1 + sigma2;
 		Snorm = sqrt(2.0 / 3.0 * (sigma1*sigma1 + sigma2*sigma2 - sigma1*sigma2));
-		
-		xia = (2.0*nuwave - 3.0)*fy / zeta2;
-		
+		double phi = Snorm - root23 * fyt;
+		double resid = 1.0;
+		double tang = 0;
+		double iteration_counter = 0;
+		double kxi_trial = 0;
+		double f_trial = 0;
+		double f_trial_p = 0;
+		lamda = (Snorm - root23 * fyt) / (2.0 * G);
+		while (fabs(resid) > 1e-8) {
 
-		xib = 1.0 - 3.0 * sqrt(6.0)*G / ( 2.0 * sqrt(6.0)*nuwave*G);
+			kxi_trial = kxi + root23 * lamda;
+			f_trial = fy_inf + (fy - fy_inf) * exp(-d * kxi_trial) + HT * kxi_trial;
+			f_trial_p= -d * (fy - fy_inf) * exp(-d * kxi) + HT;
+			resid = Snorm
+				- (2.0 * G) * lamda
+				- root23 * f_trial;
+				//- (eta / dt) * gamma;
 
-		if (xia < xib) {
-			if (xia < 0)
-				xi_a = 0;
-			else
-				xi_a = xia;
 
-			if (xib < 1)
-				xi_b = xib;
-			else
-				xi_b = 1;
-		}
-		else {
-			if (xib < 0)
-				xi_a = 0;
-			else
-				xi_a = xib;
+			tang = -(2.0 * G)
+				- 2.0 / 3.0 * f_trial_p;
+				//- (eta / dt);
 
-			if (xia < 1)
-				xi_b = xia;
-			else
-				xi_b = 1;
-		}
+			lamda -= (resid / tang);
+
+			iteration_counter++;
+
+			if (iteration_counter > 100) {
+				//opserr << "More than 100" ;
+				//opserr << " iterations in constituive subroutine J2-plasticity \n";
+				break;
+			} //end if 
+
+		} //end while resid
+
 
 		//iteration to determine lamda
 		//-----------------------------------------------------------------------
 		//variables
 		
-		for (int i = 0; i < 40; i++) {
-
-			//residual of X = xi*(s+2*G*lamda)-s;
-
-			if (xi < tol) {
-				xi = (xi_a + xi_b) / 2;
-			}
-
-
-			double  lamdap1 =  zeta2*xi + (2.0 * nuwave - 3.0)*fy;
-			double  lamdap2 =  - sqrt(6.0)*G*(3.0 - 2.0 * nuwave + 2.0 * nuwave*xi);
-			lamda = (1.0 - xi) / xi*lamdap1 / lamdap2;
-#ifdef _SDEBUG
-			if (lamda < 0) {
-				opserr << this->getTag() << " meets an nagetive lamda: " << lamda << "sigPr " << SigtrPr << endln;
-				return(-1);
-			}
-#endif
-
-			double deltasig;
-
-			deltasig = xi*(nuwave*(1 - xi)*I1tr ) / (3.0 - 2.0 * nuwave*(1 - xi));
-
-			sigma1 = SigtrPr(0)*xi + deltasig;
-			sigma2 = SigtrPr(1)*xi + deltasig;
-
-
-			I1 = sigma1 + sigma2;
-			Snorm = sqrt(2.0 / 3.0 * (sigma1*sigma1 + sigma2*sigma2 - sigma1*sigma2));
-			Xres = xi*(Snorm + 2.0 * G*lamda) - Snorm;
-
-
-			//returning to different zone
-
-
-			Fres = sqrt(3.0 / 2.0)*Snorm  - fy;
-
-
-			if ((fabs(Xres) / Snorm < tol) && (fabs(Fres) / fy < tol) && lamda > 0) {
-					break;
-			}
-
-
-			//if (i > 15) {
-
-			//xi = xi_a ;
-			//}
-
-			double dlamda1_dxi =  zeta2;
-			double dlamda2_dxi = - sqrt(6.0)*G * 2.0 * nuwave;
-
-			double dlamdadxi = (-1.0 / xi / xi)*lamdap1 / lamdap2 + (1.0 / xi - 1)*(dlamda1_dxi*lamdap2 - dlamda2_dxi*lamdap1) / lamdap2 / lamdap2;
-
-			double dsigdxi = (nuwave*(1.0 - 2.0*xi)*I1tr )*(3.0 - 2.0 * nuwave*(1.0 - xi)) - 2.0*nuwave*(nuwave*(1.0 - xi)*xi*I1tr);
-			dsigdxi = dsigdxi / (3.0 - 2.0 * nuwave*(1.0 - xi)) / (3.0 - 2.0 * nuwave*(1 - xi));
-
-			double dsigma1dxi = SigtrPr(0) + dsigdxi;
-			double dsigma2dxi = SigtrPr(1) + dsigdxi;
-			double dsnormdxi = ((2.0 * sigma1 - sigma2)*dsigma1dxi + (2.0 * sigma2 - sigma1)*dsigma2dxi) / 3.0 / Snorm;
-
-			double  dXdxi = Snorm + 2.0 * G*lamda + (xi - 1.0)*dsnormdxi + 2.0*G*xi*dlamdadxi;
-
-			deltaxi = -Xres / dXdxi;
-			xi = xi + deltaxi;
-
-
-#ifdef _SDEBUG
-			opserr << "sigma1: " << sigma1 << "  sigma2: " << sigma2 << endln;
-			opserr << "  Fres: " << Fres << " sigma1Res: " << sigma1Res << endln;
-#endif
-			//if (this->getTag()==177) {
-
-			//opserr<< "Material: " <<this->getTag()<<" ," << SigtrPr(0)<< ", "<< SigtrPr(1)<< "..,sigPr:"<<sigma1<<sigma2<< ", ft: "<<ftbar<<", fc: "<<fcbar<<endln;
-			//}
-
-		}
-		//end of determining lamda, principal stresses;
-
-		kxi = kxi_Commit + lamda * sqrt(2.0/3.0);
-		if (kxi > 1)
-			kxi = 1.0;
-
-
-
-		fyt = fy_inf+ (fy - fy_inf)*exp(-d*kxi)+ H*kxi;
-
+		kxi = kxi_trial;
+		fyt = fy_inf+ (fy - fy_inf)*exp(-d*kxi)+ HT*kxi;
+		Snorm = root23* fyt;
 		//now determine damage variables
 		//-----------------------------------------------------------------------
-
-		//double gt, gc;  //failure energy
+		double devS1 = (sigma1 - I1tr / 3.0) / (1 + 2 * G * lamda / Snorm);
+		double devS2 = (sigma2 - I1tr / 3.0) / (1 + 2 * G * lamda / Snorm);
+		
+		sigma1 = 2 * devS1 + devS2;
+		sigma2 = devS1 + 2*devS2;
+	
+		
 		sigPr(0) = sigma1; sigPr(1) = sigma2;
 
 		//calculate increment of eps_principle
-		if (lamda>0)
+		if (lamda >0)
 			delta_epsPr = lamda*(sigPr / Snorm - (sigPr(0) + sigPr(1)) / 3 / Snorm);
 
 		
@@ -552,8 +462,7 @@ J2PlaneStressThermal::setTrialStrain(const Vector &strain)
 		opserr << "  Sig: " << sig << " DeltaPeps " << delta_epsPr << endln;
 	}
 #endif
-	//TempAndElong(0) = fy;
-	//TempAndElong(1) = fyt;
+
 	///////////////////////////////////////////////output for debug////////////////////////////// 
 	//#endif
 
@@ -667,7 +576,7 @@ J2PlaneStressThermal::getCopy(const char *type)
 		//for debugging
 		matTag++;
 		J2PlaneStressThermal *theCopy =
-			new J2PlaneStressThermal(matTag, E0, nu, fy0, fy0_inf,d,H);
+			new J2PlaneStressThermal(matTag, TypeTag, E0, nu, fy0, fy0_inf,d,H);
 		return theCopy;
 	}
 	else {
@@ -679,7 +588,7 @@ NDMaterial*
 J2PlaneStressThermal::getCopy(void)
 {
 	J2PlaneStressThermal *theCopy =
-		new J2PlaneStressThermal(this->getTag(), E0, nu, fy0, fy0_inf,d,H);
+		new J2PlaneStressThermal(this->getTag(), TypeTag, E0, nu, fy0, fy0_inf,d,H);
 	return theCopy;
 }
 
@@ -737,6 +646,8 @@ J2PlaneStressThermal::Print(OPS_Stream &s, int flag) {
 const Vector&
 J2PlaneStressThermal::getTempAndElong(void)
 {
+	TempAndElong(0) = kxi;
+	TempAndElong(1) = fyt;
 	return TempAndElong;
 }
 
@@ -745,7 +656,7 @@ J2PlaneStressThermal::getTempAndElong(void)
 double
 J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, double&Elong)
 {
-	int typeTag = 21;
+	
 	double TempT = tempT;
 	double E00; //Initial tangent 
 	ET = E0;
@@ -755,13 +666,13 @@ J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, d
 	//typeTag:3   EC3 Structural Steel
 	//typeTag:21  EC2 Reinforcing Steel EC2 NHotRolled
 	//typeTag:22  EC2 Reinforcing Steel EC2 NCold formed
-	//typeTag:23  EC2 Reinforcing Steel EC2 X
+	//typeTag:23  EC2 Reinforcing Steel EC2 X  
 
 	double FyRfactors[12];
 	double FpRfactors[12];
 	double E0Rfactors[12];
 	
-	if (typeTag == 0 || typeTag == 3) {
+	if (TypeTag == 0 || TypeTag == 3) {
 		double FyRfEC3[12] = { 1.0, 1.0 ,1.0, 1.0 ,0.78, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
 		double FpRfEC3[12] = { 1.0, 0.807 ,0.613, 0.420 ,0.36, 0.18, 0.075, 0.050, 0.0375, 0.025 ,0.0125, 0.0 };
 		double E0RfEC3[12] = { 1.0, 0.9, 0.8 ,0.7, 0.6 ,0.31, 0.13, 0.09, 0.0675, 0.045, 0.0225 , 0.0 };
@@ -772,7 +683,7 @@ J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, d
 		}
 
 	}
-	else if (typeTag == 21) {
+	else if (TypeTag == 21) {
 		double FyRfEC21[12] = { 1.0, 1.0 ,1.0, 1.0 ,0.78, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
 		double FpRfEC21[12] = { 1.0, 0.81 ,0.61, 0.42 ,0.36, 0.18, 0.07, 0.05, 0.04, 0.02 ,0.01, 0.0 };
 		double E0RfEC21[12] = { 1.0, 0.9, 0.8 ,0.7, 0.6 ,0.31, 0.13, 0.09, 0.07, 0.04, 0.02 , 0.0 };
@@ -783,7 +694,7 @@ J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, d
 		}
 
 	}
-	else if (typeTag == 22) {
+	else if (TypeTag == 22) {
 		double FyRfEC22[12] = { 1.0, 1.0 ,1.0, 0.94 ,0.67, 0.40, 0.12, 0.11, 0.08, 0.05 ,0.03, 0.0 };
 		double FpRfEC22[12] = { 0.96 ,0.92, 0.81 ,0.63, 0.44, 0.26, 0.08, 0.06, 0.05 ,0.03, 0.02, 0.0 };
 		double E0RfEC22[12] = { 1.0, 0.87, 0.72 ,0.56, 0.40 ,0.24, 0.08, 0.06, 0.05, 0.03, 0.02 , 0.0 };
@@ -793,7 +704,7 @@ J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, d
 			E0Rfactors[i] = E0RfEC22[i];
 		}
 	}
-	else if (typeTag == 23) {
+	else if (TypeTag == 23) {
 		double FyRfEC23[12] = { 1.0, 1.0 ,1.0, 0.90 ,0.70, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
 		double FpRfEC23[12] = { 1.00 ,0.87, 0.74 ,0.70, 0.51, 0.18, 0.07, 0.05, 0.04 ,0.02, 0.01, 0.0 };
 		double E0RfEC23[12] = { 1.0, 0.95, 0.90 ,0.75, 0.60 ,0.31, 0.13, 0.09, 0.07, 0.04, 0.02 , 0.0 };
@@ -804,7 +715,7 @@ J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, d
 		}
 	}
 	else
-		opserr << "WARNING SteelECThermal received an invalid typeTag: " << typeTag << endln;
+		opserr << "WARNING SteelECThermal received an invalid typeTag: " << TypeTag << endln;
 
 	//Now Updating modulus, strengths
 	for (int i = 0; i<13; i++) {
@@ -850,14 +761,15 @@ J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, d
 
 	
 	fy_inf = fy / fy0*fy0_inf;
-	//H = 0;
-	fyt = fy_inf + (fy - fy_inf)*exp(-d*kxi_Commit) + H*kxi_Commit;
+	//H = fy / fy0 * 200e6;
+	HT = H * fy / fy0;
+	fyt = fy_inf -(fy_inf-fy)*exp(-d*kxi_Commit) + HT*kxi_Commit;
 	
 	
 
 	//ThermalElongation = ThermalElongation;
 	//(TempT -20)*1.0e-5;
-	TempAndElong(0) = tempT;
+	//TempAndElong(0) = tempT;
 	//TempAndElong(1) = fy;
 	//bulk = bulk_0;
 	//shear = shear_0;
@@ -870,7 +782,7 @@ J2PlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, d
 	Elong = ThermalElongation;
 	//this->plastic_integrator();
    // TempAndElong(0) = Temp;
-	TempAndElong(1) = C(0,0);
+	//TempAndElong(1) = kxi;
 	Tchange++;
 	return 0;
 }

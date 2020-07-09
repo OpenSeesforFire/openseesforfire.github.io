@@ -76,11 +76,11 @@ proc DisplayModel3D { {ShapeType nill} {dAmp 5}  {xLoc 0} {yLoc 0} {xPixels 0} {
 		set windowTitle $windowTitle0$viewPlane$planeTXT
 		recorder display $windowTitle $xLoc1 $yLoc $xPixels $yPixels  -wipe ; # display recorder
 		DisplayPlane $ShapeType $dAmp $viewPlane 
-		set viewPlane ZY
+		set viewPlane YZ
 		set windowTitle $windowTitle0$viewPlane$planeTXT
 		recorder display $windowTitle $xLoc $yLoc $xPixels $yPixels  -wipe ; # display recorder
 		DisplayPlane $ShapeType $dAmp $viewPlane 
-		set viewPlane ZX
+		set viewPlane XZ
 		set windowTitle $windowTitle0$viewPlane$planeTXT
 		recorder display $windowTitle $xLoc $yLoc1 $xPixels $yPixels  -wipe ; # display recorder
 		DisplayPlane $ShapeType $dAmp $viewPlane 

@@ -56,6 +56,7 @@
 #include <string.h>
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
+#include <elementAPI.h>
 
 //parameters
 const double J2PlasticityThermal :: one3   = 1.0 / 3.0 ;
@@ -66,6 +67,49 @@ const double J2PlasticityThermal :: root23 = sqrt( 2.0 / 3.0 ) ;
 double J2PlasticityThermal::initialTangent[3][3][3][3] ;   //material tangent
 double J2PlasticityThermal::IIdev[3][3][3][3] ; //rank 4 deviatoric 
 double J2PlasticityThermal::IbunI[3][3][3][3] ; //rank 4 I bun I 
+
+
+void*
+OPS_J2PlasticityThermal(void)
+{
+    NDMaterial* theMaterial = 0;
+
+    int numArgs = OPS_GetNumRemainingInputArgs();
+
+    if (numArgs < 5) {
+        opserr << "Want: nDMaterial J2PlasticityThermal $tag $typeTag $E $nu $fy $fyinf \n";
+        return 0;
+    }
+
+    int iData[2];
+    double dData[10];
+    dData[4] = 0;
+    dData[5] = 0;
+
+
+
+    int numData = 2;
+    if (OPS_GetInt(&numData, iData) != 0) {
+        opserr << "WARNING invalid integer tag: nDMaterial EasticIsotropic \n";
+        return 0;
+    }
+
+    numData = numArgs - 2;;
+    if (OPS_GetDouble(&numData, dData) != 0) {
+        opserr << "WARNING invalid data: nDMaterial EasticIsotropic : " << iData[0] << "\n";
+        return 0;
+    }
+
+    double K = dData[0] / 2 / (1 - dData[1]);
+    double G = dData[0] / 2 / (1 + dData[1]);
+
+
+    theMaterial = new J2PlasticityThermal(iData[0], 0,iData[1],
+        K, G, dData[2], dData[3], dData[4], dData[5]);
+
+    return theMaterial;
+}
+
 
 //zero internal variables
 void J2PlasticityThermal :: zero ( ) 
@@ -98,6 +142,7 @@ TempAndElong(2)
   sigma_0 = 0.0;
 
   sigma_infty = 0.0 ;
+  sigma_infty0 = 0.0;
   delta       = 0.0 ;
   Hard        = 0.0 ;
   eta         = 0.0 ;
@@ -167,6 +212,7 @@ TempAndElong(2)
 //full constructor
 J2PlasticityThermal :: J2PlasticityThermal(int    tag,
 			     int classTag,
+                 int typeTag,
 			     double K,
 			     double G,
 			     double yield0,
@@ -189,8 +235,10 @@ J2PlasticityThermal :: J2PlasticityThermal(int    tag,
   bulk_0 = K;
   shear_0 = G;
   sigma_0 = yield0;
+  TypeTag = typeTag;
 
   sigma_infty = yield_infty ;
+  sigma_infty0 = yield_infty;
   delta       = d ;
   Hard        = H ;
   eta         = viscosity ;
@@ -261,6 +309,7 @@ J2PlasticityThermal :: J2PlasticityThermal(int    tag,
 J2PlasticityThermal :: 
 J2PlasticityThermal(   int    tag, 
                 int  classTag,
+                int typeTag,
                 double K, 
                 double G ) :
 NDMaterial(tag, classTag),
@@ -277,6 +326,7 @@ TempAndElong(2)
   sigma_y     = 1.0e16*shear ;
   sigma_0 = 1.0e16*shear;
   sigma_infty = sigma_y ;
+  sigma_infty0 = sigma_y;
   delta       = 0.0 ;
   Hard        = 0.0 ;
   eta         = 0.0 ;
@@ -369,7 +419,7 @@ J2PlasticityThermal :: getCopy (const char *type)
 		(strcmp(type, "3DThermal") == 0))
 	{
 		J2ThreeDimensionalThermal  *clone;
-		clone = new J2ThreeDimensionalThermal(this->getTag(), bulk, shear, sigma_y,
+		clone = new J2ThreeDimensionalThermal(this->getTag(), TypeTag, bulk, shear, sigma_y,
 			sigma_infty, delta, Hard, eta, rho);
 		return clone;
 	}
@@ -403,7 +453,7 @@ void J2PlasticityThermal :: Print( OPS_Stream &s, int flag )
 //plasticity integration routine
 void J2PlasticityThermal :: plastic_integrator( )
 {
-  const double tolerance = (1.0e-8)*sigma_y ;
+  const double tolerance = (1.0e-6) ;
 
   const double dt = ops_Dt ; //time step
 
@@ -438,7 +488,7 @@ void J2PlasticityThermal :: plastic_integrator( )
   int ii, jj ; 
 
   int iteration_counter ;
-  const int max_iterations = 25 ;
+  const int max_iterations = 50 ;
 
   //compute the deviatoric strains
 
@@ -502,8 +552,8 @@ void J2PlasticityThermal :: plastic_integrator( )
 	iteration_counter++ ;
 
 	if ( iteration_counter > max_iterations ) {
-	    opserr << "More than " << max_iterations ;
- 	    opserr << " iterations in constituive subroutine J2-plasticity \n" ;
+	    //opserr << "More than " << max_iterations ;
+ 	    //opserr << " iterations in constituive subroutine J2-plasticity \n" ;
 	    break ;
 	} //end if 
 	
@@ -594,114 +644,120 @@ void J2PlasticityThermal :: plastic_integrator( )
 double
 J2PlasticityThermal::setThermalTangentAndElongation(double &tempT, double&ET, double&Elong)
 {
-	double TempT = tempT + 20;
-	double E00; //Initial tangent 
-	ET = 2E11;
-	E00 = 2E11;
+    double E0 = 2e11;
+    double TempT = tempT;
+    //double E00; //Initial tangent 
+    double E = E0;
+    double fy;
+    double fy0 = sigma_y;
 
-	// EN 1992 pt 1-2-1. Class N hot rolled  reinforcing steel at elevated temperatures
-	
-	if (TempT <= 100) {
+    // EN 1992&1993
+    //typeTag:3   EC3 Structural Steel
+    //typeTag:21  EC2 Reinforcing Steel EC2 NHotRolled
+    //typeTag:22  EC2 Reinforcing Steel EC2 NCold formed
+    //typeTag:23  EC2 Reinforcing Steel EC2 X
 
-	}
-	else if (TempT <= 200) {
+    double FyRfactors[12];
+    double FpRfactors[12];
+    double E0Rfactors[12];
 
-		bulk = bulk_0*(1 - (TempT - 100)*0.1 / 100);
-		shear = shear_0*(1 - (TempT - 100)*0.1 / 100);
-		sigma_y = sigma_0;
-		ET = E00*(1 - (TempT - 100)*0.1 / 100);
-		Hard = 0.01*ET / 2.8;
+    if (TypeTag == 0 || TypeTag == 3) {
+        double FyRfEC3[12] = { 1.0, 1.0 ,1.0, 1.0 ,0.78, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
+        double FpRfEC3[12] = { 1.0, 0.807 ,0.613, 0.420 ,0.36, 0.18, 0.075, 0.050, 0.0375, 0.025 ,0.0125, 0.0 };
+        double E0RfEC3[12] = { 1.0, 0.9, 0.8 ,0.7, 0.6 ,0.31, 0.13, 0.09, 0.0675, 0.045, 0.0225 , 0.0 };
+        for (int i = 0; i < 12; i++) {
+            FyRfactors[i] = FyRfEC3[i];
+            FpRfactors[i] = FpRfEC3[i];
+            E0Rfactors[i] = E0RfEC3[i];
+        }
 
-	}
-	else if (TempT <= 300) {
+    }
+    else if (TypeTag == 21) {
+        double FyRfEC21[12] = { 1.0, 1.0 ,1.0, 1.0 ,0.78, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
+        double FpRfEC21[12] = { 1.0, 0.81 ,0.61, 0.42 ,0.36, 0.18, 0.07, 0.05, 0.04, 0.02 ,0.01, 0.0 };
+        double E0RfEC21[12] = { 1.0, 0.9, 0.8 ,0.7, 0.6 ,0.31, 0.13, 0.09, 0.07, 0.04, 0.02 , 0.0 };
+        for (int i = 0; i < 12; i++) {
+            FyRfactors[i] = FyRfEC21[i];
+            FpRfactors[i] = FpRfEC21[i];
+            E0Rfactors[i] = E0RfEC21[i];
+        }
 
-		bulk = bulk_0*(0.9 - (TempT - 200)*0.1 / 100);
-		shear = shear_0*(0.9 - (TempT - 200)*0.1 / 100);
+    }
+    else if (TypeTag == 22) {
+        double FyRfEC22[12] = { 1.0, 1.0 ,1.0, 0.94 ,0.67, 0.40, 0.12, 0.11, 0.08, 0.05 ,0.03, 0.0 };
+        double FpRfEC22[12] = { 0.96 ,0.92, 0.81 ,0.63, 0.44, 0.26, 0.08, 0.06, 0.05 ,0.03, 0.02, 0.0 };
+        double E0RfEC22[12] = { 1.0, 0.87, 0.72 ,0.56, 0.40 ,0.24, 0.08, 0.06, 0.05, 0.03, 0.02 , 0.0 };
+        for (int i = 0; i < 12; i++) {
+            FyRfactors[i] = FyRfEC22[i];
+            FpRfactors[i] = FpRfEC22[i];
+            E0Rfactors[i] = E0RfEC22[i];
+        }
+    }
+    else if (TypeTag == 23) {
+        double FyRfEC23[12] = { 1.0, 1.0 ,1.0, 0.90 ,0.70, 0.47, 0.23, 0.11, 0.06, 0.04 ,0.02, 0.0 };
+        double FpRfEC23[12] = { 1.00 ,0.87, 0.74 ,0.70, 0.51, 0.18, 0.07, 0.05, 0.04 ,0.02, 0.01, 0.0 };
+        double E0RfEC23[12] = { 1.0, 0.95, 0.90 ,0.75, 0.60 ,0.31, 0.13, 0.09, 0.07, 0.04, 0.02 , 0.0 };
+        for (int i = 0; i < 12; i++) {
+            FyRfactors[i] = FyRfEC23[i];
+            FpRfactors[i] = FpRfEC23[i];
+            E0Rfactors[i] = E0RfEC23[i];
+        }
+    }
+    else
+        opserr << "WARNING SteelECThermal received an invalid typeTag: " << TypeTag << endln;
 
-		sigma_y = sigma_0;
-		ET = E00*(0.9 - (TempT - 200)*0.1 / 100);
-		Hard = 0.01*ET / 2.8;
+    //Now Updating modulus, strengths
+    for (int i = 0; i < 13; i++) {
+        if (TempT <= 80 + 100 * i)
+        {
+            if (i == 0) {
+                fy = fy0 * (1.0 - TempT * (1.0 - FyRfactors[0]) / 80);
+                E = E0 * (1.0 - TempT * (1.0 - E0Rfactors[0]) / 80);
+            }
+            else if (i == 12) {
+                opserr << "Warning:The temperature " << TempT << " for SteelECthermal is out of range\n";
+                return -1;
+            }
+            else {
+                fy = fy0 * (FyRfactors[i - 1] - (TempT + 20 - 100 * i) * (FyRfactors[i - 1] - FyRfactors[i]) / 100);
+                E = E0 * (E0Rfactors[i - 1] - (TempT + 20 - 100 * i) * (E0Rfactors[i - 1] - E0Rfactors[i]) / 100);
+            }
+            break;
+        }
+    }
+#ifdef _BDEBUG
+    //opserr<<", TempT:"<<TempT<< " fy: "<< fy<< " fp: "<< fp <<" E0T:  "<< E0<<endln;
+#endif
+    //E = E0;
+    // caculation of thermal elongation
+    double ThermalElongation = 0;
+    if (TempT <= 1) {
+        ThermalElongation = TempT * 1.2164e-5;
+    }
+    else if (TempT <= 730) {
+        ThermalElongation = -2.416e-4 + 1.2e-5 * (TempT + 20) + 0.4e-8 * (TempT + 20) * (TempT + 20);
+    }
+    else if (TempT <= 840) {
+        ThermalElongation = 11e-3;
+    }
+    else if (TempT <= 1180) {
+        ThermalElongation = -6.2e-3 + 2e-5 * (TempT + 20);
+    }
+    else {
+        opserr << " SteelEC Temperature " << TempT << " is invalid\n";
+        return -1;
+    }
 
-	}
-	else if (TempT <= 400) {
-		bulk = bulk_0*(0.8 - (TempT - 300)*0.1 / 100);
-		shear = shear_0*(0.8 - (TempT - 300)*0.1 / 100);
 
-		sigma_y = sigma_0;
-		ET = E00*(0.8 - (TempT - 300)*0.1 / 100);
-		Hard = 0.01*ET / 2.8;
-	}
-	else if (TempT <= 500) {
-		bulk = bulk_0*(0.7 - (TempT - 400)*0.1 / 100);
-		shear = shear_0*(0.7 - (TempT - 400)*0.1 / 100);
+    sigma_y = fy / fy0 * sigma_0;
+    sigma_infty = fy / fy0 * sigma_infty0;
+    bulk = bulk_0 * E / E0;
+    shear = shear_0 * E / E0;
+    //H = fy / fy0 * 200e6;
+    //HT = H * fy / fy0;
+  //  sigma_infty = fy_inf - (fy_inf - fy) * exp(-d * kxi_Commit) + HT * kxi_Commit;
 
-		sigma_y = sigma_0*(1 - (TempT - 400)*0.22 / 100);
-		ET = E00*(0.7 - (TempT - 400)*0.1 / 100);
-		Hard = 0.01*ET / 2.8;
-	}
-	else if (TempT <= 600) {
-		bulk = bulk_0*(0.6 - (TempT - 500)*0.29 / 100);
-		shear = shear_0*(0.6 - (TempT - 500)*0.29 / 100);
-		sigma_y = sigma_0*(0.78 - (TempT - 500)*0.31 / 100);
-		ET = E00*(0.6 - (TempT - 500)*0.29 / 100);
-		Hard = 0.01*ET / 2.8;
-	}
-	else if (TempT <= 700) {
-		bulk = bulk_0*(0.31 - (TempT - 600)*0.18 / 100);
-		shear = shear_0*(0.31 - (TempT - 600)*0.18 / 100);
 
-		sigma_y = sigma_0*(0.47 - (TempT - 600)*0.24 / 100);
-		ET = E00*(0.31 - (TempT - 600)*0.18 / 100);
-		Hard = 0.01*ET / 2.8;
-	}
-	else if (TempT <= 800) {
-		bulk = bulk_0*(0.13 - (TempT - 700)*0.04 / 100);
-		shear = shear_0*(0.13 - (TempT - 700)*0.04 / 100);
-
-		sigma_y = sigma_0*(0.23 - (TempT - 700)*0.12 / 100);
-		ET = E00*(0.13 - (TempT - 700)*0.04 / 100);
-		Hard = 0.01*ET / 2.8;
-	}
-	else if (TempT <= 900) {
-		bulk = bulk_0*(0.09 - (TempT - 800)*0.02 / 100);
-		shear = shear_0*(0.09 - (TempT - 800)*0.02 / 100);
-
-		sigma_y = sigma_0*(0.11 - (TempT - 800)*0.05 / 100);
-		ET = E00*(0.09 - (TempT - 800)*0.02 / 100);
-		Hard = 0.01*ET / 2.8;
-	}
-	else if (TempT <= 1000) {
-		bulk = bulk_0*(0.0675 - (TempT - 900)*(0.00675 - 0.0045) / 100);
-		shear = shear_0*(0.0675 - (TempT - 900)*(0.00675 - 0.0045) / 100);
-
-		sigma_y = sigma_0*(0.06 - (TempT - 900)*0.02 / 100);
-		ET = E00*(0.0675 - (TempT - 900)*(0.00675 - 0.0045) / 100);
-		Hard = 0.01*ET / 2.8;
-	}
-
-	else {
-		opserr << "the temperature is invalid\n";
-	}
-	
-	// Calculate thermal elongation 
-	if (TempT <= 20) {
-		ThermalElongation = 0.0;
-	}
-	else if (TempT <= 750) {
-		ThermalElongation = -2.416e-4 + 1.2e-5 *TempT + 0.4e-8 *TempT*TempT;
-		
-	}
-	else if (TempT <= 860) {
-		ThermalElongation = 11e-3;
-		
-	}
-	else if (TempT <= 1200) {
-		ThermalElongation = -6.2e-3 + 2e-5*TempT;
-
-	}
-	else {
-		opserr << "the temperature is invalid\n";
-	}
 	
 	//ThermalElongation = 12e-6*(tempT);
 	TempAndElong(0) = TempT - 20;

@@ -31,7 +31,7 @@
 #define UserDefinedFire_h
 
 #include <FireModel.h>
-
+#include <PathTimeSeriesThermal.h>
 class Vector;
 
 
@@ -43,8 +43,8 @@ class UserDefinedFire : public FireModel
 		UserDefinedFire(int tag, const Vector& theData, const Vector& theTime,
 			            int dataType);
 
-		UserDefinedFire(int tag, const char* fileNameData, const char* fileNameTime,
-			            int dataType);    
+		UserDefinedFire(int tag, const char* fileNameData, int dataType);    
+
 
 		~UserDefinedFire();
 

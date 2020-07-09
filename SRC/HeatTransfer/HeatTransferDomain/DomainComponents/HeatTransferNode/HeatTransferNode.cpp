@@ -24,8 +24,9 @@
 
 //
 // Written by Yaqiang Jiang (y.jiang@ed.ac.uk)
+// Modified by Liming Jiang//
 //
-// Note: This class was adapted from Node
+// Note: This class was adapted from Node, the DoF should be reduced!!
 
 #include <HeatTransferNode.h>
 #include <HeatTransferElement.h>

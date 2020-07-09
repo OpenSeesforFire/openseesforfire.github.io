@@ -36,6 +36,8 @@
 
 #include <OPS_Stream.h>
 #include <Vector.h>
+#include <ID.h>
+#include <vector>
 
 class HeatTransferElement;
 class HeatTransferNode;
@@ -119,6 +121,7 @@ class HeatTransferDomain
 	virtual void unsetFluxConstant(void);
     virtual int setInitial(double vaule, int dofTag = 0);
 	virtual int setInitial(int nodeTag, double value, int dofTag = 0);
+    virtual int SelectingNodes(ID& NodesRange, int crdTag, double MinValue, double MaxValue, double Tolerance = 1e-6);
 
     virtual  int commit(void);
     virtual  int revertToLastCommit(void);

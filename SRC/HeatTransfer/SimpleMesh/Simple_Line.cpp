@@ -187,7 +187,7 @@ int Simple_Line::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const 
 			TempNode = new HeatTransferNode(OriginNodeTag + i, nDoF, OriginLoc1, NodeCrdX);
 		}
 		else if (OriginLocs.Size() == 2) {
-			TempNode = new HeatTransferNode(OriginNodeTag + i, nDoF, OriginLoc1, OriginLoc2, NodeCrdX);
+			TempNode = new HeatTransferNode(OriginNodeTag + i, nDoF, OriginLoc1, NodeCrdX, OriginLoc2);
 		}
 		else {
 			TempNode = new HeatTransferNode(OriginNodeTag + i, nDoF, NodeCrdX);
@@ -195,10 +195,11 @@ int Simple_Line::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const 
 
 		if (theHTDomain->addNode(TempNode) < 0)
 			return -1;
-		else
-			return 0;
+		
 
 	}
+
+	return 0;
 
 }
 

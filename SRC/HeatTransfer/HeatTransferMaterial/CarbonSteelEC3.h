@@ -38,7 +38,7 @@ class CarbonSteelEC3: public HeatTransferMaterial
 		virtual ~CarbonSteelEC3();
 
 		// method for this material to update itself according to its new parameters
-		int setTrialTemperature(double );
+		int setTrialTemperature(double T, int par = 0);
 		const Matrix& getConductivity();
 		double getRho();
 		double getSpecificHeat();

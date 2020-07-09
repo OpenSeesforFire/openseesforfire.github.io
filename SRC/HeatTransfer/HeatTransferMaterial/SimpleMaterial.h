@@ -39,7 +39,7 @@ class SimpleMaterial: public HeatTransferMaterial
 		~SimpleMaterial();
 
 		// method for this material to update itself according to its new parameters
-		int setTrialTemperature(double );  // seem of no use
+		int setTrialTemperature(double T, int par = 0);  // seem of no use
 
 		const Matrix& getConductivity();
 		double getRho();

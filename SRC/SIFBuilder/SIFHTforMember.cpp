@@ -1131,7 +1131,8 @@ SIFHTforMember::RunHTAnalysis(double fireDuration, double timeStep)
   
   
   int numSteps = fireDuration/timeStep;
-  theHTAnalysis->analyze(numSteps, timeStep);
+  double time = 0;
+  theHTAnalysis->analyze(numSteps, timeStep,time);
   
  
   //if finished

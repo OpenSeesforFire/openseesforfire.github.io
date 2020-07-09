@@ -55,7 +55,7 @@ double
 NorminalFireEC1::getGasTemperature(double time)
 {
     static double T;
-	static double Ta = 20;
+	static double Ta = 293.15;
 	
 	if (time < StartTime)
 		return Ta;
@@ -120,19 +120,19 @@ NorminalFireEC1::applyFluxBC(HeatFluxBC* theFlux, double time)
     int flux_type = theFlux->getTypeTag();
 	if (flux_type == 1) {
 		Convection* convec = (Convection*) theFlux;
-		convec->setSurroundingTemp(this->getGasTemperature(time)+273.15);
+		convec->setSurroundingTemp(this->getGasTemperature(time));
 		convec->applyFluxBC(time);
-		} else if (flux_type == 2) {
-			Radiation* rad = (Radiation*) theFlux;
-			static const double bzm = 5.67 * 1e-008;
-			//double alpha = rad->getAbsorptivity();
-			double temp = this->getGasTemperature(time)+273.15;
-			double qir = bzm * pow(temp, 4.0);
-			rad->setIrradiation(qir);
-			rad->applyFluxBC(time);
-		} else {
-			opserr << "NorminalFireEC1::applyFluxBC() - incorrect flux type provided\n";
-			exit(-1);
-			}
+	} else if (flux_type == 2) {
+		Radiation* rad = (Radiation*) theFlux;
+		 double bzm = 5.67 * 1e-008;
+		//double alpha = rad->getAbsorptivity();
+		double temp = this->getGasTemperature(time);
+		double qir = bzm * pow(temp, 4.0);
+		rad->setIrradiation(qir);
+		rad->applyFluxBC(time);
+	} else {
+		opserr << "NorminalFireEC1::applyFluxBC() - incorrect flux type provided\n";
+		exit(-1);
+	}
 }
 

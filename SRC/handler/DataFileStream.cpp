@@ -169,7 +169,6 @@ DataFileStream::open(void)
     theFile.open(fileName, ios::out| ios::app);
 
   theOpenMode = APPEND;
-  opserr <<"file name is "<< fileName << endln;
   if (theFile.bad()) {
     std::cerr << "WARNING - DataFileStream::setFile()";
     std::cerr << " - could not open file " << fileName << std::endl;

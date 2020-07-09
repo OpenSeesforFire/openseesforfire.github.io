@@ -24,7 +24,7 @@
 
 //
 // Written by Yaqiang Jiang (y.jiang@ed.ac.uk)
-//
+// Modiefied by Liming Jiang
 
 #include <ConcreteEC2.h>
 #include <Matrix.h>
@@ -34,7 +34,7 @@
 
 ConcreteEC2::ConcreteEC2(int tag, double moisture, bool isLower)
 :HeatTransferMaterial(tag), trial_temp(0.0), ini_temp(0.0), 
- rho(2300.0), cp(900.0), enthalpy(0.0), moist(moisture), IsLower(isLower)
+ rho(2300.0), rho_a(2300.0), cp(900.0), enthalpy(0.0), moist(moisture), IsLower(isLower)
 {
     if ( k == 0){
 		k = new Matrix(3,3);
@@ -53,7 +53,7 @@ ConcreteEC2::~ConcreteEC2()
 }
 
 int 
-ConcreteEC2::setTrialTemperature(double temp)
+ConcreteEC2::setTrialTemperature(double temp, int par)
 {
     trial_temp = temp - 273.15;
     return 0;
@@ -110,7 +110,18 @@ ConcreteEC2::getConductivity(void)
 double  
 ConcreteEC2::getRho(void)
 {
-    return rho;
+	if (trial_temp <= 115)
+		rho = rho_a;
+	else if (trial_temp <= 200)
+		rho = rho_a * (1 - 0.02 * (trial_temp - 115) / 85);
+	else if (trial_temp <= 400)
+		rho = rho_a * (0.98 - 0.03 * (trial_temp - 200) / 200);
+	else if (trial_temp <= 1200)
+		rho = rho_a * (0.95 - 0.07 * (trial_temp - 400) / 800);
+	else
+		rho = 0.88 * rho_a;
+
+	return rho;
 }
 
 
@@ -340,7 +351,7 @@ ConcreteEC2::getEnthalpy(double temp)
 HeatTransferMaterial*
 ConcreteEC2::getCopy(void)
 {
-    ConcreteEC2* theCopy = new ConcreteEC2(this->getTag(), moist);
+    ConcreteEC2* theCopy = new ConcreteEC2(this->getTag(), moist,IsLower);
     theCopy->trial_temp = trial_temp;
     return theCopy;
 }

@@ -55,6 +55,24 @@ FireModel::getFireTypeTag()
 	return FireTypeTag;
 }
 
+double
+FireModel::getFirePars(int parTag)
+{
+	return 0.0;
+}
+
+int 
+FireModel::setFirePars(double time, const Vector& firePars)
+{
+	return 0;
+}
+
+double
+FireModel::getFireOut(double time, const Vector& locs)
+{
+	return 0;
+}
+
 void 
 FireModel::Print(OPS_Stream& s, int i)
 {

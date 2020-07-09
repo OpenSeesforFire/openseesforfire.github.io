@@ -41,7 +41,7 @@ class HeatTransferMaterial: public TaggedObject
 		virtual ~HeatTransferMaterial();
 
 		// method for this material to update itself according to its new parameters
-		virtual int setTrialTemperature(double ) = 0;
+		virtual int setTrialTemperature(double T, int par=0 ) = 0;
 		virtual const Matrix& getConductivity() = 0;
 		virtual double getRho() = 0;
 		virtual double getSpecificHeat() = 0;

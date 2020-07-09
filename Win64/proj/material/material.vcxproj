@@ -201,6 +201,7 @@
     <ClCompile Include="..\..\..\SRC\material\uniaxial\ImpactMaterial.cpp" />
     <ClCompile Include="..\..\..\SRC\material\uniaxial\InitStrainMaterial.cpp" />
     <ClCompile Include="..\..\..\SRC\material\uniaxial\InitStressMaterial.cpp" />
+    <ClCompile Include="..\..\..\SRC\material\uniaxial\JointEPMaterialThermal.cpp" />
     <ClCompile Include="..\..\..\SRC\material\uniaxial\KikuchiAikenHDR.cpp" />
     <ClCompile Include="..\..\..\SRC\material\uniaxial\KikuchiAikenLRB.cpp" />
     <ClCompile Include="..\..\..\SRC\material\uniaxial\Maxwell.cpp" />
@@ -555,6 +556,7 @@
     <ClInclude Include="..\..\..\SRC\material\uniaxial\ImpactMaterial.h" />
     <ClInclude Include="..\..\..\SRC\material\uniaxial\InitStrainMaterial.h" />
     <ClInclude Include="..\..\..\SRC\material\uniaxial\InitStressMaterial.h" />
+    <ClInclude Include="..\..\..\SRC\material\uniaxial\JointEPMaterialThermal.h" />
     <ClInclude Include="..\..\..\SRC\material\uniaxial\KikuchiAikenHDR.h" />
     <ClInclude Include="..\..\..\SRC\material\uniaxial\KikuchiAikenLRB.h" />
     <ClInclude Include="..\..\..\SRC\material\uniaxial\Maxwell.h" />

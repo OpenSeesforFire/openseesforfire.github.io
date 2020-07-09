@@ -22,13 +22,10 @@
 // $Date: 2012-05-21 23:03:01 $
 // $Source: /usr/local/cvs/OpenSees/SRC/material/section/LayeredShellFiberSectionThermal.cpp,v $
 
-// Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
+// LayeredShellSection developed bu Yuli Huang (yulihuang@gmail.com) & Xinzheng Lu (luxz@tsinghua.edu.cn)
 //
+// 
 // Layered Shell Section
-//
-/* Ref: Lu X, Lu XZ, Guan H, Ye LP, Collapse simulation of reinforced 
-concrete high-rise building induced by extreme earthquakes, 
-Earthquake Engineering & Structural Dynamics, 2013, 42(5): 705-723*/
 // Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
 
 
@@ -47,7 +44,7 @@ const double  LayeredShellFiberSectionThermal::root56 = 1 ; //shear correction
 //null constructor
 LayeredShellFiberSectionThermal::LayeredShellFiberSectionThermal( ) : 
 SectionForceDeformation( 0, SEC_TAG_LayeredShellFiberSectionThermal ), 
-strainResultant(8), nLayers(0),countnGauss(0),AverageThermalMomentP(0), AverageThermalForceP(0),sT(0), ThermalElongation(0)
+strainResultant(8), nLayers(0),countnGauss(0),AverageThermalMomentP(0), AverageThermalForceP(0),sT(0), ThermalElongation(0), Offset(0)
 {
 
 }
@@ -57,9 +54,9 @@ LayeredShellFiberSectionThermal::LayeredShellFiberSectionThermal(
                                    int tag, 
                                    int iLayers, 
                                    double *thickness, 
-                                   NDMaterial **fibers ) :
+                                   NDMaterial **fibers, double offset) :
 SectionForceDeformation( tag, SEC_TAG_LayeredShellFiberSectionThermal ),
-strainResultant(8), countnGauss(0), AverageThermalMomentP(0), AverageThermalForceP(0),sT(0), ThermalElongation(0)
+strainResultant(8), countnGauss(0), AverageThermalMomentP(0), AverageThermalForceP(0),sT(0), ThermalElongation(0), Offset(offset)
 {
   this->nLayers = iLayers;
   sg = new double[iLayers];
@@ -122,7 +119,7 @@ SectionForceDeformation  *LayeredShellFiberSectionThermal::getCopy( )
     clone = new LayeredShellFiberSectionThermal( this->getTag(),
 					  nLayers,
 					  thickness,
-					  theFibers ) ; //make the copy
+					  theFibers,Offset ) ; //make the copy
     delete thickness;
   }
   return clone ;
@@ -319,14 +316,14 @@ setTrialSectionDeformation( const Vector &strainResultant_from_element)
 
   double z ;
 
- #ifdef _DEBUG
+ #ifdef _SDEBUG
 	  if (strainResultant(8) ==111)
 	  opserr<< "Sec strain  "<<strainResultant<<endln;
 	#endif
 
   for ( i = 0; i < nLayers; i++ ) {
 
-      z = ( 0.5*h ) * sg[i] ;
+      z = ( 0.5*h ) * sg[i]-Offset;
   
       strain(0) =  strainResultant(0)  - z*strainResultant(3)-ThermalElongation[i] ;
 
@@ -392,7 +389,7 @@ LayeredShellFiberSectionThermal::getTemperatureStress(const Vector& dataMixed)
 	  
 	double thickness = 0.5*h*wg[i];
 
-    double yi = ( 0.5*h ) * sg[i];
+    double yi = ( 0.5*h ) * sg[i] - Offset;
 
 	double tangent, elongation;
 
@@ -430,7 +427,7 @@ const Vector&  LayeredShellFiberSectionThermal::getStressResultant( )
 
   for ( i = 0; i < nLayers; i++ ) {
 
-      z = ( 0.5*h ) * sg[i] ;
+      z = ( 0.5*h ) * sg[i]- Offset;  //added for offset
 
       weight = ( 0.5*h ) * wg[i] ;
 
@@ -483,7 +480,7 @@ const Matrix&  LayeredShellFiberSectionThermal::getSectionTangent( )
 
   for ( i = 0; i < nLayers; i++ ) {
 
-      z = ( 0.5*h ) * sg[i] ;
+      z = ( 0.5*h ) * sg[i] - Offset;
 
       weight = (0.5*h) * wg[i] ;
 

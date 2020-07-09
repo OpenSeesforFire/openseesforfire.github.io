@@ -65,6 +65,7 @@ using std::setiosflags;
 #include <ConcreteEC2.h>
 #include <SimpleMaterial.h>
 #include <SFRMCoating.h>
+#include <TimberHTMaterial.h>
 
 // includes for the analysis classes
 #include <HT_TransientAnalysis.h>
@@ -92,7 +93,7 @@ using std::setiosflags;
 #include <Idealised_Local_Fire.h>
 #include <LocalizedFireSFPE.h>
 #include <AlpertCeilingJetModel.h>
-
+#include <UserDefinedFire.h>
 #include <BoundaryPattern.h>
 #include <FireImposedPattern.h>
 
@@ -191,6 +192,7 @@ TclHeatTransferModule::TclHeatTransferModule(int ndm, Tcl_Interp* interp)
   Tcl_CreateCommand(interp, "HTPattern", (Tcl_CmdProc* )TclHeatTransferCommand_addHTPattern,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "FireModel", (Tcl_CmdProc* )TclHeatTransferCommand_addFireModel,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "HeatFluxBC", (Tcl_CmdProc* )TclHeatTransferCommand_addHeatFluxBC,(ClientData)NULL, NULL);
+  //Tcl_CreateCommand(interp, "HTFixT", (Tcl_CmdProc*)TclHeatTransferCommand_addSPTemperatureBC, (ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "HTCoupleT", (Tcl_CmdProc* )TclHeatTransferCommand_addMPTemperatureBC,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "HTAnalysis", (Tcl_CmdProc* )TclHeatTransferCommand_HTAnalysis,(ClientData)NULL, NULL);
   
@@ -527,7 +529,7 @@ TclHeatTransferCommand_addHTMaterial(ClientData clientData, Tcl_Interp *interp, 
     }
 
     //Adding CarbonSteelEC3
-	if (strcmp(argv[1],"CarbonSteelEC3") == 0) {
+	if (strcmp(argv[1],"SteelEC3") == 0||strcmp(argv[1], "CarbonSteelEC3")== 0) {
 
 		theHTMaterial = new CarbonSteelEC3(HTMaterialTag);
 
@@ -555,7 +557,7 @@ TclHeatTransferCommand_addHTMaterial(ClientData clientData, Tcl_Interp *interp, 
 			return TCL_ERROR;
 			}
 
-			if(strcmp(argv[1],"Lower") == 0||strcmp(argv[1],"lower") == 0||strcmp(argv[1],"-lower") == 0){
+			if(strcmp(argv[4],"Lower") == 0||strcmp(argv[4],"lower") == 0||strcmp(argv[4],"-lower") == 0){
 				isLower = true;
 			}
 		 }
@@ -583,7 +585,29 @@ TclHeatTransferCommand_addHTMaterial(ClientData clientData, Tcl_Interp *interp, 
     
     theHTMaterial = new SFRMCoating(HTMaterialTag, typeTag);
 
-	}else if(strcmp(argv[1],"GenericMaterial") == 0){
+	}
+    //add timber HT material
+  else if (strcmp(argv[1], "Timber") == 0 || strcmp(argv[1], "timber") == 0) {
+
+       int typeTag = 0;
+
+        if (argc == 3) {
+            typeTag = 1;
+        }
+        else if (argc == 4) {
+            if (Tcl_GetInt(interp, argv[3], &typeTag) != TCL_OK) {
+                opserr << "WARNING invalid typeTag" << endln;
+                opserr << " for HeatTransfer material: " << argv[1] << endln;
+                return TCL_ERROR;
+            }
+        }
+        else
+            opserr << "WARNING:: Defining HeatTransfer material: " << argv[1] << " recieved more than 4 arguments." << "\n";
+
+        theHTMaterial = new TimberHTMaterial(HTMaterialTag, typeTag);
+
+    }
+  else if(strcmp(argv[1],"GenericMaterial") == 0){
 	  
 		double density=0;
 		double cp =0;
@@ -1065,6 +1089,7 @@ TclHeatTransferCommand_addHTMesh(ClientData clientData, Tcl_Interp *interp, int 
     if (Tcl_GetDouble(interp, argv[count], &Loc2) == TCL_OK) {
       count++;
       SectionLocs->resize(2);
+      (*SectionLocs)(0) = Loc1;
        (*SectionLocs)(1)=Loc2;
     }
     
@@ -1093,7 +1118,7 @@ TclHeatTransferCommand_addHTMesh(ClientData clientData, Tcl_Interp *interp, int 
 		}
       }
 #ifdef _DEBUG
-	  opserr<<MeshCtrls;
+	  opserr<<"OriginLocs "<< *SectionLocs<<" MeshCtrls "<< MeshCtrls<<endln;
 #endif
 // for geting uncertain number of doubel values  
   }
@@ -1257,9 +1282,7 @@ TclHeatTransferCommand_HTRefineMesh(ClientData clientData, Tcl_Interp *interp, i
     }
     // for geting uncertain number of doubel values
     
-//#ifdef _DEBUG
-	opserr << "HTEntity "<<HTEntityTag<< " has a refined mesh as"<<MeshVec<<endln;
-//#endif
+
   }
   
   //space info obtained
@@ -1273,6 +1296,12 @@ TclHeatTransferCommand_HTRefineMesh(ClientData clientData, Tcl_Interp *interp, i
       opserr<<"WARNING::the Entity "<<HTEntityTag<< "failed to refine Seeds "<< SeedTag1 << endln;
     }
   }
+
+  #ifdef _DEBUG
+  opserr << "HTEntity " << HTEntityTag << " has refined mesh as:" << MeshVec << endln;
+  #endif
+
+  return TCL_OK;
  
 ////////////////////////////////////////////
 }
@@ -1362,8 +1391,8 @@ TclHeatTransferCommand_addHTConstants(ClientData clientData, Tcl_Interp *interp,
   }
   
   int count=2;
-  Vector constants(6);
-  if((argc-count!=5)&&(argc-count!=6)){
+  Vector constants(5);
+  if((argc-count!=4)&&(argc-count!=5)){
 	  opserr<<"WARNING:: Non-sufficent or oversized data for defining heat transfer contants: "<<argv[1]<<"\n";
 	  return TCL_ERROR;
   }
@@ -1384,8 +1413,8 @@ TclHeatTransferCommand_addHTConstants(ClientData clientData, Tcl_Interp *interp,
 		}
       }
 // for geting uncertain number of doubel values 
-  if(argc-count==5){
-	  constants(5)=  constants(3)*constants(1)*constants(1)*constants(1)*constants(1);
+  if(argc-count==4){
+	  constants(4)= 5.67e-8*constants(1)*constants(1)*constants(1)*constants(1);
 #ifdef _DEBUG
 	  opserr<<"TclHeatTransfer:: AddHTconstants: "<<constants<<endln;
 #endif
@@ -1524,6 +1553,8 @@ TclHeatTransferCommand_HTEleSet(ClientData clientData, Tcl_Interp *interp, int a
   if (EleRange!=0) {
     theHTEleSet->addEleID(EleRange);
   }
+
+  opserr << "NodeSet " << HTEleSetTag << " selects elements:" << EleRange << endln;
   
   if(theHTEleSet!=0){
 		theTclHTModule->addHTEleSet(theHTEleSet);
@@ -1551,7 +1582,8 @@ TclHeatTransferCommand_HTNodeSet(ClientData clientData, Tcl_Interp *interp, int 
     return TCL_ERROR;
   }
   
-  HTNodeSet* theHTNodeSet=0;
+  HTNodeSet* theHTNodeSet = 0;
+  Simple_Entity* theHTEntity = 0;
   int HTNodeSetTag = 0;
   int HTEntityTag = 0;
   int FaceID =0;
@@ -1575,33 +1607,35 @@ TclHeatTransferCommand_HTNodeSet(ClientData clientData, Tcl_Interp *interp, int 
     }else{
       count++;
     }
-  }
-	//HTEntityTag obtained
-  
-  
-  Simple_Entity* theHTEntity = theTclHTModule->getHTEntity(HTEntityTag);
-  
-  if(theHTEntity==0){
-    opserr<< "WARNING:: HTNodeSet failed to get the HTEntity: " <<argv[1] <<"\n";
-    return TCL_ERROR;
-  }
-  
-  int EntityMeshTag = theHTEntity->getMeshTag();
-  Simple_Mesh* theHTMesh = theTclHTModule->getHTMesh(EntityMeshTag);
+    
 
-	//to obtain faceTag
-  if(strcmp(argv[count],"-face") == 0||strcmp(argv[count],"-Face") == 0||strcmp(argv[count],"face") == 0){
-    count++;
-    if (Tcl_GetInt(interp, argv[count], &FaceID) != TCL_OK) {
-      opserr << "WARNING:: invalid face tag for defining HTEleSet: " << argv[1] << "\n";
-      return TCL_ERROR;
-    }else{
-      count++;
+    theHTEntity = theTclHTModule->getHTEntity(HTEntityTag);
+    if (theHTEntity == 0) {
+        opserr << "WARNING:: HTNodeSet failed to get the HTEntity: " << argv[1] << "\n";
+        return TCL_ERROR;
     }
+    //HTEntityTag obtained
 
-	theHTMesh->SelectingNodesbyFace(NodeRange, FaceID);
+    int EntityMeshTag = theHTEntity->getMeshTag();
+    Simple_Mesh* theHTMesh = theTclHTModule->getHTMesh(EntityMeshTag);
 
+    //to obtain faceTag
+    if (strcmp(argv[count], "-face") == 0 || strcmp(argv[count], "-Face") == 0 || strcmp(argv[count], "face") == 0) {
+        count++;
+        if (Tcl_GetInt(interp, argv[count], &FaceID) != TCL_OK) {
+            opserr << "WARNING:: invalid face tag for defining HTEleSet: " << argv[1] << "\n";
+            return TCL_ERROR;
+        }
+        else {
+            count++;
+        }
+
+        theHTMesh->SelectingNodesbyFace(NodeRange, FaceID);
+
+    }
+  
   }
+	
 	//end of HTEntity tag 
   
   //search node in the range of xloc
@@ -1609,8 +1643,7 @@ TclHeatTransferCommand_HTNodeSet(ClientData clientData, Tcl_Interp *interp, int 
   if(argc-count>0){
   if(strcmp(argv[count],"-Locx") == 0||strcmp(argv[count],"Locx") == 0||strcmp(argv[count],"locx") == 0||strcmp(argv[count],"-locx") == 0){
      count++;
-		 
-    
+		
     
     double xlocLB, xlocUB;
     
@@ -1636,7 +1669,7 @@ TclHeatTransferCommand_HTNodeSet(ClientData clientData, Tcl_Interp *interp, int 
       return TCL_ERROR;
     }
     
-    theHTMesh->SelectingNodes(NodeRange, 0, xlocLB,xlocUB);
+    theHTDomain->SelectingNodes(NodeRange, 0, xlocLB,xlocUB);
     // for geting uncertain number of doubel values
   
   }
@@ -1671,7 +1704,7 @@ TclHeatTransferCommand_HTNodeSet(ClientData clientData, Tcl_Interp *interp, int 
       return TCL_ERROR;
     }
     
-    theHTMesh->SelectingNodes(NodeRange, 1, ylocLB,ylocUB);
+    theHTDomain->SelectingNodes(NodeRange, 1, ylocLB,ylocUB);
     // for geting uncertain number of doubel values
     
   }
@@ -1704,7 +1737,7 @@ TclHeatTransferCommand_HTNodeSet(ClientData clientData, Tcl_Interp *interp, int 
       return TCL_ERROR;
     }
     
-    theHTMesh->SelectingNodes(NodeRange, 1, zlocLB,zlocUB);
+    theHTDomain->SelectingNodes(NodeRange, 2, zlocLB,zlocUB);
     // for geting uncertain number of doubel values 
   }
   }
@@ -1724,9 +1757,9 @@ TclHeatTransferCommand_HTNodeSet(ClientData clientData, Tcl_Interp *interp, int 
   else
 	opserr<<"WARNING: TclHTModule failed to add HTNodeSet: "<<argv[1]<<endln;
   
-#ifdef _DEBUG
-  opserr<<"NodeSet "<<HTNodeSetTag <<" grouped nodes:"<<NodeRange<<endln;
-#endif
+
+  opserr<<"NodeSet "<<HTNodeSetTag <<" selects nodes:"<<NodeRange<<endln;
+
 
 	return TCL_OK;
   
@@ -1870,6 +1903,19 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 	else if (strcmp(argv[1], "Exponent") == 0 || strcmp(argv[1], "Exp") == 0) {
 		theFireModel = new NorminalFireEC1(FireModelTag, 5); // hydrocarbon fire tag is 3;
 	}
+    else if (strcmp(argv[1], "UserDefined") == 0 || strcmp(argv[1], "userDefined") == 0) {
+        count++;
+        if (argc < 3) {
+            opserr << "WARNING insufficient input for UserDeifined Fire Model " << FireModelTag<< endln;
+            return TCL_ERROR;
+        }
+
+        if (strcmp(argv[count], "-file") == 0 || strcmp(argv[1], "File") == 0 ||strcmp(argv[1], "file") == 0) {
+            theFireModel = new UserDefinedFire(FireModelTag,argv[count+1], 1);
+
+        }
+
+    }
     //Paramtetric fire
 	else if(strcmp(argv[1],"parametric") == 0||strcmp(argv[1],"Parametric") == 0){
 		double thi=0; double avent=0; double hvent=0; double atotal=0; double afire=0; double qfire=0; double Tlim=0;
@@ -2488,9 +2534,8 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
     else if(HeatFluxTypeTag==2)
     {
       
-      for(int i= 0;i<NumHeatFluxBCs; i++){
-        
-        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+i,ElesRange(i),FaceID,HeatFluxConstants(2),HeatFluxConstants(3),HeatFluxConstants(4),HeatFluxConstants(5));
+      for(int i= 0;i<NumHeatFluxBCs; i++){  
+        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+i,ElesRange(i),FaceID,HeatFluxConstants(2),5.67e-8,HeatFluxConstants(3), HeatFluxConstants(4));
         theHTDomain->addHeatFluxBC(Radiat_BC,PatternTag);
         
       }
@@ -2509,7 +2554,7 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
         Convection* Convec_BC = new Convection(ExistingHeatFluxBCs+2*i,ElesRange(i),FaceID,HeatFluxConstants(0),HeatFluxConstants(1));
         theHTDomain->addHeatFluxBC(Convec_BC,PatternTag);
         
-        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+2*i+1,ElesRange(i),FaceID,HeatFluxConstants(2),HeatFluxConstants(3),HeatFluxConstants(4),HeatFluxConstants(5));
+        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+2*i+1,ElesRange(i),FaceID,HeatFluxConstants(2), 5.67e-8,HeatFluxConstants(3),HeatFluxConstants(4));
         theHTDomain->addHeatFluxBC(Radiat_BC,PatternTag);
       }
     }
@@ -2688,8 +2733,8 @@ int TclHeatTransferCommand_HTAnalyze(ClientData clientData, Tcl_Interp *interp, 
 	if (Tcl_GetDouble(interp, argv[2], &dT) != TCL_OK)	
       return TCL_ERROR;
 
-    
-    result = theHTAnalysis->analyze(numIncr, dT);
+	double time = 0;
+    result = theHTAnalysis->analyze(numIncr, dT,time);
 
 	if (result < 0) 
     opserr << "OpenSees > analyze failed, returned: " << result << " error flag\n";
@@ -2808,6 +2853,30 @@ int TclHeatTransferCommand_HTRecorder(ClientData clientData, Tcl_Interp *interp,
 
   }
   //end of nodeset
+  else if (strcmp(argv[count], "-node") == 0 || strcmp(argv[count], "Node") == 0 || strcmp(argv[count], "-Node") == 0)
+  {
+      count++;
+
+      int numnodes = argc - count;
+      ID RecNodeID = ID(numnodes);
+      int NodeTag = 0;
+      for (int i = 0; i < numnodes; i++) {
+
+          if (Tcl_GetInt(interp, argv[count], &NodeTag) != TCL_OK) {
+              opserr << "WARNING:: invalid nodeSet tag for defining HTNodeRecorder : " << "\n";
+              return TCL_ERROR;
+          }
+          RecNodeID(i) = NodeTag;
+          count++;
+      }
+     
+
+#ifdef _DEBUG
+      opserr << "TclHeatTransferModule::HTRecorder, theRecNodeID " << RecNodeID << endln;
+#endif
+      theHTRecorder = new HTNodeRecorder(HTReorderTag++, &RecNodeID, *theHTDomain, *theOutputStream);
+
+  }
  else if(strcmp(argv[count],"-HTEntity") == 0||strcmp(argv[count],"htEntity") == 0||strcmp(argv[count],"-htentity") == 0)
   {
     count++;

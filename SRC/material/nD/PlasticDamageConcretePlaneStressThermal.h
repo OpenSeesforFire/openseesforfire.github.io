@@ -154,6 +154,7 @@ class PlasticDamageConcretePlaneStressThermal : public NDMaterial
 	 Matrix Ccommit;
 	 int Cchange;
 	 int Tchange;
+	 double epsLitsp;
 
 	 Vector TempAndElong;
 };

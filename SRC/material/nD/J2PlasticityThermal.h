@@ -68,17 +68,18 @@ class J2PlasticityThermal : public NDMaterial {
   //full constructor
   J2PlasticityThermal(    int    tag,
 					int    classTag,
+                    int typeTag,
                    double K,
                    double G,
                    double yield0,
                    double yield_infty,
                    double d,
-                   double H,
+                   double H,                  
                    double viscosity = 0,
 				   double rho = 0.0) ;
 
   //elastic constructor
-  J2PlasticityThermal( int tag, int classTag, double K, double G ) ;
+  J2PlasticityThermal( int tag, int classTag, int typeTag, double K, double G ) ;
 
   //destructor
   virtual ~J2PlasticityThermal( ) ;
@@ -127,7 +128,9 @@ protected :
 
   double bulk_0;  //initial bulk modulus
   double shear_0; //initial shear modulus
+  double sigma_infty0;
 
+  int TypeTag;
 
   Vector TempAndElong;  //TempAndElong, Liming
 

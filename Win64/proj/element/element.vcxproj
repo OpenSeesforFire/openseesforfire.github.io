@@ -123,6 +123,8 @@
     <ClCompile Include="..\..\..\SRC\element\forceBeamColumn\ForceBeamColumnWarping2d.cpp" />
     <ClCompile Include="..\..\..\SRC\element\frictionBearing\FPBearingPTV.cpp" />
     <ClCompile Include="..\..\..\SRC\element\Information.cpp" />
+    <ClCompile Include="..\..\..\SRC\element\joint\BeamColumnJoint2dThermal.cpp" />
+    <ClCompile Include="..\..\..\SRC\element\joint\BeamColumnJoint3dThermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\mvlem\MVLEM.cpp" />
     <ClCompile Include="..\..\..\SRC\element\mvlem\SFI_MVLEM.cpp" />
     <ClCompile Include="..\..\..\SRC\element\PFEMElement\BackgroundDef.cpp" />
@@ -151,6 +153,7 @@
     <ClCompile Include="..\..\..\SRC\element\shell\ShellDKGT.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellMITC4Thermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellMITC9.cpp" />
+    <ClCompile Include="..\..\..\SRC\element\shell\ShellNLComThermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellNLDKGQ.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellNLDKGQThermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellNLDKGT.cpp" />
@@ -382,6 +385,8 @@
     <ClInclude Include="..\..\..\SRC\element\forceBeamColumn\ForceBeamColumnWarping2d.h" />
     <ClInclude Include="..\..\..\SRC\element\frictionBearing\FPBearingPTV.h" />
     <ClInclude Include="..\..\..\SRC\element\Information.h" />
+    <ClInclude Include="..\..\..\SRC\element\joint\BeamColumnJoint2dThermal.h" />
+    <ClInclude Include="..\..\..\SRC\element\joint\BeamColumnJoint3dThermal.h" />
     <ClInclude Include="..\..\..\SRC\element\mvlem\MVLEM.h" />
     <ClInclude Include="..\..\..\SRC\element\mvlem\SFI_MVLEM.h" />
     <ClInclude Include="..\..\..\SRC\element\PFEMElement\BackgroundDef.h" />
@@ -410,6 +415,7 @@
     <ClInclude Include="..\..\..\SRC\element\shell\ShellDKGT.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellMITC4Thermal.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellMITC9.h" />
+    <ClInclude Include="..\..\..\SRC\element\shell\ShellNLComThermal.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellNLDKGQ.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellNLDKGQThermal.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellNLDKGT.h" />
