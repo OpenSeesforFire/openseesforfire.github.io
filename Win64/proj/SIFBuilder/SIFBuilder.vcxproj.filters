@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Tcl">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="SIFMembers">
+      <UniqueIdentifier>{a0043810-af5b-4ca3-ab91-245d7cb16b0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SIFMembers\Iterator">
+      <UniqueIdentifier>{1c79575d-9f38-4f79-ba57-0ff679eb9a7a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\tcl\TclSIFBuilder.cpp">
+      <Filter>Tcl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFColumn.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMember.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFSlab.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFXBeam.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFXBeamSec.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFXWall.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFYBeam.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFYWall.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFColumnIter.cpp">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFSecXBeamIter.cpp">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFSlabIter.cpp">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFXBeamIter.cpp">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFYBeamIter.cpp">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFSection.cpp">
+      <Filter>SIFMembers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFfireAction.cpp" />
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFfireActionIter.cpp" />
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFBuilderDomain.cpp" />
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFHTforMember.cpp" />
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFCompartmentIter.cpp">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFJointIter.cpp">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFMaterial.cpp" />
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFJoint.cpp" />
+    <ClCompile Include="..\..\..\SRC\SIFBuilder\SIFCompartment.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\tcl\TclSIFBuilder.h">
+      <Filter>Tcl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFColumn.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMember.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFSlab.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFXBeam.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFXBeamSec.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFXWall.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFYBeam.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFYWall.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFColumnIter.h">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFSecXBeamIter.h">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFSlabIter.h">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFXBeamIter.h">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMembers\SIFMemberIter\SIFYBeamIter.h">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFBuilderDomain.h" />
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFfireAction.h" />
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFfireActionIter.h" />
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFHTforMember.h" />
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFCompartmentIter.h">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFJointIter.h">
+      <Filter>SIFMembers\Iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFSection.h">
+      <Filter>SIFMembers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFMaterial.h" />
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFJoint.h" />
+    <ClInclude Include="..\..\..\SRC\SIFBuilder\SIFCompartment.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\SRC\SIFBuilder\Flowchart.pdf" />
+  </ItemGroup>
+</Project>

@@ -39,10 +39,9 @@
 *.bsc
 *.pdb
 .vs
-*.filters
 *.exp
 *.pyd
-obj
+.obj
 
 # OTHER
 Makefile.def
