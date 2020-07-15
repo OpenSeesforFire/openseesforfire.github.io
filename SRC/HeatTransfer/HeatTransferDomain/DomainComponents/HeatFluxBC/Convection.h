@@ -36,21 +36,26 @@
 class Convection : public HeatFluxBC
 {
   public:
-    Convection(int tag, int eleTag, int fTag, double h, double T);
+    Convection(int tag, int eleTag, int fTag, double h, double T = 293.15, int fireType =0);
     ~Convection();
 
-	virtual void applyFluxBC(double factor);
+	void applyFluxBC(double factor);
 
-	virtual double getParameter(void) const;  // return convective heat transfer coefficient hc
-	virtual double getSurroundingTemp(void) const;
-	virtual void setSurroundingTemp(double T);
+	double getParameter(void) const;  // return convective heat transfer coefficient hc
+	void setParameter(double);
+	double getSurroundingTemp(void) const;
+	void setSurroundingTemp(double T);
 	int getTypeTag(){return type_tag;};
+	int getFireType(void);
 
   protected:
 
   private:
-	double hc, Ta;
-	static const int type_tag = 1;
+	  int FireType;
+	  double hc;
+	  double Ta;
+	  bool setIndex;
+	  int type_tag = 1;
 };
 
 #endif

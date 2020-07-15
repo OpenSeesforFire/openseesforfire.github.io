@@ -658,7 +658,7 @@ BrickEight::addPrecribedSurfFlux(PrescribedSurfFlux* theFlux, double factor)
 			Qp(mm) += shp2[m] * qk * ds;
 			}
 		}
-    //opserr << "element: "<<this->getTag()<<"Nodal Data: "<<data<<" , Qp= " << Qp << endln;
+   // opserr << "element: "<<this->getTag()<<"Nodal Data: "<<data<<" , Qp= " << Qp << endln;
 	return 0;
 }
 

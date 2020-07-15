@@ -30,11 +30,13 @@
 #define TimberHTMaterial_h
 
 #include <HeatTransferMaterial.h>
+#include <HeatTransferDomain.h>
+#include <Vector.h>
 
 class TimberHTMaterial: public HeatTransferMaterial
 {
     public:
-		TimberHTMaterial(int tag,int typeTag);    
+		TimberHTMaterial(int tag,int typeTag, HeatTransferDomain* theDomain, Vector matPars);
 		virtual ~TimberHTMaterial();
 
 		// method for this material to update itself according to its new parameters
@@ -53,8 +55,9 @@ class TimberHTMaterial: public HeatTransferMaterial
 		void update();
 		void  Print(OPS_Stream&, int = 0) {return;};
 
+		const Vector& getPars();
     protected:
-    
+		
     private:
 		int TypeTag;
 		int PhaseTag;
@@ -62,6 +65,12 @@ class TimberHTMaterial: public HeatTransferMaterial
 		double trial_temp;
 		double ini_temp;  // keep a copy of initial temperature
 		static double epsilon;
+		Vector MatPars;
+		double pht1, pht2;
+		double charTime;
+		HeatTransferDomain* theHTDomain;
+
+		int determinePhase(double temp, double time);
 };
 
 

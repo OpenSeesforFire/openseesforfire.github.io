@@ -41,8 +41,8 @@
 
 class Matrix;
 class Vector;
-//class Information;
-//class Response;
+class Information;
+class Response;
 class HeatTransferNode;
 class PrescribedSurfFlux;
 
@@ -97,6 +97,8 @@ class HeatTransferElement : public HeatTransferDomainComponent
     
 	// method for obtaining residual at element level
     //virtual const Vector &getEleResidual(void) = 0;
+	virtual Response* setResponse(const char** argv, int argc,OPS_Stream& theHandler);
+	virtual int getResponse(int responseID, Information& eleInformation);
 
   protected:
 	bool convecFlag, radFlag, pFlag; // flags to indicate BCs' existence

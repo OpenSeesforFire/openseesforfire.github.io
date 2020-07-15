@@ -56,7 +56,7 @@ class LocalizedFireSFPE : public FireModel
 	protected:
 
     private:
-	  
+	  double determineFireConvec(HeatTransferNode* the_node, double time, int FireType = 0);
 	  double x1, x2, x3, d, ini_q, hc,hb;
 	  int centerLine, FireType;
 	  double Qsquare;

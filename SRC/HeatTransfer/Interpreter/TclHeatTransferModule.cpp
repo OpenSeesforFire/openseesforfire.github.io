@@ -100,6 +100,7 @@ using std::setiosflags;
 //include recorders
 #include <HTNodeRecorder.h>
 #include <HTRecorderToStru.h>
+#include <HTElementRecorder.h>
 
 #include <elementAPI.h>
 #include <TclHeatTransferModule.h>
@@ -497,7 +498,73 @@ TclHeatTransferModule::getHeatTransferDomain(){
   return theHTDomain;
 }
 
+void 
+TclHeatTransferModule::clearAll()
+{
+    if(theHTDomain!=0)
+        theHTDomain->clearAll();
 
+    if (theHTMaterials != 0)
+        delete theHTMaterials;
+
+    if (theHTEntities != 0)
+        delete theHTEntities;
+
+    if (theHTCons != 0) {
+        theHTCons->clearAll();
+        delete theHTCons;
+    }
+
+    if (theHTEleSets != 0) {
+        theHTEleSets->clearAll();
+        delete theHTEleSets;
+    }
+
+    if (theHTNodeSets != 0) {
+        theHTNodeSets->clearAll();
+        delete theHTNodeSets;
+    }
+
+    if (theFireModels != 0) {
+        theFireModels->clearAll();
+        delete theFireModels;
+    }
+
+    if (theHTMeshes != 0) {
+        theHTMeshes->clearAll();
+        delete theHTMeshes;
+    }
+
+    if (theHTMeshIter != 0)
+        delete theHTMeshIter;
+
+
+    theHTDomain = 0;
+    theTclHTModule = 0;
+    theTclHTPattern = 0;
+    theHTMaterials = 0;
+    theHTEntities = 0;
+    theHTCons = 0;
+    theHTEleSets = 0;
+    theHTNodeSets = 0;
+    theFireModels = 0;
+    theHTMeshes = 0;
+    theHTMeshIter = 0;
+    if (theHTAnalysis != 0) {
+        theHTAnalysis->clearAll();
+    }
+
+    //Analysis classes
+    theAnalysisModel = 0;
+    theAlgorithm = 0;
+    theHandler = 0;
+    theNumberer = 0;
+    theSOE = 0;
+    theHTAnalysis = 0;
+    theTransientIntegrator = 0;
+    theTest = 0;
+    HTReorderTag = 0;
+}
 //-------------------------------------------------------------------------------//
 //------------------------Procedure of tcl commmands-----------------------------//
 
@@ -590,21 +657,45 @@ TclHeatTransferCommand_addHTMaterial(ClientData clientData, Tcl_Interp *interp, 
   else if (strcmp(argv[1], "Timber") == 0 || strcmp(argv[1], "timber") == 0) {
 
        int typeTag = 0;
+       Vector Pars = 0;
 
         if (argc == 3) {
             typeTag = 1;
         }
-        else if (argc == 4) {
+        else if (argc >3) {
             if (Tcl_GetInt(interp, argv[3], &typeTag) != TCL_OK) {
                 opserr << "WARNING invalid typeTag" << endln;
                 opserr << " for HeatTransfer material: " << argv[1] << endln;
                 return TCL_ERROR;
             }
+            int count =4;
+            if ((argc - count) > 0) {
+                Pars.resize(argc - count);
+            }
+            else {
+                opserr << "WARNING:: no parameter is defined for Timber HT Material: " << argv[1] << "\n";
+                return TCL_ERROR;
+            }
+            //-----for geting uncertain number of double data.
+            int ArgStart = count;
+            int ArgEnd = argc;
+            double data;
+
+            if (ArgStart != ArgEnd) {
+                for (int i = ArgStart; i < ArgEnd; i++) {
+                    Tcl_GetDouble(interp, argv[i], &data);
+                    Pars(i - ArgStart) = data;
+                }
+            }
+#ifdef _DEBUG
+            opserr << "HTTimber Material" << argv[1] << ": Parameters " << Pars << endln;
+#endif
+
         }
         else
             opserr << "WARNING:: Defining HeatTransfer material: " << argv[1] << " recieved more than 4 arguments." << "\n";
 
-        theHTMaterial = new TimberHTMaterial(HTMaterialTag, typeTag);
+        theHTMaterial = new TimberHTMaterial(HTMaterialTag, typeTag, theHTDomain, Pars);
 
     }
   else if(strcmp(argv[1],"GenericMaterial") == 0){
@@ -860,7 +951,12 @@ TclHeatTransferCommand_addHTEntity(ClientData clientData, Tcl_Interp *interp, in
 		//Simple_Isection3D(int tag, double HTI_centerX, double HTI_centerY, double HTI_centerZ,
                               //double HTI_Bf, double HTI_Tf, double HTI_Hw, double HTI_Tw, double HTI_Len);
 		double HTI_centerX,HTI_centerY, HTI_centerZ, HTI_BF, HTI_Tf, HTI_HB, HTI_Tw, HTI_Len;
-
+        if (argc < 11) {
+            opserr << "WARNING insufficient parameters" << endln;
+            opserr << " for HeatTransfer entity: " << argv[1] << endln;
+            return TCL_ERROR;
+        }
+          
 		if (Tcl_GetDouble (interp, argv[3], &HTI_centerX) != TCL_OK) {
 			opserr << "WARNING invalid HTI_centerX" << endln;
 			opserr << " for HeatTransfer entity: " << argv[1] << endln;	    
@@ -1414,12 +1510,14 @@ TclHeatTransferCommand_addHTConstants(ClientData clientData, Tcl_Interp *interp,
       }
 // for geting uncertain number of doubel values 
   if(argc-count==4){
-	  constants(4)= 5.67e-8*constants(1)*constants(1)*constants(1)*constants(1);
-#ifdef _DEBUG
-	  opserr<<"TclHeatTransfer:: AddHTconstants: "<<constants<<endln;
-#endif
+	  constants(4)= 5.67e-8;
+
 	  //calculating radiation from the ambient air;
   }
+
+#ifdef _DEBUG
+  opserr << "TclHeatTransfer:: AddHTconstants: " << constants << endln;
+#endif
 
   theHTConstants = new HTConstants(HTConstantTag,constants);
   
@@ -1554,7 +1652,7 @@ TclHeatTransferCommand_HTEleSet(ClientData clientData, Tcl_Interp *interp, int a
     theHTEleSet->addEleID(EleRange);
   }
 
-  opserr << "NodeSet " << HTEleSetTag << " selects elements:" << EleRange << endln;
+  opserr << "HTEleSet " << HTEleSetTag << " selects elements:" << EleRange << endln;
   
   if(theHTEleSet!=0){
 		theTclHTModule->addHTEleSet(theHTEleSet);
@@ -1963,11 +2061,11 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 		theFireModel = new ParametricFireEC1(FireModelTag, thi, avent, hvent, atotal, afire, qfire, Tlim);
 	}
 	//localised fire curve;
-    else if(strcmp(argv[1],"localised") == 0||strcmp(argv[1],"Localised") == 0){
+    else if(strcmp(argv[1],"localisedSFPE") == 0||strcmp(argv[1],"LocalisedSFPE") == 0){
 		
 		count++; //count should be updated
 		double crd1=0.0; double crd2=0.0; double crd3=0.0; 
-		double D=0; double Q=0; double H=0; int lineTag=0;
+		double D=0; double Q=0; double HB=0; double HC = 0; int lineTag=0;
 		
 		if(argc-count<=0)
 		{
@@ -2020,12 +2118,18 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 			return TCL_ERROR;
 			}
 			count++;
-			if (Tcl_GetDouble(interp, argv[count], &H) != TCL_OK) {
+			if (Tcl_GetDouble(interp, argv[count], &HC) != TCL_OK) {
 			opserr << "WARNING invalid distance between the fire source and the ceiling" << endln;
 			opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;	    
 			return TCL_ERROR;
 			}
 			count++;
+            if (Tcl_GetDouble(interp, argv[count], &HB) != TCL_OK) {
+                opserr << "WARNING invalid distance between the fire source and the beam" << endln;
+                opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+                return TCL_ERROR;
+            }
+            count++;
 			//detect argument for linetag;
 			if(argc-count>0){
 				if (Tcl_GetInt(interp, argv[count], &lineTag) != TCL_OK) {
@@ -2044,8 +2148,91 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 			      <<" expects tag:-firePars or firePars" << "\n";
 		}
 
-		theFireModel = new LocalizedFireEC1(FireModelTag, crd1, crd2, crd3, D, Q, H, lineTag);
+		theFireModel = new LocalizedFireSFPE(FireModelTag, crd1, crd2, crd3, D, Q, HC, HB, lineTag);
     }   
+    else if (strcmp(argv[1], "localised") == 0 || strcmp(argv[1], "Localised") == 0 || strcmp(argv[1], "LocalisedEC") == 0) {
+
+    count++; //count should be updated
+    double crd1 = 0.0; double crd2 = 0.0; double crd3 = 0.0;
+    double D = 0; double Q = 0; double H = 0; int lineTag = 0;
+
+    if (argc - count <= 0)
+    {
+        opserr << "WARNING invalid aguments" << endln;
+        opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+        return TCL_ERROR;
+    }
+
+    //Add a tag for location of origin;
+    if (strcmp(argv[count], "-origin") == 0 || strcmp(argv[count], "origin") == 0) {
+        count++;
+        if (Tcl_GetDouble(interp, argv[count], &crd1) != TCL_OK) {
+            opserr << "WARNING invalid x axis coordinate of fire origin" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+        if (Tcl_GetDouble(interp, argv[count], &crd2) != TCL_OK) {
+            opserr << "WARNING invalid y axis coordinate of fire origin" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+
+        if (Tcl_GetDouble(interp, argv[count], &crd3) == TCL_OK) {
+            //if the z loc is successfully recieved, count should be added with 1;
+            count++;
+        }
+        else
+        {
+            //it it possible not to have a z loc for localised fire definiton
+            opserr << "WARNING invalid z axis coordinate of fire origin" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            crd3 = 0.0;
+        }
+    }
+    //end of fire origin, waiting for firePars;
+    if (strcmp(argv[count], "-firePars") == 0 || strcmp(argv[count], "firePars") == 0) {
+        count++;
+
+        if (Tcl_GetDouble(interp, argv[count], &D) != TCL_OK) {
+            opserr << "WARNING invalid diameter of the fire source" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+        if (Tcl_GetDouble(interp, argv[count], &Q) != TCL_OK) {
+            opserr << "WARNING invalid rate of heat release" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+        if (Tcl_GetDouble(interp, argv[count], &H) != TCL_OK) {
+            opserr << "WARNING invalid distance between the fire source and the ceiling" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+        //detect argument for linetag;
+        if (argc - count > 0) {
+            if (Tcl_GetInt(interp, argv[count], &lineTag) != TCL_OK) {
+                opserr << "WARNING invalid central line tag " << endln;
+                opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+                return TCL_ERROR;
+            }
+        }
+        else {
+            opserr << "Central line tag for localised fire " << argv[2] << "is set as default:3" << endln;
+            lineTag = 3;
+        }
+    }
+    else {
+        opserr << "WARNING:: Defining Localised fire " << argv[2]
+            << " expects tag:-firePars or firePars" << "\n";
+    }
+
+    theFireModel = new LocalizedFireEC1(FireModelTag, crd1, crd2, crd3, D, Q, H, lineTag);
+    }
 	//else ----------
 	else if(strcmp(argv[1],"idealised") == 0||strcmp(argv[1],"Idealised") == 0){
 		
@@ -2465,10 +2652,26 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
     count++;
     
     if (Tcl_GetInt(interp, argv[count], &HTconstantsID) != TCL_OK) {
-      opserr << "WARNING:: invalid constants tag for defining HTEleSet: " << argv[1] << "\n";
+      opserr << "WARNING:: invalid constants tag for defining Heatflux BC: " << argv[1] << "\n";
       return TCL_ERROR;
     }
+    count++;
   }
+
+  if (argc - count > 0)
+  {
+      if (strcmp(argv[count], "-par") == 0 || strcmp(argv[count], "-Par") == 0 || strcmp(argv[count], "-firePar") == 0) {
+
+          count++;
+
+          if (Tcl_GetInt(interp, argv[count], &FireType) != TCL_OK) {
+              opserr << "WARNING:: invalid par tag for defining extral fire parameter: " << argv[1] << "\n";
+              return TCL_ERROR;
+          }
+          count++;
+      }
+  }
+  
   
   if(HTconstantsID==0){
     opserr<<"WARNING::no HTConstants found for defining heat flux BC"<<endln;
@@ -2491,10 +2694,14 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
 	 return TCL_ERROR;
   }
   Vector HeatFluxConstants = theHTConstants->getConstants();
+
+
+  opserr << HeatFluxConstants << endln;
   
   if(HeatFluxConstants==0){
     opserr<<"WARNING TclHTModule:addHeatFluxBC failed to get HTConstants "<<HTconstantsID<<endln;
   }
+  double ambqir = HeatFluxConstants(1) * HeatFluxConstants(1) * HeatFluxConstants(1) * HeatFluxConstants(1) * HeatFluxConstants(4);
   
   //------------------Applying heat flux BC--------------------------//
   //-----------------------------------------------------------------//
@@ -2535,7 +2742,7 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
     {
       
       for(int i= 0;i<NumHeatFluxBCs; i++){  
-        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+i,ElesRange(i),FaceID,HeatFluxConstants(2),5.67e-8,HeatFluxConstants(3), HeatFluxConstants(4));
+        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+i,ElesRange(i), FaceID, HeatFluxConstants(2), HeatFluxConstants(4), HeatFluxConstants(3), ambqir);
         theHTDomain->addHeatFluxBC(Radiat_BC,PatternTag);
         
       }
@@ -2554,7 +2761,7 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
         Convection* Convec_BC = new Convection(ExistingHeatFluxBCs+2*i,ElesRange(i),FaceID,HeatFluxConstants(0),HeatFluxConstants(1));
         theHTDomain->addHeatFluxBC(Convec_BC,PatternTag);
         
-        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+2*i+1,ElesRange(i),FaceID,HeatFluxConstants(2), 5.67e-8,HeatFluxConstants(3),HeatFluxConstants(4));
+        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+2*i+1,ElesRange(i), FaceID, HeatFluxConstants(2), HeatFluxConstants(4), HeatFluxConstants(3), ambqir);
         theHTDomain->addHeatFluxBC(Radiat_BC,PatternTag);
       }
     }
@@ -2583,6 +2790,7 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
     
     Vector HeatFluxConstants = (theTclHTModule->getHTConstants(HTconstantsID))->getConstants();
     
+    
 	  if(HeatFluxConstants==0){
     opserr<<"WARNING TclHTModule:addHeatFluxBC failed to get HTConstants "<<HTconstantsID<<endln;
 	  }
@@ -2599,7 +2807,7 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
       
       for(int i= 0;i<NumHeatFluxBCs; i++){
         
-        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+i,ElesRange(i),FaceID,HeatFluxConstants(2),HeatFluxConstants(3),HeatFluxConstants(4),HeatFluxConstants(5));
+        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+i,ElesRange(i), FaceID, HeatFluxConstants(2), HeatFluxConstants(4), HeatFluxConstants(3), ambqir);
         theHTDomain->addHeatFluxBC(Radiat_BC,PatternTag);
         
       }
@@ -2618,7 +2826,7 @@ TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, 
         Convection* Convec_BC = new Convection(ExistingHeatFluxBCs+2*i,ElesRange(i),FaceID,HeatFluxConstants(0),HeatFluxConstants(1));
         theHTDomain->addHeatFluxBC(Convec_BC,PatternTag);
         
-        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+2*i+1,ElesRange(i),FaceID,HeatFluxConstants(2),HeatFluxConstants(3),HeatFluxConstants(4),HeatFluxConstants(5));
+        Radiation* Radiat_BC = new Radiation(ExistingHeatFluxBCs+2*i+1,ElesRange(i),FaceID,HeatFluxConstants(2),HeatFluxConstants(4),HeatFluxConstants(3), ambqir);
         theHTDomain->addHeatFluxBC(Radiat_BC,PatternTag);
       }
     } 
@@ -2776,7 +2984,7 @@ int TclHeatTransferCommand_HTRecorder(ClientData clientData, Tcl_Interp *interp,
 	count += 2;
 	}
   
-  
+  ///////-----------------------HTRecorderToStructural member-----------------------------------//
   if(strcmp(argv[count],"-xloc") == 0||strcmp(argv[count],"xLoc") == 0||strcmp(argv[count],"-xLoc") == 0)
   {
 	 count++;
@@ -2828,7 +3036,8 @@ int TclHeatTransferCommand_HTRecorder(ClientData clientData, Tcl_Interp *interp,
 	HTReorderTag++; 
    theHTRecorder = new HTRecorderToStru(HTReorderTag,*theRecVec,*theHTDomain,*theOutputStream);
    }
-  //end of if xloc is found;
+
+  ///////-----------------------HTNodeRecorder-----------------------------------//
   else if(strcmp(argv[count],"-nodeSet") == 0||strcmp(argv[count],"NodeSet") == 0||strcmp(argv[count],"-NodeSet") == 0)
   {
     count++;
@@ -2916,7 +3125,33 @@ int TclHeatTransferCommand_HTRecorder(ClientData clientData, Tcl_Interp *interp,
    theHTRecorder = new HTNodeRecorder(HTReorderTag++,&RecNodesID,*theHTDomain,*theOutputStream);
 
   }
+  ///////-----------------------HTEleRecorder-----------------------------------//
+ else if (strcmp(argv[count], "-EleSet") == 0 || strcmp(argv[count], "eleset") == 0 || strcmp(argv[count], "EleSet") == 0)
+  {
+     count++;
+     int EleSetID = 0;
+    if (Tcl_GetInt(interp, argv[count], &EleSetID) != TCL_OK) {
+      opserr << "WARNING:: invalid nodeSet tag for defining HTNodeRecorder : " << "\n";
+      return TCL_ERROR;
+    }
 
+    HTEleSet* theRecNodeSet = theTclHTModule->getHTEleSet(EleSetID);
+    if (theRecNodeSet == 0) {
+      opserr << "WARNING:: TclHTModule failed to get the requested NodeSet for HTNodeRecorder: " << "\n";
+      return TCL_ERROR;
+    }
+    ID RecEleID = 0;
+     RecEleID = theRecNodeSet->getEleID();
+
+    #ifdef _DEBUG
+  opserr << "TclHeatTransferModule::HTRecorder, RecEleID " << RecEleID << endln;
+    #endif
+//    HTElementRecorder(const ID* eleID,const char** argv, int argc, bool echoTime, HeatTransferDomain& theDomain,  OPS_Stream& theOutputHandler)
+    theHTRecorder = new HTElementRecorder(2, &RecEleID, argv,argc, true, *theHTDomain, *theOutputStream);
+
+
+
+  }
 	
 	//HTRecorderToStru::HTRecorderToStru(int tag, const Matrix& theCrds, HeatTransferDomain &theDom, OPS_Stream &theOutputHandler, double tolerance)
 // for geting uncertain number of doubel values 

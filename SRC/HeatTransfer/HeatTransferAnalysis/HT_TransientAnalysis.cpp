@@ -148,14 +148,17 @@ HT_TransientAnalysis::initialize(void)
 int 
 HT_TransientAnalysis::analyze(int numSteps, double dT,double& lastTime, double monitortime)
 {
-	int result = 0; int monitor = 0;
+    int result = 0; int monitor = 0;  int displayTag = 1;
 	int laststep = lastTime / dT;
     HeatTransferDomain* the_domain = this->getDomainPtr();
 	
     for (int i = laststep; i < numSteps; i++) {
 #ifdef _DEBUG
-		opserr<<"Current time: "<<the_domain->getCurrentTime()<<endln;
+		//opserr<<"Current time: "<<the_domain->getCurrentTime()<<endln;
 #endif
+        if(displayTag ==1)
+            opserr << "Current time: " << the_domain->getCurrentTime() << endln;
+
 		if (analysis_model->analysisStep(dT) < 0) {
 			opserr << "HT_TransientAnalysis::analyze() - the HT_AnalysisModel failed";
 			opserr << " at time " << the_domain->getCurrentTime() << endln;

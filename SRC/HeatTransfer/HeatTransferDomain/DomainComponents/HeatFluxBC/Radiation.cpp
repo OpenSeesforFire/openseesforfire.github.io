@@ -34,7 +34,7 @@
 Radiation::Radiation(int tag, int eleTag, int fTag, double epsilon, 
 					 double sigma, double alpha, double qir)
 :HeatFluxBC(tag, eleTag, fTag), emissivity(epsilon), 
- absorptivity(alpha), BZM_const(sigma) ,irradiation(qir)
+ absorptivity(alpha), BZM_const(sigma) ,irradiation(qir), setIndex(false)
 {
 
 }
@@ -49,8 +49,12 @@ Radiation::~Radiation()
 void 
 Radiation::applyFluxBC(double factor)
 {
-    if (theElement != 0)
-		theElement->applyRadiation(this, factor);
+    if (!setIndex) {
+        if (theElement != 0)
+            theElement->applyRadiation(this, factor);
+        setIndex = true;
+    }
+   
 }
 
 

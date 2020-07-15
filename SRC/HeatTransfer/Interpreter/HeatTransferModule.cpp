@@ -65,6 +65,7 @@ using std::setiosflags;
 #include <ConcreteEC2.h>
 #include <SimpleMaterial.h>
 #include <SFRMCoating.h>
+#include <TimberHTMaterial.h>
 
 // includes for the analysis classes
 #include <HT_TransientAnalysis.h>
@@ -555,6 +556,35 @@ int OPS_addHTMaterial()
 		}
 
 		theHTMaterial = new SFRMCoating(HTMaterialTag, typeTag);
+
+	}
+	else if (strcmp(HTmatType, "Timber") == 0 || strcmp(HTmatType, "timber") == 0) {
+
+		int typeTag = 0;
+		double* paras = new double[6];
+		if (OPS_GetNumRemainingInputArgs() < 2) {
+			typeTag = 1;
+		}
+		else {
+
+			if (OPS_GetIntInput(&numdata, &typeTag) < 0) {
+				opserr << "WARNING invalid typeTag" << endln;
+				opserr << " for HeatTransfer material: " << HTMaterialTag << endln;
+				return -1;
+			}
+			if (OPS_GetNumRemainingInputArgs() > 5) {
+				numdata = 6;
+				if (OPS_GetDoubleInput(&numdata, paras) < 0) {
+					opserr << "WARNING:: HTMaterial failed to identify parameters for material: " << HTmatType << endln;
+					return -1;
+				}
+			}
+
+
+		}
+
+		Vector Pars = Vector(paras, 6);
+		theHTMaterial = new TimberHTMaterial(HTMaterialTag, typeTag, theHTDomain, Pars);
 
 	}
 	else if (strcmp(HTmatType, "GenericMaterial") == 0) {

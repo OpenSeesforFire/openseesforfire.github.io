@@ -27,6 +27,9 @@
 //
 // Note: This class was adapted from Material   
 #include <HeatTransferMaterial.h>
+#include <Information.h>
+#include <HTMaterialResponse.h>
+
 
 HeatTransferMaterial::HeatTransferMaterial(int tag)
 :TaggedObject(tag), k(0)
@@ -41,4 +44,48 @@ HeatTransferMaterial::~HeatTransferMaterial()
   // does nothing
 
 
+}
+
+
+const Vector&
+HeatTransferMaterial::getPars() {
+    opserr << "HeatTransferMaterial::getPars should not be called";
+    return 0;
+}
+
+
+Response*
+HeatTransferMaterial::setResponse(const char** argv, int argc,
+    OPS_Stream& theOutput)
+{
+    Response* theResponse = 0;
+
+    if((strcmp(argv[0], "phaseTag") == 0)||(strcmp(argv[0], "-phaseTag")==0)||(strcmp(argv[0], "phase") == 0)){
+        theOutput.tag("ResponseType", "phaseType");
+        theResponse = new HTMaterialResponse(this, 1, this->getPars()(0));
+
+        theOutput.endTag();
+
+    }
+
+return theResponse;
+
+}
+
+int
+HeatTransferMaterial::getResponse(int responseID, Information& matInfo)
+{
+
+    static Vector tempData(2);  //L.jiang [SIF]
+    static Information infoData(tempData);  //L.jiang [SIF]
+
+    // each subclass must implement its own stuff  
+
+    switch (responseID) {
+    case 1:
+        matInfo.setDouble(this->getPars()(0));
+        return 0;
+    default:
+        return -1;
+    }
 }

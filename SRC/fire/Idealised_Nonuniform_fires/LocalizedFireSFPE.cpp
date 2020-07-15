@@ -122,6 +122,7 @@ LocalizedFireSFPE::getFlux(HeatTransferNode* node, double time, int FireType)
 	//double Lt = 2.9 * h * pow(Qh_ast,0.33);
    double LB = (2.3* pow(Qhb_ast, 0.3) -1)*hb;
 	double  LC = (2.9* pow(Qhc_ast, 0.4) -1)*hc;
+	double LC0 = (2.9 * pow(Qhc_ast, 1.0/3.0) - 1) * hc;
 
 	// now calculate r	
 	const Vector& coords = node->getCrds();
@@ -159,7 +160,7 @@ LocalizedFireSFPE::getFlux(HeatTransferNode* node, double time, int FireType)
 	double w,q_dot;
 	if(FireType ==0){
 		//for ceiling
-		w = (r + hb + z_acute) / (LB +hb + z_acute);
+		w = (r + hc + z_acute) / (LC0 +hc + z_acute);
 		q_dot = 518.8* exp(-3.7*w)*1000;
 	}else if(FireType==1){
 		// for downward face of upper flange
@@ -185,19 +186,162 @@ LocalizedFireSFPE::getFlux(HeatTransferNode* node, double time, int FireType)
 	// now determine the flux
 	
 	int tag = node->getTag();
-#ifdef _DEBUG
+#ifdef _FDEBUG
 	opserr<<" NodeTag: "<<node->getTag()<< " r:  "<<r<<"____ "<< " q:  "<<q_dot<<"____ ";
 #endif
 	return q_dot;
 }
 
 
+
+double
+LocalizedFireSFPE::determineFireConvec(HeatTransferNode* node, double time, int FireType) {
+	double q, convech;
+	//if Qsquare is activated
+	if (Qsquare > 1)
+		q = (time / Qsquare) * (time / Qsquare) * 1e6;
+	else
+		q = ini_q;
+	//applying Qsquare
+	if (q > ini_q)
+		q = ini_q;
+
+	double constant = 1.11 * 1e6 * pow(d, 2.5);
+	double Qd_ast = q / constant;
+
+	double z_acute, Lf;
+
+	if (Qd_ast < 1.0) {
+		double term = pow(Qd_ast, 0.4) - pow(Qd_ast, 0.66667);
+		z_acute = 2.4 * d * term;
+		Lf = 3.5 * d * pow(Qd_ast, 0.66667);
+	}
+	else {
+		double term = 1.0 - pow(Qd_ast, 0.4);
+		z_acute = 2.4 * d * term;
+		Lf = 3.5 * d * pow(Qd_ast, 0.4);
+	}
+
+
+	//double Lf = 0.0148 * pow(q,0.4) - 1.02 * d;
+
+	if (Lf < hc) {
+#ifdef _DEBUG
+		opserr << "LocalizedFireSFPE::getFlux() - flame is not impinging ceiling, method has not implemented.\n";
+		//exit(-1);
+#endif
+		return 0;
+	}
+
+	//Dimensionless HRR
+	double termb = 1.11 * 1e6 * d * pow(hb, 1.5);
+	double Qhb_ast = q / termb;
+
+	double termc = 1.11 * 1e6 * d * pow(hc, 1.5);
+	double Qhc_ast = q / termc;
+
+
+
+	// now calculate H plus Lh
+	//double Lt = 2.9 * h * pow(Qh_ast,0.33);
+	double LB = (2.3 * pow(Qhb_ast, 0.3) - 1) * hb;
+	double  LC = (2.9 * pow(Qhc_ast, 0.4) - 1) * hc;
+
+	// now calculate r	
+	const Vector& coords = node->getCrds();
+	int size = coords.Size();
+
+	double deltaX1, deltaX2, sum, r;
+
+	if (centerLine == 1) {
+		deltaX1 = x2 - coords(1);
+		if (size == 3) {
+			// then heat transfer coordinate is 3D
+			deltaX2 = x3 - coords(2);
+		}
+		else {
+			// then heat transfer coordinate is 2D
+			deltaX2 = x3;
+		}
+	}
+	else if (centerLine == 2) {
+		deltaX1 = x1 - coords(0);
+		if (size == 3) {
+			// then heat transfer coordinate is 3D
+			deltaX2 = x3 - coords(2);
+		}
+		else {
+			// then heat transfer coordinate is 2D
+			deltaX2 = x3;
+		}
+	}
+	else if (centerLine == 3) {
+		deltaX1 = x1 - coords(0);
+		deltaX2 = x2 - coords(1);
+	}
+
+	sum = deltaX1 * deltaX1 + deltaX2 * deltaX2;
+	r = sqrt(sum);
+
+	if (FireType == 0 || FireType == 1 || FireType == 2 || FireType == 3) {
+		//for ceiling
+		if (r <= LC)
+			convech = 35;
+		else
+			convech = 35;
+	}
+	else if (FireType == 4) {
+		// for downward face of lower flange
+		if (r <= LB)
+			convech = 35;
+		else
+			convech = 35;
+	}
+	else {
+		opserr << "Localised fireSFPE::Incorrect fire type tag" << endln;
+	}
+}
+
 void
 LocalizedFireSFPE::applyFluxBC(HeatFluxBC* theFlux, double time)
 {
+	double ambTemp = 293.15;
     int flux_type = theFlux->getTypeTag();
-    if (flux_type == 3) 
-		{
+	if (flux_type == 1) {
+		Convection* convec = (Convection*)theFlux;
+		//convec->setSurroundingTemp(this->getGasTemperature(time));
+		int eleTag = theFlux->getElementTag();
+		int fTag = theFlux->getFaceTag();
+		HeatTransferDomain* theDomain = theFlux->getDomain();
+		if (theDomain == 0) {
+			opserr << "LocalizedFireSFPE::applyFluxBC() - HeatFluxBC has not been associated with a domain";
+			exit(-1);
+		}
+
+		HeatTransferElement* theEle = theDomain->getElement(eleTag);
+		if (theEle == 0) {
+			opserr << "LocalizedFireSFPE::applyFluxBC() - no element with tag " << eleTag << " exists in the domain";
+			exit(-1);
+		}
+
+		const ID& faceNodes = theEle->getNodesOnFace(fTag);
+		HeatTransferNode* theNode = theDomain->getNode(faceNodes(0));
+		//double hconvec = this->determineFireConvec(theNode, time, 4);
+		//convec->setParameter(hconvec);
+		convec->applyFluxBC(time);
+	}
+	else if (flux_type == 2) {
+		Radiation* rad = (Radiation*)theFlux;
+		//double bzm = 5.67e-8;
+		//double temp = rad->;
+		//double temp = this->getGasTemperature(time);
+		//double qir = bzm * pow(ambTemp, 4.0);
+		//rad->setIrradiation(qir);
+		rad->applyFluxBC(time);
+	}
+	
+	else if (flux_type == 3) 
+	{
 		PrescribedSurfFlux* pflux = (PrescribedSurfFlux*) theFlux;
         int FireType = pflux->getFireType();
 		//int flux_type = pflux->getTypeTag();
@@ -226,16 +370,18 @@ LocalizedFireSFPE::applyFluxBC(HeatFluxBC* theFlux, double time)
 				opserr << "LocalizedFireSFPE::applyFluxBC() - no node with tag " << nodTag << " exists in the domain";
 				exit(-1);
 				}
-			nodalFlux(i) = this->getFlux(theNode,time,FireType); 
-			//opserr << "Flux at node " << nodTag << " is " << nodalFlux(i) << endln;
+			nodalFlux(i) = this->getFlux(theNode,time, FireType);
+			//double r = (theNode->getCrds()(0)) * (theNode->getCrds()(0)) + (theNode->getCrds()(2)-1.8) * (theNode->getCrds()(2)-1.8);
+			//opserr << "Flux at node " << nodTag <<", r:"<<sqrt(r)<< " ,q=  " << nodalFlux(i) << endln;
 			}
 
 		pflux->setData(nodalFlux);
 		pflux->applyFluxBC();
-		} else {
+	} else 
+	{
 			opserr << "LocalizedFireSFPE::applyFluxBC() - incorrect flux type "
 				<< flux_type << " provided\n";
 			exit(-1);
-		}
+	}
 }
 

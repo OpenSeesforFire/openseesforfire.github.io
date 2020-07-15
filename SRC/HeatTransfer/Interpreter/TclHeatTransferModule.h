@@ -61,6 +61,7 @@ public:
   int addHTNodeSet(HTNodeSet* theHTNodeSet);
   int addHTEleSet(HTEleSet* theHTEleSet);
   int addFireModel(FireModel* theFireModel);
+  void clearAll();
 	
 	HeatTransferMaterial *getHTMaterial(int tag);
 	Simple_Entity *getHTEntity(int tag);

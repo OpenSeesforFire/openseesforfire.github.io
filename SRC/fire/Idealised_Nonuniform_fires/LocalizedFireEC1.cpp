@@ -145,7 +145,7 @@ LocalizedFireEC1::applyFluxBC(HeatFluxBC* theFlux, double time)
 {
     int flux_type = theFlux->getTypeTag();
     if (flux_type == 3) 
-		{
+	{
 		PrescribedSurfFlux* pflux = (PrescribedSurfFlux*) theFlux;
 
 		//int flux_type = pflux->getTypeTag();
@@ -155,13 +155,13 @@ LocalizedFireEC1::applyFluxBC(HeatFluxBC* theFlux, double time)
 		if (theDomain == 0) {
 			opserr << "LocalizedFireEC1::applyFluxBC() - HeatFluxBC has not been associated with a domain";
 			exit(-1);
-			}
+		}
 
 		HeatTransferElement* theEle = theDomain->getElement(eleTag);
 		if (theEle == 0) {
 			opserr << "LocalizedFireEC1::applyFluxBC() - no element with tag " << eleTag << " exists in the domain";
 			exit(-1);
-			}
+		}
 
 		const ID& faceNodes = theEle->getNodesOnFace(fTag);
 		int size = faceNodes.Size();
@@ -173,18 +173,19 @@ LocalizedFireEC1::applyFluxBC(HeatFluxBC* theFlux, double time)
 			if (theNode == 0) {
 				opserr << "LocalizedFireEC1::applyFluxBC() - no node with tag " << nodTag << " exists in the domain";
 				exit(-1);
-				}
+			}
 			nodalFlux(i) = this->getFlux(theNode,time); 
 			//opserr << "Flux at node " << nodTag << " is " << nodalFlux(i) << endln;
-			}
+		}
 
 		pflux->setData(nodalFlux);
 		pflux->applyFluxBC();
-		} else {
+	}
+	else {
 			opserr << "LocalizedFireEC1::applyFluxBC() - incorrect flux type "
 				<< flux_type << " provided\n";
 			exit(-1);
-		}
+	}
 }
 
 void 

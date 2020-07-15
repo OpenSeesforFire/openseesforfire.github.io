@@ -53,6 +53,7 @@ class Radiation : public HeatFluxBC
   private:
 	double emissivity, BZM_const, irradiation;
 	double absorptivity;
+	bool setIndex;
 	static const int type_tag = 2;
 };
 

@@ -141,6 +141,9 @@
     <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\SteelASCE.cpp" />
     <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\TimberHTMaterial.cpp" />
     <ClCompile Include="..\..\..\SRC\HeatTransfer\HTModelBuilder\HTModelBuilder.cpp" />
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTElementRecorder.cpp" />
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTElementResponse.cpp" />
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTMaterialResponse.cpp" />
     <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTNodeRecorder.cpp" />
     <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTRecorder.cpp" />
     <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTRecorderToStru.cpp" />
@@ -228,6 +231,9 @@
     <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\SteelASCE.h" />
     <ClInclude Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\TimberHTMaterial.h" />
     <ClInclude Include="..\..\..\SRC\HeatTransfer\HTModelBuilder\HTModelBuilder.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTElementRecorder.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTElementResponse.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTMaterialResponse.h" />
     <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTNodeRecorder.h" />
     <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTRecorder.h" />
     <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTRecorderToStru.h" />

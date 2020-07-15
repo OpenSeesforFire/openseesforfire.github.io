@@ -31,7 +31,7 @@
 #include <algorithm>
 
 #include <HeatTransferElement.h>
-//#include "ElementResponse.h"
+#include <HTElementResponse.h>
 //#include <Renderer.h>
 #include <Vector.h>
 #include <Matrix.h>
@@ -39,6 +39,7 @@
 #include <HeatTransferDomain.h>
 #include <Convection.h>
 #include <Radiation.h>
+#include <Information.h>
 
 using std::list;
 
@@ -165,4 +166,17 @@ HeatTransferElement::removeRadiation(Radiation* theRadiation)
     // reset the flag if no radiation bc exists
 	if (theRadiationBCs.size() == 0)
 		radFlag = false;
+}
+
+Response*
+HeatTransferElement::setResponse(const char** argv, int argc, OPS_Stream& theHandler) {
+
+	return 0;
+}
+
+
+int
+HeatTransferElement::getResponse(int responseID, Information& eleInformation)
+{
+	return 0;
 }

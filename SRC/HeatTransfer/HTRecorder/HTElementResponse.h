@@ -3,7 +3,7 @@
 **          Pacific Earthquake Engineering Research Center            **
 **                                                                    **
 **                                                                    **
-** (C) Copyright 2001, The Regents of the University of California    **
+** (C) Copyright 1999, The Regents of the University of California    **
 ** All Rights Reserved.                                               **
 **                                                                    **
 ** Commercial use of this program without express permission of the   **
@@ -16,73 +16,48 @@
 **   Gregory L. Fenves (fenves@ce.berkeley.edu)                       **
 **   Filip C. Filippou (filippou@ce.berkeley.edu)                     **
 **                                                                    **
-** Fire & Heat Transfer modules developed by:                         **
-**   Yaqiang Jiang (y.jiang@ed.ac.uk)                                 **
-**   Asif Usmani (asif.usmani@ed.ac.uk)                               **
-**                                                                    **
 ** ****************************************************************** */
-
+                                                                        
+// $Revision: 1.5 $
+// $Date: 2009-12-17 23:50:36 $
+// $Source: /usr/local/cvs/OpenSees/SRC/recorder/response/HTElementResponse.h,v $
+                                                                        
+// Written: MHS 
+// Created: Oct 2000
 //
-// Written by Yaqiang Jiang (y.jiang@ed.ac.uk)
-//
+// Description: This file contains the HTElementResponse class interface
 
-#include <Convection.h>
-#include <HeatTransferElement.h>
+#ifndef HTElementResponse_h
+#define HTElementResponse_h
 
-//const int Convection::type_tag;
+#include <Response.h>
+#include <Information.h>
 
-Convection::Convection(int tag, int eleTag, int fTag, double h, double T , int fireType )
-:HeatFluxBC(tag, eleTag, fTag), hc(h), Ta(T),setIndex (false), FireType(0)
+class HeatTransferElement;
+
+class ID;
+class Vector;
+class Matrix;
+
+class HTElementResponse : public Response
 {
-    //opserr << hc << "  " << Ta << endln;
-}
+public:
+	HTElementResponse(HeatTransferElement *ele, int id);
+	HTElementResponse(HeatTransferElement *ele, int id, int val);
+	HTElementResponse(HeatTransferElement *ele, int id, double val);
+	HTElementResponse(HeatTransferElement *ele, int id, const ID &val);
+	HTElementResponse(HeatTransferElement *ele, int id, const Vector &val);
+	HTElementResponse(HeatTransferElement *ele, int id, const Matrix &val);
+	HTElementResponse(HeatTransferElement *ele, int id, const Vector &val1, const ID &val2);
+
+	~HTElementResponse();
+
+	int getResponse(void);
 
 
-Convection::~Convection()
-{
+private:
+	HeatTransferElement *theElement;
+	int responseID;
+};
 
-}
-
-
-void 
-Convection::applyFluxBC(double factor)
-{
-    if (!setIndex) {
-        if (theElement != 0)
-            theElement->applyConvection(this, factor);
-        setIndex = true;
-    }
-
-}
-
-void 
-Convection::setParameter(double convec)
-{
-    hc = convec;
-
-}
-double 
-Convection::getParameter(void) const
-{
-    return hc;
-}
-
-
-double 
-Convection::getSurroundingTemp(void) const
-{
-    return Ta;
-}
-
-
-void
-Convection::setSurroundingTemp(double T)
-{
-    Ta = T;
-}
-
-int
-Convection::getFireType(void)
-{
-    return FireType;
-}
+#endif

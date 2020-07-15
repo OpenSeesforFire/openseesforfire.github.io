@@ -77,7 +77,10 @@ class QuadFour : public HeatTransferElement
     const Vector& get_Q_Radiation();  //computeQqr(void); getRadiation  
 	const Vector& get_Q_Convection();  //computeQqc(void); getConvection  
 
-	//const Vector& getEleResidual(void);            
+	//const Vector& getEleResidual(void);      
+
+    Response* setResponse(const char** argv, int argc, OPS_Stream& output);
+    int getResponse(int responseID, Information& eleInfo);
 
   protected:
     
