@@ -63,7 +63,7 @@ class NaturalFire : public FireModel
 	  Vector fireLocs;
 	  double  d, q, h;
 	  double smokeT;
-	  double maxq;
+	  double addq;
 	  int centerLine;
 };
 

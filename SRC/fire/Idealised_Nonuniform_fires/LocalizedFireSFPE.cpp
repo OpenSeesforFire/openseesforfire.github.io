@@ -110,19 +110,19 @@ LocalizedFireSFPE::getFlux(HeatTransferNode* node, double time, int FireType)
 		}
 	
     //Dimensionless HRR
-	double termb = 1.11 * 1e6 * d *pow(hb,1.5);
+	double termb = 1.11 * 1e6 *pow(hb,2.5);
 	double Qhb_ast = q / termb;
 
-	double termc = 1.11 * 1e6 * d* pow(hc,1.5);
+	double termc = 1.11 * 1e6 * pow(hc,2.5);
 	double Qhc_ast = q / termc;
 	
 
 
 	// now calculate H plus Lh
 	//double Lt = 2.9 * h * pow(Qh_ast,0.33);
-   double LB = (2.3* pow(Qhb_ast, 0.3) -1)*hb;
-	double  LC = (2.9* pow(Qhc_ast, 0.4) -1)*hc;
-	double LC0 = (2.9 * pow(Qhc_ast, 1.0/3.0) - 1) * hc;
+   double LB = (2.3* pow(Qhb_ast, 0.3) -1)*hb;       // 2.3
+	double  LC = (2.9* pow(Qhc_ast, 0.4) -1)*hc;      //2.9
+	double LC0 = (2.89 * pow(Qhc_ast, 1.0/3.0) - 1) * hc;
 
 	// now calculate r	
 	const Vector& coords = node->getCrds();

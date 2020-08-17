@@ -48,6 +48,11 @@ Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, dou
 		opserr << "Idealised_Local_Fire::Idealised_Local_Fire - invalid line tag provided for Hasemi fire.\n"
 			<< " Only 1, or 2, or 3 is correct.\n";
 		}
+
+	if (D2 - D1 > 1e-3)
+		CurveType = 1;
+	else
+		CurveType = 0;
 	
 }
 
@@ -106,12 +111,22 @@ Idealised_Local_Fire::~Idealised_Local_Fire()
 double 
 Idealised_Local_Fire::getFlux(HeatTransferNode* node, double time)
 {
-    // first calculate flame length
+	// now determine the flux
+	double q_dot;
   
+	if (CurveType == 0) {
+		q_dot = q;
+		//Uniform distribution of heat flux
+
+		return q_dot;
+
+	}
 
 	// now calculate r	
 	const Vector& coords = node->getCrds();
 	int size = coords.Size();
+
+	
 
 	double deltaX1, deltaX2, sum, r;
 	//------------moving ..................
@@ -165,10 +180,7 @@ Idealised_Local_Fire::getFlux(HeatTransferNode* node, double time)
     r = sqrt(sum);
 
 	// now calculate y
-	
 
-	// now determine the flux
-	double q_dot;
 	
   if (r <= d1) {
 		q_dot = q;
@@ -176,16 +188,17 @@ Idealised_Local_Fire::getFlux(HeatTransferNode* node, double time)
   
   else if ((r > d1) && (r <= d2)) {
 		
-		if(CurveType==1){
-      q_dot = q - q * (r-d1)/(d2-d1);
-		
+	  
+	 if(CurveType==1){
+		q_dot = q - q * (r-d1)/(d2-d1);
+	 	
 		}
-		else if(CurveType==2){
-      double L=d2-d1;
-      double A = 2*(k2-2*k1+1)/L/L;
-      double B = (-k2+4*k1-3)/L;
-      double X=r-d1;
-      q_dot = (A*X*X+B*X+1)*q;
+     else if(CurveType==2){
+		double L=d2-d1;
+		double A = 2*(k2-2*k1+1)/L/L;
+		double B = (-k2+4*k1-3)/L;
+		double X=r-d1;
+		q_dot = (A*X*X+B*X+1)*q;
     }
     else if(CurveType==3){
       double X= (r-d1)/(d2-d1);
@@ -207,8 +220,33 @@ void
 Idealised_Local_Fire::applyFluxBC(HeatFluxBC* theFlux, double time)
 {
     int flux_type = theFlux->getTypeTag();
-    if (flux_type == 3) 
-		{
+	if (flux_type == 1) {
+		Convection* convec = (Convection*)theFlux;
+		//convec->setSurroundingTemp(this->getGasTemperature(time));
+		int eleTag = theFlux->getElementTag();
+		int fTag = theFlux->getFaceTag();
+		HeatTransferDomain* theDomain = theFlux->getDomain();
+		if (theDomain == 0) {
+			opserr << "Idealised_Local_Fire::applyFluxBC() - HeatFluxBC has not been associated with a domain";
+			exit(-1);
+		}
+
+		HeatTransferElement* theEle = theDomain->getElement(eleTag);
+		if (theEle == 0) {
+			opserr << "Idealised_Local_Fire::applyFluxBC() - no element with tag " << eleTag << " exists in the domain";
+			exit(-1);
+		}
+
+		const ID& faceNodes = theEle->getNodesOnFace(fTag);
+		HeatTransferNode* theNode = theDomain->getNode(faceNodes(0));
+		convec->applyFluxBC(time);
+	}
+	else if (flux_type == 2) {
+		Radiation* rad = (Radiation*)theFlux;
+		rad->applyFluxBC(time);
+	}
+	else if (flux_type == 3)
+	{
 		PrescribedSurfFlux* pflux = (PrescribedSurfFlux*) theFlux;
 
 		//int flux_type = pflux->getTypeTag();
@@ -243,10 +281,10 @@ Idealised_Local_Fire::applyFluxBC(HeatFluxBC* theFlux, double time)
 
 		pflux->setData(nodalFlux);
 		pflux->applyFluxBC();
-		} else {
+	} else {
 			opserr << "Idealised_Local_Fire::applyFluxBC() - incorrect flux type "
 				<< flux_type << " provided\n";
 			exit(-1);
-		}
+	}
 }
 

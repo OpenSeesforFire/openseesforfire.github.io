@@ -23,7 +23,7 @@
 ** ****************************************************************** */
 
 //
-// Written by Yaqiang Jiang (y.jiang@ed.ac.uk)
+// Written by Liming Jiang (liming.jiang@poly.edu.hk)
 //
 
 #include <NaturalFire.h>
@@ -41,7 +41,7 @@
 NaturalFire::NaturalFire(int tag, double D,
 	double Q, double H, int lineTag, double smokeTemp, PathTimeSeriesThermal* fireLocPath)
 	:FireModel(tag, 7), FireLocPath(fireLocPath), fireLocs(3), d(D), 
-	q(Q), h(H), smokeT(smokeTemp),maxq(1e5),centerLine(lineTag)
+	q(Q), h(H), smokeT(smokeTemp),addq(1e5),centerLine(lineTag)
 {
     // check the direction of central line of a Hasemi fire
     // 1 indicates it is parrallel to x1 axis, 2 indicates
@@ -107,7 +107,7 @@ NaturalFire::setFirePars(double time, const Vector& firePars) {
 		q = FirePars(3);
 		d = FirePars(4);
 		smokeT = FirePars(5);
-		maxq = FirePars(6);
+		addq = FirePars(6);
 
 	}
 	else {
@@ -137,7 +137,7 @@ NaturalFire::getFirePars(int ParTag) {
 	else if (ParTag == 6)
 		return smokeT;
 	else if (ParTag == 7)
-		return maxq;
+		return addq;
 	else {
 		opserr << "WARNING! invalid tag for NaturalFire::getFirePars " << ParTag << endln;
 		return -1;
@@ -217,7 +217,7 @@ NaturalFire::getFireOut( double time, const Vector& coords)
 	sum = deltaX1 * deltaX1 + deltaX2 * deltaX2;
 	r = sqrt(sum);
 
-
+	double q_smoke = 0.85 * 5.67e-8 * (pow(smokeT, 4) - pow(293.15, 4)) + 35 * (smokeT - 293.15);
 	if (Lf < h) {
 		//not impinge ceiling
 		
@@ -232,16 +232,23 @@ NaturalFire::getFireOut( double time, const Vector& coords)
 		//opserr << " GAS: " << gas_t << " Q: "<< q<<" h "<< pow(q / 1000.0 / r, 2.0 / 3.0);
 		gas_t = gas_t + 293.15;
 
-		if (gas_t > smokeT) {
-		
-			q_dot = 0.8 * 5.67e-8 * (pow(gas_t, 4) - pow(293.15, 4)) + 35 * (gas_t - 293.15);
-		}
-		else {
 
-			q_dot = 0.8 * 5.67e-8 * (pow(smokeT, 4) - pow(293.15, 4)) + 35 * (smokeT - 293.15);
+		if (addq > q_smoke)
+			addq = q_smoke;
+
+		//if (r < d)
+			q_dot = 0.85 * 5.67e-8 * (pow(gas_t, 4) - pow(293.15, 4)) + 35 * (gas_t - 293.15) + addq;
+		//else
+			//q_dot = 0.85 * 5.67e-8 * (pow(gas_t, 4) - pow(293.15, 4)) + 35 * (gas_t - 293.15);
+		
+
+		if (q_dot < q_smoke) {
+#ifdef _DEBUG
+			opserr << "Travelling fire: q_dot " << q_dot << "q_smoke: " << q_smoke << endln;
+#endif
+			q_dot = q_smoke;
 
 		}
-		
 		
 	}
 	else {
@@ -261,9 +268,15 @@ NaturalFire::getFireOut( double time, const Vector& coords)
 			q_dot = 15000 * pow(y, -3.7);
 		}
 
-		q_dot = q_dot * maxq / 1e5; //modify the maximum q
+		if (addq > q_smoke)
+			addq = q_smoke;
+		q_dot = q_dot +addq; //modify the maximum q
+		
+		if (q_dot > 120000)
+			q_dot = 120000;
 
-		double q_smoke = 0.8 * 5.67e-8 * (pow(smokeT, 4) - pow(293.15, 4)) + 35 * (smokeT - 293.15);
+		//adibadic temperature principle: eps*qr -eps*sigma*T^4 +h (smokeT-T)=0
+		// Gauge heat flux = eps*qr-eps*sigma*Tg^4+h(smokeT-Tg)
 		if (q_dot < q_smoke) {
 #ifdef _DEBUG
 			opserr << "Travelling fire: q_dot " << q_dot << "q_smoke: " << q_smoke << endln;
@@ -296,7 +309,40 @@ void
 NaturalFire::applyFluxBC(HeatFluxBC* theFlux, double time)
 {
     int flux_type = theFlux->getTypeTag();
-    if (flux_type == 3) 
+
+	if (flux_type == 1) {
+		Convection* convec = (Convection*)theFlux;
+		//convec->setSurroundingTemp(this->getGasTemperature(time));
+		int eleTag = theFlux->getElementTag();
+		int fTag = theFlux->getFaceTag();
+		HeatTransferDomain* theDomain = theFlux->getDomain();
+		if (theDomain == 0) {
+			opserr << "LocalizedFireSFPE::applyFluxBC() - HeatFluxBC has not been associated with a domain";
+			exit(-1);
+		}
+
+		HeatTransferElement* theEle = theDomain->getElement(eleTag);
+		if (theEle == 0) {
+			opserr << "LocalizedFireSFPE::applyFluxBC() - no element with tag " << eleTag << " exists in the domain";
+			exit(-1);
+		}
+
+		const ID& faceNodes = theEle->getNodesOnFace(fTag);
+		HeatTransferNode* theNode = theDomain->getNode(faceNodes(0));
+		//double hconvec = this->determineFireConvec(theNode, time, 4);
+		//convec->setParameter(hconvec);
+		convec->applyFluxBC(time);
+	}
+	else if (flux_type == 2) {
+		Radiation* rad = (Radiation*)theFlux;
+		//double bzm = 5.67e-8;
+		//double temp = rad->;
+		//double temp = this->getGasTemperature(time);
+		//double qir = bzm * pow(ambTemp, 4.0);
+		//rad->setIrradiation(qir);
+		rad->applyFluxBC(time);
+	}
+	else if (flux_type == 3) 
 		{
 		PrescribedSurfFlux* pflux = (PrescribedSurfFlux*) theFlux;
 
