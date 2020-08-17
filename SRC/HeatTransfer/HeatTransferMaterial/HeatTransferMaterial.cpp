@@ -24,6 +24,7 @@
 
 //
 // Written by Yaqiang Jiang (y.jiang@ed.ac.uk)
+//Modified by Liming Jiang (liming.jiang@ed.ac.uk)
 //
 // Note: This class was adapted from Material   
 #include <HeatTransferMaterial.h>
@@ -88,4 +89,18 @@ HeatTransferMaterial::getResponse(int responseID, Information& matInfo)
     default:
         return -1;
     }
+}
+
+
+bool
+HeatTransferMaterial::getIfHeatGen()
+{
+    return false;
+}
+
+
+double 
+HeatTransferMaterial::getHeatGen()
+{
+    return 0;
 }

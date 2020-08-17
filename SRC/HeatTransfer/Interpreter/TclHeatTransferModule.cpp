@@ -92,6 +92,7 @@ using std::setiosflags;
 #include <LocalizedFireEC1.h>
 #include <Idealised_Local_Fire.h>
 #include <LocalizedFireSFPE.h>
+#include < NaturalFire.h>
 #include <AlpertCeilingJetModel.h>
 #include <UserDefinedFire.h>
 #include <BoundaryPattern.h>
@@ -141,6 +142,7 @@ int TclHeatTransferCommand_HTNodeSet(ClientData clientData, Tcl_Interp *interp, 
 int TclHeatTransferCommand_HTEleSet(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 int TclHeatTransferCommand_addHTPattern(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 int TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
+int TclHeatTransferCommand_setFirePars(ClientData clientData, Tcl_Interp* interp, int argc, TCL_Char** argv);
 int TclHeatTransferCommand_addHeatFluxBC(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 int TclHeatTransferCommand_addMPTemperatureBC(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
 int TclHeatTransferCommand_HTRefineMesh(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv);
@@ -192,6 +194,7 @@ TclHeatTransferModule::TclHeatTransferModule(int ndm, Tcl_Interp* interp)
   Tcl_CreateCommand(interp, "HTNodeSet", (Tcl_CmdProc* )TclHeatTransferCommand_HTNodeSet,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "HTPattern", (Tcl_CmdProc* )TclHeatTransferCommand_addHTPattern,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "FireModel", (Tcl_CmdProc* )TclHeatTransferCommand_addFireModel,(ClientData)NULL, NULL);
+  Tcl_CreateCommand(interp, "SetFirePars", (Tcl_CmdProc*)TclHeatTransferCommand_setFirePars,(ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "HeatFluxBC", (Tcl_CmdProc* )TclHeatTransferCommand_addHeatFluxBC,(ClientData)NULL, NULL);
   //Tcl_CreateCommand(interp, "HTFixT", (Tcl_CmdProc*)TclHeatTransferCommand_addSPTemperatureBC, (ClientData)NULL, NULL);
   Tcl_CreateCommand(interp, "HTCoupleT", (Tcl_CmdProc* )TclHeatTransferCommand_addMPTemperatureBC,(ClientData)NULL, NULL);
@@ -276,6 +279,8 @@ theTest =0;
    Tcl_DeleteCommand(theInterp, "HTNodeSet");
   Tcl_DeleteCommand(theInterp, "HTPattern");
   Tcl_DeleteCommand(theInterp, "FireModel");
+  Tcl_DeleteCommand(theInterp, "SetFirePars");
+
   Tcl_DeleteCommand(theInterp, "HeatFuxBC");
   Tcl_DeleteCommand(theInterp, "HTCoupleT");
 
@@ -859,7 +864,7 @@ TclHeatTransferCommand_addHTEntity(ClientData clientData, Tcl_Interp *interp, in
 
 	}
 
-	else if(strcmp(argv[1],"ProtectedIsection") == 0||strcmp(argv[1],"InsIsection2D") == 0||strcmp(argv[1],"ProtectedIsection2d") == 0)
+	else if(strcmp(argv[1],"ProtectedIsection") == 0||strcmp(argv[1],"CoatIsection2D") == 0||strcmp(argv[1],"ProtectedIsection2d") == 0)
   {
 	  
 		double HTI_centerX, HTI_centerY, HTI_BF, HTI_Tf, HTI_Tw, HTI_HB ,HTI_coat;
@@ -2060,7 +2065,7 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 
 		theFireModel = new ParametricFireEC1(FireModelTag, thi, avent, hvent, atotal, afire, qfire, Tlim);
 	}
-	//localised fire curve;
+	//localised SFPE fire curve;
     else if(strcmp(argv[1],"localisedSFPE") == 0||strcmp(argv[1],"LocalisedSFPE") == 0){
 		
 		count++; //count should be updated
@@ -2149,7 +2154,67 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 		}
 
 		theFireModel = new LocalizedFireSFPE(FireModelTag, crd1, crd2, crd3, D, Q, HC, HB, lineTag);
-    }   
+    } 
+    //travelling
+    else if (strcmp(argv[1], "Travelling") == 0 || strcmp(argv[1], "travelling") == 0 || strcmp(argv[1], "NaturalFire") == 0) {
+
+    count++; //count should be updated
+    double crd1 = 0.0; double crd2 = 0.0; double crd3 = 0.0;
+    double D = 0; double Q = 0; double H = 0; int lineTag = 0;
+    double smokeT = 0;
+
+    if (argc - count <= 0)
+    {
+        opserr << "WARNING invalid aguments" << endln;
+        opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+        return TCL_ERROR;
+    }
+
+    //end of fire origin, waiting for firePars;
+       if (strcmp(argv[count], "-firePars") == 0 || strcmp(argv[count], "firePars") == 0) {
+        count++;
+
+        if (Tcl_GetDouble(interp, argv[count], &D) != TCL_OK) {
+            opserr << "WARNING invalid diameter of the fire source" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+        if (Tcl_GetDouble(interp, argv[count], &Q) != TCL_OK) {
+            opserr << "WARNING invalid rate of heat release" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+        if (Tcl_GetDouble(interp, argv[count], &H) != TCL_OK) {
+            opserr << "WARNING invalid distance between the fire source and the ceiling" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+        //detect argument for linetag;
+        if (argc - count > 0) {
+            if (Tcl_GetInt(interp, argv[count], &lineTag) != TCL_OK) {
+                opserr << "WARNING invalid central line tag " << endln;
+                opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+                return TCL_ERROR;
+            }
+            count++;
+        }
+
+
+        if (argc - count > 0) {
+            if (Tcl_GetDouble(interp, argv[count], &smokeT) != TCL_OK) {
+                opserr << "WARNING invalid smoke temperature between the fire source and the ceiling" << endln;
+                opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+                return TCL_ERROR;
+            }
+        }
+        
+    }
+    theFireModel = new NaturalFire(FireModelTag, D, Q, H, lineTag, smokeT);
+    }
+    //localised EC1
     else if (strcmp(argv[1], "localised") == 0 || strcmp(argv[1], "Localised") == 0 || strcmp(argv[1], "LocalisedEC") == 0) {
 
     count++; //count should be updated
@@ -2277,7 +2342,7 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 		}
 		//end of fire origin, waiting for firePars;
 
-		if(strcmp(argv[count],"-Q") == 0||strcmp(argv[count],"Q")==0||strcmp(argv[count],"HRR") == 0){
+		if(strcmp(argv[count],"-q") == 0||strcmp(argv[count],"q")==0||strcmp(argv[count],"-Q") == 0){
 			count++;
 			if (Tcl_GetDouble(interp, argv[count], &Q) != TCL_OK) {
 			opserr << "WARNING invalid rate of heat release" << endln;
@@ -2346,6 +2411,11 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 			}
 			count++;
 		}
+        else if (strcmp(argv[count], "-constant") == 0 || strcmp(argv[count], "uniform") == 0 || strcmp(argv[count], "-uniform") == 0) {
+            D1 = 0.0;
+            D2 = 0.0;
+
+        }
 			//detect argument for linetag;
 		if(argc-count>0){
 			if(strcmp(argv[count],"-centreLine") == 0||strcmp(argv[count],"CentreLine")==0||strcmp(argv[count],"-centreline") == 0){
@@ -2357,10 +2427,7 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 				}
 			}
 		}
-		else {
-			opserr<< "WARNING:: Defining Localised fire "<<argv[2]
-			      <<" expects tag:-firePars or firePars" << "\n";
-		}
+	
 		if(typeTag ==1){
 			theFireModel = new Idealised_Local_Fire(FireModelTag, crd1, crd2, crd3, Q,D1,  D2, lineTag);
 		}
@@ -2398,7 +2465,115 @@ TclHeatTransferCommand_addFireModel(ClientData clientData, Tcl_Interp *interp, i
 
 }
 
+//add setFIrePars
+int
+TclHeatTransferCommand_setFirePars(ClientData clientData, Tcl_Interp* interp, int argc, TCL_Char** argv)
+{
+    // checking the TclHTModule exists or not
+    if (theTclHTModule == 0) {
+        opserr << "WARNING current HeatTransfer Module has been destroyed - HTPattern\n";
+        return TCL_ERROR;
+    }
+    // checking the HTDomain exists or not
+    if (theHTDomain == 0) {
+        opserr << "WARNING no active HeatTransfer Domain -  HTPattern\n";
+        return TCL_ERROR;
+    }
 
+    //create a pointer to base class
+    FireModel* theFireModel = 0;
+    int FireModelTag = 0;
+    int count = 1;
+    int FireParTag = 0;
+    double crd1 = 0;
+    double crd2 = 0;
+    double crd3 = 0;
+    double q = 0;
+    double d = 0;
+    double Ts = 0;
+    double addq = 0;
+
+    if (strcmp(argv[count], "firemodel") == 0 || strcmp(argv[count], "-fireModel") == 0 || strcmp(argv[count], "fire") == 0)
+    {
+
+        count++;
+
+        if (Tcl_GetInt(interp, argv[count], &FireModelTag) != TCL_OK) {
+            opserr << "WARNING:: invalid masterID tag for coupling temperature: " << argv[1] << "\n";
+            return TCL_ERROR;
+        }
+        else {
+            count++;
+        }
+    }
+
+    if (argc - count < 3) {
+        opserr << "WARNING:: insufficient fire parameters for SetFirePars for fire model: " << FireModelTag << "\n";
+        return TCL_ERROR;
+    }
+
+    if (Tcl_GetDouble(interp, argv[count], &crd1) != TCL_OK) {
+        opserr << "WARNING invalid x axis coordinate of fire origin" << endln;
+        opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+        return TCL_ERROR;
+    }
+    count++;
+    if (Tcl_GetDouble(interp, argv[count], &crd2) != TCL_OK) {
+        opserr << "WARNING invalid y axis coordinate of fire origin" << endln;
+        opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+        return TCL_ERROR;
+    }
+    count++;
+
+    if (Tcl_GetDouble(interp, argv[count], &crd3) == TCL_OK) {
+        //if the z loc is successfully recieved, count should be added with 1;
+        count++;
+    }
+
+    int remaining = argc - count;
+    double dataInput = 0;
+    double data[4];
+    for (int i = 0; i < remaining; i++)
+    {
+        if (Tcl_GetDouble(interp, argv[count], &dataInput) != TCL_OK) {
+            opserr << "WARNING invalid y axis coordinate of fire origin" << endln;
+            opserr << " for HeatTransfer localised fire model: " << argv[2] << endln;
+            return TCL_ERROR;
+        }
+        count++;
+        data[i] = dataInput;
+    }
+    int numPars = 3 + remaining;
+    Vector firepars(numPars);
+    firepars(0) = crd1; firepars(1) = crd2; firepars(2) = crd3;
+    if (numPars == 4) {
+        firepars(3) = data[0];
+    }
+    else if (numPars == 5) {
+        firepars(3) = data[0]; firepars(4) = data[1];
+    }
+    else if (numPars == 6) {
+        firepars(3) = data[0]; firepars(4) = data[1]; firepars(5) = data[2] + 273.15;
+    }
+    else if (numPars == 7) {
+        firepars(3) = data[0]; firepars(4) = data[1]; firepars(5) = data[2] + 273.15; firepars(6) = data[3];
+    }
+
+    FireModel* thefire = 0;
+    thefire = theTclHTModule->getFireModel(FireModelTag);
+    if (thefire == 0) {
+        opserr << "HeatTransferModule::SetFirePars failed to obtain the fire model" << endln;
+        return -1;
+    }
+    double thecurrentTime = theHTDomain->getCurrentTime();
+
+    thefire->setFirePars(thecurrentTime, firepars);
+
+
+    return TCL_OK;
+
+
+}
 
 //Add HeatFluxBC
 int

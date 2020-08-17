@@ -1997,7 +1997,7 @@ OPS_addFireModel()
 		theFireModel = new LocalizedFireEC1(FireModelTag, crd1, crd2, crd3, D, Q, H, lineTag);
 	}
 	//Travelling fire curve;
-	else if (strcmp(option, "travelling") == 0 || strcmp(option, "Travelling") == 0) {
+	else if (strcmp(option, "travelling") == 0 || strcmp(option, "Travelling") == 0 || strcmp(option, "NaturalFire") == 0) {
 
 		double crd1 = 0.0; double crd2 = 0.0; double crd3 = 0.0;
 		double D = 1.0; double Q = 1e6; double H = 3.0; double Ts = 293.15;  int lineTag = 2;
@@ -3098,7 +3098,7 @@ int OPS_SetFirePars() {
 	const char* option = 0;
 	option = OPS_GetString();
 
-	if (strcmp(option, "firemodel") == 0 || strcmp(option, "fireModel") == 0 || strcmp(option, "-fire") == 0)
+	if (strcmp(option, "firemodel") == 0 || strcmp(option, "-fireModel") == 0 || strcmp(option, "-fire") == 0)
 	{
 
 		int FireModelTag = 0;
@@ -3109,7 +3109,7 @@ int OPS_SetFirePars() {
 		double q = 0;
 		double d = 0;
 		double Ts = 0;
-		double maxq = 1e5;
+		double addq = 0;
 		if (OPS_GetIntInput(&dataNum, &FireModelTag) < 0) {
 			opserr << "WARNING:: invalid FireModel tag for HTOutput: " << "\n";
 			return -1;
@@ -3194,7 +3194,7 @@ int OPS_SetFirePars() {
 				}
 				
 				if (OPS_GetNumRemainingInputArgs() > 0) {
-					if (OPS_GetDoubleInput(&dataNum, &maxq) < 0) {
+					if (OPS_GetDoubleInput(&dataNum, &addq) < 0) {
 						opserr << "WARNING:: invalid maximum incident q for set firePars " << "\n";
 						return -1;
 					}
@@ -3214,7 +3214,7 @@ int OPS_SetFirePars() {
 				firepars(3) = q; firepars(4) = d; firepars(5) = Ts+273.15;
 			}
 			else if (numPars == 7) {
-				firepars(3) = q; firepars(4) = d; firepars(5) = Ts + 273.15; firepars(6) = maxq;
+				firepars(3) = q; firepars(4) = d; firepars(5) = Ts + 273.15; firepars(6) = addq;
 			}
 			
 			FireModel* thefire = 0;

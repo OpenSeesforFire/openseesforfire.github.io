@@ -24,7 +24,7 @@
 
 //
 // Written by Yaqiang Jiang (y.jiang@ed.ac.uk)
-//
+// Modified by Liming Jiang (liming.jiang@ed.ac.uk)
 
 #include <QuadFour.h>
 #include <HeatTransferNode.h>
@@ -345,8 +345,8 @@ QuadFour::getCapacityTangent()
 {
 	K.Zero();
 	if (phaseTransformation == true){
-		static double enth[4];
-		static double rc[4]; // rc = rho times specific heat;
+		double enth[4];
+		double rc[4]; // rc = rho times specific heat;
 
 		const Vector& Temp1 = theNodes[0]->getTrialTemperature();
 		const Vector& Temp2 = theNodes[1]->getTrialTemperature();
@@ -412,8 +412,8 @@ QuadFour::getCapacityTangent()
 				}
 			}
 		} else {
-			static double rhoi[4];
-			static double cpi[4];
+			double rhoi[4];
+			double cpi[4];
 			//opserr << this->getTag() << " capacity tangent\n";
 
 			for (int i = 0; i < 4; i++) {
@@ -434,9 +434,9 @@ QuadFour::getCapacityTangent()
 				for (int m = 0; m < 4; m++) {
 					for (int n = 0; n < 4; n++) {
 						K(m,n) += shp[2][m] * rcdvol * shp[2][n];
-						}
 					}
 				}
+			}
 		}
 
 	//opserr << this->getTag() << "capacity tang:" << endln;
@@ -587,6 +587,33 @@ QuadFour::get_Q_Transient()
 
 	//opserr << this->getTag() << " transient Q:" << endln;
 	//opserr << Q << endln;
+	
+	//For materials generating heat
+	if (theMaterial[0]->getIfHeatGen() == true) {
+		double HeatQ[4];
+		//opserr << this->getTag() << " capacity tangent\n";
+
+		for (int i = 0; i < 4; i++) {
+			// enable to account for temperature dependent density
+			HeatQ[i] = theMaterial[i]->getHeatGen(); // get specific heat
+		}
+		double rcdvol;
+
+		// Loop over the integration points
+		for (int i = 0; i < 4; i++) {
+
+			// Determine Jacobian for this integration point
+			rcdvol = this->shapeFunction(pts[i][0], pts[i][1]);
+			rcdvol *= (HeatQ[i] * wts[i]);
+
+			for (int m = 0; m < 4; m++) {
+				for (int n = 0; n < 4; n++) {
+					Q(m) += shp[2][m] * rcdvol * shp[2][n];
+				}
+			}
+		}
+	}
+	//End of for HeatGen
 
 	return Q;	
 }

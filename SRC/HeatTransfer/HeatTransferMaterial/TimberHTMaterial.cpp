@@ -292,6 +292,29 @@ TimberHTMaterial::determinePhase(double temp, double time)
 }
 
 
+bool
+TimberHTMaterial::getIfHeatGen()
+{
+    if (PhaseTag == 2 || PhaseTag == 3)
+        return true;
+    else
+        return false;
+}
+
+
+double
+TimberHTMaterial::getHeatGen()
+{
+    double Qgen = 0;
+    if (PhaseTag == 2)
+    {
+        Qgen = 100;
+    }
+    return Qgen ;
+}
+
+
+
 const Vector&
 TimberHTMaterial::getPars() {
     static Vector pars(2);
@@ -301,3 +324,6 @@ TimberHTMaterial::getPars() {
     return pars;
 
 }
+
+
+
