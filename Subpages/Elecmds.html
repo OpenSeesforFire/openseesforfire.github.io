@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../stylesheets/styles.css">
+    <link rel="stylesheet" href="../stylesheets/github-light.css">
+    <meta name="viewport" content="../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../user.html">Users </a></p></h4>
+          <small><p class="view"><a href="starter.html">Getting Started </a></p></small>
+        <small><p class="view"><a href="heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="sifexamples.html">SIFBuilder Examples</a><img src="New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
+        <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
+         <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>Thermo-Mechanical Elements in OpenSees</h2>
+    <hr>
+<p>
+This page introduces the commands of using various elements for thermo-mechanical analysis in OpenSees.
+ </p>
+<hr>
+    <center><b>Thermo-mechaical beam-column Elements</b></center>
+
+<hr>
+
+<!Disp based beam-column element command---------------------------------------------------------------------->
+<h4><a name = "DispBeamEles"> dispBeamColumnThermal</a></h4>
+<p>Thermo-mechanical displacement based beam-column elements are derived by modifying the existing elements to include the interface for thermal action. The definition of thermo-mechanical beam-column elements for 2d and 3d model in OpenSees can be scripted as follows:</p>
+
+<div class="box">
+<code>
+element dispBeamColumnThermal $eleID $NodeTag0 $NodeTag1 $NumInts $secTag $TransfTag;
+</code>
+</div>
+
+
+<hr>
+
+<!force based beam column element command---------------------------------------------------------------------->
+<h4> <a name = "forceBeamEles">forceBeamColumnThermal</a> </h4>
+<p><b>ForceBeamColumnThermal</b> is used for using force based thermo-mechanical elements.</p>
+
+<div class="box">
+<code>
+element forceBeamColumnThermal $eleID $NodeTag0 $NodeTag1 $NumInts $secTag $TransfTag;
+</code>
+</div>
+
+<br>
+<hr>
+
+<hr>
+    <center><b>Thermo-mechaical Shell Elements</b></center>
+<hr>
+<!Multi-axis ElasticIsotropicThermal command---------------------------------------------------------------------->
+<h4> <a name = "ShellMITC4">ShellMITC4Thermal</a> </h4>
+<p><b>ElasticIsotropicThermal</b> is created for analyses using shell elements in OpenSees, which could either be defined with constant thermal expansion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.</p>
+
+<div class="box">
+<code>
+element ShellMITC4Thermal $eleTag $iNode $jNode $kNode $lNode $secTag;
+</code>
+</div>
+    
+<p>A sample is shown as below: </p>
+<div class="box">
+<code>
+block2D $nx $ny 1 1 ShellMITC4Thermal  5 { <br>
+    1   0. 0. 0. <br>
+    2   4.15 0. 0. <br>
+    3  4.15 3.15 0. <br>
+    4   0. 3.15 0. <br>
+}
+</code>
+</div>
+
+<br>
+<hr>
+<h4> <a name = "ShellNLDKGQ">ShellNLDKGQThermal</a> </h4>
+<p><b>ShellNLDKGQThermal</b> is created for analyses using shell elements in OpenSees, which can co-work with a layered shell section. </p>
+
+<div class="box">
+<code>
+element ShellNLDKGQThermal $eleTag $iNode $jNode $kNode $lNode $secTag;
+</code>
+</div>
+    
+<p>A sample is shown as below: </p>
+<div class="box">
+<code>
+block2D $nx $ny 1 1 ShellNLDKGQThermal  5 { <br>
+    1   0. 0. 0. <br>
+    2   4.15 0. 0. <br>
+    3  4.15 3.15 0. <br>
+    4   0. 3.15 0. <br>
+}
+</code>
+</div>
+
+<br>
+<hr>    
+    
+    
+    
+    
+<small><p>This page is created by Liming Jiang, 2016</p></small>
+      </section>
+     <footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>

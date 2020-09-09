@@ -51,7 +51,7 @@ This page introduces the developed commands for performing thermo-mechanical ana
 <hr>
 <!Steel01Thermal command---------------------------------------------------------------------->
 <h4><a name = "Steel01"> Steel01Thermal</a></h4>
-This class is derived by modification of the existing steel material class "Steel01" to include the temperature-dependent properties according to EN 1993-1-2 carbon steel at elevated temperature. The definition of the parameters of Steel01Thermal material in OpenSees Command language Manual:
+This material class is derived by modifying the existing steel material "Steel01" to include the temperature-dependent properties according to EN 1993-1-2 carbon steel at elevated temperature. The definition of the parameters of Steel01Thermal material can be scripted as follows:
 
 <div class="box">
 <code>
@@ -77,7 +77,8 @@ uniaxialMaterial Steel02Thermal $matTag $Fy $E0 $b $R0 $cR1 $cR2 <$a1 $a1 $a1 $a
 
 <!SteelECThermal command---------------------------------------------------------------------->
 <h4> <a name = "SteelEC">SteelECThermal</a> </h4>
-<b>SteeelECThermal</b> is developed for modelling steel material at elevated temperature, and provding different types of steel material definition according to EN1992,EN1993.
+<b>SteeelECThermal</b> is developed for modelling steel material at elevated temperature, and provding different types of steel material definition according to EN1992,EN1993. <br>
+--EC2NH and EC2NC are correponding to the hot-rolled and cold-formed steel rebars in Eurocode 2. EC3 is scorreponding to the carbon steel in EC3. 
 
 <div class="box">
 <code>
@@ -85,6 +86,12 @@ uniaxialMaterial SteelECThermal $matTag <$steelType> $Fy $E0
 </code>
 </div>
 
+<p>A sample is shown as below: </p>
+<div class="box">
+<code>
+uniaxialMaterial SteelECThermal 1 EC2NH 5.65e8 2e11;
+</code>
+</div>
 
 <br>
 <hr>
@@ -130,7 +137,7 @@ uniaxialMaterial ConcreteECThermal 2 $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets;
 <hr>
 <!Multi-axis ElasticIsotropicThermal command---------------------------------------------------------------------->
 <h4> <a name = "ShellElas">ElasticIsotropicThermal</a> </h4>
-<b>ElasticIsotropicThermal</b> is created for analysis using shell elements in OpenSees, which could either be defined with constant thermal exapnasion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.
+<b>ElasticIsotropicThermal</b> is created for analyses using shell elements in OpenSees, which could either be defined with constant thermal expansion ratio, or using thermal expansion ratios for concrete or Steel. For the latter, corresponding stiffness reduction will be also applied automatically.
 
 <div class="box">
 <code>
@@ -140,7 +147,42 @@ nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Therma
 
 <br>
 <hr>
+<h4> <a name = "ShellJ2">J2PlaneStressThermal</a> </h4>
+<p><b>J2PlaneStressThermal</b> is created for analyses using shell elements in OpenSees, which represents a J2 plasiticty material (Von-Mises stress yielding principle) suitable for steel materials, using reduction factors and thermal exapnasion properties defined in Eurocode 2 and Eurocode 3. H1 and H2 and hardening factors for kinematic and isotropic hardening after yielding.</p>
 
+<div class="box">
+<code>
+nDMaterial J2PlaneStressThermal $matTag $typeTag $E0 $Poisson_ratio $fy $fyu $H1 $H2;
+</code>
+</div>
+    
+<p>A sample is shown as below: </p>
+<div class="box">
+<code>
+nDMaterial  J2PlaneStressThermal 11 22 2e11 0.3 5.65e8 6.65e8 10 2e10;
+</code>
+</div>
+
+<br>
+<hr>
+<h4> <a name = "ShellCDP">CDPPlaneStressThermal</a> </h4>
+<p><b>CDPPlaneStressThermal</b> is created for analyses using shell elements in OpenSees, which represents a concrete damage plasiticty material suitable for concrete materials, using reduction factors and thermal exapnasion properties defined in Eurocode 2. gt and gc are the fracture energy associated with the crack and crush of concrete material.</p>
+
+<div class="box">
+<code>
+nDMaterial CDPPlaneStressThermal $matTag $E0 $Poisson_ratio $ft $fc $gt $gc;
+</code>
+</div>
+    
+<p>A sample is shown as below: </p>
+<div class="box">
+<code>
+nDMaterial  CDPPlaneStressThermal 101 2.2e10 0.2 3e6 30e6 $gt $gc;
+</code>
+</div>
+
+<br>
+<hr>
 
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
