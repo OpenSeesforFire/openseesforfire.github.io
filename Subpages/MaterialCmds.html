@@ -34,7 +34,7 @@
         <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
         <small><p class="view"><a href="commands.html">Command manual </a></p></small>
         <small><p class="view"><a href="examples.html">Examples</a></p></small>
-        <small><p class="view"><a href="sifexamples.html">SIFBuilder Examples</a><img src="New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
+        <small><p class="view"><a href="openfire.html">OpenFIRE</a></p></small>
         <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
         <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
@@ -78,7 +78,7 @@ uniaxialMaterial Steel02Thermal $matTag $Fy $E0 $b $R0 $cR1 $cR2 <$a1 $a1 $a1 $a
 <!SteelECThermal command---------------------------------------------------------------------->
 <h4> <a name = "SteelEC">SteelECThermal</a> </h4>
 <b>SteeelECThermal</b> is developed for modelling steel material at elevated temperature, and provding different types of steel material definition according to EN1992,EN1993. <br>
---EC2NH and EC2NC are correponding to the hot-rolled and cold-formed steel rebars in Eurocode 2. EC3 is scorreponding to the carbon steel in EC3. 
+--EC2NH and EC2NC are correponding to the hot-rolled and cold-formed steel rebars in Eurocode 2. EC3 is scorreponding to the carbon steel in EC3.
 
 <div class="box">
 <code>
@@ -155,7 +155,7 @@ nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Therma
 nDMaterial J2PlaneStressThermal $matTag $typeTag $E0 $Poisson_ratio $fy $fyu $H1 $H2;
 </code>
 </div>
-    
+
 <p>A sample is shown as below: </p>
 <div class="box">
 <code>
@@ -173,7 +173,7 @@ nDMaterial  J2PlaneStressThermal 11 22 2e11 0.3 5.65e8 6.65e8 10 2e10;
 nDMaterial CDPPlaneStressThermal $matTag $E0 $Poisson_ratio $ft $fc $gt $gc;
 </code>
 </div>
-    
+
 <p>A sample is shown as below: </p>
 <div class="box">
 <code>
