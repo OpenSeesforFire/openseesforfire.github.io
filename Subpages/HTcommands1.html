@@ -61,6 +61,45 @@ HeatTransfer 3D <br>
 
 <hr>
 
+<!--------HeatTransfer Material command------------------------------------------------------------>
+<h4><a name = "HTMaterial"> HTMaterial</a></h4>
+<b>HTMaterial</b> command is used to define heat transfer materials, which can be used for various structural materials and non-structural materials. Commands can be written as:
+
+<div class="box">
+<code>
+HTMaterial $HTMaterialType $HTMatTag <$HTMatPar1,$HTMatPar2>;  
+</code>
+</div>
+<p>A very simple example is shown as below</p>
+<div class="box">
+<code>
+HTMaterial CarbonSteelEC3 1; <br>
+HTMaterial ConcreteEC2 2 0.0;   #Moisture ratio
+</code>
+</div>
+<br>
+
+<hr>
+    
+<!--------HeatTransfer Entity command------------------------------------------------------------>
+<h4><a name = "HTEntity"> HTEntity</a></h4>
+<b>HTEntity</b> command is used to define various entities for heat transfer analyses, which can be used for creating 1D to 3D entities such as line, block, I-section, composite section, brick, I-section beam, composite beam. Commands can be written as:
+
+<div class="box">
+<code>
+HTEntity $HTEntityType $HTEntityTag $centerlocx $centerlocy <$centerlocz> $HTEntitydim1 $HTEntitydim2 <$HTEntitydim3> ;  
+</code>
+</div>
+<p>A very simple example is shown as below</p>
+<div class="box">
+<code>
+HTEntity Block 1 0.0 0.0 $slabl $slabt; <br>
+HTEntity Brick 2 0.0 0.0 0.0 $slabw $slabt $slabl ; 
+</code>
+</div>
+<br>
+
+<hr>
 <!-----HTSetInitialT command------------------------------------------------------------>
 <h4> <a name = "HTSetInit"> SetInitialT </a> </h4>
 <b>SetInitialT</b> command is used to initialise the temperature field for all the objects (<b>HTEntity</b>), which is usually assigned with the ambient temperature as the first and only argument following the command.
@@ -85,13 +124,13 @@ SetInitialT 293.15;
 
 <div class="box">
 <code>
-HTConstants $constantSeriesTag $Convective_Coefficient $ambientT $emissivity $Stephen_Boltzan_Constant $absorptivity $irradiation ;
+HTConstants $constantSeriesTag $Convective_Coefficient $ambientT $emissivity  $absorptivity ;
 </code>
 </div>
 Here one example is shown as below, which is used for unexposed surface of a concrete slab.
 <div class="box">
 <code>
-HTConstants 1 4.0 293.15 0.7 5.67e-8 0.7 418.738;
+HTConstants 1 4.0 293.15 0.7 0.7;
 </code>
 </div>
 <hr>
@@ -102,29 +141,28 @@ HTConstants 1 4.0 293.15 0.7 5.67e-8 0.7 418.738;
 
 <div class="box">
 <code>
-HTPattern AmbientBc $PatternTag {
-   HeatFluxBC..... ;
-}
-HTPattern fire $patternTag model $FireModelTag {
-   HeatFluxBC..... ;
-}
+HTPattern AmbientBc $PatternTag { <br>
+   HeatFluxBC..... ; <br>
+}  <br>
+HTPattern fire $patternTag model $FireModelTag {  <br>
+   HeatFluxBC..... ;   <br>
+}    <br>
 </code>
 </div>
 <p>An examples is given as below, which is to define the heat transfer boudanry conditions for the unexposed surface of a concrete slab:</p>
 <div class="box">
 <code>
-HTConstants 1 4.0 293.15 0.7 5.67e-8 0.7 418.738;
-HTPattern AmbientBC 1 {
-	HeatFluxBC -HTEntity 1 -face 5 -type ConvecAndRad -HTConstants 1;
+HTPattern AmbientBC 1 { <br>
+	HeatFluxBC -HTEntity 1 -face 5 -type ConvecAndRad -HTConstants 1; <br>
 }
 </code>
 </div>
 <p>Another example is given here to show how the fire exposure being defined in a heat transfer analysis. A Standard Fire time-temperature relationship curve is adopted to define the fire exposure, and more fire models can be used which can be referred to as <b>FireModel</b></p>
 <div class="box">
 <code>
-FireModel 1 -type standard ;
-HTPattern fire 2 model 1 {
-	HeatFluxBC -HTEntity 1 -face 3 -type -ConvecAndRad -HTConstants 1;
+FireModel 1 -type standard ;  <br>
+HTPattern fire 2 model 1 {   <br>
+	HeatFluxBC -HTEntity 1 -face 3 -type -ConvecAndRad -HTConstants 1;  <br>
 }
 </code>
 </div>
