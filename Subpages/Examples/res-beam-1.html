@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../../stylesheets/styles.css">
+    <link rel="stylesheet" href="../../stylesheets/github-light.css">
+    <meta name="viewport" content="../../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="../heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="../sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="../commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="../examples.html">Examples</a></p></small>
+        <!-- <small><p class="view"><a href="../sifexamples.html">SIFBuilder Examples</a></p></small> -->
+        <h4><p class="view"><a href="../../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>A simply supported composite beam subjected to test temperatures.</h2>
+<hr>
+<! You can leave your name here>
+<p>Developed by Domada Veera Venkata Ramakanth</p>
+<hr>
+<h4> Introduction</h4>
+<! -----A brief introduction of the problem---------->
+<p>Figure-1 shows a restrained beam subjected to a temperature rise. The beam has been modelled using three existing steel models catering for thermal material degradation. The temperature load has been appl;ied on the left half portion of the beam. Displacement of the middle node and reaction at the right support have been compared in all three cases.</p>
+<! -----Using the folliwng table to provide model information---------->
+<table style="width:100%">
+ <tr>
+    <th>OpenSees Model </th>
+    <th>Type used for this example</th>
+  </tr>
+  <tr>
+    <td>Element</td>
+    <td>DispBeamColumnThermal</td>
+  </tr>
+  <tr>
+    <td>Section</td>
+    <td>FiberSectionThermal</td>
+  </tr>
+  <tr>
+    <td>Material</td>
+    <td>Steel01Thermal, Steel02Thermal, SteelECThermal</td>
+  </tr>
+  <tr>
+    <td>Thermal Loading </td>
+    <td>Uniform temperature rise of 1000 degrees on the left half portion of the restrained beam</td>
+  </tr>
+</table>
+<! -----A link for downloading this exampel package(package should be stored in download/example folder------->
+<p><b>Download:</b> <a href =/Download/Examples/Ex-8_res-beam.zip> This Example Package </a> </p>
+<hr>
+<! -----A figure to show the model------->
+<h4> Model Geometry</h4>
+
+ <center><img src="../../images/CaseImgs/res-beam.png"  style="width:300px;"> </center>
+ <center><small>Figure-1: Schematic of simply supported beam subjected to test temperature</small></center>
+
+<hr>
+<! -----Tcl scripts for the model defitnion------->
+<h4> Tcl scripts for model definition</h4>
+<p><b>Restrained Beam model</b></p>
+<code>
+<pre>
+
+  wipe;
+  set s1 1;
+  set s2 2;
+  set s3 3;
+
+  model BasicBuilder -ndm 2 -ndf 3
+
+  # node $NodeTag $XCoord $Ycoord
+  node      1         2000            0
+  node      2         1000            0
+  node      3            0            0
+
+  # fix $NodeTag x-transl y-transl z-rot
+  fix      1   1   1   1
+  fix      3   1   1   1
+
+  # Geometric Transformation
+  geomTransf Linear 1
+  geomTransf PDelta 2
+  geomTransf Corotational 3
+
+  #uniaxialMaterial Steel01Thermal $matTag $Fy $E0 $b <$a1 $a2 $a3 $a4>
+  uniaxialMaterial  Steel01Thermal      1  500 2e+05 0.15
+
+
+  #uniaxialMaterial Steel02Thermal $matTag $Fy $E0 $b $R0 $cR1 $cR2 <$a1 $a1 $a1 $a1>
+  uniaxialMaterial Steel02Thermal 2 500 2e+05 0.15 20 0.925 0.15 0 1 0 1 0
+
+
+  #uniaxialMaterial SteelECThermal $matTag <$steelType> $Fy $E0
+  uniaxialMaterial  SteelECThermal      3  500 2e+05
+
+  section fiberSecThermal 155 -GJ        10000 {
+
+  #patch quad $matTag $numSubdivIJ $numSubdivJK $yI $zI $yJ $zJ $yK $zK $yL $zL
+  patch quad $s1 10 10 -50.0 -50.0 50.0 -50.0 50.0 50.0 -50.0 50.0
+  }
+
+
+  # element dispBeamColumn $eleTag $iNode $jNode $numIntgrPts $secTag $transfTag
+  element dispBeamColumnThermal      1      3      2  3    155  1   -mass        0
+  element dispBeamColumnThermal      2      2      1  3    155  1   -mass        0
+
+
+  recorder Node -file Node_displacements-s1.out -node 2 -dof 1 disp
+  # recorder Node -file Node_rotations.out -time -nodeRange 1 3 -dof 3 disp
+  recorder Node -file Node_forceReactions-s1.out -node 3 -dof 1 reaction
+  # recorder Node -file Node_momentReactions.out -time -nodeRange 1 3 -dof 3 reaction
+  # recorder Element -file DispBeamColumn_localForce.out -time -ele 1 2 localForce
+  # recorder Element -file DispBeamColumn_basicDeformation.out -time -ele 1 2 basicDeformation
+  # recorder Element -file DispBeamColumn_plasticDeformation.out -time -ele 1 2 plasticDeformation
+
+
+  puts "Running interval 1\n"
+
+  # Loads - Plain Pattern
+  pattern Plain 100 Linear {
+    eleLoad	-ele	1	-type	-beamThermal	1000	-50	  1000	 50.0
+
+  }
+  # recording the initial status
+
+  record
+
+  # Analysis options
+  system BandGeneral
+  numberer Plain
+  constraints Transformation
+  integrator LoadControl 0.01
+  test NormDispIncr 0.001 50 2
+  algorithm Newton
+  analysis Static
+  analyze 100
+
+</pre>
+</code>
+<br>
+<hr>
+<! -----Analysis results from OpenSees (better with reference paper)------->
+<h4> Output Results</h4>
+<p>Comparision of horizontal displacement of the middle node</p>
+
+ <center><img src="../../images/CaseImgs/res-beam-res-disp.png"  style="width:500px;"> </center>
+ <center><small>Figure-2: Horizontal displacement of the middle node vs. Temperature</small></center>
+
+ <p>Comparision of reaction force at the right side support</p>
+
+  <center><img src="../../images/CaseImgs/res-beam-res-reaction.png"  style="width:500px;"> </center>
+  <center><small>Figure-3: Reaction force at the right side support vs. Temperature</small></center>
+  
+<hr>
+<small><p>This page is created by D.V.V. Ramakanth, 2020</p></small>
+      </section>
+<footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>
