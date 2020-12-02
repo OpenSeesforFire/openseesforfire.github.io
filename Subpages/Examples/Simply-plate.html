@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../../stylesheets/styles.css">
+    <link rel="stylesheet" href="../../stylesheets/github-light.css">
+    <meta name="viewport" content="../../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="../heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="../sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="../commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="../examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="../sifexamples.html">SIFBuilder Examples</a><img src="../New.gif" alt="new" style="float:none;width:20px;height:20px;"></p></small>
+        <h4><p class="view"><a href="../../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>Simply supported plate subject to experimental temperatures</h2>
+<hr>
+<! You can leave your name here>
+<p>Developed by Mhd Anwar Orabi</p> 
+<hr>
+<h4> Introduction</h4>
+<! -----A brief introduction of the problem---------->
+<p>
+Simply supported slab with 100 mm depth and a plan of 4.15 m × 3.15 m as shown in Figure E6-1 subject to distributed load of 5.4 kN/m<sup>2</sup>. 25 mm concrete cover is applied over a steel area of 295 mm<sup>2</sup>/m. Concrete has a compressive strength of 37 MPa, and a tensile strength of 0.1×f’<sub>c</sub>. Crushing strain of the concrete is 0.0025, and steel yields at 568 MPa and has a Young’s modulus of 206 GPa. Temperature file is provided and based on 1D heat transfer analysis of the experimental conditions. 
+</p>
+<! -----Using the folliwng table to provide model information---------->
+<table style="width:100%">
+ <tr>
+    <th>OpenSees Model </th>
+    <th>Type used for this example</th>
+  </tr>
+  <tr>
+    <td>Element</td>
+    <td>ShellNLDKGQThermal</td>
+  </tr>
+  <tr>
+    <td>Section</td>
+    <td>LayeredShellThermal</td>
+  </tr>
+  <tr>
+    <td>Material</td>
+    <td>PlateRebarThermal, CDPPlaneStressThermal</td>
+  </tr>
+  <tr>
+    <td>Thermal Loading </td>
+    <td>shellThermallAction (temperature from heat transfer analysis based on experimental conditions)</td>
+  </tr>
+</table>
+<! -----A link for downloading this exampel package(package should be stored in download/example folder------->
+<p><b>Download:</b> <a href =/download/examples/example6.zip> This Example Package </a> </p>
+<hr>
+<! -----A figure to show the model------->
+<h4> Model Geometry</h4>
+
+ <center><img src="../../images/CaseImgs/example6.png"  style="width:300px;"> </center>
+ <center><small>Figure-1: Schematic of simply supported shell subject to heating based on experimental conditions</small></center>
+
+<hr>
+<! -----Tcl scripts for the model defitnion------->
+<h4> Tcl scripts for model definition</h4>
+<p><b>The Slab Model (3D)</b></p>
+<code>
+<pre>
+#define general parameters <br>
+set l 4.15 
+set w 3.15
+set t 0.1
+set cc 0.025 
+set ro 0.000295
+set UDL -5400
+set halfT [expr 0.5001*$t]
+set nx 10 
+set ny 10 
+set elemx [expr $l/$nx] 
+set elemy [expr $w/$ny]
+set fy 568e6 
+set Es 2.06e11 
+set fc 37e6 
+set ft [expr 0.1*$fc] 
+set v 0.2 
+set epscu 0.0025 
+set Ec [expr 1.5*$fc/$epscu] 
+set gt [expr $ft/$Ec*$ft*2] 
+set gc [expr $fc/$Ec*$fc*6] 
+
+#define nodes <br>
+
+for {set i 0} {$i &le $nx} {incr i 1} { 
+	set x [expr $i*$elemx]
+	for {set j 0} {$j &le $ny} {incr j 1} { 
+		set y [expr $j*$elemy] 
+		set nodeID [expr int($i*($ny+1) + $j + 1)]
+		node $nodeID $x $y 0
+	} 
+} <br>
+
+#define boundary conditions:
+fixX 0  0 	0 	1	0 	0 	0
+fixX $l 0 	0 	1	0 	0 	0
+fixY 0  0 	0 	1	0 	0 	0
+fixY $w 0 	0 	1	0 	0 	0 <br>
+
+#define rebar materials: 
+uniaxialMaterial Steel01Thermal 1  $fy $Es 0.015;
+nDMaterial PlateRebarThermal 2 1 0;
+nDMaterial PlateRebarThermal 3 1 90; <br>
+
+#define concrete material and layer:
+nDMaterial CDPPlaneStressThermal 4 $Ec $v $ft $fc $gt $gc;
+nDMaterial PlateFromPlaneStressThermal 5 4 1e9; <br>
+
+#define layered shell section; Two fibres: 
+section  LayeredShellThermal 1 13 5 0.01 5 0.01 5 [expr 0.005 - $ro] 2 $ro 3 $ro 5 [expr 0.01 - $ro] 5 0.01 5 0.01 5 0.01 5 0.01 5 0.01 5 0.01 5 0.005; <br>
+
+#define shell elements: dispBeamColumnThermal $eleTag $iNode $jNode $numIntgrPts $secTag $TransfTag;<br>
+for {set i 1} {$i &le $nx} {incr i 1} {
+	for {set j 1} {$j &le $ny} {incr j 1} {
+	
+		set elemID [expr int(($i - 1)*$ny + $j)]
+		
+		set node4 [expr int(($i - 1)*($ny + 1) + $j)]
+		set node3 [expr $node4 + 1]
+		set node2 [expr $node3 + $ny + 1]
+		set node1 [expr $node2 - 1]
+		
+		 element ShellNLDKGQThermal	 $elemID $node1 $node2 $node3 $node4 1
+	}
+} <br>
+
+# adding the dead load
+set f3 [expr $UDL*$elemx*$elemy]
+pattern Plain 1 Linear {
+	for {set i 1} {$i &le [expr ($nx + 1)*($ny + 1)]} {incr i 1} {
+	   #load nodeTag	f1 	f2 	f3 	 f11  f22  f33
+		load  $i 		0   0   $f3  0 	  0    0
+	}
+} <br>
+
+# running ambient analysis
+set stepSize 0.05
+set tFinal 1
+constraints Plain    		
+numberer Plain			
+system BandGeneral		
+test NormDispIncr 1e-3 500 1	
+algorithm Newton				
+integrator LoadControl $stepSize				
+analysis Static
+analyze [expr $tFinal/$stepSize] <br>
+
+# applying thermal loads
+pattern Plain 2 Linear {
+		eleLoad -range 1 		 [expr $nx*$ny] -type -shellThermal -source "temp.dat" -$halfT 		$halfT
+} <br>
+
+# running thermo-mechanical analysis
+set stepSize 15
+set tFinal 10800
+constraints Plain    		
+numberer Plain			
+system BandGeneral		
+test NormDispIncr 1e-3 500 1	
+algorithm Newton				
+integrator LoadControl $stepSize				
+analysis Static
+analyze [expr $tFinal/$stepSize] <br>
+</pre>
+</code>
+<br>
+<hr>
+<! -----Analysis results from OpenSees (better with reference paper)------->
+<h4> Output Results</h4>
+<p>The central vertical deflection is shown in this figure and compared to experimental results</p>
+    
+ <center><img src="../../images/CaseImgs/example6res.png"  style="width:500px;"> </center>
+ <center><small>Figure 1:  OpenSEES resutls considering simply supported and fixed boundaries compared to experimental observation</small></center>
+<b>Reference:</b><p>Lim, L., Buchanan, A., Moss, P., & Franssen, J. (2004). Numerical modelling of two-way reinforced concrete slabs in fire. Engineering Structures, 26, 1081–91. https://doi.org/10.1016/j.engstruct.2004.03.009</p>
+<hr>
+<small><p>This page is created by Mhd Anwar, 2020</p></small>
+      </section>
+<footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>
