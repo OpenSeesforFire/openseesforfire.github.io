@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../../stylesheets/styles.css">
+    <link rel="stylesheet" href="../../stylesheets/github-light.css">
+    <meta name="viewport" content="../../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="../heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="../sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="../commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="../examples.html">Examples</a></p></small>
+        <!-- <small><p class="view"><a href="../sifexamples.html">SIFBuilder Examples</a></p></small> -->
+        <h4><p class="view"><a href="../../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>Demonstration of column pull in action with a scaled down 10 storey frame model</h2>
+    <hr>
+    <! You can leave your name here>
+    <p>Developed by Tejeswar Yarlagadda</p>
+    <hr>
+<h4> Introduction</h4>
+
+<p>
+Figure E.6-1 shows a 10 building model with storey height of 50mm and beam span of 250mm. The cross sections of the beam and column are 25 X 2 mm and 25 X 1mm made with Aluminium. An uniform loading of 0.05N/mm has been applied over the beams and a point load of 200N applied over the column. Floors 4,5 and 6 have been subjected to a thermal action of 650<sup>0</sup>C applied linearly.
+</p>
+<p>Download the Example package <a href= /Download/Examples/10StoreyFrame.zip> <strong><blink><u>Here</u></blink></strong></a></p>
+<small>Note: The downladed zip file contains 3 tcl files. All the three files are should be placed at a single directory.</small>
+<hr>
+<h4> Loading and boundary conditions</h4>
+
+ <center><img src="../../images/CaseImgs/alframe.PNG"  style="width:350px;"> </center>
+ <center><small>Figure E.6-1: A 10 storey building frame model</small></center>
+
+
+<p>The beams of the frame are assumed to be spanning between strong central core and outer peripheral columns. Therefore the right support is extremely rigid and left support is provided by the columns.</p>
+
+
+<h4> Animation showing column pull-in action</h4>
+
+ <center><img src="../../images/CaseImgs/pullinplot.gif"  style="width:800px;"> </center>
+ <center><small>Figure E.6-2: Animation showing floors under fire pulling the peripheral column inwards.</small></center>
+
+
+<hr>
+<small><p>This page is created by D.V.V. Ramakanth, 2019</p></small>
+      </section>
+<footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>

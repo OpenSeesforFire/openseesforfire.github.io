@@ -1,0 +1,318 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../../stylesheets/styles.css">
+    <link rel="stylesheet" href="../../stylesheets/github-light.css">
+    <meta name="viewport" content="../../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="../heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="../sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="../commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="../examples.html">Examples</a></p></small>
+        <!-- <small><p class="view"><a href="../sifexamples.html">SIFBuilder Examples</a></p></small> -->
+        <h4><p class="view"><a href="../../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>A simply supported composite beam subjected to test temperatures.</h2>
+<hr>
+<! You can leave your name here>
+<p>Developed by Dr. Mustesin Ali Khan</p>
+<hr>
+<h4> Introduction</h4>
+<! -----A brief introduction of the problem---------->
+<p>
+Figure-1 shows a 4.53 m simply supported composite beam. Static loads of P = 32.47 kN are applied as shown in Figure 1. The bottom flange, web, top flange and slab of the beam are subjected to a temperature as recorded during experiments.  152 beam elements are used for modelling the steel beam as well as concrete slab and rigid link connection is assumed between concrete slab and steel beam.  Material class Steel01Thermal and ConcreteECThermal are used for steel beam and concrete slab, respectively. A comparison, of midspan deflection is presented with test results.
+</p>
+<! -----Using the folliwng table to provide model information---------->
+<table style="width:100%">
+ <tr>
+    <th>OpenSees Model </th>
+    <th>Type used for this example</th>
+  </tr>
+  <tr>
+    <td>Element</td>
+    <td>DispBeamColumnThermal</td>
+  </tr>
+  <tr>
+    <td>Section</td>
+    <td>FiberSectionThermal</td>
+  </tr>
+  <tr>
+    <td>Material</td>
+    <td>ConcreteECThermal, Steel01Thermal</td>
+  </tr>
+  <tr>
+    <td>Thermal Loading </td>
+    <td>Beam2DThermalAction ---Test temperatures</td>
+  </tr>
+</table>
+<! -----A link for downloading this exampel package(package should be stored in download/example folder------->
+<p><b>Download:</b> <a href =/Download/Examples/Ex-7_Simply-beam.zip> This Example Package </a> </p>
+<hr>
+<! -----A figure to show the model------->
+<h4> Model Geometry</h4>
+
+ <center><img src="../../images/CaseImgs/Simply-beam.PNG"  style="width:300px;"> </center>
+ <center><small>Figure-1: Schematic of simply supported beam subjected to test temperature</small></center>
+
+<hr>
+<! -----Tcl scripts for the model defitnion------->
+<h4> Tcl scripts for model definition</h4>
+<p><b>Simply Supported Beam model</b></p>
+<code>
+<pre>
+
+  ####################################################################################
+  # composite beam with Simply supported bounary conditions exposed to fire
+  # total 151 elements for 4530 mm beam ;
+  # Four point load P=32.47 kN; thermal history in accordence with tests (Wianman and Kirby);
+  # 8 fibers for both the slab and steel beam section;
+  # Material class Steel01Thermal is used for steel and Concrete02Thermal for concrete;
+  # unit i.e. mm, N, MPa
+  # Written: Mustesin Ali Khan
+  # July 2020,  The Hong Kong Polytechnic University
+
+
+
+  wipe;
+  model BasicBuilder -ndm 2 -ndf 3;
+
+  source DisplayPlane.tcl
+  source DisplayModel2D.tcl
+
+  # define NODAL COORDINATES FOR BEAM
+  for {set level 1} {$level <=152} {incr level 1} {
+  	set X [expr ($level-1)*30];
+  	set nodeID $level
+  	node $nodeID $X 0;		# actually define node
+  }
+
+  # define NODAL COORDINATES FOR SLAB
+  for {set level 1001} {$level <=1152} {incr level 1} {
+  	set X [expr ($level-1001)*30];
+  	set nodeID $level
+  	set loc 193.0
+  	node $nodeID $X $loc;		# actually define node
+  }
+  #define boundary condition;
+  fix 1    1 1 0;
+  fix 1001 1 1 0;
+  fix 152  0 1 0;
+  fix 1152 0 1 0;
+
+
+  #define RIGID LINKS
+  set type beam
+  for {set level 2} {$level <=151} {incr level 1} {
+  	set masterNodeTag $level;
+  	set slaveNodeTag [expr $level+1000]
+  	rigidLink $type $masterNodeTag $slaveNodeTag;		# actually define rigid link
+  }
+
+  #define material
+  uniaxialMaterial Steel01Thermal 1 255 2e5 0.01; # for steel beam
+  uniaxialMaterial Steel01Thermal 3 600 2.1e5 0.01; # for reinforcement in slab
+
+  set fpc -30
+  set epsc0 -0.003
+  set fpcu [expr $fpc*0.05];
+  set epsU -0.02
+  set lambda 0.1
+  set ft 0.0
+  set Ets [expr $ft/0.002];
+
+  uniaxialMaterial ConcreteECThermal 2 $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets
+
+  # beam sections:
+  # d 398.0;	# depth
+  # bf 141.8;	# flange width
+  # tf 8.6;	# flange thickness
+  # tw 6.4;	# web thickness
+
+  #define fibred section for steel beam;
+  	section fiberSecThermal 1   {
+
+      fiber -125.35 0 918.8 1;
+      fiber -110.05 0 918.8 1;
+      fiber -101.43 0 220.2 1;
+      fiber -72.46  0 220.2 1;
+      fiber -43.49  0 220.2 1;
+      fiber -14.52  0 220.2 1;
+      fiber  14.52  0 220.2 1;
+      fiber  43.49  0 220.2 1;
+      fiber  72.46  0 220.2 1;
+      fiber  101.43 0 220.2 1;
+      fiber  110.05 0 918.8 1;
+      fiber  125.35 0 918.8 1;
+      }
+
+
+  #define fibred section for concrete slab;
+  section fiberSecThermal 2   {
+
+  	fiber -56.87  0 10432.5 2;
+  	fiber -40.62  0 10432.5 2;
+  	fiber -24.37  0 10432.5 2;
+  	fiber -8.12   0 10432.5 2;
+  	fiber  8.12   0 10432.5 2;
+  	fiber  24.37  0 10432.5 2;
+  	fiber  40.62  0 10432.5 2;
+  	fiber  56.87  0 10432.5 2;
+  	#fiber -25 0   367.575 3;
+  	layer straight 3 4 50.24 -50 -250 -50 250
+      }
+
+  geomTransf Corotational 1;
+
+  #ELES FOR BEAMS
+  for {set level 1} {$level <=151} {incr level 1} {
+  	set node1 $level
+  	set node2 [expr $node1+1]
+  	set eleID $level
+  	element dispBeamColumnThermal $eleID $node1 $node2 5 1 1;		# actually define element
+  }
+
+  #ELES FOR SLAB
+  for {set level 1001} {$level <=1151} {incr level 1} {
+  	set node1 $level
+  	set node2 [expr $node1+1]
+  	set eleID $level
+  	element dispBeamColumnThermal $eleID $node1 $node2 5 2 1;		# actually define element
+  }
+
+  recorder Node -file node6_RigidLink.out -time -node 75 -dof 2 disp;
+
+  # Define DISPLAY -------------------------------------------------------------
+  set  xPixels 1000;	# height of graphical window in pixels
+  set  yPixels 490;	# height of graphical window in pixels
+  set  xLoc1 10;	# horizontal location of graphical window (0=upper left-most corner)
+  set  yLoc1 10;	# vertical location of graphical window (0=upper left-most corner)
+  set ViewScale 2;	# scaling factor for viewing deformed shape, it depends on the dimensions of the model
+  DisplayModel2D DeformedShape $ViewScale $xLoc1 $yLoc1 $xPixels $yPixels 0
+
+  # apply UDL Load
+  pattern Plain 1 Linear {
+  #CREATE UNIFORM LOADS FOR BEAMS
+  set  P -32470;
+      load 19  0 $P 0;
+  	load 56  0 $P 0;
+  	load 94  0 $P 0;
+  	load 132  0 $P 0;
+  }
+
+
+  constraints Transformation;
+  numberer Plain;
+  system BandGeneral;
+  test NormUnbalance 1.0e-2 100;
+  algorithm Newton;
+  integrator LoadControl 0.1;
+  analysis Static;
+  analyze 10;
+
+  loadConst -time 0.0
+
+  # PATTERN AND TIME SERIES FOR STEEL
+  pattern Plain 2 Linear {
+
+  for {set level 1} {$level <=151} {incr level 1} {
+  set eleID $level
+
+  eleLoad -ele $eleID -type -beamThermal -source "Steeltemp.dat"  -128.5   128.5 ;
+  }
+  }
+
+  # PATTERN AND TIME SERIES FOR CONCRETE
+  pattern Plain 3 Linear  {
+
+
+  for {set level 1001} {$level <=1151} {incr level 1} {
+  set eleID $level
+  #eleLoad -ele $eleID -type -beamThermal $TbotSlab -$Hslab $TtopSlab $Hslab ;
+  eleLoad -ele $eleID -type -beamThermal -source "Slabtemp.dat"  -65   65;
+  }
+  }
+
+
+  # Start of analysis generation
+  # ------------------------------
+  # create the system of equations
+  system UmfPack
+
+  # create the DOF numberer
+  numberer Plain
+
+  # create the constraint handler
+  constraints Transformation
+
+  # create the convergence test
+  test NormDispIncr 1e-1 100;
+
+  #test NormUnbalance 1.0e-12 25
+  #test EnergyIncr 1.0e-12 25
+
+  # create the integration scheme
+  integrator LoadControl 150
+
+  # create the solution algorithm
+  algorithm KrylovNewton
+
+  # create the analysis object
+  analysis Static
+  # ------------------------------
+  # Finally perform the analysis
+  # ------------------------------
+  analyze 16
+  # --------------------------------
+  # End of analysis
+
+</pre>
+</code>
+<br>
+<hr>
+<! -----Analysis results from OpenSees (better with reference paper)------->
+<h4> Output Results</h4>
+<p>Midspan vertical displacement</p>
+
+ <center><img src="../../images/CaseImgs/Simply-beam-res.PNG"  style="width:500px;"> </center>
+ <center><small>Figure-2: OpenSEES Model vs Test Results</small></center>
+<b>Reference:</b><p>Wainman D.E. and Kirby B.R. Compendium of UK standard fire test data unprotected structural steel-1. British Steel Corporation, Ref. No. RS/RSC/S10328/1/98/B. Swinden Laboratories, Rotherdam, 1988.</p>
+<hr>
+<small><p>This page is created by D.V.V. Ramakanth, 2020</p></small>
+      </section>
+<footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>
