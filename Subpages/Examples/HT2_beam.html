@@ -49,8 +49,9 @@
 <! -----A brief introduction of the problem---------->
 <p>
 
-    Figure 1-1 shows a 6m steel beam subjected to a localised fire which is set just under the centre of the beam. This example is established according to the real-scale localised fire tests reported by Wakamatsu and Hasemi.
+    Figure HT2-2 shows a 6m steel beam subjected to a localised fire which is set just under the centre of the beam. This example is established according to the real-scale localised fire tests reported by Wakamatsu and Hasemi.
 </p>
+<p>Please refer to this paper: <a href="https://www.researchgate.net/publication/346083373_Thermal_analysis_infrastructure_in_OpenSees_for_fire_and_its_smart_application_interface_towards_natural_fire_modelling">Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology，2020 </a> </p>
 <! -----Using the folliwng table to provide model information---------->
 <table style="width:100%">
  <tr>
@@ -59,7 +60,7 @@
   </tr>
   <tr>
     <td>HT Entity</td>
-    <td>Isection3D</td>
+    <td>Isection3D, I-section (400mm*200mm*13mm*15mm)</td>
   </tr>
   <tr>
     <td>Material</td>
@@ -67,7 +68,7 @@
   </tr>
   <tr>
     <td>Fire Type </td>
-    <td>Localised fire</td>
+    <td>Localised fire (1127kW) </td>
   </tr>
 </table>
 <! -----A link for downloading this exampel package(package should be stored in download/example folder------->
@@ -75,116 +76,87 @@
 <hr>
 <! -----A figure to show the model------->
 <h4> Model Geometry</h4>
-
+<p>The construction size of the real-scale localised fire tests is 6.0m × 6.0m × 3.4m (Ceiling Height). The observed steel beam under the centre of the ceiling is a 150mm(H) × 75mm(W) × 5(Web) × 6mm(Flange) H-shape section. A rectangular gas burner 1.0m × 1.0m was setting in the centre of the floor with 1.0m vertical height. This burner used propane as the fuel. The heat release rates are in equivalent to different fire sizes controlled by the volume of flowing gas and assumed complete combustion. *The real-scale localised fire tests without protection soffit.</p>
  <center><img src="../../images/CaseImgs/HT2_model.png"  style="width:600px;"> </center>
- <center><small>Figure-1: Schematic of steel beam subjected to localised fire</small></center>
+ <center><small>Figure HT-1: Schematic of steel beam subjected to localised fire(Wakamatsu and Hasemi, 1997)</small></center>
 
 <hr>
 <! -----Tcl scripts for the model defitnion------->
 <h4> Tcl scripts for model definition</h4>
-<p><b>A. 2D model:</b></p>
+
 <code>
-#define node     <br>
-node 1 0 0;        <br>
-node 2 2 0;<br>
-node 3 1 0;<br>
+set BF 0.20;  
+set HB 0.40; set Len 6.0;
+<p style="color:green;">##Width of flange, Height of beam,#Length of beam (m) </p> 
+set Tw 0.013; #Thickness of web (m)<br>
+set Tf 0.015; #Thickness of flange (m)<br>
 
-#define boundary condition;<br>
-fix 1 1 1 1;<br>
-fix 2 1 1 1;<br>
-fix 3 0 1 1;<br>
+set Centrex 0.0    <br>
+set Centrey [expr $HB/2.0]     #Centrey=HB/2.0    <br>
+set Centrez [expr $Len/2.0]   #Centrez=Len/2.0    <br>
+#Mesh sizes; <br>
+set elex [expr ($BF-$Tw)/8.0];<br>
+set eleweby [expr ($HB-$Tf*2.0)/10.0];<br>
+set eley [expr $Tf/2.0]<br>
+set elewebx [expr $Tw/2.0] <br>
+set elez [expr $Len/120.0]    <br><br>
+    
+ <p style="color:green;">#activates the HTModule.</p> 
+HeatTransfer 3D;<br>
 
-#define an elastic material with Tag=1 and E=2e11. <br>
-uniaxialMaterial Steel01Thermal 1 2e11 2e11 0.01;<br>
+#Defining HeatTransfer Material with Material tag 1<br>
+HTMaterial CarbonSteelEC3 1;        <br>
 
-#define fibred section; Two fibres: fiber $yLoc $zLoc $A $matTag<br>
-set secTag 1;      <br>
-   section FiberThermal $secTag { <br>
-    fiber -0.025 0 0.005 1; <br>
-    fiber 0.025 0 0.005 1; <br>
-    };
+#define Heat Transfer Entity; <br>
+HTEntity  Isection3D   1    $Centrex   $Centrey  $Centrez   $BF   $HB  $Tw    $Tf   $Len;<br>
 
-#define coordinate transforamtion: geomTransf $type $TransfTag; <br>
-#three transformation types can be chosen: Linear, PDelta, Corotational)<br>
-geomTransf Linear 1 ; <br>
 
-#define beam element: dispBeamColumnThermal $eleTag $iNode $jNode $numIntgrPts $secTag $TransfTag;<br>
-#"numIntgrPts" is the number of integration points along the element; <br>
-#"TransfTag" is pre-defined coordinate-transformation; <br>
-element dispBeamColumnThermal 1 1 3 3 1 1; <br>
-element dispBeamColumnThermal 2 3 2 3 1 1; <br>
-pattern Plain 1 Linear { <br>
-eleLoad -ele 1 -type -beamThermal 1000 -50 1000 50 <br>
-#eleLoad -ele 2 -type -beamThermal 0 -0.05 0 0.05 <br>
-}; <br>
+#HTMesh $MeshTag $EntityTag  $MaterialTag -SecondMat 2<br>
+HTMesh 1 1 1 -phaseChange 0 -MeshCtrls $elex $eley $elez $elewebx $eleweby <br>
+HTMeshAll; <br>
+puts "mesh done";<br><br>
+    
+#Defining Initial Temperature (K); <br>
+SetInitialT 293.15; <br>
+#Defining HeatTransfer constants $consTag $hc(W/m^2∙K) $Ta $ε $a <br>
+HTConstants 1 35.0 293.15 0.85 0.85; <br>
+#Defining HeatTransfer Boundary Pattern <br>
+HTPattern AmbientBC 1 {   <br>
+	HeatFluxBC -HTEntity 1 -face  1 4 5 6 7 8 9  -type -ConvecAndRad -HTConstants 1;<br>
+}   <br> <br>
+FireModel Localised 1 -origin 0.0 -2.0 $Centrez -firePars 1.0 1127.0E3 2.4 2 ; <br>
+HTPattern fire 2 model 1 {   <br>
+	HeatFluxBC -HTEntity 1 -face 1  -type -Prescribed -HTConstants 1 -par 4; #Fire action using input heat flux<br>
+	HeatFluxBC -HTEntity 1 -face 4 5  -type -Prescribed -HTConstants 1 -par 3;<br>
+	HeatFluxBC -HTEntity 1 -face 6 7  -type -Prescribed -HTConstants 1 -par 2;<br>
+	HeatFluxBC -HTEntity 1 -face 8 9  -type -Prescribed -HTConstants 1 -par 1;<br>
+	#'HTEntitiy' $entTag, 'face' $fTag, 'type' $HFType, 'HTConstants' consTag<br>
+	#-par is to set extra tags for SFPE beam-ceiling localised fire model. User can leave as it is<br>
+}<br><br>
+
+#HeatTransfer Recorder <br>
+set flloc [expr ($BF-$Tw)/4.0+$Tw/2]  <br>
+HTNodeSet 10 -Locx $flloc -Locy 0.0075;  <br>
+HTRecorder -file tempBLF.out -NodeSet 10;    #Nodes of beam lower flange    <br>
+HTAnalysis HeatTransfer   <br>
+HTAnalyze 108 10;  <br>
+wipe;<br>
 </code>
 <br>
-<p><b>B. 3D model:</b></p>
-<code>
-wipe;                  <br>
-#file mkdir Data;           # create data directory            <br>
-model BasicBuilder -ndm 3 -ndf 6;# 2 dimension and 3 dofs per node <br>
-#source DisplayPlane.tcl;       # procedure for displaying a plane in model<br>
-#source DisplayModel2D.tcl;     # procedure for displaying 2D perspective of model<br>
-
-#define node<br>
-node 1 0 0 0;<br>
-node 2 2000 0 0;<br>
-node 3 1000 0 0;<br>
-
-#define boundary condition;<br>
-fix 1 1 1 1 1 1 1;<br>
-fix 2 1 1 1 1 1 1;<br>
-fix 3 0 1 1 1 1 1;<br>
-
-#define an elastic material with Tag=1 and E=2e11.    <br>
-#uniaxialMaterial SteelECThermal 1 300 2e5 0.01;<br>
-uniaxialMaterial Steel01Thermal 1 1000 2e5 0.01;<br>
-#define fibred section; Two fibres: fiber $yLoc $zLoc $A $matTag<br>
-set secTag 1;<br>
-section FiberThermal $secTag {<br>
-    fiber -25 -25 2500 1;<br>
-    fiber -25 25 2500 1;<br>
-    fiber 25 -25 2500 1;<br>
-    fiber 25 25 2500 1;<br>
- };<br>
-
-#define coordinate transforamtion: geomTransf $type $TransfTag;<br>
-#three transformation types can be chosen: Linear, PDelta, Corotational)<br>
-geomTransf Linear 1 0 1 0;<br>
-
-#define beam element:
-#element dispBeamColumnThermal $eleTag $iNode $jNode $numIntgrPts $secTag $TransfTag;<br>
-element dispBeamColumnThermal  1 1 3 3 1 1;<br>
-element dispBeamColumnThermal  2 3 2 3 1 1;<br>
-#"numIntgrPts" is the number of integration points along the element;<br><br>
-#"TransfTag" is pre-defined coordinate-transformation;<br>
-
-#define output
-recorder Node -file RBDFree31.out -time -node 3 -dof 1 disp;        # displacements of free nodes<br>
-recorder Element -file RBElement1Sec.out -time -ele 1 section 1 fiber -25 25 stressStrain<br>
-recorder Element -file RBElement1SecFibre.out -time -ele 1 section 2 fiber -25 25 TempElong;<br>
-recorder Element -file RBElement2LF.out -time -ele 2 localForce;<br>
+    
 
 
-#define thermal load (i.e. temperature distribution in section)<br>
-#-beamThermal $T1 $LocY1 $T2 LocY2....; two temperature means uniform or linear temperature distribution<br>
-#T1=bottom temperature;T2=top temperature<br>
-pattern Plain 1 Linear {<br>
-eleLoad -ele 1 -type -beamThermal 1000 -50 1000 50<br>
-};<br>
-</code>
 <br>
 <hr>
 <! -----Analysis results from OpenSees (better with reference paper)------->
 <h4> Output Results</h4>
-<p>The varation of the mid-node displacement is shown in the following figure, where the node moves towards the right-hand direction due to thermal expansion and moves back because of material degradation</p>
+<p>The temperature distributions of the steel beam are shown in the following figure.</p>
 
- <center><img src="../../images/CaseImgs/Thermal_Expansion22.jpg"  style="width:500px;"> </center>
- <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
-<b>Reference:</b><p>Jiang, J., & Usmani, A. (2013). Modeling of steel frame structures in fire using OpenSees. Computers & Structures, 118, 90–99. https://doi.org/10.1016/j.compstruc.2012.07.013</p>
+ <center><img src="../../images/CaseImgs/HT-2out.png"  style="width:600px;"> </center>
+ <center><small>Figure HT-2:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
+<b>Reference:</b><p>Jiang, L., Jiang, Y.,Zhang, Z., Usmani, A. Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology，2020 </p>
 <hr>
-<small><p>This page is created by Liming Jiang, 2016</p></small>
+<small><p>This page is created by Liming Jiang & Zhuojun Nan, 2020</p></small>
       </section>
 <footer>
         <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
