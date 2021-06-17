@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../../stylesheets/styles.css">
+    <link rel="stylesheet" href="../../stylesheets/github-light.css">
+    <meta name="viewport" content="../../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="../heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="../sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="../commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="../examples.html">Examples</a></p></small>
+        <!-- <small><p class="view"><a href="../sifexamples.html">SIFBuilder Examples</a></p></small> -->
+        <h4><p class="view"><a href="../../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>Heat transfer of Concrete Slab subjected to Standard Fire</h2>
+<hr>
+<! You can leave your name here>
+<p>Developed by Dr Liming Jiang and Qiujin</p>
+<hr>
+<h4> Introduction</h4>
+<! -----A brief introduction of the problem---------->
+<p>
+
+    Figure HT2-2 shows a 6m steel beam subjected to a localised fire which is set just under the centre of the beam. This example is established according to the real-scale localised fire tests reported by Wakamatsu and Hasemi.
+</p>
+<p>Please refer to this paper: <a href="https://www.researchgate.net/publication/346083373_Thermal_analysis_infrastructure_in_OpenSees_for_fire_and_its_smart_application_interface_towards_natural_fire_modelling">Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology，2021 </a> </p>
+<! -----Using the folliwng table to provide model information---------->
+<table style="width:100%">
+ <tr>
+    <th>OpenSees Model </th>
+    <th>Type used for this example</th>
+  </tr>
+  <tr>
+    <td>HT Entity</td>
+    <td>Isection3D, I-section (400mm*200mm*13mm*15mm)</td>
+  </tr>
+  <tr>
+    <td>Material</td>
+    <td>CarbonSteelEC3</td>
+  </tr>
+  <tr>
+    <td>Fire Type </td>
+    <td>Localised fire (1127kW) </td>
+  </tr>
+</table>
+<! -----A link for downloading this exampel package(package should be stored in download/example folder------->
+<p><b>Download:</b> <a href =/Download/Examples/HT2_Example_EC1 Localised.zip> This Example Package </a> </p>
+<hr>
+<! -----A figure to show the model------->
+<h4> Model Geometry</h4>
+<p>The construction size of the real-scale localised fire tests is 6.0m × 6.0m × 3.4m (Ceiling Height). The observed steel beam under the centre of the ceiling is a 150mm(H) × 75mm(W) × 5(Web) × 6mm(Flange) H-shape section. A rectangular gas burner 1.0m × 1.0m was setting in the centre of the floor with 1.0m vertical height. This burner used propane as the fuel. The heat release rates are in equivalent to different fire sizes controlled by the volume of flowing gas and assumed complete combustion. *The real-scale localised fire tests without protection soffit.</p>
+ <center><img src="../../images/CaseImgs/HT2_model.png"  style="width:600px;"> </center>
+ <center><small>Figure HT-1: Schematic of steel beam subjected to localised fire(Wakamatsu and Hasemi, 1997)</small></center>
+
+<hr>
+<! -----Tcl scripts for the model defitnion------->
+<h4> Tcl scripts for model definition</h4>
+
+<code>
+set BF 0.20;  
+set HB 0.40; set Len 6.0;
+<p style="color:green;">##Width of flange, Height of beam,#Length of beam (m) </p> 
+set Tw 0.013; #Thickness of web (m)<br>
+set Tf 0.015; #Thickness of flange (m)<br>
+
+set Centrex 0.0    <br>
+set Centrey [expr $HB/2.0]     #Centrey=HB/2.0    <br>
+set Centrez [expr $Len/2.0]   #Centrez=Len/2.0    <br>
+#Mesh sizes; <br>
+set elex [expr ($BF-$Tw)/8.0];<br>
+set eleweby [expr ($HB-$Tf*2.0)/10.0];<br>
+set eley [expr $Tf/2.0]<br>
+set elewebx [expr $Tw/2.0] <br>
+set elez [expr $Len/120.0]    <br><br>
+    
+ <p style="color:green;">#activates the HTModule.</p> 
+HeatTransfer 3D;<br>
+
+#Defining HeatTransfer Material with Material tag 1<br>
+HTMaterial CarbonSteelEC3 1;        <br>
+
+#define Heat Transfer Entity; <br>
+HTEntity  Isection3D   1    $Centrex   $Centrey  $Centrez   $BF   $HB  $Tw    $Tf   $Len;<br>
+
+
+#HTMesh $MeshTag $EntityTag  $MaterialTag -SecondMat 2<br>
+HTMesh 1 1 1 -phaseChange 0 -MeshCtrls $elex $eley $elez $elewebx $eleweby <br>
+HTMeshAll; <br>
+puts "mesh done";<br><br>
+    
+#Defining Initial Temperature (K); <br>
+SetInitialT 293.15; <br>
+#Defining HeatTransfer constants $consTag $hc(W/m^2∙K) $Ta $ε $a <br>
+HTConstants 1 35.0 293.15 0.85 0.85; <br>
+#Defining HeatTransfer Boundary Pattern <br>
+HTPattern AmbientBC 1 {   <br>
+	HeatFluxBC -HTEntity 1 -face  1 4 5 6 7 8 9  -type -ConvecAndRad -HTConstants 1;<br>
+}   <br> <br>
+FireModel Localised 1 -origin 0.0 -2.0 $Centrez -firePars 1.0 1127.0E3 2.4 2 ; <br>
+HTPattern fire 2 model 1 {   <br>
+	HeatFluxBC -HTEntity 1 -face 1  -type -Prescribed -HTConstants 1 -par 4; #Fire action using input heat flux<br>
+	HeatFluxBC -HTEntity 1 -face 4 5  -type -Prescribed -HTConstants 1 -par 3;<br>
+	HeatFluxBC -HTEntity 1 -face 6 7  -type -Prescribed -HTConstants 1 -par 2;<br>
+	HeatFluxBC -HTEntity 1 -face 8 9  -type -Prescribed -HTConstants 1 -par 1;<br>
+	#'HTEntitiy' $entTag, 'face' $fTag, 'type' $HFType, 'HTConstants' consTag<br>
+	#-par is to set extra tags for SFPE beam-ceiling localised fire model. User can leave as it is<br>
+}<br><br>
+
+#HeatTransfer Recorder <br>
+set flloc [expr ($BF-$Tw)/4.0+$Tw/2]  <br>
+HTNodeSet 10 -Locx $flloc -Locy 0.0075;  <br>
+HTRecorder -file tempBLF.out -NodeSet 10;    #Nodes of beam lower flange    <br>
+HTAnalysis HeatTransfer   <br>
+HTAnalyze 108 10;  <br>
+wipe;<br>
+</code>
+<br>
+    
+
+
+<br>
+<hr>
+<! -----Analysis results from OpenSees (better with reference paper)------->
+<h4> Output Results</h4>
+<p>The temperature distributions of the steel beam are shown in the following figure.</p>
+
+ <center><img src="../../images/CaseImgs/HT-2out.png"  style="width:600px;"> </center>
+ <center><small>Figure HT-2:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
+<b>Reference:</b><p>Jiang, L., Jiang, Y.,Zhang, Z., Usmani, A. Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology，2020 </p>
+<hr>
+<small><p>This page is created by Liming Jiang & Zhuojun Nan, 2020</p></small>
+      </section>
+<footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../../stylesheets/styles.css">
+    <link rel="stylesheet" href="../../stylesheets/github-light.css">
+    <meta name="viewport" content="../../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="../heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="../sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="../commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="../examples.html">Examples</a></p></small>
+        <!-- <small><p class="view"><a href="../sifexamples.html">SIFBuilder Examples</a></p></small> -->
+        <h4><p class="view"><a href="../../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>A flat slab subjected to furnace fire (BRANZ test)</h2>
+<hr>
+<! You can leave your name here>
+<p>Developed by Dr Liming Jiang</p>
+<hr>
+<h4> Introduction</h4>
+<! -----A brief introduction of the problem---------->
+<p>
+Figure 1 shows the slab configuration, which was tested by BRANZ using a furnace (Lim et al., 2002). This is a flat concrete slab with single layer of steel mesh. A UDL of 5.4kN/m2 was loaded on the slab during the fire test, and the fire following the standard time-temperature curve lasted for 3 hours.
+</p>
+<! -----Using the folliwng table to provide model information---------->
+<table style="width:100%">
+ <tr>
+    <th>OpenSees Model </th>
+    <th>Type used for this example</th>
+  </tr>
+  <tr>
+    <td>Element</td>
+    <td>ShellNLDKGQThermal</td>
+  </tr>
+  <tr>
+    <td>Section</td>
+    <td>LayeredShellThermal</td>
+  </tr>
+  <tr>
+    <td>Material</td>
+    <td>CDPPlaneStressThermal, SteelECThermal, J2PlaneStressThermal</td>
+  </tr>
+  <tr>
+    <td>Thermal Loading </td>
+    <td>ShellThermalAction, with userdefined dat file</td>
+  </tr>
+</table>
+<! -----A link for downloading this exampel package(package should be stored in download/example folder------->
+<p><b>Download:</b> <a href =/Download/Examples/FlatShellfire.zip> This Example Package </a> </p>
+<hr>
+<! -----A figure to show the model------->
+<h4> Model Geometry</h4>
+
+ <center><img src="../../images/CaseImgs/LimSlabfire.png"  style="width:400px;"> </center>
+ <center><small>Figure-1: Schematic of restrained beam subjected to uniform temperature rise</small></center>
+
+<hr>
+<! -----Tcl scripts for the model defitnion------->
+<h4> Tcl scripts for model definition</h4>
+
+<code>
+model BasicBuilder -ndm 3 -ndf 6;   <br>
+#define model parameters: Number of elements along x and y, slab dimensions, UDL     <br>
+set nx 20;    <br>
+set ny 20;    <br>
+set slabT 0.1;  <br>
+set slabB 3.150;  <br>
+set slabL 4.150;<br>
+set UDL 5.4E3;<br>
+<br>    
+#define material models    <br>    
+set gt [expr 3.7e6/2.2e10*3.7e6*2];<br>
+set gc [expr 37.0e6/2.2e10*37.0e6*6];<br>
+nDMaterial  CDPPlaneStressThermal 100 2.2e10 0.2 3.7e6 37e6 $gt $gc;<br>
+nDMaterial   PlateFromPlaneStressThermal    4   100   1e9;<br>
+<br>    
+#uniaxialMaterial SteelECThermal 1 EC2NC 5.65e8 2e11;<br>
+uniaxialMaterial SteelECThermal 1 EC2NH 4.68e8 2e11;<br>
+nDMaterial PlateRebarThermal 3 1 0; <br>
+nDMaterial PlateRebarThermal 5 1 90; <br>
+nDMaterial  J2PlaneStressThermal 13 21 2e11 0.3 4.68e8 6.00e8 0.1 2e8;<br>
+nDMaterial   PlateFromPlaneStressThermal    46   13   20e10;<br>
+<br>
+#define shell section:rebar/layer    <br>    
+section LayeredShellThermal   5  13 4  0.008 4  0.008  4 0.008435 3 0.000565 5 0.000565 4 0.004435  4  0.01 4  0.01 4  0.01 4  0.01 4  00.01 4  0.01 4  0.01 ; <br>  
+section LayeredShellThermal   6  12 4  0.01 4  0.01  4 0.005 46 0.000565 4 0.004435 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ; <br>  
+<br>
+#define shell elements using block2d   <br>  
+block2D $nx $ny 1 1 ShellNLDKGQThermal  5 {  <br>  
+    1   0. 0. 0.   <br>  
+    2   4.15 0. 0.  <br>  
+    3  4.15 3.15 0. <br>  
+    4   0. 3.15 0. <br>  
+} <br>  
+<br>  
+#define boundary condition:simply supoorted;<br>
+fixX 0  0 0 1 0 0 0 ;   <br>
+fixX 4.15  0 0 1 0 0 0 ;   <br>
+fixY 0  0 0 1 0 0 0 ;    <br>
+fixY 3.15  0 0 1 0 0 0 ;   <br>
+fix 1  1 1 1 0 0 1 ;      <br>
+<br>
+#Define recorders   <br>
+#DisplayModel3D  DeformedShape $ViewScale $xLoc1 $yLoc1  $xPixels $yPixels    <br>
+set MidEle [expr 1+($nx)*$ny/2+$nx/2];<br>
+
+</code>
+
+<hr>
+<! -----Analysis results from OpenSees (better with reference paper)------->
+<h4> Output Results</h4>
+<p>The varation of the mid-node displacement is shown in the following figure</p>
+
+ <center><img src="../../images/CaseImgs/slabfiretest.png"  style="width:500px;"> </center>
+ <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
+<b>Reference:</b><p>Jiang, L. et al. (2021) ‘Modelling concrete slabs subjected to fires using nonlinear layered shell elements and concrete damage plasticity material’, Engineering Structures. Elsevier Ltd, 234i, p. 111977. doi:10.1016/j.engstruct.2021.111977.</p>
+<hr>
+<small><p>This page is created by Liming Jiang, 2016</p></small>
+      </section>
+<footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>
