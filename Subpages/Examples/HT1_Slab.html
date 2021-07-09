@@ -43,15 +43,16 @@
 <h2>Heat transfer of Concrete Slab subjected to Standard Fire</h2>
 <hr>
 <! You can leave your name here>
-<p>Developed by Dr Liming Jiang and Qiujin</p>
+<p>Developed by Qiujin</p>
 <hr>
 <h4> Introduction</h4>
 <! -----A brief introduction of the problem---------->
 <p>
 
-    Figure HT2-2 shows a 6m steel beam subjected to a localised fire which is set just under the centre of the beam. This example is established according to the real-scale localised fire tests reported by Wakamatsu and Hasemi.
+   Figure HT1-1 shows a 3-dimentional 4.15×3.15×0.1m concrete slab which is simply supported on the four edges. Only the bottom surface of the slab is subjected to ISO834 standard fire. HTMaterial class ConcreteEC2 is used here. Please refer to the following papers:
 </p>
-<p>Please refer to this paper: <a href="https://www.researchgate.net/publication/346083373_Thermal_analysis_infrastructure_in_OpenSees_for_fire_and_its_smart_application_interface_towards_natural_fire_modelling">Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology，2021 </a> </p>
+<p><a href="https://www.researchgate.net/publication/346083373_Thermal_analysis_infrastructure_in_OpenSees_for_fire_and_its_smart_application_interface_towards_natural_fire_modelling">Jiang et al.,Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology, 2021 </a> <br> <a href="https://www.researchgate.net/publication/348804142_Modelling_concrete_slabs_subjected_to_fires_using_nonlinear_layered_shell_elements_and_concrete_damage-plasticity_material">Jiang et al., Modelling concrete slabs subjected to fires using nonlinear layered shell elements and concrete damage-plasticity material, Engineering Structures, 2021   </a>    
+
 <! -----Using the folliwng table to provide model information---------->
 <table style="width:100%">
  <tr>
@@ -59,90 +60,107 @@
     <th>Type used for this example</th>
   </tr>
   <tr>
-    <td>HT Entity</td>
-    <td>Isection3D, I-section (400mm*200mm*13mm*15mm)</td>
+    <td>HTEntity</td>
+    <td>Block(2D) or Brick(3D)</td>
   </tr>
   <tr>
-    <td>Material</td>
-    <td>CarbonSteelEC3</td>
+    <td>HTMaterial</td>
+    <td>ConcreteEC2</td>
   </tr>
   <tr>
     <td>Fire Type </td>
-    <td>Localised fire (1127kW) </td>
+    <td>Standard fire (ISO834) </td>
   </tr>
 </table>
 <! -----A link for downloading this exampel package(package should be stored in download/example folder------->
-<p><b>Download:</b> <a href =/Download/Examples/HT2_Example_EC1 Localised.zip> This Example Package </a> </p>
+<p><b>Download:</b> <a href =/Download/Examples/HT1ConcreteSlabStandardFire.zip> This Example Package </a> </p>
 <hr>
 <! -----A figure to show the model------->
 <h4> Model Geometry</h4>
-<p>The construction size of the real-scale localised fire tests is 6.0m × 6.0m × 3.4m (Ceiling Height). The observed steel beam under the centre of the ceiling is a 150mm(H) × 75mm(W) × 5(Web) × 6mm(Flange) H-shape section. A rectangular gas burner 1.0m × 1.0m was setting in the centre of the floor with 1.0m vertical height. This burner used propane as the fuel. The heat release rates are in equivalent to different fire sizes controlled by the volume of flowing gas and assumed complete combustion. *The real-scale localised fire tests without protection soffit.</p>
- <center><img src="../../images/CaseImgs/HT2_model.png"  style="width:600px;"> </center>
- <center><small>Figure HT-1: Schematic of steel beam subjected to localised fire(Wakamatsu and Hasemi, 1997)</small></center>
+<p>The model is to estimate the heat transfer of a flat concrete slab exposed to a furnace fire following Standard Fire curve. The slab is 100mm thick and it can be modelled either using 1D line element, 2D Block element, or 3D Brick element </p>
+ <center><img src="../../images/CaseImgs/FigureHT1-1.png"  style="width:300px;"> </center>
+ <center><small>Figure HT-1:  Schematic of simply supported slab subjected to ISO834 standard fire)</small></center>
 
 <hr>
 <! -----Tcl scripts for the model defitnion------->
 <h4> Tcl scripts for model definition</h4>
-
+<b>2D HT model</b>
 <code>
-set BF 0.20;  
-set HB 0.40; set Len 6.0;
-<p style="color:green;">##Width of flange, Height of beam,#Length of beam (m) </p> 
-set Tw 0.013; #Thickness of web (m)<br>
-set Tf 0.015; #Thickness of flange (m)<br>
-
-set Centrex 0.0    <br>
-set Centrey [expr $HB/2.0]     #Centrey=HB/2.0    <br>
-set Centrez [expr $Len/2.0]   #Centrez=Len/2.0    <br>
-#Mesh sizes; <br>
-set elex [expr ($BF-$Tw)/8.0];<br>
-set eleweby [expr ($HB-$Tf*2.0)/10.0];<br>
-set eley [expr $Tf/2.0]<br>
-set elewebx [expr $Tw/2.0] <br>
-set elez [expr $Len/120.0]    <br><br>
+<p style="color:green;">#Definet analysis module </p> 
+HeatTransfer 2D; #2D or 2d or 3D or 3d indicate the model dimension. <br>
+#Defining HeatTransfer Material <br>
+HTMaterial ConcreteEC2 1 0.0; <br><br>
     
- <p style="color:green;">#activates the HTModule.</p> 
-HeatTransfer 3D;<br>
+<p style="color:green;">#Defining slab geometry: just need a cross section is enough in 2D analysis  </p> 
+set t 0.1;<br>
+set w 3.15;<br>
+#Defining Entity
+HTEntity Block 1 0.0 [expr $t/2] $w $t; #A 2D block with its centroid at 0,t/2;<br>
+#Defining mesh: <br>
+set elemx [expr $w/20] <br>
+set elemy [expr $t/8] <br>
+HTMesh 1 1 1 -phaseChange 1 -MeshCtrls $elemx $elemy<br>
+HTMeshAll;<br>
+# define ambient temperature<br>
+SetInitialT 293.15; #Kelvin degree centigrade is used here<br><br>
 
-#Defining HeatTransfer Material with Material tag 1<br>
-HTMaterial CarbonSteelEC3 1;        <br>
-
-#define Heat Transfer Entity; <br>
-HTEntity  Isection3D   1    $Centrex   $Centrey  $Centrez   $BF   $HB  $Tw    $Tf   $Len;<br>
-
-
-#HTMesh $MeshTag $EntityTag  $MaterialTag -SecondMat 2<br>
-HTMesh 1 1 1 -phaseChange 0 -MeshCtrls $elex $eley $elez $elewebx $eleweby <br>
-HTMeshAll; <br>
-puts "mesh done";<br><br>
-    
-#Defining Initial Temperature (K); <br>
-SetInitialT 293.15; <br>
-#Defining HeatTransfer constants $consTag $hc(W/m^2∙K) $Ta $ε $a <br>
-HTConstants 1 35.0 293.15 0.85 0.85; <br>
-#Defining HeatTransfer Boundary Pattern <br>
-HTPattern AmbientBC 1 {   <br>
-	HeatFluxBC -HTEntity 1 -face  1 4 5 6 7 8 9  -type -ConvecAndRad -HTConstants 1;<br>
-}   <br> <br>
-FireModel Localised 1 -origin 0.0 -2.0 $Centrez -firePars 1.0 1127.0E3 2.4 2 ; <br>
-HTPattern fire 2 model 1 {   <br>
-	HeatFluxBC -HTEntity 1 -face 1  -type -Prescribed -HTConstants 1 -par 4; #Fire action using input heat flux<br>
-	HeatFluxBC -HTEntity 1 -face 4 5  -type -Prescribed -HTConstants 1 -par 3;<br>
-	HeatFluxBC -HTEntity 1 -face 6 7  -type -Prescribed -HTConstants 1 -par 2;<br>
-	HeatFluxBC -HTEntity 1 -face 8 9  -type -Prescribed -HTConstants 1 -par 1;<br>
-	#'HTEntitiy' $entTag, 'face' $fTag, 'type' $HFType, 'HTConstants' consTag<br>
-	#-par is to set extra tags for SFPE beam-ceiling localised fire model. User can leave as it is<br>
-}<br><br>
-
-#HeatTransfer Recorder <br>
-set flloc [expr ($BF-$Tw)/4.0+$Tw/2]  <br>
-HTNodeSet 10 -Locx $flloc -Locy 0.0075;  <br>
-HTRecorder -file tempBLF.out -NodeSet 10;    #Nodes of beam lower flange    <br>
-HTAnalysis HeatTransfer   <br>
-HTAnalyze 108 10;  <br>
+<p style="color:green;">#Defining heat transfer boundary conditions：</p>
+HTConstants 1 4.0 293.15 0.7 0.7; # unexposed surface<br>
+HTConstants 2 25.0 293.15 0.7 0.7; # exposed surface      <br>
+HTPattern AmbientBC 1 { <br>
+    HeatFluxBC -HTEntity 1 -face 4 -type ConvecAndRad -HTConstants 1;  #The unexposed surface<br>
+  }<br>
+FireModel standard 1; #defining fire model <br>
+HTPattern fire 2 model 1 {<br>
+    HeatFluxBC -HTEntity 1 -face 1 -type ConvecAndRad -HTConstants 2; #The exposed surface<br>
+ }<br>
+#Defining node set that are expected to output here:<br>
+HTNodeSet 1 -Locx 0.0  <br>
+HTRecorder -file tempslab2D.out -NodeSet 1<br>
+HTAnalysis HeatTransfer<br>
+HTAnalyze 120 15;	<br>
 wipe;<br>
+</code> <br>
+<b>3D HT model</b>
+<code>
+    <p style="color:green;">#Definet analysis module </p>
+HeatTransfer 3D; #2D or 2d, or 3D or 3d indicate the model dimension. <br>
+#Defining HeatTransfer Material<br>
+HTMaterial ConcreteEC2 1 0.0; <br>
+#Defining slab geometry: <br>
+set slabw 3.15; #slab width<br>
+set slabl 4.15; #slab length<br>
+set slabt 0.1; #slab thickness<br>
+#Defining Entity: <br>
+HTEntity Brick 1 0.0 0.0 0.0 $slabw $slabt $slabl; <br>
+#A 3D brick with its centroid at 0,0,0; X-axis along its width;Y-axis is through depth and Z-axis along its length<br>
+#Defining mesh: <br>
+set elex [expr $slabw/20];<br>
+set eley [expr $slabt/8];<br>
+set elez [expr $slabl/20];<br>
+#HTMesh $MeshTag $EntityTag $MaterialTag -phaseChange -MeshCtrls $eleSizeX<br>
+HTMesh 1 1 1 -phaseChange 1 -MeshCtrls $elex $eley $elez;  <br>
+HTMeshAll;<br>
+#Defining ambient temperature:<br>
+SetInitialT 293.15; #Kelvin degree centigrade is used here<br><br>
+    <p style="color:green;">#Defining heat transfer boundary conditions：</p>
+HTConstants 1 4.0 293.15 0.7 0.7; # unexposed surface<br>
+HTConstants 2 25.0 293.15 0.7 0.7; # exposed surface<br>
+HTPattern AmbientBC 1 {<br>
+	HeatFluxBC -HTEntity 1 -face 2 -type ConvecAndRad -HTConstants 1; #The unexposed surface<br>
+}<br>
+FireModel standard 1; #defining fire model<br>
+HTPattern fire 2 model 1 {<br>
+	HeatFluxBC -HTEntity 1 -face 1 -type ConvecAndRad -HTConstants 2; #The exposed surface<br>
+}<br>
+#Defining node set that are expected to output here:<br>
+HTNodeSet 1 -Locx 0.0 -Locz 0.0; <br>
+HTRecorder -file tempslab3D.out -NodeSet 1;<br>
+HTAnalysis HeatTransfer<br>
+#Defining analysis steps and step time;<br>
+HTAnalyze 120 15;	<br>
+wipe;    
 </code>
-<br>
     
 
 
@@ -152,9 +170,10 @@ wipe;<br>
 <h4> Output Results</h4>
 <p>The temperature distributions of the steel beam are shown in the following figure.</p>
 
- <center><img src="../../images/CaseImgs/HT-2out.png"  style="width:600px;"> </center>
+ <center><img src="../../images/CaseImgs/HT1_output.png"  style="width:600px;"> </center>
  <center><small>Figure HT-2:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
-<b>Reference:</b><p>Jiang, L., Jiang, Y.,Zhang, Z., Usmani, A. Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology，2020 </p>
+<b>Reference:</b>
+    <p>Jiang, L., Jiang, Y.,Zhang, Z., Usmani, A. Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology，2021 <br> Jiang, L., Anwar, O., Jiang, J. & Usmani, A. (2021) Modelling concrete slabs subjected to fires using nonlinear layered shell elements and concrete damage plasticity material. Engineering Structures. doi:10.1016/j.engstruct.2021.111977.<br> Lim, L. & Wade, C. (2002) Experimental fire tests of two-way concrete slabs. BRANZ, New Zealand </p>
 <hr>
 <small><p>This page is created by Liming Jiang & Zhuojun Nan, 2020</p></small>
       </section>
