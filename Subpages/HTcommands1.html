@@ -90,15 +90,17 @@ HTMaterial ConcreteEC2 2 0.0;   #Moisture ratio
 HTEntity $HTEntityType $HTEntityTag $centerlocx $centerlocy <$centerlocz> $HTEntitydim1 $HTEntitydim2 <$HTEntitydim3> ;  
 </code>
 </div>
-<p>A very simple example is shown as below</p>
+<p>For different types of HTEntity, the type and tag of entity have to be given. It is followed by the central coordinates and dimensions. Some simple examples are shown as below</p>
 <div class="box">
 <code>
-HTEntity Block 1 0.0 0.0 $slabl $slabt; <br>
-HTEntity Brick 2 0.0 0.0 0.0 $slabw $slabt $slabl ; 
+HTEntity Line 1 0.0 $slabt; <br>
+HTEntity Block 2 0.0 0.0 $slabl $slabt; <br>
+HTEntity Brick 3 0.0 0.0 0.0 $slabw $slabt $slabl ; <br>
+HTEntity  Isection   4    $Centrex   $Centrey    $BF   $HB  $Tw   $Tf ;
 </code>
 </div>
 <br>
-
+    <center><img src="../images/htentity2d.png" style="width:600px;"></center>
 <hr>
 <!-----HTSetInitialT command------------------------------------------------------------>
 <h4> <a name = "HTSetInit"> SetInitialT </a> </h4>
