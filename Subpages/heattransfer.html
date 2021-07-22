@@ -45,7 +45,7 @@
 <h4> Introduction</h4>
 
 <p>
-Tcl command library has been added to facilitate the script based usage of OpenSees. Since the fire and heat transfer modules were developed, it is desirable to have corresponding Tcl commands for performing heat transfer analyses in OpenSees. This will significantly reduce the complexity in constructing a heat transfer model without requiring knowledge of C++ programming as a user. </p>
+<a href="commands.html"> Tcl commands</a>library has been added to facilitate the script based usage of OpenSees. Examples of using heat transfer module can be found in the <a href="/Subpages/examples.html"> Examples</a> page. </p> <p> Since the fire and heat transfer modules were developed, it is desirable to have corresponding Tcl commands for performing heat transfer analyses in OpenSees. This will significantly reduce the complexity in constructing a heat transfer model without requiring knowledge of C++ programming as a user. </p>
 <p>
 Heat transfer analysis in OpenSees is based on the finite element method to solve the transient governing equations. Therefore a mesh tool becomes necessary to discretise the model into nodes and elements.</p>
 <p>Please refer to this paper: <a href="https://www.researchgate.net/publication/346083373_Thermal_analysis_infrastructure_in_OpenSees_for_fire_and_its_smart_application_interface_towards_natural_fire_modelling">Thermal analysis infrastructure in OpenSees for fire and its smart application interface towards natural fire modelling, Fire Technology，2020 </a> </p>
@@ -75,8 +75,18 @@ This is followed by a few commands to declare the appropriate boundary condition
 Heat transfer analysis is finally completed after receiving <b>HTAnalyze</b> and thereafter the model can be wiped out using command <b>wipeHT</b>.
 </li>
 </ol>
+<hr>
+    
+<hr>
+<h4> Heat Transfer Script</h4>
+<p>The heat transfer commands available in OpenSees for fire can be found in the <a href="commands.html"> commands</a> page. A breif summary is given in the Figure below:</p>
+<img src="../images/cmdImgs/HTScript.png"  style="width:840px;">
+<center><small>Figure 2:  Heat Transfer Script in OpenSeees for fire</small></center>
+
 
 <hr>
+    
+    
 <h4> HeatTransfer script demo</h4>
 <code>
 HeatTransfer 2D; <br>
