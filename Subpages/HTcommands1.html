@@ -47,61 +47,6 @@
  This page explains the commands used for heat transfer analysis in OpenSees </p>
 
 <hr>
-<!--------HeatTransfer command------------------------------------------------------------>
-<h4><a name = "HeatTransfer"> HeatTransfer</a></h4>
-<b>HeatTransfer</b> command is used to activate the Heat Transfer module, which is followed by <i>2D</i> or <i>3D</i> to initialise a 2D or 3D environment. Commands can be written as:
-
-<div class="box">
-<code>
-HeatTransfer 2D <br>
-or <br>
-HeatTransfer 3D <br>
-</code>
-</div>
-
-<hr>
-
-<!--------HeatTransfer Material command------------------------------------------------------------>
-<h4><a name = "HTMaterial"> HTMaterial</a></h4>
-<b>HTMaterial</b> command is used to define heat transfer materials, which can be used for various structural materials and non-structural materials. Commands can be written as:
-
-<div class="box">
-<code>
-HTMaterial $HTMaterialType $HTMatTag <$HTMatPar1,$HTMatPar2>;  
-</code>
-</div>
-<p>A very simple example is shown as below</p>
-<div class="box">
-<code>
-HTMaterial CarbonSteelEC3 1; <br>
-HTMaterial ConcreteEC2 2 0.0;   #Moisture ratio
-</code>
-</div>
-<br>
-
-<hr>
-    
-<!--------HeatTransfer Entity command------------------------------------------------------------>
-<h4><a name = "HTEntity"> HTEntity</a></h4>
-<b>HTEntity</b> command is used to define various entities for heat transfer analyses, which can be used for creating 1D to 3D entities such as line, block, I-section, composite section, brick, I-section beam, composite beam. Commands can be written as:
-
-<div class="box">
-<code>
-HTEntity $HTEntityType $HTEntityTag $centerlocx $centerlocy <$centerlocz> $HTEntitydim1 $HTEntitydim2 <$HTEntitydim3> ;  
-</code>
-</div>
-<p>For different types of HTEntity, the type and tag of entity have to be given. It is followed by the central coordinates and dimensions. Some simple examples are shown as below</p>
-<div class="box">
-<code>
-HTEntity Line 1 0.0 $slabt; <br>
-HTEntity Block 2 0.0 0.0 $slabl $slabt; <br>
-HTEntity Brick 3 0.0 0.0 0.0 $slabw $slabt $slabl ; <br>
-HTEntity  Isection   4    $Centrex   $Centrey    $BF   $HB  $Tw   $Tf ;
-</code>
-</div>
-<br>
-    <center><img src="../images/htentity2d.png" style="width:600px;"></center>
-<hr>
 <!-----HTSetInitialT command------------------------------------------------------------>
 <h4> <a name = "HTSetInit"> SetInitialT </a> </h4>
 <b>SetInitialT</b> command is used to initialise the temperature field for all the objects (<b>HTEntity</b>), which is usually assigned with the ambient temperature as the first and only argument following the command.
@@ -170,6 +115,33 @@ HTPattern fire 2 model 1 {   <br>
 </div>
 <hr>
 
+    
+<!HTMesh command---------------------------------------------------------------------->
+<h4> <a name = "FireModel">FireModel </a> </h4>
+<b>FireModel</b> command is to define various design fire models ready-to-use in OpenSees for fire. Using this command, ideally uniform fire models and ideally non-uniform fire models can be defined. These models may either provide time-variant gas-phase temperatureThe, or time-variant and location-based gauge heat fluxes:
+
+<img src="../images/cmdImgs/firemodels.png"  style="width:600px;">
+<center><small>Figure:  Fire models available in OpenSees for fire</small></center>
+The fire command should be used with <b>HTPattern</b> command and the definition can be wrriten as:
+
+<div class="box">
+<code>
+FireModel $fireModelType $fireModelTag <$fireModelPars>; <br>
+</code>
+</div>
+
+The example scripts are shown as below:
+<div class="box">
+<code>
+FireModel standard 1; <br>
+FireModel Localised 2 -origin 0.0 -2.0 0.0 -firePars 1.0 1127.0E3 2.4 2 ;<br>
+FireModel NaturalFire 6 -firePars -file firepars.dat 2<br>
+</code>
+</div>
+
+<hr>
+    
+    
 <!HTMesh command---------------------------------------------------------------------->
 <h4> <a name = "HTRecorder"> HTRecorder </a> </h4>
 <b>HTRecorder</b> command is used to request the temperature data inside an (<b>HTEntity</b>), which could come up with location (coordinates) based or predefined data points at the interested section.

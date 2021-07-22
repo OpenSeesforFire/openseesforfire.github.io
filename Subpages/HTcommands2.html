@@ -46,7 +46,21 @@
 <p>
  This page explains the commands used for heat transfer analysis in OpenSees </p>
 
-<!HTMaterial command---------------------------------------------------------------------->
+<!--------HeatTransfer command------------------------------------------------------------>
+<h4><a name = "HeatTransfer"> HeatTransfer</a></h4>
+<b>HeatTransfer</b> command is used to activate the Heat Transfer module, which is followed by <i>2D</i> or <i>3D</i> to initialise a 2D or 3D environment. Commands can be written as:
+
+<div class="box">
+<code>
+HeatTransfer 2D <br>
+or <br>
+HeatTransfer 3D <br>
+</code>
+</div>
+
+<hr>
+    
+<!----------HTMaterial command---------------------------------------------------------------------->
 <h4> <a name = "HTMaterial">HTMaterial</a> </h4>
 <b>HTMaterial</b> command is used to define a heat transfer material. which shall be defined as:
 
@@ -140,8 +154,10 @@ The definition of the parameters mentioned above for 1D and 2D HTEntities are il
 
 <div class="box">
 <code>
-HTEntity  Isection   1    0.0      0.2    0.4 0.20 0.02 0.02;<br>
-HTEntity  Block   2    0.0      0.45     0.6    0.1;
+HTEntity Line 1 0.0 $slabt; <br>
+HTEntity Block 2 0.0 0.0 $slabl $slabt; <br>
+HTEntity Brick 3 0.0 0.0 0.0 $slabw $slabt $slabl ; <br>
+HTEntity  Isection   4    $Centrex   $Centrey    $BF   $HB  $Tw   $Tf ;
 </code>
 </div>
 
@@ -228,6 +244,19 @@ HTEleSet 2 -NodeSet 2 -face 2; <br>
 </code>
 </div>
 
+<hr>
+   
+<!HTMesh command---------------------------------------------------------------------->
+<h4> <a name = "HTRecorder"> HTRecorder </a> </h4>
+<b>HTRecorder</b> command is used to request the temperature data inside an (<b>HTEntity</b>), which could come up with location (coordinates) based or predefined data points at the interested section.
+
+<div class="box">
+<code>
+HTRecorder -locx $locx -locy $locy1 <locy2...locyn>;
+</code>
+</div>
+
+<br>
 <hr>
 <br>
 
