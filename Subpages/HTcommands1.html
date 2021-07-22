@@ -129,6 +129,54 @@ The fire command should be used with <b>HTPattern</b> command and the definition
 FireModel $fireModelType $fireModelTag <$fireModelPars>; <br>
 </code>
 </div>
+<p>Parameters for various fire models are given in the following table</p>
+<table style="width:95%">
+  <tr>
+    <td>Fire Model</td>
+    <td>fireModelType</td>
+    <td>fireModelPars</td>
+  </tr>
+  <tr>
+    <td>Standard Fire Curve (ISO834, EC1)</td>
+    <td>standard or Standard</td>
+    <td>-</td>
+  </tr>
+    <tr>
+    <td>External Fire Curve (EC1)</td>
+    <td>external or External</td>
+	<td> - </td>
+  </tr>
+  <tr>
+    <td>HydroCarbon Fire Curve (EC1)</td>
+    <td>HydroCarbon or hydroCarbon</td>
+	<td> - </td>
+  </tr>
+    <tr>
+    <td>ASTM Fire Curve</td>
+    <td>ASTM or ASTME119</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>Parameteric Fire Curve(EC1)</td>
+    <td>parametric or Parametric</td>
+	<td>thi,Area_vent, h_vent,Area_total, Area_fire, Q_fire, T_lim</td>
+  </tr>
+    <tr>
+    <td>Localised fire (EC1)</td>
+    <td>localised or Localised</td>
+    <td>-orign $xloc $yloc $zloc -firePars $D $Q $H $symmetricAxisTag</td>
+  </tr>
+     <tr>
+    <td>Natural Fire Model (Jiang et al,2021(</td>
+    <td>NaturalFire</td>
+    <td>-firePars -file $filename </td>
+  </tr>
+    <tr>
+    <td>User Defined Fire models using external data file</td>
+    <td>Uerdefined</td>
+    <td>-file $filename -Type $dataTypeTag</td>
+  </tr>
+</table>
 
 The example scripts are shown as below:
 <div class="box">
@@ -141,19 +189,6 @@ FireModel NaturalFire 6 -firePars -file firepars.dat 2<br>
 
 <hr>
     
-    
-<!HTMesh command---------------------------------------------------------------------->
-<h4> <a name = "HTRecorder"> HTRecorder </a> </h4>
-<b>HTRecorder</b> command is used to request the temperature data inside an (<b>HTEntity</b>), which could come up with location (coordinates) based or predefined data points at the interested section.
-
-<div class="box">
-<code>
-HTRecorder -locx $locx -locy $locy1 <locy2...locyn>;
-</code>
-</div>
-
-<br>
-<hr>
 
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
