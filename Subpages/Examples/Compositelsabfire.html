@@ -48,7 +48,7 @@
 <h4> Introduction</h4>
 <! -----A brief introduction of the problem---------->
 <p>
-Figure 1 shows the slab configuration, which was tested by BRANZ using a furnace (Lim et al., 2002). This is a flat concrete slab with single layer of steel mesh. A UDL of 5.4kN/m2 was loaded on the slab during the fire test, and the fire following the standard time-temperature curve lasted for 3 hours.
+Figure 1 shows the slab configuration, which was tested by BRANZ using a furnace (Lim et al., 2002). This is a composite slab tested in New Zealand. A UDL of 5.4kN/m2 was loaded on the slab during the fire test, and the fire following the standard time-temperature curve lasted for 3 hours. An enhanced version of LayerShellThermal section is used in this model, which enables unified reference plane to significantly reduce the modelling efforts by eliminating the elements for ribs.
 </p>
 <! -----Using the folliwng table to provide model information---------->
 <table style="width:100%">
@@ -62,7 +62,7 @@ Figure 1 shows the slab configuration, which was tested by BRANZ using a furnace
   </tr>
   <tr>
     <td>Section</td>
-    <td>LayeredShellThermal</td>
+    <td>LayeredShellThermal (V2.0)</td>
   </tr>
   <tr>
     <td>Material</td>
@@ -79,8 +79,8 @@ Figure 1 shows the slab configuration, which was tested by BRANZ using a furnace
 <! -----A figure to show the model------->
 <h4> Model Geometry</h4>
 
- <center><img src="../../images/CaseImgs/LimSlabfire.png"  style="width:400px;"> </center>
- <center><small>Figure-1: Schematic of restrained beam subjected to uniform temperature rise</small></center>
+ <center><img src="../../images/CaseImgs/CompSlabLim.jpg"  style="width:500px;"> </center>
+ <center><small>Figure-1: Schematic of composite slab subjected to furnace fire</small></center>
 
 <hr>
 <! -----Tcl scripts for the model defitnion------->
@@ -139,9 +139,9 @@ set MidEle [expr 1+($nx)*$ny/2+$nx/2];<br>
 <h4> Output Results</h4>
 <p>The varation of the mid-node displacement is shown in the following figure</p>
 
- <center><img src="../../images/CaseImgs/slabfiretest.png"  style="width:500px;"> </center>
+ <center><img src="../../images/CaseImgs/CompSlabLimRes.jpg"  style="width:500px;"> </center>
  <center><small>Figure 1:  Workflow of using OpenSees for Heat Transfer analysis</small></center>
-<b>Reference:</b><p>Jiang, L. et al. (2021) ‘Modelling concrete slabs subjected to fires using nonlinear layered shell elements and concrete damage plasticity material’, Engineering Structures. Elsevier Ltd, 234i, p. 111977. doi:10.1016/j.engstruct.2021.111977.</p>
+<b>Reference:</b><p>Jiang, L. et al. (2021) ‘Modelling concrete slabs subjected to fires using nonlinear layered shell elements and concrete damage plasticity material’, Engineering Structures. Elsevier Ltd, 234i, p. 111977. doi:10.1016/j.engstruct.2021.111977.<br> Qiu et al. 'A unified approach for modelling composite slabs in fire", Engineering Structures (under review)</p>
 <hr>
 <small><p>This page is created by Liming Jiang, 2016</p></small>
       </section>
