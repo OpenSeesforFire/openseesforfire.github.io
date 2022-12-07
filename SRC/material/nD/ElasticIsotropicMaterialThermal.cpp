@@ -137,7 +137,7 @@ ElasticIsotropicMaterialThermal::getRho()
 NDMaterial*
 ElasticIsotropicMaterialThermal::getCopy(const char *type)
 {
-	if (strcmp(type, "ThreeDimensionalThermal") == 0 || strcmp(type, "3DThermal") == 0) {
+	if (strcmp(type, "ThreeDimensional") == 0 || strcmp(type, "ThreeDimensionalThermal") == 0 || strcmp(type, "3DThermal") == 0) {
 		ElasticIsotropic3DThermal *theModel;
 		theModel = new ElasticIsotropic3DThermal(this->getTag(), E, v, rho, Alpha,SoftIndex);
 		return theModel;
@@ -356,4 +356,12 @@ ElasticIsotropicMaterialThermal::updateParameter(int parameterID, Information &i
 	default:
 		return -1;
 	}
+}
+
+double
+ElasticIsotropicMaterialThermal::getThermalTangentAndElongation(double& TempT, double& ET, double& Elong)
+{
+
+	this->setThermalTangentAndElongation(TempT, ET, Elong);
+	return 0;
 }

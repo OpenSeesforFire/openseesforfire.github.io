@@ -68,6 +68,13 @@ HeatTransferMaterial::setResponse(const char** argv, int argc,
         theOutput.endTag();
 
     }
+    else if ((strcmp(argv[0], "charTime") == 0) || (strcmp(argv[0], "-charTime") == 0) || (strcmp(argv[0], "CharTime") == 0)) {
+        theOutput.tag("ResponseType", "phaseType");
+        theResponse = new HTMaterialResponse(this, 2, this->getPars()(1));
+
+        theOutput.endTag();
+
+    }
 
 return theResponse;
 
@@ -86,6 +93,9 @@ HeatTransferMaterial::getResponse(int responseID, Information& matInfo)
     case 1:
         matInfo.setDouble(this->getPars()(0));
         return 0;
+    case 2:
+        matInfo.setDouble(this->getPars()(1));
+        return 0;
     default:
         return -1;
     }
@@ -100,7 +110,7 @@ HeatTransferMaterial::getIfHeatGen()
 
 
 double 
-HeatTransferMaterial::getHeatGen()
+HeatTransferMaterial::getHeatGen(double par)
 {
     return 0;
 }

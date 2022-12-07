@@ -76,5 +76,5 @@ FireModel::getFireOut(double time, const Vector& locs)
 void 
 FireModel::Print(OPS_Stream& s, int i)
 {
-	opserr << "it should not be called here" << endln;
+	opserr << "No fire model information to print" << endln;
 }

@@ -90,13 +90,13 @@ OPS_J2PlasticityThermal(void)
 
     int numData = 2;
     if (OPS_GetInt(&numData, iData) != 0) {
-        opserr << "WARNING invalid integer tag: nDMaterial EasticIsotropic \n";
+        opserr << "WARNING invalid integer tag: nDMaterial J2PlasticityThermal \n";
         return 0;
     }
 
     numData = numArgs - 2;;
     if (OPS_GetDouble(&numData, dData) != 0) {
-        opserr << "WARNING invalid data: nDMaterial EasticIsotropic : " << iData[0] << "\n";
+        opserr << "WARNING invalid data: nDMaterial J2PlasticityThermal : " << iData[0] << "\n";
         return 0;
     }
 

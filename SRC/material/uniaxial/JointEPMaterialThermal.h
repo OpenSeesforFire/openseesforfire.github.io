@@ -34,6 +34,9 @@
 // of an elastic perfectly plastic uniaxial material, 
 //
 // What: "@(#) JointEPMaterialThermal.h, revA"
+// Modified：LMJ, 2021
+// This is to model connection behaviour in fire
+// Fire Group @ The Hong Kong Polytechnic University, openseesforfire@github.io
 
 #include <UniaxialMaterial.h>
 

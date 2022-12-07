@@ -125,6 +125,7 @@ class ConvergenceTest;
 #define OPS_GetIntInput ops_getintinput_
 #define OPS_SetIntOutput ops_setintoutput_
 #define OPS_GetDoubleInput ops_getdoubleinput_
+#define OPS_GetListInput ops_getlistinput_            //added by PolyU
 #define OPS_SetDoubleOutput ops_setdoubleoutput_
 #define OPS_AllocateMaterial ops_allocatematerial_
 #define OPS_AllocateElement ops_allocateelement_
@@ -179,6 +180,7 @@ extern "C" int        OPS_ResetCurrentInputArg(int cArg);
 extern "C" int        OPS_GetIntInput(int *numData, int*data);
 extern "C" int        OPS_SetIntOutput(int *numData, int*data);
 extern "C" int        OPS_GetDoubleInput(int *numData, double *data);
+extern "C" int        OPS_GetListInput(int* numData, double* data);
 extern "C" int        OPS_SetDoubleOutput(int *numData, double *data);
 extern "C" const char *OPS_GetString(void); // does a strcpy
 extern "C" int        OPS_SetString(const char*); 

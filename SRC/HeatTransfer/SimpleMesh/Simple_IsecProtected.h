@@ -12,7 +12,7 @@ public:
 	Simple_IsecProtected(int tag, double HTI_centerX, double HTI_centerY, double HTI_Bf, double HTI_Tf, double HTI_Tw, double HTI_Hw , double HTI_coat);
 	~Simple_IsecProtected();
 
-	int InitialMeshCtrl(Vector& MeshCtrls);
+	int InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl = false);
     bool InitialSeeds(void); 
     const Vector& GetSeeds(int SeedTag);
     int GetNumofNodes(void);
@@ -24,7 +24,7 @@ public:
 private:
 	 Vector Seeds1;
 	 Vector Seeds2;
-	double EleX, EleY , EleX_Web, EleY_Web, Ele_coat;
+	double EleX, EleY, EleX_Web, EleY_Web, Ele_coat;
  
     double HTI_centerX, HTI_centerY, HTI_Bf, HTI_Tf, HTI_Tw, HTI_Hw, HTI_UBf, HTI_UTf, HTI_Coat;
 	ID NumCtrlID;

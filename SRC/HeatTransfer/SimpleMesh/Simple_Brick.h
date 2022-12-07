@@ -15,7 +15,7 @@ public:
 
 	~Simple_Brick();
    
-  int InitialMeshCtrl(Vector& MeshCtrls);
+  int InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl = false);
   bool InitialSeeds();
   int RefineSeeds(int SeedTag, const Vector& RefinedSeedsInfo);
 

@@ -22,46 +22,54 @@
 **                                                                    **
 ** ****************************************************************** */
 
-//Created: Yaqiang Jiang@ The University of Edinburgh
-//Date: 11 Mar 2012
+//
+// Added by Liming Jiang (liming.jiang@polyu.edu.hk)
+// Based on LocalisedBurning fire model
 
-//Note: This class was adapted from PathTimeSeries class in OpenSees
-
-#ifndef UserDefinedFire_h
-#define UserDefinedFire_h
-
+#ifndef NaturalFire_h
+#define NaturalFire_h
 #include <FireModel.h>
 #include <PathTimeSeriesThermal.h>
-class Vector;
+#include <Vector.h>
 
+//class Vector;
+class HeatTransferNode;
 
-
-class UserDefinedFire : public FireModel
+class NaturalFire : public FireModel
 {
     public:
-		UserDefinedFire(int tag);
-		UserDefinedFire(int tag, const Vector& theData, const Vector& theTime,
-			            int dataType);
+	  // typeTag indicates the type of norminal fire given in EN1991-1-2
+	  // default is 1 corresponding to the standard temperature-time curve,
+	  // 2 is for external fire curve, 3 is for hydrocarbon curve. Default 
+	  // value is 1.
+		NaturalFire(int tag, double D = 1, double Q = 1e6,
+			double H = 3, int centerLineTag = 2, double smokeTemp = 293.15, PathTimeSeriesThermal* fireParPath = 0);
 
-		UserDefinedFire(int tag, const char* fileNameData, int dataType);    
+		NaturalFire(int tag, int centerLineTag=2, PathTimeSeriesThermal* fireParPath = 0);
+
+	  //NaturalFire(double crd1, double crd2, double crd3, const Vector& time,
+		 //              const Vector& d, const Vector& Q, double H);
 
 
-		~UserDefinedFire();
-
-		void applyFluxBC(HeatFluxBC* theFlux, double time);
-		double getDuration();
-		double getPeakData();
-
-    protected:
+	  virtual ~NaturalFire();
+	  
+	  void applyFluxBC(HeatFluxBC* theFlux, double time);
+	  int setFirePars(double time,const Vector& firePars =0);
+	  double getFirePars(int ParTag=1);
+	  double getFireOut(double time, const Vector&);
+	protected:
 
     private:
-		double getData(double time);
-		//double getIncidentFlux(double time);
-
-		Vector* theData;      // vector containg the data points
-		Vector* time;		  // vector containg the time values of data points
-		int currentTimeLoc;   // current location in time
-        int type_tag;         // 1 for gas temperature, 2 for incident radiative flux
+	  double getFlux(HeatTransferNode* the_node, double time);
+	  PathTimeSeriesThermal* FireParPath;
+	  Vector fireLocs;
+	  double  d, q, h;
+	  double smokeT;
+	  double addq;
+	  int centerLine;
+	  double hc, absorp;
+	  int fmode;
 };
 
 #endif
+

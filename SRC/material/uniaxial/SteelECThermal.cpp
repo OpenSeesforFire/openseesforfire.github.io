@@ -403,6 +403,9 @@ SteelECThermal::getThermalElongation(void)
 double 
 SteelECThermal::getElongTangent(double TempT, double &ET, double &Elong, double TempTmax) 
 {
+	if(TempT<-100||TempT>1200)
+		opserr<< "WARNING SteelECThermal received an invalid temperature: " << TempT<< endln;
+
 	double FyRfactors[12];
 	double FpRfactors[12];
 	double E0Rfactors[12];

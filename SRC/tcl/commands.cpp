@@ -184,7 +184,8 @@ extern void *OPS_AlphaOS(void);
 extern void *OPS_AlphaOS_TP(void);
 extern void *OPS_AlphaOSGeneralized(void);
 extern void *OPS_AlphaOSGeneralized_TP(void);
-extern void *OPS_CentralDifference(void);
+extern void* OPS_ExplicitDifference(void);
+extern void* OPS_CentralDifference(void);
 extern void *OPS_CentralDifferenceAlternative(void);
 extern void *OPS_CentralDifferenceNoDamping(void);
 extern void *OPS_Collocation(void);
@@ -1262,8 +1263,7 @@ int
 wipeHeatTransfer(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv)
 {
 	if (theTclHTModule != 0) {
-    delete theTclHTModule;
-    theTclHTModule = 0;
+        theTclHTModule->clearAll();
   }
   return TCL_OK;
 
@@ -1547,14 +1547,16 @@ wipeModel(ClientData clientData, Tcl_Interp *interp, int argc, TCL_Char **argv)
 
 #ifdef _HEATTRANSFER
   if (theTclHTModule != 0) {
-    theTclHTModule = 0;
+      theTclHTModule->clearAll();
   }
+  theTclHTModule = 0;
 #endif
 
  #ifdef _SIFBUILDER
   if (theTclSIFBuilder != 0) {
-    theTclSIFBuilder =0;
+    delete theTclSIFBuilder;
   }
+  theTclSIFBuilder = 0;
 #endif				  
   return TCL_OK;  
 }
@@ -2414,9 +2416,29 @@ specifyAnalysis(ClientData clientData, Tcl_Interp *interp, int argc,
 {
     // make sure at least one other argument to contain type of system
     if (argc < 2) {
-	opserr << "WARNING need to specify an analysis type (Static, Transient)\n";
-	return TCL_ERROR;
-    }    
+        opserr << "WARNING need to specify an analysis type (Static, Transient)\n";
+        return TCL_ERROR;
+    }
+
+    //
+    // do nothing if request is for the same analysis type!
+    //
+
+    if ((strcmp(argv[1], "Static") == 0) && (theStaticAnalysis != 0))
+        return TCL_OK;
+
+    if (((strcmp(argv[1], "VariableTimeStepTransient") == 0) ||
+        (strcmp(argv[1], "TransientWithVariableTimeStep") == 0) ||
+        (strcmp(argv[1], "VariableTransient") == 0)) &&
+        (theVariableTimeStepTransientAnalysis != 0))
+        return TCL_OK;
+
+    if ((strcmp(argv[1], "Transient") == 0) && (theTransientAnalysis != 0))
+        return TCL_OK;
+
+    //
+    // analysis changing .. delete the old analysis
+    //
 
     // delete the old analysis
     if (theStaticAnalysis != 0) {
@@ -2472,7 +2494,7 @@ specifyAnalysis(ClientData clientData, Tcl_Interp *interp, int argc,
 	    theSOE = new ProfileSPDLinSOE(*theSolver);      
 #endif
 	}
-    if (strcmp(argv[1], "VariableStepStatic") == 0 || strcmp(argv[1], "VariableStatic") == 0) {
+    if (strcmp(argv[1], "VariableStepStatic") == 0 || strcmp(argv[1], "VariableStatic") == 0 || strcmp(argv[1], "VarStatic") == 0) {
         theStaticAnalysis = new VariableTimeStepStaticAnalysis(theDomain,
             *theHandler,
             *theNumberer,
@@ -5158,6 +5180,13 @@ specifyIntegrator(ClientData clientData, Tcl_Interp *interp, int argc,
     theTransientIntegrator = (TransientIntegrator *)OPS_WilsonTheta();
     
     if (theTransientAnalysis != 0)
+      theTransientAnalysis->setIntegrator(*theTransientIntegrator);
+  }
+
+  else if (strcmp(argv[1], "ExplicitDifference") == 0) {
+  theTransientIntegrator = (TransientIntegrator*)OPS_ExplicitDifference();
+
+  if (theTransientAnalysis != 0)
       theTransientAnalysis->setIntegrator(*theTransientIntegrator);
   }
   

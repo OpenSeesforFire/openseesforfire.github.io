@@ -62,8 +62,11 @@ VariableTimeStepStaticAnalysis::VariableTimeStepStaticAnalysis(
 
 VariableTimeStepStaticAnalysis::~VariableTimeStepStaticAnalysis()
 {
-
+   // opserr << "the variable static analysis has been removed";
 }    
+
+
+
 
 int 
 VariableTimeStepStaticAnalysis::analyze(int numSteps, double dT, double dtmin, double dtmax, int Jd)
@@ -200,6 +203,12 @@ VariableTimeStepStaticAnalysis::analyze(int numSteps, double dT, double dtmin, d
 
   }
 
+theDom =0;
+theAlgo = 0;
+theIntegratr = 0;
+theLoadCtrl = 0;
+theTest = 0;
+theModel = 0;
 
   return 0;
 }
@@ -229,10 +238,12 @@ VariableTimeStepStaticAnalysis::determineDt(double dT,
   if(failure)
       factor = 0.5;
   else {
-      if (numLastIter < 10)
+      if (numLastIter < 100)
           factor = 2.0;
-      else if (numLastIter < 100)
-          factor = 1.0;
+      else if (numLastIter < 400)
+          factor = 0.5;
+      else if (numLastIter < 800)
+          factor = 0.25;
   }
   
 

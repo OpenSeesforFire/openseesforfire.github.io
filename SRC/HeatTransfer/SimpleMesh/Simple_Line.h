@@ -16,7 +16,7 @@ public:
 	Simple_Line(int tag, double centerX, double lengthX);
 	~Simple_Line();
    
-	virtual int InitialMeshCtrl(Vector&);
+	virtual int InitialMeshCtrl(Vector&, bool numCtrl = false);
 	virtual bool InitialSeeds();
 	//virtual bool RefineSeeds(int SeedTag, const Vector& RefinedSeedsInfo);
 

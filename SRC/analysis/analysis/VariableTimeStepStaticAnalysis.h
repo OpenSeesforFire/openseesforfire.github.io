@@ -60,6 +60,7 @@ class VariableTimeStepStaticAnalysis: public StaticAnalysis
     virtual ~VariableTimeStepStaticAnalysis();
 
     int analyze(int numSteps, double dT, double dtMin, double dtMax, int Jd);
+ 
 
   protected:
     double determineDt(double dT, double dtMin, double dtMax, bool failure,

@@ -20,7 +20,7 @@ Simple_Line::~Simple_Line()
 }
 
 
-int Simple_Line::InitialMeshCtrl(Vector& MeshCtrls)
+int Simple_Line::InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl)
 {
     NumCtrlID(0)=(a2-a1)/MeshCtrls(0)+0.5;
 	return 0;

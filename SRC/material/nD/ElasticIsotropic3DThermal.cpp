@@ -220,6 +220,7 @@ ElasticIsotropic3DThermal::setThermalTangentAndElongation(double &TempT, double&
 	E = ET;
 	Temp = TempT;
 	ThermalElong = Elong;
+	//ThermalElong = 0;
 	return 0;
 }
 

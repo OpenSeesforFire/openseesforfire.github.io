@@ -45,7 +45,7 @@ Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, dou
     // 1 indicates it is parrallel to x1 axis, 2 indicates
     // parallelt to x2 axis, 3 indicates parallel to x3 axis.
     if ((lineTag != 1) && (lineTag != 2) && (lineTag != 3)) {
-		opserr << "Idealised_Local_Fire::Idealised_Local_Fire - invalid line tag provided for Hasemi fire.\n"
+		opserr << "Idealised_Local_Fire::Idealised_Local_Fire - invalid line tag\n"
 			<< " Only 1, or 2, or 3 is correct.\n";
 		}
 
@@ -63,7 +63,7 @@ Idealised_Local_Fire::Idealised_Local_Fire(int tag,double crd1, double crd2, dou
     // 1 indicates it is parrallel to x1 axis, 2 indicates
     // parallelt to x2 axis, 3 indicates parallel to x3 axis.
     if ((lineTag != 1) && (lineTag != 2) && (lineTag != 3)) {
-		opserr << "Idealised_Local_Fire::Idealised_Local_Fire - invalid line tag provided for Hasemi fire.\n"
+		opserr << "Idealised_Local_Fire::Idealised_Local_Fire - invalid line tag\n"
 			<< " Only 1, or 2, or 3 is correct.\n";
 		}
 	if(D2-D1>1e-3)

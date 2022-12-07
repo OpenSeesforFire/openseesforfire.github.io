@@ -16,7 +16,7 @@ HTNodeSet::addNodeID(ID& newNodeID)
 	if (NodeID==0) {
     NodeID=newNodeID;
   } else {
-    opserr<< "HTNodeSet::AddEleID is not able to merge ele id"<<newNodeID<<endln;
+    opserr<< "HTNodeSet::AddNodeID is not able to merge node id"<<newNodeID<<endln;
   }
 	return 0;
 }

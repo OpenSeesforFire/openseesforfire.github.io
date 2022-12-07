@@ -891,6 +891,16 @@ Domain::addNodalLoad(NodalLoad *load, int pattern)
     }
 
     load->setDomain(this);    // done in LoadPattern::addNodalLoad()
+
+    //Added by Liming for ThermalNodeAction;openseesforfire.github.io
+    int type;
+    const Vector& data = load->getData(type);
+    if (type == LOAD_TAG_NodalThermalAction) {
+        res->setNodalThermalActionPtr((NodalThermalAction*)load);
+    }
+    //Added by Liming for ThermalNodeAction;UOE2013
+
+
     this->domainChange();
 
     return result;

@@ -1137,7 +1137,7 @@ HeatTransferDomain::SelectingNodes(ID& NodesRange, int crdTag, double MinValue, 
                 NodeTag = i+1;
             else
                 NodeTag = NodesRange(i);
-           // opserr<<"nodetag"<< NodeTag<<"  "<<(this->getNode(NodeTag)->getCrds())<<"     ";
+
             double NodalCrd = (this->getNode(NodeTag)->getCrds())(crdTag);
             if ((NodalCrd <= MaxValue + Tolerance) && (NodalCrd >= MinValue - Tolerance)) {
                 SelectedNodes.push_back(NodeTag);
@@ -1145,15 +1145,20 @@ HeatTransferDomain::SelectingNodes(ID& NodesRange, int crdTag, double MinValue, 
        
 
     }
-    int NewIDsize = SelectedNodes.size();
-    //opserr << "SimpleMesh::SelectingNodes has selected " << NewIDsize << " Nodes for crd" << crdTag << endln;
-
-    NodesRange.resize(NewIDsize);
+    int NewIDsize = SelectedNodes.size(); 
+    //Mhd Anwar Orabi 2021
+    if (NewIDsize == 0)
+        NodesRange = 0;
+    else 
+        NodesRange.resize(NewIDsize);
+    
+    
+    
     for (int i = 0; i < NewIDsize; i++) {
         NodesRange(i) = SelectedNodes[i];
     }
 #ifdef _DEBUG
-    opserr << NodesRange << endln;
+    opserr << "Debug mode node range currently selected is:" << NodesRange << endln;
 #endif
     return 0;
 }

@@ -42,20 +42,16 @@ class ShellThermalAction : public ElementalLoad
                 double t9, double locY9, 
 		        int theElementTag);
 
-  ShellThermalAction(int tag,
-                double t1, double locY1, double t2, double locY2,
-				double t3, double locY3, double t4, double locY4,
-                double t5, double locY5, int theElementTag);
-
 
     ShellThermalAction(int tag,
                 double t1, double locY1, double t2, double locY2,
                 int theElementTag);
 	ShellThermalAction(int tag, 
-					 double locY1, double locY2,
-					 TimeSeries* theSeries,int theElementTag
-					 );
-
+			    double locY1, double locY2,
+			    TimeSeries* theSeries,int theElementTag);
+    ShellThermalAction(int tag,
+                double locY1, double locY2, double locY3, double locY4,
+                TimeSeries* theSeries, TimeSeries* theSeries1, int theElementTag );
 	ShellThermalAction(int tag, int theElementTag);
 
   ShellThermalAction();    
@@ -73,16 +69,16 @@ class ShellThermalAction : public ElementalLoad
  protected:
   
  private:
-  double Temp[9]; //Initial Temperature 
-  double TempApp[9]; // Temperature applied
-  double Loc[9]; // Location through the depth of section
+  Vector Temp; //Initial Temperature 
+  Vector TempApp; // Temperature applied
+  Vector Loc; // Location through the depth of section
   static Vector data; // data for temperature and locations
   int ThermalActionType;
 
   //--Adding a factor vector for FireLoadPattern [-BEGIN-]: by L.J&P.K(university of Edinburgh)-07-MAY-2012-///
   int indicator; //indicator if fireloadpattern was called
-  Vector Factors;
   TimeSeries* theSeries;
+  TimeSeries* theSeries1;
   //--Adding a factor vector for FireLoadPattern [-END-]: by L.J&P.K(university of Edinburgh)-07-MAY-2012-///
 };
 

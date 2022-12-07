@@ -207,9 +207,11 @@
 #define MAT_TAG_ConcreteCM                      90
 #define MAT_TAG_SteelMPF                        91
 #define MAT_TAG_ElasticMaterialThermal          92   //L.Jiang [SIF]
-#define MAT_TAG_SteelECThermal			93   //L.Jiang [SIF]
+#define MAT_TAG_SteelECThermal			        93   //L.Jiang [SIF]
 #define MAT_TAG_StainlessECThermal              94   //L.Jiang [SIF]
-#define MAT_TAG_ConcreteECThermal		95   //L.Jiang [SIF]
+#define MAT_TAG_ConcreteECThermal	            95         //L.Jiang [SIF]
+#define MAT_TAG_JointEPMaterialThermal          98      //L.Jiang [SIF]
+#define MAT_TAG_TimberECThermal		            99               //L.Jiang [SIF]
 #define MAT_TAG_BoucWenOriginal                 96
 #define MAT_TAG_DamperMaterial                  97
 
@@ -452,6 +454,7 @@
 #define ND_TAG_PlateFiberMaterialThermal      7006   //L.Jiang[SIF]
 #define ND_TAG_PlateRebarMaterialThermal      7007   //L.Jiang[SIF]
 #define ND_TAG_PlateFromPlaneStressMaterialThermal 7008   //L.Jiang[SIF]
+#define ND_TAG_J2PlaneStressThermal 7010   //L.Jiang[SIF]
 
 #define ND_TAG_InitStressNDMaterial 7009
 
@@ -516,6 +519,7 @@
 #define LOAD_TAG_NodalThermalAction       15 //L.Jiang [ SIF ]
 #define LOAD_TAG_ThermalActionWrapper     16 //L.Jiang [ SIF ]
 #define LOAD_TAG_LysmerVelocityLoader      17  //Jose Abell (UANDES)
+#define LOAD_TAG_BrickThermalAction     18 //L.Jiang [ SIF ]
 
 
 #define MAT_TAG_IsotropicLinElastic         1001
@@ -704,7 +708,8 @@
 #define ELE_TAG_ForceBeamColumn3dThermal  172  //L.Jiang [SIF] //Still testing
 #define ELE_TAG_ShellMITC4Thermal         173   //L.Jiang [SIF]
 #define ELE_TAG_ShellNLDKGQThermal        174   //L.Jiang [SIF]
-#define ELE_TAG_ShellANDeS                175   //L.Jiang [SIF]
+#define ELE_TAG_IGAQuad                   177   //L.Jiang [SIF]
+#define ELE_TAG_ShellANDeS                175   //by jaabell (UANDES)
 #define ELE_TAG_AxEqDispBeamColumn2d      178
 #define ELE_TAG_FourNodeTetrahedron       179
 #define ELE_TAG_TriSurfaceLoad            180
@@ -846,6 +851,7 @@
 #define LINESEARCH_TAGS_SecantLineSearch              4
 
 
+
 #define INTEGRATOR_TAGS_Newmark                          1
 #define INTEGRATOR_TAGS_HHT                              2
 #define INTEGRATOR_TAGS_HHT_TP                           3
@@ -901,6 +907,7 @@
 #define INTEGRATOR_TAGS_KRAlphaExplicit                 53
 #define INTEGRATOR_TAGS_KRAlphaExplicit_TP              54
 #define INTEGRATOR_TAGS_ExplicitDifference              55
+#define INTEGRATOR_TAGS_EQPath        					56
 
 #define LinSOE_TAGS_FullGenLinSOE		1
 #define LinSOE_TAGS_BandGenLinSOE		2

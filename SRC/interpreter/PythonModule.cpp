@@ -124,6 +124,37 @@ PythonModule::getDouble(double *data, int numArgs)
     return 0;
 }
 
+/////Polyu adding python getlist
+int
+PythonModule::getList(double* data, int* sizelist)
+{
+   // opserr << "python test: " << endln;
+   // PyObject* Type = PyObject_Type(wrapper.getCurrentArgv());
+    //const char* p = type->tp_name;
+   // opserr <<"type is "<< p << endln;
+
+    PyObject* list = PyTuple_GetItem(wrapper.getCurrentArgv(), wrapper.getCurrentArg());
+    int size = 1;
+    if (!PyList_Check(list)) {
+        return 0;
+    }
+
+   size = PyList_GET_SIZE(list);
+   int sizeL = int( size);
+   *sizelist = sizeL;
+   //double* newdata= new double[sizeL];
+   for (int i = 0; i < sizeL; i++) {
+       PyObject* o = PyList_GetItem(list, i);
+       data[i] = PyFloat_AsDouble(o);
+       //PyList_SET_ITEM(currentResult, i, Py_BuildValue("d", data[i]));
+   }
+   //data = newdata;
+  // opserr <<"data:  "<< data[1] << endln;
+    return 0;
+}
+
+/////Polyu adding python getlist
+
 const char*
 PythonModule::getString()
 {

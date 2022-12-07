@@ -390,7 +390,8 @@ BeamColumnJoint2dThermal::update(void)
 	if (Mlimit > 0.0) {
 		if (abs(deform(2)) > Mlimit) {
 			Domain* theDomain = OPS_GetDomain();
-			opserr << "WARNing::Connection Failure! Element removed";
+			opserr << "WARNing::Connection Failure! Element removed"<<endln;
+			opserr <<"Joint Deform:" <<deform << endln;
 			theDomain->removeElement(this->getTag());
 		}
 

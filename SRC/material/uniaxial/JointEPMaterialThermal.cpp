@@ -31,6 +31,10 @@
 //
 // What: "@(#) JointEPMaterialThermal.C, revA"
 
+// Modified：LMJ, 2021
+// This is to model connection behaviour in fire
+// Fire Group @ The Hong Kong Polytechnic University, openseesforfire@github.io
+
 
 #include <JointEPMaterialThermal.h>
 #include <Vector.h>
@@ -42,7 +46,7 @@
 #include <elementAPI.h>
 
 void *
-OPS_JointEPMaterial(void)
+OPS_JointEPMaterialThermal(void)
 {
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
@@ -55,6 +59,7 @@ OPS_JointEPMaterial(void)
   
   int iData[1];
   double dData[4];
+  dData[2] = 0.0;
   dData[3] = 0.0; // setting default eps0 to 0.
 
   int numData = 1;
@@ -62,17 +67,33 @@ OPS_JointEPMaterial(void)
     opserr << "WARNING invalid tag for JointEPMaterialThermal ElasticPP" << endln;
     return 0;
   }
-
-  numData = numArgs-1;
-  if (OPS_GetDoubleInput(&numData, dData) != 0) {
-    opserr << "Invalid data for JointEPMaterialThermal " << iData[0] << endln;
-    return 0;	
-  }
-        
-  if (numData == 2) 
-    dData[2] = -dData[1];
-
   int softindex = 1;
+  numData = numArgs-2;
+  if (numData > 1) {
+      if (OPS_GetDoubleInput(&numData, dData) != 0) {
+          opserr << "Invalid data for JointEPMaterialThermal " << iData[0] << endln;
+          return 0;
+      }
+      const char* typeChar = OPS_GetString();
+      if ((strcmp(typeChar, "-SteelSoft") == 0) || (strcmp(typeChar, "-SSoft") == 0) || (strcmp(typeChar, "-sSoft") == 0)) {
+          softindex = 1;
+      }
+      else if ((strcmp(typeChar, "-ConcreteSoft") == 0) || (strcmp(typeChar, "-CSoft") == 0) || (strcmp(typeChar, "-cSoft") == 0)) {
+          softindex = 2;
+      }
+  }
+  else {
+      
+  }
+
+  if (abs(dData[2]) < 1e-10)
+  {
+      dData[2] = -dData[1];
+  }
+
+
+
+
   // Parsing was successful, allocate the material
     theMaterial = new JointEPMaterialThermal(iData[0], dData[0], dData[1], dData[2], dData[3], softindex);
   if (theMaterial == 0) {
@@ -85,7 +106,7 @@ OPS_JointEPMaterial(void)
 
 
 JointEPMaterialThermal::JointEPMaterialThermal(int tag, double e, double eyp, int soft)
-:UniaxialMaterial(tag,MAT_TAG_ElasticPPMaterial),
+:UniaxialMaterial(tag,MAT_TAG_JointEPMaterialThermal),
  ezero(0.0), E(e), ep(0.0), E0(e), softIndex(soft),
  trialStrain(0.0), trialStress(0.0), trialTangent(E),
  commitStrain(0.0), commitStress(0.0), commitTangent(E)
@@ -96,7 +117,7 @@ JointEPMaterialThermal::JointEPMaterialThermal(int tag, double e, double eyp, in
 
 JointEPMaterialThermal::JointEPMaterialThermal(int tag, double e, double eyp,
 				     double eyn, double ez, int soft  )
-:UniaxialMaterial(tag,MAT_TAG_ElasticPPMaterial),
+:UniaxialMaterial(tag,MAT_TAG_JointEPMaterialThermal),
  ezero(ez), E(e), E0(e),  ep(0.0), softIndex(soft),
  trialStrain(0.0), trialStress(0.0), trialTangent(E),
  commitStrain(0.0), commitStress(0.0), commitTangent(E)

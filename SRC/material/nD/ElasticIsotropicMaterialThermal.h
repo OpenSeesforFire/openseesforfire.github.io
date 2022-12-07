@@ -97,7 +97,7 @@ public:
 
 	virtual int setParameter(const char **argv, int argc, Parameter &param);
 	virtual int updateParameter(int parameterID, Information &info);
-
+	double getThermalTangentAndElongation(double&, double&, double&);
 
 
 protected:

@@ -13,7 +13,7 @@ public:
 	Simple_Isection(int tag, double HTI_centerX, double HTI_centerY, double HTI_Bf, double HTI_Tf, double HTI_Tw, double HTI_Hw);
 	~Simple_Isection();
 
-	int InitialMeshCtrl(Vector& MeshCtrls);
+	int InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl = false);
     bool InitialSeeds(void); 
     const Vector& GetSeeds(int SeedTag);
     int GetNumofNodes(void);

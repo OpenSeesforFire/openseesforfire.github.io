@@ -5,10 +5,10 @@
 #include <math.h>
 #include <QuadFour.h>
 
-Simple_Block::Simple_Block(int tag, double a1, double b1, double a3, double b3,double a2, double b2, double a4, double b4)
-:Simple_Entity(tag,0),a1(a1), b1(b1), a3(a3), b3(b3), a2(a2), b2(b2), a4(a4), b4(b4),NumCtrlID(2),Seeds1(1),Seeds2(1),Seeds3(1),Seeds4(1)
+Simple_Block::Simple_Block(int tag, double a1, double b1, double a2, double b2, double a3, double b3, double a4, double b4)
+:Simple_Entity(tag,0),a1(a1), b1(b1),  a2(a2), b2(b2), a3(a3), b3(b3), a4(a4), b4(b4),NumCtrlID(2),Seeds1(1),Seeds2(1),Seeds3(1),Seeds4(1)
 {
-
+	opserr << "Define block using corner points: " << a1 << ", " << b1 << ",...,  " << a4 << ", " << b4 << endln;
 }
 Simple_Block::Simple_Block(int tag, double centerX, double centerY, double breadthX, double heightY)
 :Simple_Entity(tag,0),CenterX(centerX), CenterY(centerY), BreadthX(breadthX), HeightY(heightY),NumCtrlID(2),Seeds1(1),Seeds2(1),Seeds3(1),Seeds4(1)
@@ -26,10 +26,17 @@ Simple_Block::~Simple_Block()
 }
 
 
-int Simple_Block::InitialMeshCtrl(Vector& MeshCtrls)
+int Simple_Block::InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl)
 {
-    NumCtrlID(0)=(a2-a1)/MeshCtrls(0)+0.5;
-	NumCtrlID(1)=(b3-b1)/MeshCtrls(1)+0.5;
+	if (numCtrl) {
+		NumCtrlID(0) = MeshCtrls(0);
+		NumCtrlID(1) = MeshCtrls(1);
+	}
+	else {
+		NumCtrlID(0) = (a2 - a1) / MeshCtrls(0) + 0.5;
+		NumCtrlID(1) = (b3 - b1) / MeshCtrls(1) + 0.5;
+	}
+    
 	return 0;
 }
 bool Simple_Block::InitialSeeds(void)
@@ -202,16 +209,22 @@ int Simple_Block::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const
 			double NodeCrdY = 0;
 			if (this->GetSeeds(1)(j) == this->GetSeeds(4)(j))
 				NodeCrdX = this->GetSeeds(1)(j);
-			else
-				opserr << "Block should be a rectangular one so far" << endln;
+			else {
+				double crdX1i = this->GetSeeds(1)(j);
+				double crdX2i = this->GetSeeds(4)(j);
+				NodeCrdX = crdX1i + i / NumCtrY * (crdX2i - crdX1i);
+			}
 
 			if (fabs(NodeCrdX) < 1e-10)
 				NodeCrdX = 0;
 
 			if ((this->GetSeeds(2))(i) == (this->GetSeeds(3))(i))
 				NodeCrdY = (this->GetSeeds(2))(i);
-			else
-				opserr << "Block should be a rectangular one so far" << endln;
+			else {
+				double crdY1i = this->GetSeeds(2)(j);
+				double crdY2i = this->GetSeeds(3)(j);
+				NodeCrdY = crdY1i + j / NumCtrX * (crdY2i - crdY1i);
+			}
 
 
 			if (fabs(NodeCrdY) < 1e-10)
@@ -228,6 +241,7 @@ int Simple_Block::GenerateNodes(HeatTransferDomain* theHTDomain, int nDoF, const
 				opserr << "HTDomain failed to generate node with coordinates: " << NodeCrdX << ", " << NodeCrdY << endln;
 				return -1;
 			}
+			//opserr << "Generated node: " << OriginNodeTag + (NumCtrX + 1) * i + j << ", x = " << NodeCrdX << ", y =  " << NodeCrdY << endln;
 			
 
 		}

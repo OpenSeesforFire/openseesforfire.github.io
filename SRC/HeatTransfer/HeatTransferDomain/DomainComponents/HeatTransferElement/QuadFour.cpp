@@ -121,14 +121,18 @@ QuadFour::QuadFour(int tag, int nd1, int nd2, int nd3, int nd4,
 
 QuadFour::~QuadFour()
 {    
-    for (int i = 0; i < 4; i++) {
-		if (theMaterial[i])
-			delete theMaterial[i];
+	if (theMaterial != 0) {
+		for (int i = 0; i < 4; i++) {
+			if (theMaterial[i])
+				delete theMaterial[i];
 		}
+		// Delete the array of pointers to NDMaterial pointer arrays
 
-  // Delete the array of pointers to NDMaterial pointer arrays
-	if (theMaterial)
 		delete[] theMaterial;
+	}
+
+
+
 }
 
 
@@ -388,7 +392,7 @@ QuadFour::getCapacityTangent()
 				dTdy += shp[1][beta] * T[beta];
 				}
 
-			if (((dTdx != 0) || (dTdy !=0)) && ((dHdx != 0) || (dHdy !=0))) {
+			if (((dTdx != 0) || (dTdy !=0)) && ((abs(dHdx)> 1e-5) || (abs(dHdy)>1e-5))) {
 				double dT = dTdx * dTdx + dTdy * dTdy;
 
 				// using Lemmon's approximation
@@ -590,12 +594,17 @@ QuadFour::get_Q_Transient()
 	
 	//For materials generating heat
 	if (theMaterial[0]->getIfHeatGen() == true) {
+		double locx, locy;
+		HeatTransferNode* node1 = this->getNodePtrs()[0];
+		HeatTransferNode* node3 = this->getNodePtrs()[2];
+		locx = (node1->getCrds()(0) + node3->getCrds()(0)) / 2;
+		locy = (node1->getCrds()(1) + node3->getCrds()(1)) / 2;
 		double HeatQ[4];
 		//opserr << this->getTag() << " capacity tangent\n";
 
 		for (int i = 0; i < 4; i++) {
 			// enable to account for temperature dependent density
-			HeatQ[i] = theMaterial[i]->getHeatGen(); // get specific heat
+			HeatQ[i] = theMaterial[i]->getHeatGen(locy); // get specific heat
 		}
 		double rcdvol;
 

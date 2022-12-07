@@ -153,10 +153,10 @@ extern void *OPS_PFEMElement2D();
 
 extern void *OPS_ShellMITC4Thermal(void);//Added by L.Jiang [SIF]
 extern void *OPS_ShellNLDKGQThermal(void);//Added by L.Jiang [SIF]
-extern void* OPS_ShellNLComThermal(void);//Added by L.Jiang [SIF]
+//extern void* OPS_IGAShellMITC9(void);//Added by L.Jiang [SIF]
 extern void* OPS_BeamColumnJoint2dThermal(void);//Added by L.Jiang [SIF]
 extern void* OPS_BeamColumnJoint3dThermal(void); //Added by L.Jiang [SIF]
-
+extern void* OPS_IGAQuad(void);//Added by L.Jiang [SIF]
 extern  void *OPS_CatenaryCableElement(void);
 extern  void *OPS_ShellANDeS(void);
 extern  void *OPS_FourNodeTetrahedron(void);
@@ -729,16 +729,28 @@ TclModelBuilderElementCommand(ClientData clientData, Tcl_Interp *interp,
       //end of adding thermo-mechanical shell elements by L.Jiang [SIF]  
   }
   //-----------------[Added for SIF, by LMJ]--------------------------------------
-  else if ((strcmp(argv[1], "shellNLComThermal") == 0) || (strcmp(argv[1], "ShellNLComThermal") == 0)) {
+  else if ((strcmp(argv[1], "IGAquad") == 0) || (strcmp(argv[1], "IGAQuad") == 0)) {
 
-  void* theEle = OPS_ShellNLComThermal();
+  void* theEle = OPS_IGAQuad();
   if (theEle != 0)
       theElement = (Element*)theEle;
   else {
       opserr << "TclElementCommand -- unable to create element of type : " << argv[1] << endln;
       return TCL_ERROR;
   }
-  //end of adding thermo-mechanical shell elements by L.Jiang [SIF]  
+  //end of adding IGA Quad elements by L.Jiang [SIF]  
+  }
+  //-----------------[Added for SIF, by Z Zhang]--------------------------------------
+  else if ((strcmp(argv[1], "IGAShellMITC9") == 0) || (strcmp(argv[1], "IGAShellMITC9") == 0)) {
+
+ // void* theEle = OPS_IGAShellMITC9();
+ // if (theEle != 0)
+ //     theElement = (Element*)theEle;
+//  else {
+ //     opserr << "TclElementCommand -- unable to create element of type : " << argv[1] << endln;
+ //     return TCL_ERROR;
+  //}
+  //end of adding IGA Shell elements by Zixin Zhang [SIF]  
   }
     else if (strcmp(argv[1], "beamColumnJointThermal") == 0) {
     int ndm = OPS_GetNDM(); 
@@ -1177,6 +1189,7 @@ TclModelBuilderElementCommand(ClientData clientData, Tcl_Interp *interp,
 	     strcmp(argv[1],"elasticForceBeamColumnWarping") == 0  || 
 	     strcmp(argv[1],"dispBeamColumnNL") == 0  || 
 	     strcmp(argv[1],"dispBeamColumnThermal") == 0  || 
+         strcmp(argv[1],"forceBeamColumnThermal") == 0 ||
 	     strcmp(argv[1],"elasticForceBeamColumn") == 0 || 
 	     strcmp(argv[1],"nonlinearBeamColumn") == 0 || 
 	     strcmp(argv[1],"dispBeamColumnWithSensitivity") == 0) {
@@ -1264,7 +1277,13 @@ TclModelBuilderElementCommand(ClientData clientData, Tcl_Interp *interp,
     int result = TclModelBuilder_addBrick(clientData, interp, argc, argv,
 					  theTclDomain, theTclBuilder, eleArgStart);
     return result;
-  } else if (strcmp(argv[1],"bbarBrick") == 0) {
+  }else if (strcmp(argv[1], "BrickThermal") == 0) {
+  int eleArgStart = 1;
+  int result = TclModelBuilder_addBrick(clientData, interp, argc, argv,
+      theTclDomain, theTclBuilder, eleArgStart);
+  return result;
+  }
+  else if (strcmp(argv[1],"bbarBrick") == 0) {
     int eleArgStart = 1;
     int result = TclModelBuilder_addBrick(clientData, interp, argc, argv,
 					  theTclDomain, theTclBuilder, eleArgStart);

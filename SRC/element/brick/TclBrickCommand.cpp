@@ -32,6 +32,7 @@
 #include <Domain.h>
 
 #include <Brick.h>
+#include <BrickThermal.h>
 #include <BbarBrick.h>
 #include <BbarBrickWithSensitivity.h>
 
@@ -162,6 +163,10 @@ TclModelBuilder_addBrick(ClientData clientData, Tcl_Interp *interp,  int argc,
     theBrick = new Brick(BrickId,Node1,Node2,Node3,Node4,
 			 Node5, Node6, Node7, Node8, *theMaterial,
 			 b1, b2, b3);
+  }else if (strcmp(argv[1], "BrickThermal") == 0) {
+      theBrick = new BrickThermal(BrickId, Node1, Node2, Node3, Node4,
+          Node5, Node6, Node7, Node8, *theMaterial,
+          b1, b2, b3);
   }
   else if (strcmp(argv[1],"bbarBrickWithSensitivity") == 0) {
     theBrick = new BbarBrickWithSensitivity(BrickId,Node1,Node2,Node3,Node4,

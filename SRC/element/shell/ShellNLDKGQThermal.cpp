@@ -1001,8 +1001,9 @@ void  ShellNLDKGQThermal::zeroLoad( )
 int 
 ShellNLDKGQThermal::addLoad(ElementalLoad *theLoad, double loadFactor)
 {
-  int type;
+	int type;
     const Vector &data = theLoad->getData(type, loadFactor);
+	//opserr << "data:" << data << endln;
 
  if (type == LOAD_TAG_ShellThermalAction) {
   // ----- Real time Temperature is obtained from shellThermalAction 
@@ -1866,6 +1867,8 @@ ShellNLDKGQThermal::formResidAndTangent( int tang_flag )
 				BGK = computeBG(k,shpBend);
 				//stiffGeo = BGJtran * membraneForce *BGK
 				stiffJKgeo.addMatrixProduct(0.0,stiffBGM,BGK,1.0);
+
+				//stiffJKgeo.Zero();//-----------LMJ
 
 				//stiffJKlocal = stiffJKlinear + stiffJKgeo
 				stiffJKlocal = stiffJKlinear;

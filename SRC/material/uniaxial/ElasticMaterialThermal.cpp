@@ -423,7 +423,7 @@ ElasticMaterialThermal::commitSensitivity(double strainGradient,
 double
 ElasticMaterialThermal::getElongTangent(double TempT, double &ET, double &Elong, double TempTmax)
 {
-	double ThermalElongation;
+	ThermalElongation = 0;
 	Temp = TempT;
 	if (softIndex != 0) {
 		 

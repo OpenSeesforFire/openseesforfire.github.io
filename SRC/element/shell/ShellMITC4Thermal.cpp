@@ -553,7 +553,7 @@ const Matrix&  ShellMITC4Thermal::getTangentStiff( )
   //do tangent and residual here
   formResidAndTangent( tang_flag ) ;
   
-#ifdef _DEBUG
+#ifdef _SDEBUG
   if(this->getTag()==1)
     opserr<< "ShellMITC4Thermal: "<<this->getTag()<< "Tangent stiffness: "<<endln<<stiff<<endln;
 
@@ -1115,7 +1115,7 @@ const Vector&  ShellMITC4Thermal::getResistingForce( )
   if (load != 0)
     resid -= *load;
 
-#ifdef _DEBUG
+#ifdef _SDEBUG
   opserr<< "ShellMITC4Thermal: "<<this->getTag()<< " Resid: "<<endln
 	 <<resid<<endln;
 #endif

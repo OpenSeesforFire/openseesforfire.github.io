@@ -32,7 +32,7 @@ Simple_Isection::~Simple_Isection()
 }
 
 int 
-Simple_Isection::InitialMeshCtrl(Vector& MeshCtrls)
+Simple_Isection::InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl)
 {
 	double EleX= MeshCtrls(0);
 	double EleY= MeshCtrls(1);

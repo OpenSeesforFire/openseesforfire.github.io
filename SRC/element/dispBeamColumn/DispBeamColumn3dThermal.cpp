@@ -51,6 +51,8 @@
 #include <FiberSectionGJThermal.h>
 #include <FiberSection3dThermal.h>
 #include <elementAPI.h>
+#include <Beam3dThermalAction.h>
+
 
 Matrix DispBeamColumn3dThermal::K(12,12);
 Vector DispBeamColumn3dThermal::P(12);
@@ -826,9 +828,9 @@ DispBeamColumn3dThermal::addLoad(ElementalLoad *theLoad, double loadFactor)
     q0[4] -= M2;
   }
 
-//J.Jiang add to consider thermal load
+//To consider thermal load
 else if (type == LOAD_TAG_Beam3dThermalAction) {
-
+      
 	// load not inside fire load pattern
 	 //static Vector factors(9);
 	 //factors.Zero();
@@ -854,8 +856,10 @@ else if (type == LOAD_TAG_Beam3dThermalAction) {
 	  Vector* dataMixV;
 	  if(data.Size()==18)
 		  dataMixV = new Vector(18);
-	  else
+	  else if (data.Size() == 25)
 		  dataMixV = new Vector(25);
+      else if (data.Size() == 35)
+          dataMixV = new Vector(35);
 
       *dataMixV=data;
 
@@ -865,9 +869,16 @@ else if (type == LOAD_TAG_Beam3dThermalAction) {
 		//  }
 #endif
 	// Loop over the integration points
+      bool zAxis = ((Beam3dThermalAction*)theLoad)->getZaxis(); //Mhd Anwar Orabi 2021
 	for (int i = 0; i < numSections; i++) {
 		// Get section stress resultant
-		const Vector &s = theSections[i]->getTemperatureStress(*dataMixV);
+        if (zAxis)
+        {
+            ((FiberSectionGJThermal*)theSections[i])->setZaxis(zAxis); //Mhd Anwar Orabi 2021 - Forces the section to be a GJ thermal section but this is bad! Need to check section type and assign based on that.
+        }
+        
+        const Vector& s = theSections[i]->getTemperatureStress(*dataMixV);
+        
 		//opserr<< "Temperature  Stress "<<s<<endln;
 
 		//apply temp along y

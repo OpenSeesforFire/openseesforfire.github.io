@@ -23,7 +23,7 @@ Simple_Brick::~Simple_Brick()
 
 
 int 
-Simple_Brick::InitialMeshCtrl(Vector& MeshCtrls)
+Simple_Brick::InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl)
 {
     double CtrX= MeshCtrls(0);
 	double CtrY= MeshCtrls(1);

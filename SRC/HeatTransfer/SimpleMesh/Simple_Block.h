@@ -11,11 +11,11 @@
 class Simple_Block : public Simple_Entity
 {
 public:
-	Simple_Block(int tag, double a1, double b1, double a3, double b3,double a2, double b2, double a4, double b4);
+	Simple_Block(int tag, double a1, double b1, double a2, double b2, double a3, double b3, double a4, double b4);
 	Simple_Block(int tag, double centerX, double centerY, double breadthX, double heightY);
 	~Simple_Block();
    
-	int InitialMeshCtrl(Vector& MeshCtrls);
+	int InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl);
 	bool InitialSeeds();
 	int RefineSeeds(int SeedTag, const Vector& RefinedSeedsInfo);
 

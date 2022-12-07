@@ -31,7 +31,7 @@ Simple_Composite2D::~Simple_Composite2D()
 }
 
 int 
-Simple_Composite2D::InitialMeshCtrl(Vector& MeshCtrls)
+Simple_Composite2D::InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl)
 {
 	double EleX= MeshCtrls(0);
 	double EleY= MeshCtrls(1);

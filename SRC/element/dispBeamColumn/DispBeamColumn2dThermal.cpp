@@ -604,7 +604,7 @@ DispBeamColumn2dThermal::getInitialBasicStiff()
   
     Matrix ka(workArea, order, 3);
     ka.Zero();
-
+     
     //double xi6 = 6.0*pts(i,0);
     double xi6 = 6.0*xi[i];
     

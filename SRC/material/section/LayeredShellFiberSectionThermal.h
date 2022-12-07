@@ -59,6 +59,11 @@ class LayeredShellFiberSectionThermal : public SectionForceDeformation{
                                 double *thickness, 
                                 NDMaterial **fibers, double offset=0 );
 
+    LayeredShellFiberSectionThermal(int tag,
+        int iLayers,
+        double* thickness, double* loc,
+        NDMaterial** fibers, double flath, double ribh, double ribangle);
+
     const char *getClassType(void) const {return "LayeredShellFiberSectionThermal";};
 
     //destructor
@@ -110,19 +115,23 @@ class LayeredShellFiberSectionThermal : public SectionForceDeformation{
     int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker);
 
 	const Vector &getTemperatureStress(const Vector&); //Added by LMJ
-	double determineFiberTemperature(const Vector& DataMixed, double fiberLoc) ; //Added by LMJ
+	double determineFiberTemperature(const Vector& DataMixed, double fiberLoc, int matType) ; //Added by LMJ
 
 
 
   private :
-
+    
     int nLayers;
     //quadrature data
     double *sg;
     double *wg;
+    double* ti;
+    double* loci;
 
     double Offset; // offset from the geometric mid-plane to neutral plane;
-
+    double flatH; // the thickness of flat part of a composite section;
+    double ribH; //thickness of rib part of a composite section;
+    double ribAng; //angle of rib about x-axis
     double h ; //plate thickness
 
     NDMaterial **theFibers;  //pointers to the materials (fibers)
@@ -141,6 +150,7 @@ class LayeredShellFiberSectionThermal : public SectionForceDeformation{
 	int countnGauss;
 	double AverageThermalForceP ;
 	double AverageThermalMomentP;
+    double AverageThermalElongP;
 
 } ; //end of LayeredShellFiberSectionThermal declarations
 

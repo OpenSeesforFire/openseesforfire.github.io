@@ -36,7 +36,7 @@ Simple_Entity::getTag()
 }*/
 
 int
-Simple_Entity::InitialMeshCtrl(Vector& MeshCtrls)
+Simple_Entity::InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl)
 {
 		return 0;
 }

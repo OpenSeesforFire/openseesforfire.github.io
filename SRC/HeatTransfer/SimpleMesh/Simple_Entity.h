@@ -29,7 +29,7 @@ public:
   virtual int GenerateEles(HeatTransferDomain* , const ID& , HeatTransferMaterial*  , HeatTransferMaterial* =0);
   
    // virtual int getTag(void);
-	virtual int InitialMeshCtrl(Vector&);
+	virtual int InitialMeshCtrl(Vector&,bool numCtrl =false);
 	
 	virtual bool InitialSeeds(void)=0;
 	virtual const Vector& GetSeeds(int)=0 ;

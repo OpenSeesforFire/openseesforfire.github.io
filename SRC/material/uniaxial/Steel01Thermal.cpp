@@ -99,16 +99,20 @@ Steel01Thermal::Steel01Thermal
    CshiftP = 1.0;
    CshiftN = 1.0;
    Cloading = 0;
-   Ctemperature = 0;//Added by Liming,2013
-   Cmono = true;    //Added by Liming,2013
+   Ctemperature = 0;
+//Added by Liming,2013
+   Cmono = true;
+    //Added by Liming,2013
 
    TminStrain = 0.0;
    TmaxStrain = 0.0;
    TshiftP = 1.0;
    TshiftN = 1.0;
    Tloading = 0;
-   Ttemperature = 0; //Added by Liming,2013
-   Tmono = true;     //Added by Liming,2013
+   Ttemperature = 0;
+ //Added by Liming,2013
+   Tmono = true;
+     //Added by Liming,2013
    
    // State variables
    Cstrain = 0.0;
@@ -150,10 +154,14 @@ Steel01Thermal::Steel01Thermal():UniaxialMaterial(0,MAT_TAG_Steel01Thermal),
 	  E0 = E0T;//JZ, 07/10//
 	  fy = fyT;//JZ, 07/10//
 	  fp = 0;//JZ, 11/10//
-	  Ttemperature = 0;  //Added by Liming,2013
-	  Ctemperature = 0;  //Added by Liming,2013
-      Cmono = true;      //Added by Liming,2013
-	  Tmono = true;      //Added by Liming,2013
+	  Ttemperature = 0;
+  //Added by Liming,2013
+	  Ctemperature = 0;
+  //Added by Liming,2013
+      Cmono = true;
+      //Added by Liming,2013
+	  Tmono = true;
+      //Added by Liming,2013
 }
 
 Steel01Thermal::~Steel01Thermal ()
@@ -167,7 +175,8 @@ Steel01Thermal::~Steel01Thermal ()
 int Steel01Thermal::setTrialStrain(double strain, double FiberTemperature, double strainRate)
 {
 
-  Ttemperature  = FiberTemperature;    //Added by Liming,2013
+  Ttemperature  = FiberTemperature;
+    //Added by Liming,2013
 
 
    // Reset history variables to last converged state
@@ -179,7 +188,8 @@ int Steel01Thermal::setTrialStrain(double strain, double FiberTemperature, doubl
    Tstrain = Cstrain;
    Tstress = Cstress;
    Ttangent = Ctangent;
-   Tmono = Cmono;       //Added by Liming,2013
+   Tmono = Cmono;
+       //Added by Liming,2013
    // Determine change in strain from last converged state
    double dStrain = strain - Cstrain;
    
@@ -189,7 +199,8 @@ int Steel01Thermal::setTrialStrain(double strain, double FiberTemperature, doubl
      // Calculate the trial state given the trial strain 
      determineTrialState (dStrain);
 	 
-     Ctemperature = Ttemperature;    //Added by Liming,2013
+     Ctemperature = Ttemperature; 
+   //Added by Liming,2013
 	 // To enable 0 dStrain in the first iteration for new thermal action step
 	 // The material stress may change due to the degraded modulus.---added by Liming, 2013, OCT//
      
@@ -566,7 +577,8 @@ int Steel01Thermal::commitState ()
    CshiftP = TshiftP;
    CshiftN = TshiftN;
    Cloading = Tloading;
-   Cmono = Tmono;//added by liming,2013
+   Cmono = Tmono;
+//added by liming,2013
 
    // State variables
    Cstrain = Tstrain;
@@ -637,7 +649,8 @@ UniaxialMaterial* Steel01Thermal::getCopy ()
    theCopy->CshiftP = CshiftP;
    theCopy->CshiftN = CshiftN;
    theCopy->Cloading = Cloading;
-   theCopy->Cmono = Cmono;   //added by liming,2013
+   theCopy->Cmono = Cmono;
+   //added by liming,2013
    
    
    // Trial history variables
@@ -646,20 +659,23 @@ UniaxialMaterial* Steel01Thermal::getCopy ()
    theCopy->TshiftP = TshiftP;
    theCopy->TshiftN = TshiftN;
    theCopy->Tloading = Tloading;
-   theCopy->Cmono = Tmono;   //added by liming,2013
+   theCopy->Cmono = Tmono;
+   //added by liming,2013
    
    
    // Converged state variables
    theCopy->Cstrain = Cstrain;
    theCopy->Cstress = Cstress;
    theCopy->Ctangent = Ctangent;
-   theCopy->Ctemperature = Ctemperature;  //added by liming,2013
+   theCopy->Ctemperature = Ctemperature;
+  //added by liming,2013
    
    // Trial state variables
    theCopy->Tstrain = Tstrain;
    theCopy->Tstress = Tstress;
    theCopy->Ttangent = Ttangent;
-   theCopy->Ctemperature = Ttemperature;  //added by liming,2013
+   theCopy->Ctemperature = Ttemperature;
+  //added by liming,2013
    return theCopy;
 }
 
@@ -771,7 +787,7 @@ void Steel01Thermal::Print (OPS_Stream& s, int flag)
 int
 Steel01Thermal::setParameter(const char **argv, int argc, Parameter &param)
 {
-
+	//opserr << argv[0] << endln;
   if (strcmp(argv[0],"sigmaY") == 0 || strcmp(argv[0],"fy") == 0)
     return param.addObject(1, this);
   
@@ -805,10 +821,10 @@ Steel01Thermal::updateParameter(int parameterID, Information &info)
 	case -1:
 		return -1;
 	case 1:
-		this->fy = info.theDouble;
+		this->fyT = info.theDouble;
 		break;
 	case 2:
-		this->E0 = info.theDouble;
+		this->E0T = info.theDouble;
 		break;
 	case 3:
 		this->b = info.theDouble;

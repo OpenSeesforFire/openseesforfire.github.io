@@ -288,13 +288,21 @@ NDMaterial::setResponse (const char **argv, int argc,
     theResponse =  new MaterialResponse(this, 2, this->getStress());
   }
   //Adding temperature and thermal expansion output,L.Jiang [SIF]
-  else if (strcmp(argv[0], "TempAndElong") == 0 || strcmp(argv[0], "TempAndElong") == 0) {
+  else if (strcmp(argv[0], "TempAndElong") == 0 || strcmp(argv[0], "TempElong") == 0) {
 	  const Vector &res = this->getTempAndElong();
 	  int size = res.Size();
 	  if (size == 2) {
 		  output.tag("ResponseType", "Temp");
 		  output.tag("ResponseType", "Elong");
 	  }
+      else if (size == 4)
+      {
+          output.tag("ResponseType", "Temp");
+          output.tag("ResponseType", "Elong");
+          output.tag("ResponseType", "dt");
+          output.tag("ResponseType", "dc");
+      }
+
 	  //opserr<<"tempElong "<<this->getTempAndElong()<<endln;
 	  theResponse = new MaterialResponse(this, 3, this->getTempAndElong());
 

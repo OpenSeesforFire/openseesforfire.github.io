@@ -111,6 +111,7 @@ using std::setiosflags;
 
  #include <SimulationInformation.h>
 #include < PathTimeSeriesThermal.h>
+//#include <OpenSeesCommands.h>
 
 static PythonWrapper* theWrapper = 0;
  extern SimulationInformation simulationInfo;
@@ -510,6 +511,16 @@ int OPS_addHTMaterial()
 		theHTMaterial = new CarbonSteelEC3(HTMaterialTag);
 
 	}
+	//adding test material
+	else if (strcmp(HTmatType, "Test") == 0 || strcmp(HTmatType, "test") == 0) {
+		int size = 1;
+		//opserr << "python test: " << size << endln;
+		int* sizeList = &size;
+		double* data = new double [50];
+		OPS_GetListInput(sizeList, data);
+		opserr <<"size "<< *sizeList<< ", python data: "<<data[1] << endln;
+		theHTMaterial = new CarbonSteelEC3(HTMaterialTag);
+	}
 	//Adding ConcreteEC2
 	else if(strcmp(HTmatType, "ConcreteEC2") == 0) {
 
@@ -842,6 +853,7 @@ OPS_addHTEntity()
 							  //double HTI_Bf, double HTI_Tf, double HTI_Hw, double HTI_Tw, double HTI_Len);
 		double HTI_centerX, HTI_centerY, HTI_centerZ, HTI_BF, HTI_Tf, HTI_HB, HTI_Tw, HTI_Len;
 
+
 		if (OPS_GetDoubleInput(&numdata, &HTI_centerX) <0) {
 			opserr << "WARNING invalid HTI_centerX" << endln;
 			opserr << " for HeatTransfer entity: " << EntityType << endln;
@@ -1058,8 +1070,8 @@ OPS_addHTMesh()
 			//if second material is defined
 			
 			if (OPS_GetDoubleInput(&numdata, &Loc2) < 0) {
-				opserr << "WARNING:: invalid section location for defining simple mesh: " << HTMeshTag << "\n";
-				return -1;
+				//opserr << "WARNING:: invalid section location for defining simple mesh: " << HTMeshTag << "\n";
+				//return -1;
 				OPS_ResetCurrentInputArg(-1);
 			}
 			else {
@@ -1858,13 +1870,27 @@ OPS_addFireModel()
 			return -1;
 		}
 		option = OPS_GetString();
+		const char* filename = 0;
+		int dataTypeTag = 1;
 		if (strcmp(option, "file") == 0 || strcmp(option, "-file" )|| strcmp(option, "File") == 0) {
-			const char* filename = OPS_GetString();
+			filename = OPS_GetString();
 			theFireModel = new UserDefinedFire(FireModelTag, filename, 1);
+		}
+		if (OPS_GetNumRemainingInputArgs() > 0) {
+			const char* dataType = OPS_GetString();
+			if (strcmp(dataType, "-type") == 0 || strcmp(dataType, "dataType") == 0 || strcmp(dataType, "type") == 0) {
+				
+				if (OPS_GetIntInput(&numData, &dataTypeTag) <0) {
+					opserr << "WARNING:: invalid Data Type Tag for user defined fire model " << dataType << "\n";
+					return -1;
+				}
+			}
+
 		}
 
 
-		theFireModel = new NorminalFireEC1(FireModelTag, 5); // hydrocarbon fire tag is 3;
+
+		theFireModel = new UserDefinedFire(FireModelTag, filename, dataTypeTag);
 	}
 	//Paramtetric fire
 	else if (strcmp(option, "parametric") == 0 || strcmp(option, "Parametric") == 0) {
@@ -2018,7 +2044,18 @@ OPS_addFireModel()
 						return -1;
 					}
 					const char* fileName = OPS_GetString();
-					theSeries = new PathTimeSeriesThermal(1, fileName, 5, false);
+					theSeries = new PathTimeSeriesThermal(1, fileName, 8, false);
+					//8 parameters in total�� firelocs(3), Q, D, 
+				}
+
+				//To get line tag if available
+				if (OPS_GetNumRemainingInputArgs() > 0) {
+					if (OPS_GetIntInput(&numData, &lineTag) < 0) {
+						opserr << "WARNING invalid distance between the fire source and the ceiling" << endln;
+						opserr << " for HeatTransfer localised fire model: " << FireModelTag << endln;
+						lineTag =2;
+					}
+
 				}
 
 			}
@@ -2800,7 +2837,7 @@ OPS_HTRecorder()
 	const char* option = OPS_GetString();
 	if (strcmp(option, "-file") == 0 || strcmp(option, "file") == 0 || strcmp(option, "-File") == 0)
 	{
-		fileName = ops_getstring();
+		fileName = OPS_GetString();
 		//const char* pwd = getInterpPWD(interp);
 		//simulationInfo.addOutputFile(fileName, pwd);
 		
@@ -3255,6 +3292,7 @@ int OPS_GetFireOut() {
 		double q = 0;
 		double d = 0;
 		double Ts = 0;
+		double ptime = 0.0;
 		if (OPS_GetIntInput(&dataNum, &FireModelTag) < 0) {
 			opserr << "WARNING:: invalid FireModel tag for HTOutput: " << "\n";
 			return -1;
@@ -3289,7 +3327,11 @@ int OPS_GetFireOut() {
 			locs(0) = xloc; locs(1) = yloc; locs(2) = zloc;
 			FireModel* thefire = theHTModule->getFireModel(FireModelTag);
 			double thecurrentTime = theHTDomain->getCurrentTime();
-			double incq = thefire->getFireOut(thecurrentTime, locs);
+#ifdef _DEBUG
+			opserr << "HTModule Checking the fire model " << FireModelTag << "location:" << locs << endln;
+#endif
+
+			double incq = thefire->getFireOut(60.0, locs);
 
 			if (OPS_SetDoubleOutput(&dataNum, &incq) < 0) {
 				opserr << "WARNING failed to return fire pars for fire model " << FireModelTag << "\n";
@@ -3344,7 +3386,10 @@ static PyObject* Py_ops_addHTMaterial(PyObject* self, PyObject* args)
 {
 	theWrapper->resetCommandLine(PyTuple_Size(args), 1, args);
 
-	if (OPS_addHTMaterial() < 0) return NULL;
+	if (OPS_addHTMaterial() < 0) {
+		opserr << (void*)0;
+		//return NULL;
+	}
 
 	return theWrapper->getResults();
 }

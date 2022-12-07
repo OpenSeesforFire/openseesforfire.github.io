@@ -22,7 +22,7 @@
 // $Date: 2011/03/10 22:51:21 $
 // $Source: /usr/local/cvs/OpenSees/SRC/element/shell/ShellMITC4.cpp,v $
 
-// Written: Leopoldo Tesser, Diego A. Talledo, Véronique Le Corvec
+// Written: Leopoldo Tesser, Diego A. Talledo, Vï¿½ronique Le Corvec
 //
 // Bathe MITC 4 four node shell element with membrane and drill
 // Ref: Dvorkin,Bathe, A continuum mechanics based four node shell
@@ -59,7 +59,7 @@ void *
 OPS_ShellMITC4(void)
 {
   if (numShellMITC4 == 0) {
-//    opserr << "Using ShellMITC4 - Developed by: Leopoldo Tesser, Diego A. Talledo, Véronique Le Corvec\n";
+//    opserr << "Using ShellMITC4 - Developed by: Leopoldo Tesser, Diego A. Talledo, Vï¿½ronique Le Corvec\n";
     numShellMITC4++;
   }
 
@@ -150,7 +150,7 @@ OPS_ShellMITC4(const ID& info)
     // load data
     if (info(0) == 2) {
 	if (numShellMITC4 == 0) {
-//    opserr << "Using ShellMITC4 - Developed by: Leopoldo Tesser, Diego A. Talledo, Véronique Le Corvec\n";
+//    opserr << "Using ShellMITC4 - Developed by: Leopoldo Tesser, Diego A. Talledo, Vï¿½ronique Le Corvec\n";
 	    numShellMITC4++;
 	}
 

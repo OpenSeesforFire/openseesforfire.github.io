@@ -68,6 +68,7 @@
 #include <ShellThermalAction.h>   //L.Jiang [SIF]
 #include <ThermalActionWrapper.h>  //L.Jiang [SIF]
 #include <NodalThermalAction.h>   //L.Jiang [SIF]
+#include <BrickThermalAction.h>   //L.Jiang [SIF]
 
 #include <Beam3dPointLoad.h>
 #include <Beam3dUniformLoad.h>
@@ -897,20 +898,18 @@ TclModelBuilder::getNDMaterial(int tag)
 }
 */
 
-int 
-TclModelBuilder::addSection(SectionForceDeformation &theSection)
+int
+TclModelBuilder::addSection(SectionForceDeformation& theSection)
 {
-  //  bool result = theSections->addComponent(&theSection);
-  bool result = OPS_addSectionForceDeformation(&theSection);
-  if (result == true)
-    return 0;
-  else {
-    opserr << "TclModelBuilder::addSection() - failed to add section: " << theSection;
-    return -1;
-  }
+	//  bool result = theSections->addComponent(&theSection);
+	bool result = OPS_addSectionForceDeformation(&theSection);
+	if (result == true)
+		return 0;
+	else {
+		opserr << "TclModelBuilder::addSection() - failed to add section: " << theSection;
+		return -1;
+	}
 }
-
-
 
 SectionForceDeformation *
 TclModelBuilder::getSection(int tag)
@@ -1593,16 +1592,16 @@ TclCommand_addNDMaterial(ClientData clientData, Tcl_Interp *interp,
 }
 
 extern int
-TclModelBuilderSectionCommand (ClientData clienData, Tcl_Interp *interp, int argc,
-				  TCL_Char **argv, TclModelBuilder *theTclBuilder);
+TclModelBuilderSectionCommand(ClientData clienData, Tcl_Interp* interp, int argc,
+	TCL_Char** argv, Domain* theDomain, TclModelBuilder* theTclBuilder);
 
 int
 TclCommand_addSection(ClientData clientData, Tcl_Interp *interp, 
 			    int argc,    TCL_Char **argv)
                           
 {
-  return TclModelBuilderSectionCommand(clientData, interp, 
-				       argc, argv, theTclBuilder);
+	return TclModelBuilderSectionCommand(clientData, interp,
+		argc, argv, theTclDomain, theTclBuilder);
 }
 
 
@@ -2342,6 +2341,123 @@ TclCommand_addElementalLoad(ClientData clientData, Tcl_Interp *interp, int argc,
   }
 
  ///---------------------- Adding identifier for ThermalAction : [END] [SIF]----------------------------------------------//
+ /// Begin to add brick thermal action
+  else if (strcmp(argv[count], "-brickThermal") == 0) {
+  count++;
+  //so far three kinds of temperature distribution
+  //(1) 9 temperature points, i.e. 8 layers
+  //(2) 5 temperature points, i.e. 4 layers
+  //(3) 2 temperature points, i.e. 1 layers: linear or uniform
+
+  double t1, locY1, t2, locY2, t3, locY3, t4, locY4, t5, locY5,
+	  t6, locY6, t7, locY7, t8, locY8, t9, locY9;
+  // 9 temperature points are given,i.e. 8 layers are defined; Also the 9 corresponding vertical coordinate is given.
+  // the temperature at each fiber is obtained by interpolating of temperatures at the nearby temperature points.
+  //Start to add source file
+  if (strcmp(argv[count], "-source") == 0) {
+	  //brick thermal action using external file
+	  count++;
+
+	  const char* pwd = getInterpPWD(interp);
+	  simulationInfo.addInputFile(argv[count], pwd);
+	  TimeSeries* theSeries = new PathTimeSeriesThermal(eleLoadTag, argv[count]);
+
+	  count++;
+
+	  double RcvLoc1, RcvLoc2;
+	  if (argc - count == 2) {
+
+		  if (Tcl_GetDouble(interp, argv[count], &RcvLoc1) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid single loc  " << argv[count] << " for -beamThermal\n";
+			  return TCL_ERROR;
+		  }
+		  if (Tcl_GetDouble(interp, argv[count + 1], &RcvLoc2) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid single loc  " << argv[count + 1] << " for -beamThermal\n";
+			  return TCL_ERROR;
+		  }
+
+	  }
+	  else {
+		  opserr << "WARNING eleLoad - invalid input for -shellThermal\n";
+	  }
+
+	  for (int i = 0; i < theEleTags.Size(); i++) {
+		  theLoad = new BrickThermalAction(eleLoadTag, RcvLoc1, RcvLoc2,
+			  theSeries, theEleTags(i));
+		  if (theLoad == 0) {
+			  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
+			  return TCL_ERROR;
+		  }
+
+		  // get the current pattern tag if no tag given in i/p
+		  int loadPatternTag = theTclLoadPattern->getTag();
+
+		  // add the load to the domain
+		  if (theTclDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
+			  opserr << "WARNING eleLoad - could not add following load to domain:\n ";
+			  opserr << theLoad;
+			  delete theLoad;
+			  return TCL_ERROR;
+		  }
+		  eleLoadTag++;
+	  }
+	  //if End of using source file
+  }
+  //end of the interface for importing temperature data from external file
+  else
+  {
+	  if (argc - count == 4) {
+		  if (Tcl_GetDouble(interp, argv[count], &t1) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid T1 " << argv[count] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+
+		  if (Tcl_GetDouble(interp, argv[count + 1], &locY1) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid LocY1 " << argv[count + 1] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+		  if (Tcl_GetDouble(interp, argv[count + 2], &t2) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid T2 " << argv[count] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+
+		  if (Tcl_GetDouble(interp, argv[count + 3], &locY2) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid LocY2 " << argv[count + 1] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+
+		  for (int i = 0; i < theEleTags.Size(); i++) {
+			  theLoad = new BrickThermalAction(eleLoadTag,
+				  t1, locY1, t2, locY2, theEleTags(i));
+
+
+			  if (theLoad == 0) {
+				  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
+				  return TCL_ERROR;
+			  }
+
+			  // get the current pattern tag if no tag given in i/p
+			  int loadPatternTag = theTclLoadPattern->getTag();
+
+			  // add the load to the domain
+			  if (theTclDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
+				  opserr << "WARNING eleLoad - could not add following load to domain:\n ";
+				  opserr << theLoad;
+				  delete theLoad;
+				  return TCL_ERROR;
+			  }
+			  eleLoadTag++;
+		  }
+		  return 0;
+	  }
+	  //finish the temperature arguments
+	  else {
+		  opserr << "WARNING eleLoad -brickThermalLoad invalid number of temperature aguments,/n looking for 0, 1, 2 or 4 arguments.\n";
+	  }
+  }
+  //end of if(recieved argument is not "source" or direct temperature input)//Liming,2021
+  }
+  //-----------------Adding tcl command for Brick thermal action, 2013..[End]-----------------------
   //-----------------Adding tcl command for shell thermal action, 2013..[Begin]---------------------
   else if (strcmp(argv[count], "-shellThermal") == 0) {
 	  count++;
@@ -2350,175 +2466,88 @@ TclCommand_addElementalLoad(ClientData clientData, Tcl_Interp *interp, int argc,
 	  //(2) 5 temperature points, i.e. 4 layers
 	  //(3) 2 temperature points, i.e. 1 layers: linear or uniform
 
-	  double t1, locY1, t2, locY2, t3, locY3, t4, locY4, t5, locY5,
-		  t6, locY6, t7, locY7, t8, locY8, t9, locY9;
+	  double t1, locY1, t2, locY2;
+	  double t3, locY3, t4, locY4;
+	  int shellThermalActionType = 0;
+	  TimeSeries* theSeries = 0;
+	  TimeSeries* theSeries1 = 0;
 	  // 9 temperature points are given,i.e. 8 layers are defined; Also the 9 corresponding vertical coordinate is given.
 	  // the temperature at each fiber is obtained by interpolating of temperatures at the nearby temperature points.
 	  //Start to add source file
 	  if (strcmp(argv[count], "-source") == 0) {
 		  if (strcmp(argv[count + 1], "-node") != 0) {
+			  //shell thermal action using external file
 			  count++;
 
-			  const char *pwd = getInterpPWD(interp);
-			  simulationInfo.addInputFile(argv[count], pwd);
-			  TimeSeries* theSeries = new PathTimeSeriesThermal(eleLoadTag, argv[count]);
-
+			  //const char *pwd = getInterpPWD(interp);
+			  //simulationInfo.addInputFile(argv[count], pwd);
+			  //opserr << argv[count] << endln;
+			  theSeries = new PathTimeSeriesThermal(eleLoadTag, argv[count]);
 			  count++;
-
-			  double RcvLoc1, RcvLoc2;
 			  if (argc - count == 2) {
 
-				  if (Tcl_GetDouble(interp, argv[count], &RcvLoc1) != TCL_OK) {
-					  opserr << "WARNING eleLoad - invalid single loc  " << argv[count] << " for -beamThermal\n";
+				  if (Tcl_GetDouble(interp, argv[count], &locY1) != TCL_OK) {
+					  opserr << "WARNING eleLoad - invalid locY1  " << argv[count] << " for -shellThermal\n";
 					  return TCL_ERROR;
 				  }
-				  if (Tcl_GetDouble(interp, argv[count + 1], &RcvLoc2) != TCL_OK) {
-					  opserr << "WARNING eleLoad - invalid single loc  " << argv[count + 1] << " for -beamThermal\n";
+				  if (Tcl_GetDouble(interp, argv[count + 1], &locY2) != TCL_OK) {
+					  opserr << "WARNING eleLoad - invalid single locY9  " << argv[count + 1] << " for -shellThermal\n";
 					  return TCL_ERROR;
 				  }
+				  shellThermalActionType = 1;
 
 			  }
 			  else {
 				  opserr << "WARNING eleLoad - invalid input for -shellThermal\n";
 			  }
-
-			  for (int i = 0; i<theEleTags.Size(); i++) {
-				  theLoad = new ShellThermalAction(eleLoadTag, RcvLoc1, RcvLoc2,
-					  theSeries, theEleTags(i));
-				  if (theLoad == 0) {
-					  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
-					  return TCL_ERROR;
-				  }
-
-				  // get the current pattern tag if no tag given in i/p
-				  int loadPatternTag = theTclLoadPattern->getTag();
-
-				  // add the load to the domain
-				  if (theTclDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
-					  opserr << "WARNING eleLoad - could not add following load to domain:\n ";
-					  opserr << theLoad;
-					  delete theLoad;
-					  return TCL_ERROR;
-				  }
-				  eleLoadTag++;
-			  }
-		  }
-		  //if not using nodal thermal action input
+		  }	  
 		  else {
-			  for (int i = 0; i<theEleTags.Size(); i++) {
-				  theLoad = new ShellThermalAction(eleLoadTag, theEleTags(i));
-				  if (theLoad == 0) {
-					  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
-					  return TCL_ERROR;
-				  }
-
-				  // get the current pattern tag if no tag given in i/p
-				  int loadPatternTag = theTclLoadPattern->getTag();
-
-				  // add the load to the domain
-				  if (theTclDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
-					  opserr << "WARNING eleLoad - could not add following load to domain:\n ";
-					  opserr << theLoad;
-					  delete theLoad;
-					  return TCL_ERROR;
-				  }
-				  eleLoadTag++;
-			  }//end of for loop
-			  return 0;
+			  //if using nodal thermal action input
+			  shellThermalActionType = 2;
 		  }//end of <if(strcmp(argv[count+1],"-node") = 0)>
+	  }
+	  else if (strcmp(argv[count], "-Twosource") == 0) {
+		  //composite element
+		  count++;
+		  if (argc - count != 6) {
+			  opserr << "WARNING eleLoad - insufficient input  " << argv[count] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+			  
+		  const char* pwd = getInterpPWD(interp);
+		  simulationInfo.addInputFile(argv[count], pwd);
+		  simulationInfo.addInputFile(argv[count+3], pwd);
+		  theSeries = new PathTimeSeriesThermal(eleLoadTag, argv[count]);
+		  theSeries1 = new PathTimeSeriesThermal(eleLoadTag+1, argv[count+3]);
+		 
+		  if (Tcl_GetDouble(interp, argv[count+1], &locY1) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid single locY1  " << argv[count] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+		  if (Tcl_GetDouble(interp, argv[count +2], &locY2) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid single locY2  " << argv[count + 1] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+		  if (Tcl_GetDouble(interp, argv[count + 4], &locY3) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid single locY1  " << argv[count] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+		  if (Tcl_GetDouble(interp, argv[count + 5], &locY4) != TCL_OK) {
+			  opserr << "WARNING eleLoad - invalid single locY2  " << argv[count + 1] << " for -shellThermal\n";
+			  return TCL_ERROR;
+		  }
+		   shellThermalActionType = 4;
+
+
 	  }
 	  //end of the interface for importing temperature data from external file
 	  else
 	  {
-		  if (argc - count == 18) {
-			  double indata[18];
-			  double BufferData;
-
-			  for (int i = 0; i<18; i++) {
-				  if (Tcl_GetDouble(interp, argv[count], &BufferData) != TCL_OK) {
-					  opserr << "WARNING eleLoad - invalid data " << argv[count] << " for -beamThermal 3D\n";
-					  return TCL_ERROR;
-				  }
-				  indata[i] = BufferData;
-				  count++;
-			  }
-
-			  //temp1,loc1,temp2,loc2...temp9,loc9
-
-			  for (int i = 0; i<theEleTags.Size(); i++) {
-				  theLoad = new ShellThermalAction(eleLoadTag,
-					  indata[0], indata[1], indata[2], indata[3],
-					  indata[4], indata[5], indata[6], indata[7],
-					  indata[8], indata[9], indata[10], indata[11],
-					  indata[12], indata[13], indata[14], indata[15],
-					  indata[16], indata[17], theEleTags(i));
-
-
-				  if (theLoad == 0) {
-					  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
-					  return TCL_ERROR;
-				  }
-
-				  // get the current pattern tag if no tag given in i/p
-				  int loadPatternTag = theTclLoadPattern->getTag();
-
-				  // add the load to the domain
-				  if (theTclDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
-					  opserr << "WARNING eleLoad - could not add following load to domain:\n ";
-					  opserr << theLoad;
-					  delete theLoad;
-					  return TCL_ERROR;
-				  }
-				  eleLoadTag++;
-			  }
-			  return 0;
-		  }
-		  // 5 temperatures are given, i.e. 4 layers are defined.
-		  else if (argc - count == 10) {
-			  double indata[10];
-			  double BufferData;
-
-			  for (int i = 0; i<10; i++) {
-				  if (Tcl_GetDouble(interp, argv[count], &BufferData) != TCL_OK) {
-					  opserr << "WARNING eleLoad - invalid data " << argv[count] << " for -beamThermal 3D\n";
-					  return TCL_ERROR;
-				  }
-				  indata[i] = BufferData;
-				  count++;
-			  }
-
-			  //temp1,loc1,temp2,loc2...temp5,loc5
-
-			  for (int i = 0; i<theEleTags.Size(); i++) {
-				  theLoad = new ShellThermalAction(eleLoadTag,
-					  indata[0], indata[1], indata[2], indata[3],
-					  indata[4], indata[5], indata[6], indata[7],
-					  indata[8], indata[9], theEleTags(i));
-
-
-				  if (theLoad == 0) {
-					  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
-					  return TCL_ERROR;
-				  }
-
-				  // get the current pattern tag if no tag given in i/p
-				  int loadPatternTag = theTclLoadPattern->getTag();
-
-				  // add the load to the domain
-				  if (theTclDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
-					  opserr << "WARNING eleLoad - could not add following load to domain:\n ";
-					  opserr << theLoad;
-					  delete theLoad;
-					  return TCL_ERROR;
-				  }
-				  eleLoadTag++;
-			  }
-			  return 0;
-		  }
-		  // two temperature is given, 
+		  // For input with two temperature points,####Note that 5 points and 9 points input are removed 
 		  //if the two temperatures are equal,i.e. uniform Temperature change in element
 		  //if the two temperatures are different,i.e. linear Temperature change in element
-		  else if (argc - count == 4) {
+		if (argc - count == 4) {
+			  shellThermalActionType =3;
 			  if (Tcl_GetDouble(interp, argv[count], &t1) != TCL_OK) {
 				  opserr << "WARNING eleLoad - invalid T1 " << argv[count] << " for -shellThermal\n";
 				  return TCL_ERROR;
@@ -2538,38 +2567,46 @@ TclCommand_addElementalLoad(ClientData clientData, Tcl_Interp *interp, int argc,
 				  return TCL_ERROR;
 			  }
 
-			  for (int i = 0; i<theEleTags.Size(); i++) {
-				  theLoad = new ShellThermalAction(eleLoadTag,
-					  t1, locY1, t2, locY2, theEleTags(i));
-
-
-				  if (theLoad == 0) {
-					  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
-					  return TCL_ERROR;
-				  }
-
-				  // get the current pattern tag if no tag given in i/p
-				  int loadPatternTag = theTclLoadPattern->getTag();
-
-				  // add the load to the domain
-				  if (theTclDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
-					  opserr << "WARNING eleLoad - could not add following load to domain:\n ";
-					  opserr << theLoad;
-					  delete theLoad;
-					  return TCL_ERROR;
-				  }
-				  eleLoadTag++;
-			  }
-			  return 0;
-		  }
+		}
+		else {
+			opserr << "WARNING eleLoad -shellThermalAction invalid number of temperature aguments,/n looking for 4 arguments: Temp1,locy1, Temp2, Locy2 or source\n";
+		}
 		  //finish the temperature arguments
-		  else {
-			  opserr << "WARNING eleLoad -shellThermalLoad invalid number of temperature aguments,/n looking for 0, 1, 2 or 4 arguments.\n";
-		  }
+		  
 	  }
-	  //end of if(recieved argument is not "source" or direct temperature input)//Liming,2014
+
+	  //---------------------Now Adding ShellThermalAction to Domain-----------------------------
+	  for (int i = 0; i < theEleTags.Size(); i++) {
+		  if (shellThermalActionType == 1)
+			  theLoad = new ShellThermalAction(eleLoadTag, locY1, locY2, theSeries, theEleTags(i));
+		  else if (shellThermalActionType == 2)
+			  theLoad = new ShellThermalAction(eleLoadTag, theEleTags(i));
+		  else if (shellThermalActionType == 3)
+			  theLoad = new ShellThermalAction(eleLoadTag, t1, locY1, t2, locY2, theEleTags(i));
+		  else if (shellThermalActionType == 4)
+			  theLoad = new ShellThermalAction(eleLoadTag,locY1, locY2, locY3, locY4, theSeries, theSeries1, theEleTags(i));
+
+		  if (theLoad == 0) {
+			  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
+			  return TCL_ERROR;
+		  }
+
+		  // get the current pattern tag if no tag given in i/p
+		  int loadPatternTag = theTclLoadPattern->getTag();
+
+		  // add the load to the domain
+		  if (theTclDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
+			  opserr << "WARNING eleLoad - could not add following load to domain:\n ";
+			  opserr << theLoad;
+			  delete theLoad;
+			  return TCL_ERROR;
+		  }
+		  eleLoadTag++;
+	  }
+	  //ending the loop on elements
+	  return 0;
   }
-  //-----------------Adding tcl command for shell thermal action, 2013..[End]-----------------------
+  //-----------------Adding tcl command for shell thermal action, 2021..[End]-----------------------
 
   else if (strcmp(argv[count], "-ThermalWrapper") == 0 || strcmp(argv[count], "-thermalWrapper") == 0) {
 
@@ -2901,6 +2938,15 @@ TclCommand_addElementalLoad(ClientData clientData, Tcl_Interp *interp, int argc,
 	  // End of for the if (ndm==2)
 	  else if (ndm == 3)
 	  {
+	  // Added by Mhd Anwar Orabi 2021
+	  bool zAxis;
+		  if (strcmp(argv[count], "-z") == 0) {
+			  zAxis = true;
+			  count++;
+		  } 
+		  else {
+			  zAxis = false;
+		  }
 		  //so far three kinds of temperature distribution
 		  double t1, locY1, t2, locY2, t3, locY3, t4, locY4, t5, locY5,
 			  t6, t7, locZ1, t8, t9, locZ2, t10, t11, locZ3, t12, t13, locZ4, t14, t15, locZ5;
@@ -2936,9 +2982,21 @@ TclCommand_addElementalLoad(ClientData clientData, Tcl_Interp *interp, int argc,
 
 				  double RcvLoc1, RcvLoc2, RcvLoc3, RcvLoc4;
 				  TimeSeries* theSeries;
-
+				  bool genInterpolation;
+				  if (strcmp(argv[count], "-genInterpolation") == 0) {
+					  genInterpolation = true;
+					  count++;
+				  }
+				  else {
+					  genInterpolation = false;
+				  }
 				  if (argc - count == 4) {
-					  theSeries = new PathTimeSeriesThermal(eleLoadTag, argv[count - 1], 15);
+					  if (genInterpolation) {
+						  theSeries = new PathTimeSeriesThermal(eleLoadTag, argv[count - 2], 25);
+					  }
+					  else {
+						  theSeries = new PathTimeSeriesThermal(eleLoadTag, argv[count - 1], 15);
+					  }
 					  using2Ddata = false;
 
 					  if (Tcl_GetDouble(interp, argv[count], &RcvLoc1) != TCL_OK) {
@@ -2960,10 +3018,18 @@ TclCommand_addElementalLoad(ClientData clientData, Tcl_Interp *interp, int argc,
 
 					  //end for recieving input
 					  for (int i = 0; i<theEleTags.Size(); i++) {
-
-						  theLoad = new Beam3dThermalAction(eleLoadTag, RcvLoc1, RcvLoc2, RcvLoc3, RcvLoc4,
-							  theSeries, theEleTags(i));
-
+						  // Modified by Mhd Anwar Orabi 2021
+						  if (genInterpolation) {
+							  theLoad = new Beam3dThermalAction(eleLoadTag, theSeries, RcvLoc1, RcvLoc2, RcvLoc3, RcvLoc4,
+								  theEleTags(i));
+						  } else if (!zAxis) {
+							  theLoad = new Beam3dThermalAction(eleLoadTag, RcvLoc1, RcvLoc2, RcvLoc3, RcvLoc4,
+								  theSeries, theEleTags(i));
+						  }
+						  else {
+							  theLoad = new Beam3dThermalAction(zAxis, eleLoadTag, RcvLoc1, RcvLoc2, RcvLoc3, RcvLoc4,
+								  theSeries, theEleTags(i));
+						  }
 						  if (theLoad == 0) {
 							  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
 							  return TCL_ERROR;
@@ -3103,38 +3169,76 @@ TclCommand_addElementalLoad(ClientData clientData, Tcl_Interp *interp, int argc,
 			  //end of  if (argc-count == 25){
 			  else if (argc - count == 4) {
 
-				  if (Tcl_GetDouble(interp, argv[count], &t1) != TCL_OK) {
-					  opserr << "WARNING eleLoad - invalid T1 " << argv[count] << " for -beamThermal\n";
-					  return TCL_ERROR;
+				  // Modified by Mhd Anwar Orabi 2021
+				  if (!zAxis) {
+					  if (Tcl_GetDouble(interp, argv[count], &t1) != TCL_OK) {
+						  opserr << "WARNING eleLoad - invalid T1 " << argv[count] << " for -beamThermal\n";
+						  return TCL_ERROR;
+					  }
+					  if (Tcl_GetDouble(interp, argv[count + 1], &locY1) != TCL_OK) {
+						  opserr << "WARNING eleLoad - invalid LocY1 " << argv[count + 1] << " for -beamThermal\n";
+						  return TCL_ERROR;
+					  }
+					  if (Tcl_GetDouble(interp, argv[count + 2], &t5) != TCL_OK) {
+						  opserr << "WARNING eleLoad - invalid T5 " << argv[count] << " for -beamThermal\n";
+						  return TCL_ERROR;
+					  }
+					  if (Tcl_GetDouble(interp, argv[count + 3], &locY5) != TCL_OK) {
+						  opserr << "WARNING eleLoad - invalid LocY5 " << argv[count + 1] << " for -beamThermal\n";
+						  return TCL_ERROR;
+					  }
+					  locY2 = locY1 + (locY5 - locY1) / 4;
+					  locY3 = locY1 + (locY5 - locY1) / 2;
+					  locY4 = locY1 + 3 * (locY5 - locY1) / 4;
+					  t2 = t1 + (t5 - t1) / 4;
+					  t3 = t1 + (t5 - t1) / 2;
+					  t4 = t1 + 3 * (t5 - t1) / 4;
+					  locZ1 = locZ2 = locZ3 = locZ4 = locZ5 = 0;
+					  t6 = t7 = t8 = t9 = t10 = 0;
+					  t11 = t12 = t13 = t14 = t15 = 0;
 				  }
-				  if (Tcl_GetDouble(interp, argv[count + 1], &locY1) != TCL_OK) {
-					  opserr << "WARNING eleLoad - invalid LocY1 " << argv[count + 1] << " for -beamThermal\n";
-					  return TCL_ERROR;
+				  else {
+					  if (Tcl_GetDouble(interp, argv[count], &t1) != TCL_OK) {
+						  opserr << "WARNING eleLoad - invalid T1 " << argv[count] << " for -beamThermal\n";
+						  return TCL_ERROR;
+					  }
+					  if (Tcl_GetDouble(interp, argv[count + 1], &locZ1) != TCL_OK) {
+						  opserr << "WARNING eleLoad - invalid LocZ1 " << argv[count + 1] << " for -beamThermal\n";
+						  return TCL_ERROR;
+					  }
+					  if (Tcl_GetDouble(interp, argv[count + 2], &t5) != TCL_OK) {
+						  opserr << "WARNING eleLoad - invalid T5 " << argv[count] << " for -beamThermal\n";
+						  return TCL_ERROR;
+					  }
+					  if (Tcl_GetDouble(interp, argv[count + 3], &locZ5) != TCL_OK) {
+						  opserr << "WARNING eleLoad - invalid LocZ5 " << argv[count + 1] << " for -beamThermal\n";
+						  return TCL_ERROR;
+					  }
+					  locZ2 = locZ1 + (locZ5 - locZ1) / 4;
+					  locZ3 = locZ1 + (locZ5 - locZ1) / 2;
+					  locZ4 = locZ1 + 3 * (locZ5 - locZ1) / 4;
+					  t2 = t1 + (t5 - t1) / 4;
+					  t3 = t1 + (t5 - t1) / 2;
+					  t4 = t1 + 3 * (t5 - t1) / 4;
+					  locY1 = locY2 = locY3 = locY4 = locY5 = 0;
+					  t6 = t7 = t8 = t9 = t10 = 0;
+					  t11 = t12 = t13 = t14 = t15 = 0;
 				  }
-				  if (Tcl_GetDouble(interp, argv[count + 2], &t5) != TCL_OK) {
-					  opserr << "WARNING eleLoad - invalid T1 " << argv[count] << " for -beamThermal\n";
-					  return TCL_ERROR;
-				  }
-				  if (Tcl_GetDouble(interp, argv[count + 3], &locY5) != TCL_OK) {
-					  opserr << "WARNING eleLoad - invalid LocY1 " << argv[count + 1] << " for -beamThermal\n";
-					  return TCL_ERROR;
-				  }
-
-				  locY2 = locY1 + (locY5 - locY1) / 4;
-				  locY3 = locY1 + (locY5 - locY1) / 2;
-				  locY4 = locY1 + 3 * (locY5 - locY1) / 4;
-				  t2 = t1 + (t5 - t1) / 4;
-				  t3 = t1 + (t5 - t1) / 2;
-				  t4 = t1 + 3 * (t5 - t1) / 4;
-				  locZ1 = locZ2 = locZ3 = locZ4 = locZ5 = 0;
-				  t6 = t7 = t8 = t9 = t10 = 0;
-				  t11 = t12 = t13 = t14 = t15 = 0;
-
+				  
 				  for (int i = 0; i<theEleTags.Size(); i++) {
-					  theLoad = new Beam3dThermalAction(eleLoadTag,
-						  t1, locY1, t2, locY2, t3, locY3, t4, locY4,
-						  t5, locY5, t6, t7, locZ1, t8, t9, locZ2, t10, t11, locZ3,
-						  t12, t13, locZ4, t14, t15, locZ5, theEleTags(i));
+					  // Modified by Mhd Anwar Orabi 2021
+					  if (!zAxis) {
+						  theLoad = new Beam3dThermalAction(eleLoadTag,
+							  t1, locY1, t2, locY2, t3, locY3, t4, locY4,
+							  t5, locY5, t6, t7, locZ1, t8, t9, locZ2, t10, t11, locZ3,
+							  t12, t13, locZ4, t14, t15, locZ5, theEleTags(i));
+					  }
+					  else {
+						  theLoad = new Beam3dThermalAction(zAxis,eleLoadTag,
+							  t1, locY1, t2, locY2, t3, locY3, t4, locY4,
+							  t5, locY5, t6, t7, locZ1, t8, t9, locZ2, t10, t11, locZ3,
+							  t12, t13, locZ4, t14, t15, locZ5, theEleTags(i));
+					  }
 					  if (theLoad == 0) {
 						  opserr << "WARNING eleLoad - out of memory creating load of type " << argv[count];
 						  return TCL_ERROR;

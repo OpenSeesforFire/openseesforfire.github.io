@@ -20,13 +20,13 @@
 
 
 Simple_Mesh::Simple_Mesh(int tag, Simple_Entity* Entity,HeatTransferDomain* theDomain,HeatTransferMaterial* theHTMaterial, Vector& MeshCtrls,
-						 HeatTransferMaterial* theHTMaterial1 )
+						 HeatTransferMaterial* theHTMaterial1, bool numCtrl)
 :TaggedObject(tag),theHTDomain(theDomain),isHTDomain(true), theHTMaterial(theHTMaterial),OriginLocs(0),EleParameters(0),
  theHTMaterial1(theHTMaterial1)
 {
-	 theEntity = Entity;
-   theEntity->setMeshTag(this->getTag());
-	 theEntity->InitialMeshCtrl(MeshCtrls);
+	theEntity = Entity;
+	theEntity->setMeshTag(this->getTag());
+	 theEntity->InitialMeshCtrl(MeshCtrls,numCtrl);
 
 	 if (theEntity->InitialSeeds()==false)
 		 opserr<<"Mesh "<<this->getTag()<< "failed to Intial the mesh Seeds"<<endln;
@@ -96,20 +96,20 @@ int Simple_Mesh::GeneratingNodes(const Vector& originLocs )
   else
   {
 #ifdef _DEBUG
-    opserr<<"SimpleMesh::GeneratingNodes encountered redefined OriginLocs"<<endln;
+    opserr<<"SimpleMesh::GeneratingNodes encountered redefined OriginLocs."<<endln;
 #endif
   }
   OriginNodeTag = theHTDomain->getNumNodes()+1;
   int nDoF=1;
 
 	if (theEntity->GenerateNodes(theHTDomain, nDoF, OriginLocs) < 0) {
-		opserr << "Simple Mesh: " << this->getTag() << "failed to generate nodes" << endln;
+		opserr << "Simple Mesh: " << this->getTag() << "failed to generate nodes." << endln;
 		return -1;
 	}
 	else {
 
 #ifdef _DEBUG
-	 opserr << "SimpleMesh has successfully generated " << (theHTDomain->getNumNodes()) - OriginNodeTag+1 << " HeatTransfer Nodes..." << endln;
+	 opserr << "SimpleMesh " << this->getTag() << " has successfully generated " << (theHTDomain->getNumNodes()) - OriginNodeTag+1 << " HeatTransfer Nodes." << endln;
 #endif
 
 	}
@@ -128,12 +128,12 @@ int Simple_Mesh::GeneratingEles(const ID& eleParameters)
   }
   else
   {
-    opserr<<"SimpleMesh::GeneratingEles encounters redefined EleParameteres"<<endln;
+    opserr<< "SimpleMesh " << this->getTag()<< " encounters redefined EleParameteres."<<endln;
   }
   
 
 #ifdef _DEBUG
-	opserr<<"SimpleMesh "<<this->getTag()<<" starts to generate elements...."<< theEntity->getEntityTypeTag() <<endln;
+	opserr<<"SimpleMesh "<<this->getTag()<<" starts to generate elements for entity of type "<< theEntity->getEntityTypeTag() <<endln;
 #endif
 
   
@@ -144,7 +144,7 @@ int Simple_Mesh::GeneratingEles(const ID& eleParameters)
 	int result = theEntity->GenerateEles(theHTDomain, EleParameters, theHTMaterial,theHTMaterial1);
 
 	if (result < 0) {
-		opserr << "HeatTransferDomain Failed to generate elements";
+		opserr << "HeatTransferDomain Failed to generate elements.\n" << endln;
 		return -1;
 	}
 
@@ -152,7 +152,7 @@ int Simple_Mesh::GeneratingEles(const ID& eleParameters)
 		
 #ifdef _DEBUG
 		if(isHTDomain)
-		opserr<<"SimpleMesh has successfully generated "<<(theHTDomain->getNumElements())-OriginEleTag+1 <<" HeatTransfer Elements..."<<endln;
+		opserr<<"SimpleMesh " << this->getTag() << " has successfully generated "<<(theHTDomain->getNumElements())-OriginEleTag+1 <<" HeatTransfer Elements.\n"<<endln;
 #endif
 
 return 0;
@@ -187,42 +187,36 @@ Simple_Mesh::SelectingNodes(ID& NodesRange,int crdTag,double MinValue, double Ma
 	vector<int> SelectedNodes;
 	int NodeTag =0;
 	for(int i=0;i<iniNumOfNodes;i++){
-		if(isHTDomain)
+		if (isHTDomain)
 		{
-			if(iniSelecting)
-				NodeTag = OriginNodeTag+i;
+			if (iniSelecting)
+				NodeTag = OriginNodeTag + i;
 			else
-				NodeTag	= NodesRange(i);
-			//opserr<<(theHTDomain->getNode(NodeTag)->getCrds())<<"     ";
+				NodeTag = NodesRange(i);
+
 			double NodalCrd = (theHTDomain->getNode(NodeTag)->getCrds())(crdTag);
-			if((NodalCrd<=MaxValue+Tolerance)&&(NodalCrd>=MinValue-Tolerance)){
+			if ((NodalCrd <= MaxValue + Tolerance) && (NodalCrd >= MinValue - Tolerance)) {
 				SelectedNodes.push_back(NodeTag);
 			}
-		 }
-		else 
-		{
-			/*
-			if(iniSelecting)
-				NodeTag = OriginNodeTag+i;
-			else
-				NodeTag	= NodesRange(i);
-
-			Node* theNode = theDomain->getNode(NodeTag);
-			if((theNode->getCrds()(crdTag)<=MaxValue+Tolerance)&&(theNode->getCrds()(crdTag)>=MinValue-Tolerance))
-				SelectedNodes.push_back(NodeTag);*/
+		}
+		else {
+			opserr << "ERROR: Simple_Mesh trying to select a node not within the domain." << endln;
+			return -1;
 		}
 	  
 	}
 	int NewIDsize = SelectedNodes.size();
+	//Mhd Anwar Orabi 2021
+	if (NewIDsize == 0)
+		NodesRange = 0;
+	else
+		NodesRange.resize(NewIDsize);
 
-	//opserr<<"SimpleMesh::SelectingNodes has selected "<<NewIDsize<<" Nodes for crd"<<crdTag<<endln;
-
-	NodesRange.resize(NewIDsize);
-	for (int i = 0; i< NewIDsize; i++) {
+	for (int i = 0; i < NewIDsize; i++) {
 		NodesRange(i)=SelectedNodes[i];
 	}
 #ifdef _DEBUG
-	opserr<<NodesRange<<endln;
+	opserr << "Debug mode node range currently selected is:" << NodesRange << endln;
 #endif
   return 0;
 }
@@ -259,7 +253,7 @@ int Simple_Mesh::SelectingNodesbyFace(ID& NodesRange, int FaceTag) {
 			}
 		}else if (FaceTag==3) {
 			NodesRange.resize(NumCtrY+1);
-			for(int i =0;i<NumCtrX+1;i++) {
+			for(int i =0;i<NumCtrY+1;i++) {
 			 NodesRange(i) = OriginNodeTag+(NumCtrX+1)*i+NumCtrX;
 			}
 		}else if (FaceTag==2) {
@@ -480,10 +474,10 @@ int Simple_Mesh::SelectingElesbyFace(ID& ElesRange, int FaceTag, int& eleFaceID)
 	}
 	else if((theEntity->getEntityTypeTag())==1||(theEntity->getEntityTypeTag())==11){
     //2D Isection Beam or IsectionBeamProtected;
-		int NumCtrX= theEntity->GetNumCtrlID()(0);
-		int NumCtrY= theEntity->GetNumCtrlID()(1);
-		int NumCtrX_Web = theEntity->GetNumCtrlID()(2);
-		int NumCtrY_Web = theEntity->GetNumCtrlID()(3);
+		int NumCtrX= theEntity->GetNumCtrlID()(0);  // flange elements in x + web elements in x
+		int NumCtrY= theEntity->GetNumCtrlID()(1); // flange elements in y
+		int NumCtrX_Web = theEntity->GetNumCtrlID()(2); // web elements in x
+		int NumCtrY_Web = theEntity->GetNumCtrlID()(3); // web elements in y
 
 		if(theEntity->getEntityTypeTag()==11){
 			

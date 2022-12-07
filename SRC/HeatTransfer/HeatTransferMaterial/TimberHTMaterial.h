@@ -37,6 +37,7 @@ class TimberHTMaterial: public HeatTransferMaterial
 {
     public:
 		TimberHTMaterial(int tag,int typeTag, HeatTransferDomain* theDomain, Vector matPars);
+		TimberHTMaterial(int tag, int typeTag, HeatTransferDomain* theDomain, Matrix thePars, Vector matPars);
 		virtual ~TimberHTMaterial();
 
 		// method for this material to update itself according to its new parameters
@@ -55,23 +56,36 @@ class TimberHTMaterial: public HeatTransferMaterial
 		void update();
 		void  Print(OPS_Stream&, int = 0) {return;};
 		bool getIfHeatGen();
-		double getHeatGen();
+		double getHeatGen(double locy=0);
 
 		const Vector& getPars();
     protected:
 		
     private:
+		
 		int TypeTag;
-		int PhaseTag;
+		int trialphTag, PhaseTag;
+		int TempTag;
 		double rho, cp, enthalpy;
+		double commit_rho, commit_cp, commit_k;
+		double rho0, moist;
 		double trial_temp;
 		double ini_temp;  // keep a copy of initial temperature
-		static double epsilon;
+		//static double charEndt;
 		Vector MatPars;
 		double pht1, pht2;
+		double pht13, pht23;
+		double HtComb, Qgen;
 		double charTime;
 		HeatTransferDomain* theHTDomain;
-
+		const char* fileName;
+		Matrix* thePars;
+		double T1, T2, T3;
+		double transt23;
+		double commit_time;
+		double current_time;
+		double current_Qc;
+		double commit_Qc;
 		int determinePhase(double temp, double time);
 };
 

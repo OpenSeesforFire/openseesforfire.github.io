@@ -51,7 +51,7 @@ class HeatTransferMaterial: public TaggedObject
 		virtual double getEnthalpy(double temperature) = 0;
 		virtual HeatTransferMaterial* getCopy() = 0;
 		virtual bool getIfHeatGen();
-		virtual double getHeatGen();
+		virtual double getHeatGen(double par =0);
 
 		virtual int commitState() = 0;
 		virtual int revertToLastCommit() = 0;

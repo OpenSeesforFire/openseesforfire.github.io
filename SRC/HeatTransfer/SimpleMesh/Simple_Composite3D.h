@@ -19,7 +19,7 @@ public:
                               double HTI_Bf, double HTI_Tf, double HTI_Hw, double HTI_Tw, double HTI_Len,double slabW,double slabH);
 	~Simple_Composite3D();
 
-	int InitialMeshCtrl(Vector& MeshCtrls);
+	int InitialMeshCtrl(Vector& MeshCtrls, bool numCtrl = false);
     bool InitialSeeds(void); 
     const Vector& GetSeeds(int SeedTag);
     int GetNumofNodes(void);

@@ -47,7 +47,7 @@ public:
 	//Simple_Mesh(int tag, Simple_Isection* Isection, Domain* theDomain,NDMaterial* theNDMaterial, double EleX, double EleY);
 	//Simple_Mesh(int tag, Simple_Isection* Isection , Domain* theDomain,NDMaterial* theNDMaterial, double EleX, double EleY,double EleX_Web,double EleY_Web);
 	
-	Simple_Mesh(int tag, Simple_Entity* Entity, HeatTransferDomain* theDomain, HeatTransferMaterial* theHTMaterial,Vector& MeshCtrls,HeatTransferMaterial* theHTMateria1=0);
+	Simple_Mesh(int tag, Simple_Entity* Entity, HeatTransferDomain* theDomain, HeatTransferMaterial* theHTMaterial,Vector& MeshCtrls,HeatTransferMaterial* theHTMateria1=0,bool numCtrl=false);
 	//Simple_Mesh(int tag, Simple_Brick* Brick, HeatTransferDomain* theDomain, HeatTransferMaterial* theHTMaterial,double EleX, double EleY, double EleZ);
 	//Simple_Mesh(int tag, Simple_Isection* Isection, HeatTransferDomain* theDomain, HeatTransferMaterial* theHTMaterial, double EleX, double EleY);
 	//Simple_Mesh(int tag, Simple_Isection* Isection , HeatTransferDomain* theDomain, HeatTransferMaterial* theHTMaterial, double EleX, double EleY,double EleX_Web,double EleY_Web);

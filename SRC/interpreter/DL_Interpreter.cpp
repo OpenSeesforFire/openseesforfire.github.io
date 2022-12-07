@@ -78,6 +78,12 @@ DL_Interpreter::getDouble(double *, int numArgs)
     return -1;
 }
 
+int
+DL_Interpreter::getList(double *, int* size)
+{
+    return -1;
+}
+
 const char*
 DL_Interpreter::getString()
 {

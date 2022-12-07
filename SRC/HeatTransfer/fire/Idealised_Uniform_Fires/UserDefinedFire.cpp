@@ -35,9 +35,12 @@
 #include <HeatFluxBC.h>
 #include <Convection.h>
 #include <Radiation.h>
+#include <PrescribedSurfFlux.h>
 
 using std::ios;
 using std::ifstream;
+
+Vector UserDefinedFire:: thefireData(2);
 
 UserDefinedFire::UserDefinedFire(int tag)
 :FireModel(tag, 8),theData(0), time(0), currentTimeLoc(-1), type_tag(-1)
@@ -47,7 +50,7 @@ UserDefinedFire::UserDefinedFire(int tag)
 }
 		   
 UserDefinedFire::UserDefinedFire(int tag,const Vector& theFireData, const Vector& theTime, int typeTag)
-:FireModel(tag ,8),theData(0), time(0), currentTimeLoc(0), type_tag(typeTag)
+:FireModel(tag ,8),theData(0), time(0), thePar(0), currentTimeLoc(0), type_tag(typeTag)
 {
     // check vectors are of same size
     if (theFireData.Size() != theTime.Size()) {
@@ -76,8 +79,13 @@ UserDefinedFire::UserDefinedFire(int tag,const Vector& theFireData, const Vector
 UserDefinedFire::UserDefinedFire(int tag, const char* theFireData, int typeTag)		       
 :FireModel(tag ,8),theData(0), time(0), currentTimeLoc(0), type_tag(typeTag)
 {
+	//Type1: time-gasT
+	//Type2: time-HT
+	//Type3: time-gasT-convec h
+	//Type: time-ht-covnec h
     // determine the number of data points
     int numDataPoints =0;
+	int numRows = 0;
 	double dataPoint;
 	ifstream theFile;
 
@@ -93,13 +101,19 @@ UserDefinedFire::UserDefinedFire(int tag, const char* theFireData, int typeTag)
 
 	theFile.close();
 
-	numDataPoints = numDataPoints / 2;
+	if(type_tag==3|| type_tag == 4)
+		numRows = numDataPoints / 3;
+	else
+		numRows = numDataPoints / 2;
+
 	// check number of data entries in both are the same
 
-	if (numDataPoints != 0) {
+	if (numRows != 0) {
 		// now create the two vector
-		theData = new Vector(numDataPoints);
-		time = new Vector(numDataPoints);
+		theData = new Vector(numRows);
+		time = new Vector(numRows);
+		if (type_tag == 3 || type_tag == 4)
+			thePar = new Vector(numRows);
 
 		// ensure did not run out of memory creating copies
 		if (theData == 0 || theData->Size() == 0 ||time == 0 || time->Size() == 0) {
@@ -122,11 +136,23 @@ UserDefinedFire::UserDefinedFire(int tag, const char* theFireData, int typeTag)
 				(*time)(count) = dataPoint;
 				theFile >> dataPoint;
 				(*theData)(count) = dataPoint;
-				count++;
+				
+
+				if (type_tag == 3 || type_tag == 4)
+				{
+					theFile >> dataPoint;
+					(*thePar)(count) = dataPoint;
+					count++;
+				}
+				else
+					count++;
 			}
+#ifdef _FDEBUG
+			opserr << (*time)(10) << "," << (*theData)(10) << "," << (*thePar)(10)<<endln;
+			opserr << (*time)(180) << "," << (*theData)(180) << "," << (*thePar)(180)<<endln;
+#endif // DEBUG
+
 			
-			opserr << (*time)(10) << "," << (*theData)(10) << endln;
-			opserr << (*time)(180) << "," << (*theData)(180) << endln;
 			// finally close the file
 			theFile.close();
 
@@ -141,12 +167,18 @@ UserDefinedFire::~UserDefinedFire()
     delete theData;
   if (time != 0)
     delete time;
+  //Mhd Anwar Orabi 2021: added the type_tag check to protect against deleting thePar when it was no initialised.
+  if (type_tag == 3 || type_tag == 4) {
+	  if (thePar != 0)
+		  delete thePar;
+  };
 }
 
 
-double
+const Vector&
 UserDefinedFire::getData(double theTime)
 {
+
     // check for a quick return
     if (theData == 0)
 		return 0.0;
@@ -194,7 +226,13 @@ UserDefinedFire::getData(double theTime)
 
 	double value1 = (*theData)[currentTimeLoc];
 	double value2 = (*theData)[currentTimeLoc+1];
-	return (value1 + (value2-value1)*(theTime-time1)/(time2 - time1));
+	thefireData(0)= (value1 + (value2-value1)*(theTime-time1)/(time2 - time1));
+	if (type_tag == 3 || type_tag == 4) {
+		double par1 = (*thePar)[currentTimeLoc];
+		double par2 = (*thePar)[currentTimeLoc+1];
+		thefireData(1) = (par1 + (par2 - par1) * (theTime - time1) / (time2 - time1));
+	}
+	return thefireData;
 }
 
 
@@ -242,34 +280,87 @@ UserDefinedFire::applyFluxBC(HeatFluxBC* theFlux, double time)
 {
     int flux_type = theFlux->getTypeTag();
     // need to identify the type of data information
-    if (type_tag == 1)
+    if (type_tag == 1|| type_tag == 3)
 		{
 		// need to determine convection type or radiation
 		if (flux_type == 1) {
 			Convection* convec = (Convection*) theFlux;
-			convec->setSurroundingTemp(this->getData(time)+273.15);
+			if (type_tag == 3 || type_tag == 4) {
+				convec->setParameter(this->getData(time)(1));
+			}
+			convec->setSurroundingTemp(this->getData(time)(0)+273.15);
 			convec->applyFluxBC(time);
 		} else if (flux_type == 2) {
 				Radiation* rad = (Radiation*) theFlux;
 				double bzm = rad->getBLZMConstant();
 				double alpha = rad->getAbsorptivity();
-				double temp = this->getData(time)+273.15;
+				double temp = this->getData(time)(0)+273.15;
 				double qir = bzm * pow(temp, 4.0);
 				rad->setIrradiation(qir);
 				rad->applyFluxBC(time);
 		} else {
 				opserr << "UserDefinedFire::applyFluxBC() - incorrect flux type provided\n";
 		}
-	} else if (type_tag == 2){
+	} 
+	//Heat flux based fire model
+	else if (type_tag == 2||type_tag == 4){
 		if (flux_type == 2) {
 			Radiation* rad = (Radiation*) theFlux;
-			double qir = this->getData(time);
-			rad->setIrradiation(qir);
+			//double qir = this->getData(time)(0);
+			//rad->setIrradiation(qir);
 			rad->applyFluxBC(time);
-			} else {
+			} 
+		else if (flux_type == 1) {
+			Convection* convec = (Convection*)theFlux;
+			if (type_tag == 3 || type_tag == 4) {
+				convec->setParameter(this->getData(time)(1));
+			}
+			convec->applyFluxBC(time);
+		}
+		else if (flux_type == 3) {
+			PrescribedSurfFlux* pflux = (PrescribedSurfFlux*)theFlux;
+
+			//int flux_type = pflux->getTypeTag();
+			int eleTag = pflux->getElementTag();
+			int fTag = pflux->getFaceTag();
+			HeatTransferDomain* theDomain = pflux->getDomain();
+			if (theDomain == 0) {
+				opserr << "Idealised_Local_Fire::applyFluxBC() - HeatFluxBC has not been associated with a domain";
+				exit(-1);
+			}
+
+			HeatTransferElement* theEle = theDomain->getElement(eleTag);
+			if (theEle == 0) {
+				opserr << "Idealised_Local_Fire::applyFluxBC() - no element with tag " << eleTag << " exists in the domain";
+				exit(-1);
+			}
+
+			const ID& faceNodes = theEle->getNodesOnFace(fTag);
+			int size = faceNodes.Size();
+			Vector nodalFlux(size);
+
+			for (int i = 0; i < size; i++) {
+				int nodTag = faceNodes(i);
+				HeatTransferNode* theNode = theDomain->getNode(nodTag);
+				if (theNode == 0) {
+					opserr << "Idealised_Local_Fire::applyFluxBC() - no node with tag " << nodTag << " exists in the domain";
+					exit(-1);
+				}
+				nodalFlux(i) = this->getData(time)(0);
+#ifdef _FDEBUG
+				opserr << "Flux at node " << nodTag << " is " << nodalFlux(i) << endln;
+#endif
+
+				
+			}
+
+			pflux->setData(nodalFlux);
+			pflux->applyFluxBC();
+		}
+		else {
 				opserr << "UserDefinedFire::applyFluxBC() - flux_type should be 2\n";
 				exit(-1); 
-			}
+		}
 	} else {
 		opserr << "UserDefinedFire::applyFluxBC() - incorrect input type provided\n";
 		exit(-1); 

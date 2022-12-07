@@ -72,6 +72,7 @@ class PythonModule: public DL_Interpreter
     // methods for commands to parse the command line
     virtual int getNumRemainingInputArgs(void);
     virtual int getInt(int *, int numArgs);
+    virtual int getList(double* data, int* sizelist); //Added by PolyU
     virtual int getDouble(double *, int numArgs);
     virtual const char* getString();
     virtual int getStringCopy(char **stringPtr);

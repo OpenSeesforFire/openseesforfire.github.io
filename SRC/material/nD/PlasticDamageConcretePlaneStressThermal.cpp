@@ -74,13 +74,13 @@ OPS_PlasticDamageConcretePlaneStressThermal(void)
 
 	int numData = 1;
 	if (OPS_GetInt(&numData, iData) != 0) {
-		opserr << "WARNING invalid integer tag: nDMaterial EasticIsotropic \n";
+		opserr << "WARNING invalid integer tag: nDMaterial PlasticDamageConcreteThermal \n";
 		return 0;
 	}
 
 	numData = numArgs - 1;;
 	if (OPS_GetDouble(&numData, dData) != 0) {
-		opserr << "WARNING invalid data: nDMaterial EasticIsotropic : " << iData[0] << "\n";
+		opserr << "WARNING invalid data: nDMaterial PlasticDamageConcreteThermal : " << iData[0] << "\n";
 		return 0;
 	}
 
@@ -111,7 +111,7 @@ PlasticDamageConcretePlaneStressThermal::PlasticDamageConcretePlaneStressThermal
 	)
 	:NDMaterial(tag, 100),
 	E(_e), nu(_nu), ft(_ft), At(_At), Ac(_Ac), Dbarc(_Dc), Dbart(_Dt),gt0(Gt),gc0(Gc),
-	eps(3), sig(3), sige(3), eps_p(3), sigeP(3), TempAndElong(2),
+	eps(3), sig(3), sige(3), eps_p(3), sigeP(3), TempAndElong(4),
 	epsCommit(3), sigCommit(3), sigeCommit(3), eps_pCommit(3),
 	Ce(3, 3), C(3, 3), Ce0(3, 3), Ccommit(3, 3), ft0(_ft), E0(_e)
 {
@@ -160,6 +160,8 @@ PlasticDamageConcretePlaneStressThermal::PlasticDamageConcretePlaneStressThermal
 
 	TempAndElong(0) = 0;
 	TempAndElong(1) = 0;
+	TempAndElong(2) = 0;
+	TempAndElong(3) = 0;
 
 	Cchange = -1;
 	Tchange = 0;
@@ -172,7 +174,7 @@ PlasticDamageConcretePlaneStressThermal::PlasticDamageConcretePlaneStressThermal
 
 PlasticDamageConcretePlaneStressThermal::PlasticDamageConcretePlaneStressThermal()
 	:NDMaterial(0, 0),
-	eps(3), sig(3), sige(3), eps_p(3), sigeP(3), TempAndElong(2),
+	eps(3), sig(3), sige(3), eps_p(3), sigeP(3), TempAndElong(4),
 	epsCommit(3), sigCommit(3), sigeCommit(3), eps_pCommit(3), sigePCommit(3),
 	Ce(3, 3), C(3, 3), Ccommit(3, 3), At(0), Ac(0), Dbarc(0), Dbart(0), epsLitsp(0)
 {
@@ -898,14 +900,15 @@ PlasticDamageConcretePlaneStressThermal::setTrialStrain(const Vector &strain)
    
    // TempAndElong(0) = this->getTag();
    //TempAndElong(0)= kt;
-   //TempAndElong(1) = kc;
+   TempAndElong(2) = kt;
+   TempAndElong(3) = kc;
 
 	if (sig(0) != sig(0))
 		opserr << "invalid sig" << sig(0) << endln;
 
 	// TempAndElong(0) = kc;
-	TempAndElong(0) = sigPr(0);
-	TempAndElong(1) = sigPr(1);
+	//TempAndElong(0) = sigPr(0);
+	//TempAndElong(1) = sigPr(1);
 
 
 	//-================================
@@ -1088,6 +1091,9 @@ PlasticDamageConcretePlaneStressThermal::getTempAndElong(void)
 double
 PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &tempT, double&ET, double&Elong)
 {
+	if (tempT < -100 || tempT>1200)
+		opserr << "WARNING ConcreteDamageThermal received an invalid temperature: " << tempT << endln;
+
 	bool Lits = true;
 	double Eps_lits = 0;
 	Temp = tempT;
@@ -1110,82 +1116,148 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 		//Ets = 0;
 	}
 	
+	int matType =1; //Siliceous aggregates
+	//int matType =2;//Calcareous aggregates
+
 	// compression strength, at elevated temperature
 	//   strain at compression strength, at elevated temperature
 	//   ultimate (crushing) strain, at elevated temperature
-	if (Temp <= 0) {
+	if (matType == 1) {
+		if (Temp <= 0) {
+			fc = fc0;
+			epsc0 = -0.0025;
+			//fcu = fcuT;
+			epscu = -0.02;
+			//Ets = EtsT;  jz what is there the statement?
+		}
+		else if (Temp <= 80) {
+			fc = fc0;
+			epsc0 = -(0.0025 + (0.004 - 0.0025)*(Temp - 0) / (80 - 0));
+			epscu = -(0.02 + (0.025 - 0.02)*(Temp - 0) / (80 - 0));
+		}
+		else if (Temp <= 180) {
+			fc = fc0*(1 - (Temp - 80)*0.05 / 100);
+			epsc0 = -(0.0040 + (0.0055 - 0.0040)*(Temp - 80) / 100);
+			epscu = -(0.0225 + (0.025 - 0.0225)*(Temp - 80) / 100);
+		}
+		else if (Temp <= 280) {
+			fc = fc0*(0.95 - (Temp - 180)*0.1 / 100);
+			epsc0 = -(0.0055 + (0.0070 - 0.0055)*(Temp - 180) / 100);
+			epscu = -(0.025 + (0.0275 - 0.025)*(Temp - 180) / 100);
+		}
+		else if (Temp <= 380) {
+			fc = fc0*(0.85 - (Temp - 280)*0.1 / 100);
+			epsc0 = -(0.0070 + (0.0100 - 0.0070)*(Temp - 280) / 100);
+			epscu = -(0.0275 + (0.03 - 0.0275)*(Temp - 280) / 100);
+		}
+		else if (Temp <= 480) {
+			fc = fc0*(0.75 - (Temp - 380)*0.15 / 100);
+			epsc0 = -(0.0100 + (0.0150 - 0.0100)*(Temp - 380) / 100);
+			epscu = -(0.03 + (0.0325 - 0.03)*(Temp - 380) / 100);
+		}
+		else if (Temp <= 580) {
+			fc = fc0*(0.60 - (Temp - 480)*0.15 / 100);
+			epsc0 = -(0.0150 + (0.0250 - 0.0150)*(Temp - 480) / 100);
+			epscu = -(0.0325 + (0.035 - 0.0325)*(Temp - 480) / 100);
+		}
+		else if (Temp <= 680) {
+			fc = fc0*(0.45 - (Temp - 580)*0.15 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.035 + (0.0375 - 0.035)*(Temp - 580) / 100);
+		}
+		else if (Temp <= 780) {
+			fc = fc0*(0.30 - (Temp - 680)*0.15 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.0375 + (0.04 - 0.0375)*(Temp - 680) / 100);
+		}
+		else if (Temp <= 880) {
+			fc = fc0*(0.15 - (Temp - 780)*0.07 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.04 + (0.0425 - 0.04)*(Temp - 780) / 100);
+		}
+		else if (Temp <= 980) {
+			fc = fc0*(0.08 - (Temp - 880)*0.04 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.0425 + (0.045 - 0.0425)*(Temp - 880) / 100);
+		}
+		else if (Temp <= 1080) {
+			fc = fc0*(0.04 - (Temp - 980)*0.03 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.045 + (0.0475 - 0.045)*(Temp - 980) / 100);
+		}
+		else {
+			opserr << "CDPThermal Material temperature " << Temp << " is invalid\n";
+		}
+	}
+	else if (matType == 2) {
+		if (Temp <= 0) {
 		fc = fc0;
 		epsc0 = -0.0025;
 		//fcu = fcuT;
 		epscu = -0.02;
 		//Ets = EtsT;  jz what is there the statement?
-	}
-	else if (Temp <= 80) {
-		fc = fc0;
-		epsc0 = -(0.0025 + (0.004 - 0.0025)*(Temp - 0) / (80 - 0));
-		epscu = -(0.02 + (0.025 - 0.02)*(Temp - 0) / (80 - 0));
-	}
-	else if (Temp <= 180) {
-		fc = fc0*(1 - (Temp - 80)*0.05 / 100);
-		epsc0 = -(0.0040 + (0.0055 - 0.0040)*(Temp - 80) / 100);
-		epscu = -(0.0225 + (0.025 - 0.0225)*(Temp - 80) / 100);
-	}
-	else if (Temp <= 280) {
-		fc = fc0*(0.95 - (Temp - 180)*0.1 / 100);
-		epsc0 = -(0.0055 + (0.0070 - 0.0055)*(Temp - 180) / 100);
-		epscu = -(0.025 + (0.0275 - 0.025)*(Temp - 180) / 100);
-
-	}
-	else if (Temp <= 380) {
-		fc = fc0*(0.85 - (Temp - 280)*0.1 / 100);
-		epsc0 = -(0.0070 + (0.0100 - 0.0070)*(Temp - 280) / 100);
-		epscu = -(0.0275 + (0.03 - 0.0275)*(Temp - 280) / 100);
-	}
-	else if (Temp <= 480) {
-		fc = fc0*(0.75 - (Temp - 380)*0.15 / 100);
-		epsc0 = -(0.0100 + (0.0150 - 0.0100)*(Temp - 380) / 100);
-		epscu = -(0.03 + (0.0325 - 0.03)*(Temp - 380) / 100);
-	}
-	else if (Temp <= 580) {
-		fc = fc0*(0.60 - (Temp - 480)*0.15 / 100);
-		epsc0 = -(0.0150 + (0.0250 - 0.0150)*(Temp - 480) / 100);
-		epscu = -(0.0325 + (0.035 - 0.0325)*(Temp - 480) / 100);
-
-	}
-	else if (Temp <= 680) {
-		fc = fc0*(0.45 - (Temp - 580)*0.15 / 100);
-		epsc0 = -0.0250;
-		epscu = -(0.035 + (0.0375 - 0.035)*(Temp - 580) / 100);
-	}
-	else if (Temp <= 780) {
-		fc = fc0*(0.30 - (Temp - 680)*0.15 / 100);
-		epsc0 = -0.0250;
-		epscu = -(0.0375 + (0.04 - 0.0375)*(Temp - 680) / 100);
-
-	}
-	else if (Temp <= 880) {
-		fc = fc0*(0.15 - (Temp - 780)*0.07 / 100);
-		epsc0 = -0.0250;
-		epscu = -(0.04 + (0.0425 - 0.04)*(Temp - 780) / 100);
-	}
-	else if (Temp <= 980) {
-		fc = fc0*(0.08 - (Temp - 880)*0.04 / 100);
-		epsc0 = -0.0250;
-		epscu = -(0.0425 + (0.045 - 0.0425)*(Temp - 880) / 100);
-	}
-	else if (Temp <= 1080) {
-		fc = fc0*(0.04 - (Temp - 980)*0.03 / 100);
-		epsc0 = -0.0250;
-		epscu = -(0.045 + (0.0475 - 0.045)*(Temp - 980) / 100);
-	}
-	else {
-		opserr << "Material temperature " << Temp << " is invalid\n";
-
+		}
+		else if (Temp <= 80) {
+			fc = fc0;
+			epsc0 = -(0.0025 + (0.004 - 0.0025)*(Temp - 0) / (80 - 0));
+			epscu = -(0.02 + (0.025 - 0.02)*(Temp - 0) / (80 - 0));
+		}
+		else if (Temp <= 180) {
+			fc = fc0*(1 - (Temp - 80)*0.03 / 100);
+			epsc0 = -(0.0040 + (0.0055 - 0.0040)*(Temp - 80) / 100);
+			epscu = -(0.0225 + (0.025 - 0.0225)*(Temp - 80) / 100);
+		}
+		else if (Temp <= 280) {
+			fc = fc0*(0.97 - (Temp - 180)*0.06 / 100);
+			epsc0 = -(0.0055 + (0.0070 - 0.0055)*(Temp - 180) / 100);
+			epscu = -(0.025 + (0.0275 - 0.025)*(Temp - 180) / 100);
+		}
+		else if (Temp <= 380) {
+			fc = fc0*(0.91 - (Temp - 280)*0.06 / 100);
+			epsc0 = -(0.0070 + (0.0100 - 0.0070)*(Temp - 280) / 100);
+			epscu = -(0.0275 + (0.03 - 0.0275)*(Temp - 280) / 100);
+		}
+		else if (Temp <= 480) {
+			fc = fc0*(0.85 - (Temp - 380)*0.11 / 100);
+			epsc0 = -(0.0100 + (0.0150 - 0.0100)*(Temp - 380) / 100);
+			epscu = -(0.03 + (0.0325 - 0.03)*(Temp - 380) / 100);
+		}
+		else if (Temp <= 580) {
+			fc = fc0*(0.74 - (Temp - 480)*0.14 / 100);
+			epsc0 = -(0.0150 + (0.0250 - 0.0150)*(Temp - 480) / 100);
+			epscu = -(0.0325 + (0.035 - 0.0325)*(Temp - 480) / 100);
+		}
+		else if (Temp <= 680) {
+			fc = fc0*(0.6 - (Temp - 580)*0.17 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.035 + (0.0375 - 0.035)*(Temp - 580) / 100);
+		}
+		else if (Temp <= 780) {
+			fc = fc0*(0.43 - (Temp - 680)*0.16 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.0375 + (0.04 - 0.0375)*(Temp - 680) / 100);
+		}
+		else if (Temp <= 880) {
+			fc = fc0*(0.27 - (Temp - 780)*0.12 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.04 + (0.0425 - 0.04)*(Temp - 780) / 100);
+		}
+		else if (Temp <= 980) {
+			fc = fc0*(0.15 - (Temp - 880)*0.09 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.0425 + (0.045 - 0.0425)*(Temp - 880) / 100);
+		}
+		else if (Temp <= 1080) {
+			fc = fc0*(0.06 - (Temp - 980)*0.04 / 100);
+			epsc0 = -0.0250;
+			epscu = -(0.045 + (0.0475 - 0.045)*(Temp - 980) / 100);
+		}
+		else {
+			opserr << "CDPThermal Material temperature " << Temp << " is invalid\n";
+		}
 	}
 	
 	double ThermalElongation = 0;
-	int matType =1; //Siliceous aggregates
-//  int matType =2;//Calcareous aggregates
 	if (matType == 1) {
 		if (Temp <= 1) {
 			ThermalElongation = Temp  * 9.213e-6;
@@ -1197,21 +1269,21 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 			ThermalElongation = 14e-3;
 		}
 		else {
-			opserr << "Material temperature " << Temp << " is invalid\n";
+			opserr << "CDPThermal Material temperature " << Temp << " is invalid\n";
 		}
 	}
 	else if(matType ==2){
 		if (Temp <= 1) {
 			ThermalElongation = Temp  * 6e-6;
 		}
-		else if (Temp <= 680) {
+		else if (Temp <= 785) {
 			ThermalElongation = -1.2e-4 + 6e-6 *(Temp + 20) + 1.4e-11 *(Temp + 20)*(Temp + 20)*(Temp + 20);
 		}
 		else if (Temp <= 1180) {
 			ThermalElongation = 12e-3;
 		}
 		else {
-			opserr << "Material temperature "<<Temp<<" is invalid\n";
+			opserr << "CDPThermal Material temperature "<<Temp<<" is invalid\n";
 		}
 	
 	}
@@ -1226,6 +1298,7 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 		//E = -fc*0.0025 / epsc0 / fc0*E0;
 	//Elong = (1 - dt)* ThermalElongation;
 	//Es = -fc*0.0025/epsc0/fc0*Es0;
+//Turn off LITS
 
 	if (Lits) {
 		if (sigCommit(0) < 0 && sigCommit(1) < 0) {
@@ -1255,8 +1328,8 @@ PlasticDamageConcretePlaneStressThermal::setThermalTangentAndElongation(double &
 	
 //TempAndElong(0) = kt;
 //TempAndElong(1) = dt;
-	//TempAndElong(0) = Temp;
-	//TempAndElong(1) = ThermalElongation;
+	TempAndElong(0) = Temp;
+	TempAndElong(1) = ThermalElongation;
 	//TempAndElong(1) = E;
 	ET = E;
 	Tchange = 1;

@@ -29,22 +29,158 @@
 // Modified for SIF modelling by Liming Jiang [http://openseesforfire.github.io] 
 
 
+
 #include <LayeredShellFiberSectionThermal.h>
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
 #include <MaterialResponse.h>
 #include <Information.h>
+#include <elementAPI.h>
+
+
+void* OPS_LayeredShellFiberSectionThermal()
+{
+    if (OPS_GetNumRemainingInputArgs() < 3) {
+        opserr << "WARNING insufficient arguments" << endln;
+        opserr << "Want: section LayeredShellThermal tag? nLayers? matTag1? h1? ... matTagn? hn? " << endln;
+        return 0;
+    }
+
+    int tag, nLayers, matTag;
+    double h,loc, * thickness, *location;
+    double offset=0;
+    double flath = 0;
+    double ribh = 0;
+    double ribangle = 0;
+    NDMaterial** theMats;
+
+    int numdata = 1;
+    if (OPS_GetIntInput(&numdata, &tag) < 0) {
+        opserr << "WARNING invalid section LayeredShellThermal tag" << endln;
+        return 0;
+    }
+
+    //get offset if identified
+    const char* typechar = OPS_GetString();
+    if ((strcmp(typechar, "-offset") == 0) || (strcmp(typechar, "offset") == 0) || (strcmp(typechar, "-Offset") == 0)) {
+        if (OPS_GetDoubleInput(&numdata, &offset) < 0) {
+            opserr << "WARNING invalid offset value" << endln;
+            opserr << "LayeredShellThermal section: " << tag << endln;
+            return 0;
+        }
+    }
+    else if ((strcmp(typechar, "-ribSection") == 0) || (strcmp(typechar, "-rib") == 0) || (strcmp(typechar, "-Rib") == 0)) {
+        if (OPS_GetDoubleInput(&numdata, &flath) < 0) {
+            opserr << "WARNING invalid flat slab thickness" << endln;
+            opserr << "LayeredShellThermal section: " << tag << endln;
+            return 0;
+        }
+        if (OPS_GetDoubleInput(&numdata, &ribh) < 0) {
+            opserr << "WARNING invalid rib height(excluding flat part)" << endln;
+            opserr << "LayeredShellThermal section: " << tag << endln;
+            return 0;
+        }
+        if (OPS_GetDoubleInput(&numdata, &ribangle) < 0) {
+            opserr << "WARNING invalid rib angle" << endln;
+            opserr << "LayeredShellThermal section: " << tag << endln;
+            return 0;
+        }
+    }
+    else {
+        OPS_ResetCurrentInputArg(-1);
+    }
+
+    if (OPS_GetIntInput(&numdata, &nLayers) < 0) {
+        opserr << "WARNING invalid nLayers" << endln;
+        opserr << "LayeredShellThermal section: " << tag << endln;
+        return 0;
+    }
+
+    if (nLayers < 2) {
+        opserr << "ERROR number of layers must be larger than 2" << endln;
+        opserr << "LayeredShellThermal section: " << tag << endln;
+        return 0;
+    }
+    
+
+    theMats = new NDMaterial * [nLayers];
+    thickness = new double[nLayers];
+    location = new double[nLayers];
+
+    int type = 0;
+    if((OPS_GetNumRemainingInputArgs())/nLayers == 2 )
+        type =1;
+    else if ((OPS_GetNumRemainingInputArgs()) / nLayers == 3)
+        type = 2;
+   
+    for (int iLayer = 0; iLayer < nLayers; iLayer++) {
+        if (OPS_GetNumRemainingInputArgs() < 2) {
+            opserr << "WARNING must provide " << 2 * nLayers << "inputs\n";
+            return 0;
+        }
+        if (OPS_GetIntInput(&numdata, &matTag) < 0) {
+            opserr << "WARNING invalid matTag" << endln;
+            opserr << "LayeredShellThermal section: " << tag << endln;
+            return 0;
+        }
+
+        theMats[iLayer] = OPS_getNDMaterial(matTag);
+        if (theMats[iLayer] == 0) {
+            opserr << "WARNING nD material does not exist" << endln;;
+            opserr << "nD material: " << matTag;
+            opserr << "LayeredShellThermal section: " << tag << endln;
+            return 0;
+        }
+
+        if (OPS_GetDoubleInput(&numdata, &h) < 0) {
+            opserr << "WARNING invalid h" << endln;
+            opserr << "LayeredShellThermal section: " << tag << endln;
+            return 0;
+        }
+
+        if (h < 0) {
+            opserr << "WARNING invalid h" << endln;
+            opserr << "LayeredShellThermal section: " << tag << endln;
+            return 0;
+        }
+        thickness[iLayer] = h;
+
+        if (type == 2) {
+            if (OPS_GetDoubleInput(&numdata, &loc) < 0) {
+                opserr << "WARNING invalid loc" << endln;
+                opserr << "LayeredShellThermal section: " << tag << endln;
+                return 0;
+            }
+            location[iLayer] = loc;
+        }
+    }
+    SectionForceDeformation* theSection = 0;
+    if(type==1)
+         theSection = new LayeredShellFiberSectionThermal(tag, nLayers, thickness, theMats,offset);
+    else if(type==2)
+        theSection = new LayeredShellFiberSectionThermal(tag, nLayers, thickness,location, theMats, flath, ribh, ribangle);
+
+    if (location != 0) delete location;
+    if (thickness != 0) delete thickness;
+    if (theMats != 0) delete[] theMats;
+
+    return theSection;
+}
+
+
+
+
 
 //static vector and matrices
 Vector  LayeredShellFiberSectionThermal::stressResultant(8) ;
-Matrix  LayeredShellFiberSectionThermal::tangent(8,8) ;
+Matrix  LayeredShellFiberSectionThermal::tangent(8,8) ; 
 ID      LayeredShellFiberSectionThermal::array(8) ;
 //const double  LayeredShellFiberSectionThermal::root56 = sqrt(5.0/6.0) ; //shear correction
 const double  LayeredShellFiberSectionThermal::root56 = 1 ; //shear correction
 //null constructor
 LayeredShellFiberSectionThermal::LayeredShellFiberSectionThermal( ) : 
 SectionForceDeformation( 0, SEC_TAG_LayeredShellFiberSectionThermal ), 
-strainResultant(8), nLayers(0),countnGauss(0),AverageThermalMomentP(0), AverageThermalForceP(0),sT(0), ThermalElongation(0), Offset(0)
+strainResultant(8), nLayers(0),countnGauss(0),AverageThermalMomentP(0), AverageThermalForceP(0),sT(0), ThermalElongation(0), Offset(0), AverageThermalElongP(0)
 {
 
 }
@@ -56,13 +192,16 @@ LayeredShellFiberSectionThermal::LayeredShellFiberSectionThermal(
                                    double *thickness, 
                                    NDMaterial **fibers, double offset) :
 SectionForceDeformation( tag, SEC_TAG_LayeredShellFiberSectionThermal ),
-strainResultant(8), countnGauss(0), AverageThermalMomentP(0), AverageThermalForceP(0),sT(0), ThermalElongation(0), Offset(offset)
+strainResultant(8), countnGauss(0), AverageThermalMomentP(0), AverageThermalForceP(0),sT(0), ThermalElongation(0), Offset(offset), AverageThermalElongP(0)
 {
   this->nLayers = iLayers;
   sg = new double[iLayers];
   wg = new double[iLayers];
+
+  ti = new double[iLayers];
+  loci = new double[iLayers];
   theFibers = new NDMaterial*[iLayers];
-   ThermalElongation = new double[iLayers];
+  ThermalElongation = new double[iLayers];
 
   h = 0.0;
   int i;
@@ -71,8 +210,11 @@ strainResultant(8), countnGauss(0), AverageThermalMomentP(0), AverageThermalForc
     h = h + thickness[i];
     theFibers[i] = fibers[i]->getCopy( "PlateFiberThermal" ) ;
   }
-  for ( i = 0; i < iLayers; i++ ) 
-	  wg[i] = 2.0 * thickness[i] / h;
+  for (i = 0; i < iLayers; i++) {
+      wg[i] = 2.0 * thickness[i] / h;
+      ti[i] = thickness[i];
+  }
+	  
 
   double currLoc = 0.0;
   double h1 = 1.0 / h;
@@ -80,7 +222,9 @@ strainResultant(8), countnGauss(0), AverageThermalMomentP(0), AverageThermalForc
   {
     currLoc = currLoc + thickness[i];
     sg[i] = currLoc * h1 - 1.0;
+    loci[i] = currLoc * 0.5 - 0.5*h;
     currLoc = currLoc + thickness[i];
+    
 	ThermalElongation[i] =0.0;  //Added  by LMJ
   }
 
@@ -89,12 +233,55 @@ strainResultant(8), countnGauss(0), AverageThermalMomentP(0), AverageThermalForc
 
 }
 
+
+
+//full constructor
+LayeredShellFiberSectionThermal::LayeredShellFiberSectionThermal(
+    int tag,
+    int iLayers,
+    double* thickness, double* loc,
+    NDMaterial** fibers, double flath, double ribh, double ribangle):
+    SectionForceDeformation(tag, SEC_TAG_LayeredShellFiberSectionThermal),
+    strainResultant(8), countnGauss(0), AverageThermalMomentP(0), AverageThermalForceP(0), 
+    sT(0), ThermalElongation(0), Offset(0), AverageThermalElongP(0),flatH (flath), ribH(ribh),ribAng(ribangle)
+{
+    this->nLayers = iLayers;
+    ti = new double[iLayers];
+    loci = new double[iLayers];
+    theFibers = new NDMaterial * [iLayers];
+    ThermalElongation = new double[iLayers];
+
+    h = 0.0;
+    int i;
+    for (i = 0; i < iLayers; i++)
+    {
+       // h = h + thickness[i];
+        theFibers[i] = fibers[i]->getCopy("PlateFiberThermal");
+    }
+        
+    //double currLoc = 0.0;
+    //double h1 = 1.0 / h;
+    for (i = 0; i < iLayers; i++)
+    {
+        //currLoc = currLoc + thickness[i];
+       // sg[i] = currLoc * h1 - 1.0;
+       // currLoc = currLoc + thickness[i];
+        ti[i] = thickness[i];
+        loci[i] = loc[i];
+        ThermalElongation[i] = 0.0;  //Added  by LMJ
+    }
+
+    sT = new Vector(2);
+    sT->Zero();
+
+}
+
 //destructor
 LayeredShellFiberSectionThermal::~LayeredShellFiberSectionThermal( ) 
 { 
   int i ;
-  if (sg != 0) delete sg;
-if (wg != 0) delete wg;
+  if (ti != 0) delete ti;
+  if (loci != 0) delete loci;
   if (theFibers != 0)
   {
     for ( i = 0; i < nLayers; i++ )
@@ -110,17 +297,22 @@ SectionForceDeformation  *LayeredShellFiberSectionThermal::getCopy( )
 {
   LayeredShellFiberSectionThermal *clone = 0;   //new instance of this class
   
-  double *thickness = new double[nLayers];
-  if (thickness != 0)
+  //double *thickness = new double[nLayers];
+  if (flatH>1e-6&&ribH>1e-6)
   {
-    for (int i = 0; i < nLayers; i++ ) 
-      thickness[i] = 0.5 * wg[i] * h;
+    //for (int i = 0; i < nLayers; i++ ) 
+     // thickness[i] = 0.5 * wg[i] * h;
 
     clone = new LayeredShellFiberSectionThermal( this->getTag(),
 					  nLayers,
-					  thickness,
-					  theFibers,Offset ) ; //make the copy
-    delete thickness;
+					  ti, loci,
+					  theFibers,flatH, ribH, ribAng) ; //make the copy
+    //delete thickness;
+  }
+  else {
+     // flatH = 0; ribH = 0.0;  ribAng = 0.0;
+      //clone = new LayeredShellFiberSectionThermal(this->getTag(),nLayers, ti, loci,theFibers, flatH, ribH, ribAng); //make the copy
+      clone = new LayeredShellFiberSectionThermal(this->getTag(),nLayers,ti,theFibers, Offset); //make the copy
   }
   return clone ;
 }
@@ -186,7 +378,7 @@ LayeredShellFiberSectionThermal::getRho( )
 
   for ( int i = 0; i < nLayers; i++ ) {
     
-    weight = ( 0.5*h ) * wg[i] ;
+    weight = ti[i] ;
 
     rhoH += ( theFibers[i]->getRho() ) * weight ;
 
@@ -258,17 +450,20 @@ LayeredShellFiberSectionThermal::setResponse(const char **argv, int argc,
       return 0;
     }
     int pointNum = atoi(argv[1]);
-    if (pointNum > 0 && pointNum <= nLayers) {
-      
-      output.tag("FiberOutput");
-      output.attr("number",pointNum);
-      output.attr("zLoc",0.5*h*sg[pointNum-1]);
-      output.attr("thickness",0.5*h*wg[pointNum-1]);
-      
-      theResponse =  theFibers[pointNum-1]->setResponse(&argv[2], argc-2, output);
-      
-      output.endTag();
+
+    if (pointNum <= 0) {
+        pointNum = 1;
     }
+    else if (pointNum > nLayers) {
+        pointNum = nLayers;
+    }
+    output.tag("FiberOutput");
+    output.attr("number", pointNum);
+    output.attr("zLoc", loci[pointNum - 1]);
+    output.attr("thickness", ti[pointNum - 1]);
+
+    theResponse = theFibers[pointNum - 1]->setResponse(&argv[2], argc - 2, output);
+    output.endTag();
   }
   output.endTag(); // SectionOutput
   return theResponse;
@@ -316,18 +511,19 @@ setTrialSectionDeformation( const Vector &strainResultant_from_element)
 
   double z ;
 
- #ifdef _SDEBUG
-	  if (strainResultant(8) ==111)
-	  opserr<< "Sec strain  "<<strainResultant<<endln;
-	#endif
+ #ifdef _DEBUG
+	 // if (strainResultant(8) ==111)
+	 // opserr<< loci[0] <<", "<< loci[9]<<endln;
+#endif
 
   for ( i = 0; i < nLayers; i++ ) {
 
-      z = ( 0.5*h ) * sg[i]-Offset;
-  
+      z = loci[i]-Offset;
+     // strain(0) = strainResultant(0) - z * strainResultant(3);
       strain(0) =  strainResultant(0)  - z*strainResultant(3)-ThermalElongation[i] ;
+      strain(1) = strainResultant(1) - z * strainResultant(4) - ThermalElongation[i];
 
-      strain(1) =  strainResultant(1)  - z*strainResultant(4)-ThermalElongation[i] ;
+      //strain(1) =  strainResultant(1)  - z*strainResultant(4) ;
 
       strain(2) =  strainResultant(2)  - z*strainResultant(5) ;
 
@@ -383,31 +579,75 @@ LayeredShellFiberSectionThermal::getTemperatureStress(const Vector& dataMixed)
   double tangent, elongation;
   double averageThermalForce =0.0;
   double averageThermalMoment =0.0;
+  AverageThermalElongP = 0.0;
   //double *thickness = new double[nLayers];
 
   for (int i = 0; i < nLayers; i++) {
 	  
-	double thickness = 0.5*h*wg[i];
+	double thickness = ti[i];
 
-    double yi = ( 0.5*h ) * sg[i] - Offset;
+    double yi = loci[i] - Offset;
+     //double yi = (0.5 * h) * sg[i];
 
 	double tangent, elongation;
 
-	FiberTemperature = this->determineFiberTemperature( dataMixed, yi);
+    int matType =0;
+    if (ribH > 1e-6 && flatH > 1e-6) {
+        //composite section with rib
+        const char* layerType = theFibers[i]->getType();
+        if (strcmp(layerType,"PlateFiberThermal")==0) {
+            matType = 0;
+        }
+        else{
+            if (yi > -flatH / 2.0) {
+                //steel rebars in the flat part
+                if (strcmp(layerType,"PlateFiberThermalSteel")==0)
+                    matType = 1;
+                else if (strcmp(layerType, "PlateRebarThermalPar")==0) {
+                    if (ribAng < 1e-4)
+                        matType = 20; //steel rebar is parallel to the ribs;   matType = 20;
+                    else if (ribAng - 90 < 1e-4 && ribAng - 90 > -1e-4)
+                        matType = 21; //steel rebar is perpendicular to the ribs; 21
+                }
+                else if (strcmp(layerType, "PlateRebarThermalPer")==0) {
+                    if (ribAng < 1e-4)
+                        matType = 21; //steel rebar is perpendicular to the ribs;  21
+                    else if (ribAng - 90 < 1e-4 && ribAng - 90 > -1e-4)
+                        matType = 20; //steel rebar is parallel to the ribs;
+                }
+                else
+                    opserr << "LayeredShellThermal can not identify matType" << endln;
+            }
+            else {
+                    matType = 3; // profile steel
+            }
+        }
+    }
+    
+
+	FiberTemperature = this->determineFiberTemperature( dataMixed, yi, matType);
 
 	theFibers[i]->getThermalTangentAndElongation(FiberTemperature, tangent, elongation);
 
 	ThermalTangent[i]=tangent;
 	ThermalElongation[i]=elongation;
-	averageThermalForce += elongation*thickness*tangent;
-	averageThermalMoment+= yi*thickness*elongation*tangent;
-	}
+    averageThermalForce += elongation * thickness * tangent;
+   // averageThermalMoment += yi * thickness * elongation * tangent;
+	//averageThermalForce += elongation*thickness*tangent;
+	//averageThermalMoment+= (yi)*thickness*(elongation- AverageThermalElongP )*tangent;
+    //AverageThermalElongP += elongation * thickness;   //commented now
+  }
+    //AverageThermalElongP = AverageThermalElongP / h;
+  (*sT)(0) = averageThermalForce - AverageThermalForceP;
+  //(*sT)(0) = 0;  
+  (*sT)(1) = 0;
+  //(*sT)(1) = averageThermalMoment - AverageThermalMomentP;
+  //(*sT)(0) = averageThermalForce - AverageThermalForceP;
+ // (*sT)(1) = averageThermalMoment - AverageThermalMomentP;
+  AverageThermalForceP = averageThermalForce;
+  //AverageThermalMomentP = averageThermalMoment;
 
-      (*sT)(0) = averageThermalForce - AverageThermalForceP;
 
-      (*sT)(1) = averageThermalMoment - AverageThermalMomentP;
-	  AverageThermalForceP = averageThermalForce;
-	  AverageThermalMomentP = averageThermalMoment;
       return *sT;
 
 }
@@ -427,9 +667,10 @@ const Vector&  LayeredShellFiberSectionThermal::getStressResultant( )
 
   for ( i = 0; i < nLayers; i++ ) {
 
-      z = ( 0.5*h ) * sg[i]- Offset;  //added for offset
+     z = loci[i]- Offset;  //added for offset
+      //z = (0.5 * h) * sg[i];  //without offset
 
-      weight = ( 0.5*h ) * wg[i] ;
+      weight = ti[i] ;
 
       stress = theFibers[i]->getStress( ) ;
   
@@ -458,7 +699,7 @@ const Vector&  LayeredShellFiberSectionThermal::getStressResultant( )
    stressResultant(6) *= root56 ;  
    stressResultant(7) *= root56 ;
 
-
+   //opserr << this->stressResultant << endln;
    return this->stressResultant ;
 }
 
@@ -480,9 +721,9 @@ const Matrix&  LayeredShellFiberSectionThermal::getSectionTangent( )
 
   for ( i = 0; i < nLayers; i++ ) {
 
-      z = ( 0.5*h ) * sg[i] - Offset;
+      z = loci[i] - Offset;
 
-      weight = (0.5*h) * wg[i] ;
+      weight = ti[i] ;
 
 /*      //compute Aeps
 
@@ -624,7 +865,7 @@ const Matrix&  LayeredShellFiberSectionThermal::getSectionTangent( )
       tangent(7,7) +=     dd(4,4) ;
 
   } //end for i
-
+  //opserr << this->tangent << endln;
   return this->tangent ;
 }
 
@@ -665,8 +906,8 @@ LayeredShellFiberSectionThermal::sendSelf(int commitTag, Channel &theChannel)
     Vector vecData(2*nLayers+1);
     int i;
     for (i = 0; i < nLayers; i++) {
-      vecData(i)         = sg[i];
-      vecData(i+nLayers) = wg[i];
+      vecData(i)         = loci[i];
+      vecData(i+nLayers) = ti[i];
     }
     vecData(2*nLayers) = h;
     res += theChannel.sendVector(dataTag, commitTag, vecData);
@@ -731,10 +972,10 @@ LayeredShellFiberSectionThermal::recvSelf(int commitTag, Channel &theChannel, FE
   if (nLayers != iData(1))
   {
     nLayers = iData(1);
-    if (sg != 0) delete sg;
-    sg = new double[nLayers];
-    if (wg != 0) delete sg;
-    wg = new double[nLayers];
+    if (ti != 0) delete ti;
+    ti = new double[nLayers];
+    if (loci != 0) delete loci;
+    loci = new double[nLayers];
     if (theFibers !=0)
     {
       for ( i = 0; i < nLayers; i++ )
@@ -755,8 +996,8 @@ LayeredShellFiberSectionThermal::recvSelf(int commitTag, Channel &theChannel, FE
     return res;
     }  
     for (i = 0; i < nLayers; i++) {
-      sg[i] = vecData[i];
-      wg[i] = vecData[i+nLayers];
+      loci[i] = vecData[i];
+      ti[i] = vecData[i+nLayers];
     }
     h = vecData[2*nLayers];
     ID idData(nLayers*2);
@@ -796,64 +1037,52 @@ LayeredShellFiberSectionThermal::recvSelf(int commitTag, Channel &theChannel, FE
 
 
 
+
+
 double
-LayeredShellFiberSectionThermal::determineFiberTemperature(const Vector& DataMixed, double fiberLoc) 
+LayeredShellFiberSectionThermal::determineFiberTemperature(const Vector& DataMixed, double fiberLoc, int matType)
 {
-		double FiberTemperature = 0;
+    double FiberTemperature = 0;
 
-		double dataTempe[18]; 
-		for (int i = 0; i < 18; i++) { 
-			dataTempe[i] = DataMixed(i);
-		}
+    double dataTempe[18];
+    for (int i = 0; i < 18; i++) {
+        dataTempe[i] = DataMixed(i);
+    }
 
-		if (  fiberLoc <= dataTempe[1])
-		{
-			opserr <<"FiberSection2dThermal::setTrialSectionDeformationTemperature -- fiber loc is out of the section";
-		}
-		else if (fiberLoc <= dataTempe[3])
-		{
-			FiberTemperature = dataTempe[0] - (dataTempe[1] - fiberLoc) * (dataTempe[0] - dataTempe[2])/(dataTempe[1] - dataTempe[3]);
-		}
-		else if (   fiberLoc <= dataTempe[5] )
-		{
-			FiberTemperature = dataTempe[2] - (dataTempe[3] - fiberLoc) * (dataTempe[2] - dataTempe[4])/(dataTempe[3] - dataTempe[5]);
-			
-		}
-		else if ( fiberLoc <= dataTempe[7] )
-		{
-			FiberTemperature = dataTempe[4] - (dataTempe[5] - fiberLoc) * (dataTempe[4] - dataTempe[6])/(dataTempe[5] - dataTempe[7]);
-		}
-		else if ( fiberLoc <= dataTempe[9] )
-		{
-			FiberTemperature = dataTempe[6] - (dataTempe[7] - fiberLoc) * (dataTempe[6] - dataTempe[8])/(dataTempe[7] - dataTempe[9]);
-		
-		}
-		else if (fiberLoc <= dataTempe[11] )
-		{
-			FiberTemperature = dataTempe[8] - (dataTempe[9] - fiberLoc) * (dataTempe[8] - dataTempe[10])/(dataTempe[9] - dataTempe[11]);
+    if (fiberLoc < dataTempe[1] || fiberLoc > dataTempe[17])
+    {
+        opserr << "LayeredShellFiberSectionThermal::determineFiberTemperature -- fiber loc: "<<fiberLoc<<" is out of the section range "<< dataTempe[1] <<", "<< dataTempe[17] <<endln;
+    }
+    else {
+        if (matType == 0|| matType == 1 || matType == 21) {
+            for (int i = 1; i < 9; i++) {
+                if (fiberLoc <= dataTempe[i * 2 + 1]) {
+                    FiberTemperature = dataTempe[2 * i - 2] - (dataTempe[2 * i - 1] - fiberLoc) * (dataTempe[2 * i - 2] - dataTempe[2 * i]) / (dataTempe[2 * i - 1] - dataTempe[2 * i + 1]);
+                    break;
+                }
+            }
+        }
+        else if (matType == 3)
+        {
+            //for steel profile 
+            FiberTemperature = dataTempe[0];
+        }
+        else if (matType == 20)
+        {
+            //for steel layer in flat section
+            fiberLoc = fiberLoc-ribH;
+            for (int i = 1; i < 9; i++) {
+                if (fiberLoc <= dataTempe[i * 2 + 1]) {
+                    FiberTemperature = dataTempe[2 * i - 2] - (dataTempe[2 * i - 1] - fiberLoc) * (dataTempe[2 * i - 2] - dataTempe[2 * i]) / (dataTempe[2 * i - 1] - dataTempe[2 * i + 1]);
+                    break;
+                }
+            }
+        }
 
-		}
-		else if (fiberLoc <= dataTempe[13] )
-		{
-			FiberTemperature = dataTempe[10] - (dataTempe[11] - fiberLoc) * (dataTempe[10] - dataTempe[12])/(dataTempe[11] - dataTempe[13]);
 
-		}
-		else if (fiberLoc <= dataTempe[15] )
-		{
-			FiberTemperature = dataTempe[12] - (dataTempe[13] - fiberLoc) * (dataTempe[12] - dataTempe[14])/(dataTempe[13] - dataTempe[15]);
+    }
 
-		}
-		else if ( fiberLoc <= dataTempe[17] )
-		{
-			FiberTemperature = dataTempe[14] - (dataTempe[15] - fiberLoc) * (dataTempe[14] - dataTempe[16])/(dataTempe[15] - dataTempe[17]);
+ 
 
-		}
-		else 
-		{
-			opserr <<"FiberSection2dThermal::setTrialSectionDeformation -- fiber loc is out of the section";
-		}
-
-		return FiberTemperature;
+    return FiberTemperature;
 }
-
-

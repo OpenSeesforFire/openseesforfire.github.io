@@ -58,13 +58,14 @@ class BeamColumnJoint3dThermal : public Element
   BeamColumnJoint3dThermal(); 
   
   // defined constructor
-  BeamColumnJoint3dThermal(int tag,int Nd1, int Nd2, 
-		    UniaxialMaterial& theMat1, UniaxialMaterial& theMat2,
-		    UniaxialMaterial& theMat3);
+  BeamColumnJoint3dThermal(int tag, int Nd1, int Nd2,
+      UniaxialMaterial& theMat1, UniaxialMaterial& theMat2,
+      UniaxialMaterial& theMat3, Vector& dispLimit);
   
   BeamColumnJoint3dThermal(int tag,int Nd1, int Nd2,
 		    UniaxialMaterial& theMat1, UniaxialMaterial& theMat2,
-		    UniaxialMaterial& theMat3, double Hgtfac, double Wdtfac);
+		    UniaxialMaterial& theMat3, UniaxialMaterial& theMat4, UniaxialMaterial& theMat5,
+            UniaxialMaterial& theMat6, Vector& dispLimit);
   
   // default destructor
   ~BeamColumnJoint3dThermal();
@@ -136,7 +137,7 @@ class BeamColumnJoint3dThermal : public Element
   void Print(OPS_Stream& s, int flag = 0);
 
   // implemented to print into file
-  const char* getClassType(void) const { return "BeamColumnJoint2d"; };
+  const char* getClassType(void) const { return "BeamColumnJoint3d"; };
 
   Response* setResponse(const char** argv, int argc, OPS_Stream& s);
   int getResponse(int responseID, Information& eleInformation);
@@ -162,7 +163,7 @@ private:
 
     // node info
     ID  connectedExternalNodes;   // contains the tags of the end nodes
-    Node* nodePtr[2];             // pointers to four nodes
+    Node* nodePtr[2];             // pointers to two nodes
     int dimension;                      // = 1, 2, or 3 dimensions
     int nDOF;	                        // number of dof for ZeroLength
     Matrix transformation;		// transformation matrix for orientation

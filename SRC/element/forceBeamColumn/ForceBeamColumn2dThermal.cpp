@@ -185,7 +185,7 @@ ForceBeamColumn2dThermal::~ForceBeamColumn2dThermal()
   if (sections != 0) {
     for (int i=0; i < numSections; i++)
       if (sections[i] != 0)
-	delete sections[i];
+	    delete sections[i];
     delete [] sections;
   }
 
@@ -219,7 +219,7 @@ ForceBeamColumn2dThermal::~ForceBeamColumn2dThermal()
     delete Ki;
 
   if(Vsth0!=0)
-	  delete Vsth0;
+	  delete [] Vsth0;
 }
 
 int

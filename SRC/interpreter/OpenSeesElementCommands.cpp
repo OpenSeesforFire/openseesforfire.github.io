@@ -94,6 +94,7 @@ void* OPS_ShellMITC4();
 void* OPS_ShellMITC9();
 void* OPS_ShellDKGQ();
 void* OPS_ShellNLDKGQ();
+void* OPS_ShellNLDKGQThermal();    
 void* OPS_CoupledZeroLength();
 void* OPS_BeamContact2D();
 void* OPS_BeamContact2Dp();
@@ -505,6 +506,7 @@ namespace {
 	functionMap.insert(std::make_pair("ShellMITC9", &OPS_ShellMITC9));
 	functionMap.insert(std::make_pair("ShellDKGQ", &OPS_ShellDKGQ));
 	functionMap.insert(std::make_pair("shellDKGQ", &OPS_ShellDKGQ));
+	functionMap.insert(std::make_pair("ShellNLDKGQThermal", &OPS_ShellNLDKGQThermal));
 	functionMap.insert(std::make_pair("ShellNLDKGQ", &OPS_ShellNLDKGQ));
 	functionMap.insert(std::make_pair("shellNLDKGQ", &OPS_ShellNLDKGQ));
 	functionMap.insert(std::make_pair("CoupledZeroLength", &OPS_CoupledZeroLength));

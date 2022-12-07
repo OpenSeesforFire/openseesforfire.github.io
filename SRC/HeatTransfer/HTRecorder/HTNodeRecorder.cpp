@@ -91,10 +91,9 @@ HTNodeRecorder::HTNodeRecorder(int tag, const ID* nodes,
 			theNodalTags = new ID(*nodes);
 			if (theNodalTags == 0 || theNodalTags->Size() != nodes->Size()) {
 				opserr << "HTNodeRecorder::HTNodeRecorder - out of memory\n";
-				}
 			}
-		} 
-
+		}
+	}
 	//lastRecorderTag++;
 }
 

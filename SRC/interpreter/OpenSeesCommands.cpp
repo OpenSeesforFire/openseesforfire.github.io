@@ -882,6 +882,14 @@ int OPS_SetIntOutput(int *numData, int*data)
     return interp->setInt(data, *numData);
 }
 
+int OPS_GetListInput(int* size, double* data)
+{
+    if (cmds == 0) return 0;
+    DL_Interpreter* interp = cmds->getInterpreter();
+   // if (size == 0 || data == 0) return -1;
+    return interp->getList(data, size);
+}
+
 int OPS_GetDoubleInput(int *numData, double *data)
 {
     if (cmds == 0) return 0;
