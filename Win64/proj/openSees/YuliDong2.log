@@ -1,0 +1,61 @@
+
+ __   __       __          __                   _       
+/ _ .|  \ _|_ /  \ _  _ _ (_  _ _ _  | _ |_ _ _(_ _  _ _
+\__)||__/  |  \__/|_)(-| )__)(-(-_)  || )|_(-| | (_|(_(-
+                  |                                     
+                                                  v2.8.0
+Analysis summary
+
+Interval 1 : Static - 11 steps
+Interval 2 : Static - 151 steps
+
+----------------
+
+WARNING invalid nodeId: C:/Program Files/Tcl/lib/reg1.3/tclreg13.dll - load nodeId 1 forces
+WARNING invalid nodeId: C:/Program Files/Tcl/lib/reg1.3/tclreg13.dll - load nodeId 1 forces
+Starting analysis at 11:48:29
+
+Running interval 1
+
+(1) Newton LF 0.10000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000176806 (max: 0.001)
+(1) Newton LF 0.20000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000173614 (max: 0.001)
+(1) Newton LF 0.30000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000175628 (max: 0.001)
+(1) Newton LF 0.40000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000177667 (max: 0.001)
+(1) Newton LF 0.50000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000179722 (max: 0.001)
+(1) Newton LF 0.60000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000181794 (max: 0.001)
+(1) Newton LF 0.70000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000183881 (max: 0.001)
+(1) Newton LF 0.80000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000185983 (max: 0.001)
+(1) Newton LF 0.90000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000188098 (max: 0.001)
+(1) Newton LF 1.00000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 7.3456e-05 (max: 0.001)
+
+Analysis completed SUCCESSFULLY
+Committed steps : 11
+
+Running interval 2
+
+(2) ModifiedNewton LF 2.00000 CTestRelativeEnergyIncr::test() - iteration: 2 last Ratio (dX*dR/dX1*dR1): 0.000832073 (max: 0.001)
+(2) ModifiedNewton LF 4.00000 CTestRelativeEnergyIncr::test() - iteration: 2 last Ratio (dX*dR/dX1*dR1): 0.000119441 (max: 0.001)
+(2) ModifiedNewton LF 6.00000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000436174 (max: 0.001)
+(2) ModifiedNewton LF 8.00000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000764158 (max: 0.001)
+(2) ModifiedNewton LF 10.00000 CTestRelativeEnergyIncr::test() - iteration: 4 last Ratio (dX*dR/dX1*dR1): 0.000309437 (max: 0.001)
+(2) ModifiedNewton LF 12.00000 CTestRelativeEnergyIncr::test() - iteration: 4 last Ratio (dX*dR/dX1*dR1): 0.000239088 (max: 0.001)
+(2) ModifiedNewton LF 14.00000 CTestRelativeEnergyIncr::test() - iteration: 5 last Ratio (dX*dR/dX1*dR1): 0.000437568 (max: 0.001)
+(2) ModifiedNewton LF 16.00000 CTestRelativeEnergyIncr::test() - iteration: 6 last Ratio (dX*dR/dX1*dR1): 0.000719845 (max: 0.001)
+(2) ModifiedNewton LF 18.00000 CTestRelativeEnergyIncr::test() - iteration: 8 last Ratio (dX*dR/dX1*dR1): 0.000718706 (max: 0.001)
+(2) ModifiedNewton LF 20.00000 CTestRelativeEnergyIncr::test() - iteration: 11 last Ratio (dX*dR/dX1*dR1): 0.000723761 (max: 0.001)
+(2) ModifiedNewton LF 22.00000 CTestRelativeEnergyIncr::test() - iteration: 14 last Ratio (dX*dR/dX1*dR1): 0.000892672 (max: 0.001)
+(2) ModifiedNewton LF 24.00000 CTestRelativeEnergyIncr::test() - iteration: 21 last Ratio (dX*dR/dX1*dR1): 0.000920532 (max: 0.001)
+(2) ModifiedNewton LF 26.00000 CTestRelativeEnergyIncr::test() - iteration: 24 last Ratio (dX*dR/dX1*dR1): 0.000986381 (max: 0.001)
+(2) ModifiedNewton LF 28.00000 CTestRelativeEnergyIncr::test() - iteration: 22 last Ratio (dX*dR/dX1*dR1): 0.000904467 (max: 0.001)
+(2) ModifiedNewton LF 30.00000 CTestRelativeEnergyIncr::test() - iteration: 18 last Ratio (dX*dR/dX1*dR1): 0.000970021 (max: 0.001)
+(2) ModifiedNewton LF 32.00000 CTestRelativeEnergyIncr::test() - iteration: 6 last Ratio (dX*dR/dX1*dR1): 0.000642739 (max: 0.001)
+(2) ModifiedNewton LF 34.00000 CTestRelativeEnergyIncr::test() - iteration: 19 last Ratio (dX*dR/dX1*dR1): 0.000915303 (max: 0.001)
+(2) ModifiedNewton LF 36.00000 CTestRelativeEnergyIncr::test() - iteration: 3 last Ratio (dX*dR/dX1*dR1): 0.000997042 (max: 0.001)
+(2) ModifiedNewton LF 38.00000 CTestRelativeEnergyIncr::test() - iteration: 25 last Ratio (dX*dR/dX1*dR1): 0.000842881 (max: 0.001)
+(2) ModifiedNewton LF 40.00000 CTestRelativeEnergyIncr::test() - iteration: 13 last Ratio (dX*dR/dX1*dR1): 0.000959836 (max: 0.001)
+(2) ModifiedNewton LF 42.00000 CTestRelativeEnergyIncr::test() - iteration: 31 last Ratio (dX*dR/dX1*dR1): 0.000938515 (max: 0.001)
+(2) ModifiedNewton LF 44.00000 CTestRelativeEnergyIncr::test() - iteration: 58 last Ratio (dX*dR/dX1*dR1): 0.000926676 (max: 0.001)
+(2) ModifiedNewton LF 46.00000 CTestRelativeEnergyIncr::test() - iteration: 39 last Ratio (dX*dR/dX1*dR1): 0.000909479 (max: 0.001)
+(2) ModifiedNewton LF 48.00000 CTestRelativeEnergyIncr::test() - iteration: 68 last Ratio (dX*dR/dX1*dR1): 0.000959819 (max: 0.001)
+(2) ModifiedNewton LF 50.00000 CTestRelativeEnergyIncr::test() - iteration: 60 last Ratio (dX*dR/dX1*dR1): 0.000945146 (max: 0.001)
+(2) ModifiedNewton LF 52.00000 
