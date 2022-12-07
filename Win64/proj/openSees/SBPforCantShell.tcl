@@ -52,7 +52,7 @@ set fpcu [expr $fpc*0.2];
 set epsU -0.02
 set lambda 0.1
 set ft 3.0
-set Ets [expr $ft/0.00838];
+set Ets [expr $ft/0.005];
 
 uniaxialMaterial ConcreteECThermal 2 $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets
 
@@ -98,8 +98,8 @@ set MidSpanEle [expr $NumEles/2];
 set FiberLocBot [expr ($d/$NumFibers)/2-($d/2)];
 set FiberLocTop [expr ($d/$NumFibers)*($NumFibers-0.5)-$d/2];
 puts "$FiberLocBot , $FiberLocTop";
-recorder Node -file WrapperData/N_MidSpan_DOF.out -time -nodeRange 1 1 -dof 1 2 3 disp;
-recorder Node -file WrapperData/N_NodeDeflect_DOF.out -time -node $EndNodeTag -dof 2 disp;
+recorder Node -file WrapperData/N_end_DOF.out -time -node $EndNodeTag -dof 2 disp;
+recorder Node -file WrapperData/N_NodeDeflect_DOF.out -time -nodeRange 1 $EndNodeTag -dof 2 disp;
 recorder Element -file WrapperData/N_ElementGF.out -time -ele 1   globalForce;
 recorder Element -file WrapperData/N_ElementDef.out -time -ele1   basicDeformation;
 
@@ -158,7 +158,7 @@ test NormDispIncr 1e-4 100 2 ;
 algorithm Newton;
 integrator LoadControl 0.2;
 analysis Static;
-analyze 100;
+analyze 150;
 }
 
 if {$ANALYSIS == "HasThermo"} {

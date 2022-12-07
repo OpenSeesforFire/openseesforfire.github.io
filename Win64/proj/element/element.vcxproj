@@ -111,6 +111,7 @@
     <ClCompile Include="..\..\..\OTHER\Triangle\triangle.c" />
     <ClCompile Include="..\..\..\SRC\coordTransformation\CorotCrdTransfWarping2d.cpp" />
     <ClCompile Include="..\..\..\SRC\element\absorbentBoundaries\LysmerTriangle.cpp" />
+    <ClCompile Include="..\..\..\SRC\element\brick\BrickThermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\catenaryCable\CatenaryCable.cpp" />
     <ClCompile Include="..\..\..\SRC\element\componentElement\ComponentElement2d.cpp" />
     <ClCompile Include="..\..\..\SRC\element\dispBeamColumn\AxEqDispBeamColumn2d.cpp" />
@@ -121,6 +122,7 @@
     <ClCompile Include="..\..\..\SRC\element\forceBeamColumn\ElasticForceBeamColumnWarping2d.cpp" />
     <ClCompile Include="..\..\..\SRC\element\forceBeamColumn\ForceBeamColumn2dThermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\forceBeamColumn\ForceBeamColumnWarping2d.cpp" />
+    <ClCompile Include="..\..\..\SRC\element\fourNodeQuad\IGAQuad.cpp" />
     <ClCompile Include="..\..\..\SRC\element\frictionBearing\FPBearingPTV.cpp" />
     <ClCompile Include="..\..\..\SRC\element\Information.cpp" />
     <ClCompile Include="..\..\..\SRC\element\joint\BeamColumnJoint2dThermal.cpp" />
@@ -153,7 +155,6 @@
     <ClCompile Include="..\..\..\SRC\element\shell\ShellDKGT.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellMITC4Thermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellMITC9.cpp" />
-    <ClCompile Include="..\..\..\SRC\element\shell\ShellNLComThermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellNLDKGQ.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellNLDKGQThermal.cpp" />
     <ClCompile Include="..\..\..\SRC\element\shell\ShellNLDKGT.cpp" />
@@ -371,6 +372,7 @@
     <ClInclude Include="..\..\..\OTHER\Triangle\triangle.h" />
     <ClInclude Include="..\..\..\SRC\coordTransformation\CorotCrdTransfWarping2d.h" />
     <ClInclude Include="..\..\..\SRC\element\absorbentBoundaries\LysmerTriangle.h" />
+    <ClInclude Include="..\..\..\SRC\element\brick\BrickThermal.h" />
     <ClInclude Include="..\..\..\SRC\element\catenaryCable\CatenaryCable.h" />
     <ClInclude Include="..\..\..\SRC\element\componentElement\ComponentElement2d.h" />
     <ClInclude Include="..\..\..\SRC\element\dispBeamColumn\AxEqDispBeamColumn2d.h" />
@@ -383,6 +385,7 @@
     <ClInclude Include="..\..\..\SRC\element\forceBeamColumn\ElasticForceBeamColumnWarping2d.h" />
     <ClInclude Include="..\..\..\SRC\element\forceBeamColumn\ForceBeamColumn2dThermal.h" />
     <ClInclude Include="..\..\..\SRC\element\forceBeamColumn\ForceBeamColumnWarping2d.h" />
+    <ClInclude Include="..\..\..\SRC\element\fourNodeQuad\IGAQuad.h" />
     <ClInclude Include="..\..\..\SRC\element\frictionBearing\FPBearingPTV.h" />
     <ClInclude Include="..\..\..\SRC\element\Information.h" />
     <ClInclude Include="..\..\..\SRC\element\joint\BeamColumnJoint2dThermal.h" />
@@ -415,7 +418,6 @@
     <ClInclude Include="..\..\..\SRC\element\shell\ShellDKGT.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellMITC4Thermal.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellMITC9.h" />
-    <ClInclude Include="..\..\..\SRC\element\shell\ShellNLComThermal.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellNLDKGQ.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellNLDKGQThermal.h" />
     <ClInclude Include="..\..\..\SRC\element\shell\ShellNLDKGT.h" />

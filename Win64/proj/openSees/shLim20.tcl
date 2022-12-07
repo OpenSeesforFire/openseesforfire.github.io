@@ -20,8 +20,8 @@ source DisplayModel3D.tcl
 set nx 10;
 set ny 10;
 set slabT 0.1;
-set slabB 3.0;
-set slabL 3.0;
+set slabB 3.150;
+set slabL 4.150;
 set UDL 5.4E3;
 
 #nDMaterial ElasticIsotropic3DThermal 12 2.2e10 0.2 0 1.4e-5;
@@ -91,16 +91,16 @@ puts "here0";
 #block2D $nx $ny 1 1 ShellNLDKGQThermal 2  ShellMITC4Thermal ShellMITC4GNLThermal
 block2D $nx $ny 1 1 ShellNLDKGQThermal  6 { 
     1   0. 0. 0.
-    2   3.0 0. 0.
-    3  3.0 3.0 0. 
-    4   0. 3.0 0.
+    2   4.15 0. 0.
+    3  4.15 3.15 0.
+    4   0. 3.15 0.
 }
 
 #fully simply supported
 fixX 0  0 0 1 0 0 0 ;
-fixX 3.0  0 0 1 0 0 0 ;
+fixX 4.15  0 0 1 0 0 0 ;
 fixY 0  0 0 1 0 0 0 ;
-fixY 3.0  0 0 1 0 0 0 ;
+fixY 3.15  0 0 1 0 0 0 ;
 fix 1  1 1 1 0 0 1 ;
 
 
@@ -217,9 +217,9 @@ pattern Plain 3 Linear {
 	load $EndNodeTag -nodalThermal 0 $minusHalfD 0 $HalfD
 	
 	#eleLoad -range 1 $NumEles -type -ThermalWrapper -nodeLoc $StartNodeTag 0 $MidNodeTag 0.5 $EndNodeTag 1; 
-	eleLoad -range 1 $NumEles -type -shellThermal -source "slab.dat" [expr -$slabT/2] [expr $slabT/2];
+	#eleLoad -range 1 $NumEles -type -shellThermal -source "slab.dat" [expr -$slabT/2] [expr $slabT/2];
 	#eleLoad -range 1 $NumEles -type -shellThermal 878.293 -0.05 620.924 -0.0375 449.884 -0.025 331.591 -0.0125 246.801 0 184.89 0.0125 141.852 0.025 116.437 0.0375 104.777 0.5;
-	#eleLoad -range 1 $NumEles -type -shellThermal 1000 [expr -$slabT/2] 100 [expr $slabT/2];
+	eleLoad -range 1 $NumEles -type -shellThermal 1000 [expr -$slabT/2] 200 [expr $slabT/2];
 	
 #}
 #}
@@ -232,9 +232,9 @@ system BandGeneral;
 #test NormUnbalance 1.0e-4 10 1;
 test NormDispIncr 1e-3  500 1;
 algorithm Newton;
-integrator LoadControl 30;	
+integrator LoadControl 0.005;	
 analysis Static;			
-analyze 360;
+analyze 100;
 
 }
 

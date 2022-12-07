@@ -32,7 +32,7 @@ set elemyi 72.5
 
 # steel properties
 set fy 375
-set fu 400
+set fu 450
 set Es 210.0e3
 set vs 0.2
 
@@ -45,7 +45,7 @@ set ft [expr 0.1*$fc]
 set v 0.2
 set epscu 0.0025
 set Ec [expr 1.5*$fc/$epscu]
-set gt [expr $ft/$Ec*$ft*2]
+set gt [expr $ft/$Ec*$ft*6]
 set gc [expr $fc/$Ec*$fc*6]
 
 ####################################################################################
@@ -110,7 +110,7 @@ fixX $l 0 	0 	1	1 	0 	1; # roller
 #uniaxialMaterial SteelECThermal matTag EC2NC yieldStrength YoungsModulus
    # uniaxialMaterial Steel01Thermal 1  $fy $Es 0.01;
    # nDMaterial PlateRebarThermal 3 1 0;
- nDMaterial  J2PlaneStressThermal 2 22 $Es 0.3 $fy $fu 0.01 50;
+ nDMaterial  J2PlaneStressThermal 2 22 $Es 0.3 $fy $fu 0.1 0.5;
  nDMaterial   PlateFromPlaneStressThermal    3   2   20e10;
  
 #nDMaterial ElasticIsotropic3DThermal $matTag $E0 $Poisson_ratio $Density $Thermal_expansion_ratio <-cSoft/-sSoft>;
@@ -137,7 +137,7 @@ fixX $l 0 	0 	1	1 	0 	1; # roller
 # flat part (50 mm)
 set flatSec 1
 #section LayeredShellThermal   secTag  		   numoflayers mat1Tag  mat1Thickness mat2Tag  mat2Thickness ... matnTag  matnThickness
-section  LayeredShellThermal   $flatSec  	   10 		   3  		[expr 0.35*$dt]	  5	 [expr 10 - 0.35*$dt]	5  5.0 5 5.0  5 5.0  5 5.0	5  5.0	5 5.0 5  5.0	5 5.0 
+section  LayeredShellThermal   $flatSec  	   10 		   3  		[expr 0.35*$dt*2]	  5	 [expr 10 - 0.35*$dt*2]	5  5.0 5 5.0  5 5.0  5 5.0	5  5.0	5 5.0 5  5.0	5 5.0 
 
 # rib (138)
 set ribSec 2
@@ -158,7 +158,7 @@ for {set i 0} {$i < $nx} {incr i 1} {
 		
 		if {[expr !fmod($j + 1, 2)]} {
 			# element ShellNLDKGQThermal	 $eleTag $iNode $jNode $kNode $lNode $secTag
-			element ShellNLDKGQThermal	 $elemID $node1 $node2 $node3 $node4 $ribSec 
+			element ShellNLDKGQThermal	 $elemID $node1 $node2 $node3 $node4 $flatSec 
 		 } else {
 		 	# element ShellNLDKGQThermal	 $eleTag $iNode $jNode $kNode $lNode $secTag   $ribSec   $flatSec
 			element ShellNLDKGQThermal	 $elemID $node1 $node2 $node3 $node4 $flatSec
@@ -188,7 +188,7 @@ DisplayModel3D  DeformedShape $ViewScale $xLoc1 $yLoc1  $xPixels $yPixels
 recorder Node -file output/MidU3.out -time -node $midpt1 -dof 3 disp;
 recorder Element -file output/deform_rib.out -time -ele $midrib  strains;
 recorder Element -file output/deform_flat.out -time -ele $midflat  strains;
-
+recorder Element -file output/stress/rib_STEEL_Temp.out -time -ele $midrib  material 1 fiber 1 TempAndElong;
 recorder Element -file output/stress/rib_STEEL_stress.out -time -ele $midrib  material 1 fiber 1 stress;	
 recorder Element -file output/stress/rib_BOT_stress.out -time -ele $midrib  material 1 fiber 2 stress;
 recorder Element -file output/stress/rib_03_stress.out -time -ele $midrib  material 1 fiber 3 stress;
@@ -270,11 +270,14 @@ constraints Plain
 numberer Plain			
 system BandGeneral		
 #test RelativeNormUnbalance 0.05 1000 2
-test NormDispIncr 0.01 1000 2	
-algorithm ModifiedNewton	
-#integrator ArcLength 1 0.01			
-integrator LoadControl $stepSize 1000 0.001 0.2				
+test NormDispIncr 0.01 500 1	
+algorithm Newton	
+#integrator ArcLength 1 0.01	
+integrator LoadControl 0.1
+		
+#integrator LoadControl 0.1 100 0.000001 0.2 		
 analysis Static
+#analyze 400 0.1 0.000001 0.2 4
 analyze 400
 
 # integrator LoadControl 0.001			

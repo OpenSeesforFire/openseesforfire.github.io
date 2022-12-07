@@ -306,6 +306,9 @@
     <ClCompile Include="..\..\..\SRC\domain\pattern\PathTimeSeriesThermal.cpp">
       <Filter>timeSeries</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\SRC\domain\load\BrickThermalAction.cpp">
+      <Filter>load\brick</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\SRC\domain\node\NodalLoad.h">
@@ -565,6 +568,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\SRC\domain\pattern\PathTimeSeriesThermal.h">
       <Filter>timeSeries</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\domain\load\BrickThermalAction.h">
+      <Filter>load\brick</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

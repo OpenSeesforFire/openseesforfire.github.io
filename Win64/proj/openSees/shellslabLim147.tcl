@@ -4,7 +4,7 @@ wipe;
 				
 				
 set ANALYSIS "HasPoint";
-set TANALYSIS "HasThermo"; 
+set TANALYSIS "Has0Thermo"; 
 
 model BasicBuilder -ndm 3 -ndf 6;
 
@@ -92,7 +92,7 @@ puts "here1";
 
 #section LayeredShellThermal  2  10  4  0.01 4 0.01  4 0.01  4  0.01  4 0.01 4  0.01  4  0.01 4  0.01 4  0.01 4  0.01 ;
 #block2D $nx $ny 1 1 ShellNLDKGQThermal 2  ShellMITC4Thermal ShellMITC4GNLThermal
-block2D $nx $ny 1 1 ShellNLDKGQThermal  1 { 
+block2D $nx $ny 1 1 ShellNLDKGQThermal  2 { 
     1   0. 0. 0.
     2   4.15 0. 0.
     3  4.15 3.15 0.
@@ -104,8 +104,8 @@ fixX 0  0 0 1 0 0 0 ;
 fixX 4.15  0 0 1 0 0 0 ;
 fixY 0  0 0 1 0 0 0 ;
 fixY 3.15  0 0 1 0 0 0 ;
-fix 1  1 1 1 0 0 1 ;
-
+fix 1  1 1 1 0 0 0 ;
+fix [expr ($nx+1)*($ny/2+1)] 0 0 0 0 0 1;
 
 #fixY 0.2   0 1 0 1 0 1 ;
 
@@ -133,15 +133,16 @@ DisplayModel3D  DeformedShape $ViewScale $xLoc1 $yLoc1  $xPixels $yPixels
 set CorEle 1;
 set MidEle [expr 1+($nx)*$ny/2+$nx/2];
 set SideEle [expr 1+($nx)*$ny/2];
-set NumEle [expr ($nx)*$ny];
+set NumEle [expr 1+($nx)*$ny/2];
 
 recorder Node -file ShellDataLim147/DFreeSlabzTCent.out -time -node [expr ($ny/2)*($nx+1)+$nx/2] -dof 3 disp;
+recorder Node -file ShellDataLim147/DFreeSlabDispz.out -time -nodeRange 1 [expr ($ny+1)*($nx+1)] -dof 3 disp;
 #------------------------------------
-recorder Element -file ShellDataLim147/dtdcElerange110_12.out -time -eleRange 1 10  material 1 fiber 12 TempAndElong;
-recorder Element -file ShellDataLim147/dtdcElerange110_9.out -time -eleRange 1 10  material 1 fiber 9 TempAndElong;
+#recorder Element -file ShellDataLim147/dtdcElerange110_12.out -time -eleRange 1 10  material 1 fiber 12 TempAndElong;
+#recorder Element -file ShellDataLim147/dtdcElerange110_9.out -time -eleRange 1 10  material 1 fiber 9 TempAndElong;
 
-recorder Element -file ShellDataLim147/dtdcElerangeTop.out -time -eleRange 1 $NumEle  material 1 fiber 13 TempAndElong;
-recorder Element -file ShellDataLim147/dtdcElerangeBot.out -time -eleRange 1 $NumEle  material 1 fiber 1 TempAndElong;
+#recorder Element -file ShellDataLim147/dtdcElerangeTop.out -time -eleRange 1 $NumEle  material 1 fiber 13 TempAndElong;
+#recorder Element -file ShellDataLim147/dtdcElerangeBot.out -time -eleRange 1 $NumEle  material 1 fiber 1 TempAndElong;
 
 recorder Element -file ShellDataLim147/EleForceSec1sigma.out -time -ele $MidEle  material 1 fiber 1 stress;	
 recorder Element -file ShellDataLim147/EleForceSec1Eps.out -time -ele $MidEle  material 1 fiber 1 strain;
@@ -235,7 +236,7 @@ test NormDispIncr 1e-3  300 1;
 algorithm Newton;
 integrator LoadControl 0.1;	
 analysis Static;			
-analyze 10;
+analyze 100;
 loadConst -time 0.0
 }
 
@@ -260,47 +261,26 @@ pattern Plain 3 Linear {
 
 }
 
-#Analysis parameters
-set Duration 10800;
-set iniStepSize 15;
-set iniNumSteps [expr $Duration/$iniStepSize]
-
+#wipe;
 constraints Plain;
 numberer Plain;
 system BandGeneral;
 #test NormUnbalance 1.0e-4 10 1;
-test NormDispIncr 1e-3  1000 1;
+test NormDispIncr 1e-3  800 1;
 algorithm Newton;
-integrator LoadControl $iniStepSize;	
-analysis Static;			
+#integrator ArcLength 0.001 0.1;
+# integrator LoadControl 15;	
+# analysis Static;			
+# analyze 480;
 
-set result [analyze $iniNumSteps];
+integrator LoadControl 15 800 0.0001 15 		
+analysis VariableStatic
+analyze 720 15 0.001 15 4
 
-# if {$result<0} {
-	# puts "The analysis stops! Now changing the time step";
-	# set currentTime [getTime];
-	# set stepSize [expr int($iniStepSize/4)];
-	# set numSteps [expr int(($Duration-$currentTime)/$stepSize)];
-	# #loadConst -time $currentTime;
-	# test NormDispIncr 1e-3  500 1;
-	# algorithm Newton;
-	# integrator LoadControl $stepSize;	
-	# analysis Static;
-	# set result1 [analyze $numSteps];
-	# if {$result<0} {
-		# puts "The analysis stops! Now changing the time step";
-		# set currentTime [getTime];
-		# set stepSize [expr int($iniStepSize/12)];
-		# set numSteps [expr int(($Duration-$currentTime)/$stepSize)];
-		# #loadConst -time $currentTime;
-		# test NormDispIncr 1e-3  1000 1;
-		# algorithm Newton;
-		# integrator LoadControl $stepSize;	
-		# analysis Static;
-		# analyze $numSteps;
-	# }
-# }
-
-# }
+#integrator ArcLength 0.01 0.1;
+#integrator LoadControl 15;	
+#analysis Static;
+#analyze 200;
+}
 
 wipe;

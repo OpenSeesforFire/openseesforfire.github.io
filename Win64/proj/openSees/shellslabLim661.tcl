@@ -17,8 +17,8 @@ source DisplayModel3D.tcl
 #8.72
 #Concrete model
 #these should both be even, number of elements per edge
-set nx 20;
-set ny 20;
+set nx 40;
+set ny 30;
 set slabT 0.1;
 set slabB 3.150;
 set slabL 4.150;
@@ -44,7 +44,7 @@ set UDL 5.4E3;
 #nDMaterial Damage2p 2 30;
 puts "3dhere0";
 #nDMaterial PlateFiberThermal 4 12;
-set gt [expr 3.7e6/2.2e10*3.7e6*2];
+set gt [expr 3.7e6/2.2e10*3.7e6*10];
 set gc [expr 37.0e6/2.2e10*37.0e6*6];
 nDMaterial  CDPPlaneStressThermal 100 2.2e10 0.2 3.7e6 37e6 $gt $gc;
 nDMaterial   PlateFromPlaneStressThermal    4   100   1e9;
@@ -67,8 +67,8 @@ nDMaterial PlateRebarThermal 5 1 90;
 #D147
 nDMaterial  J2PlaneStressThermal 11 22 2e11 0.3 5.65e8 5.85e8 0.1 2e8;
 nDMaterial   PlateFromPlaneStressThermal    44   11   20e10;
-
-nDMaterial  J2PlaneStressThermal 12 22 2e11 0.3 5.68e8 6.45e8 0.1 2e8;
+#661mesh
+nDMaterial  J2PlaneStressThermal 12 22 2e11 0.3 5.68e8 6.45e8 0.1 3e8;
 nDMaterial   PlateFromPlaneStressThermal    45   12   20e10;
 
 nDMaterial  J2PlaneStressThermal 13 21 2e11 0.3 4.68e8 6.00e8 0.1 2e8;
@@ -79,11 +79,11 @@ nDMaterial   PlateFromPlaneStressThermal    46   13   20e10;
 
 puts "here0";
 #D147Mesh
-section LayeredShellThermal   1  13 4  0.01 4  0.01  4 0.005 3 0.000198 5 0.000198 4 0.004604  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
-section LayeredShellThermal   2  12 4  0.01 4  0.01  4 0.005 44 0.000198 4 0.004802  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
+section LayeredShellThermal   1  13 4  0.005 4  0.01  4 0.01 3 0.000198 5 0.000198 4 0.004604  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
+section LayeredShellThermal   2  12 4  0.005 4  0.01  4 0.01 44 0.000198 4 0.004802  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
 #661Mesh
 section LayeredShellThermal   3  13 4  0.008 4  0.008  4 0.008705 3 0.000295 5 0.000295 4 0.004705  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
-section LayeredShellThermal   4  12 4  0.01 4  0.01  4 0.005 45 0.000295 4 0.004705  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
+section LayeredShellThermal   4  12 4  0.005 4  0.01  4 0.01 45 0.000295 4 0.004705  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
 #HD12 bars
 section LayeredShellThermal   5  13 4  0.008 4  0.008  4 0.008435 3 0.000565 5 0.000565 4 0.004435  4  0.01 4  0.01 4  0.01 4  0.01 4  00.01 4  0.01 4  0.01 ;
 section LayeredShellThermal   6  12 4  0.01 4  0.01  4 0.005 46 0.000565 4 0.004435 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
@@ -104,7 +104,8 @@ fixX 0  0 0 1 0 0 0 ;
 fixX 4.15  0 0 1 0 0 0 ;
 fixY 0  0 0 1 0 0 0 ;
 fixY 3.15  0 0 1 0 0 0 ;
-fix 1  1 1 1 0 0 1 ;
+fix 1  1 1 1 0 0 0 ;
+fix [expr ($nx+1)*($ny/2)+1] 0 0 0 0 0 1;
 
 
 #fixY 0.2   0 1 0 1 0 1 ;
@@ -254,8 +255,8 @@ set HalfD [expr $slabT/2];
 
 pattern Plain 3 Linear {
 
-	eleLoad -range 1 $NumEles -type -shellThermal -source "slab.dat" [expr -$slabT/2] [expr $slabT/2];
-
+	#eleLoad -range 1 $NumEles -type -shellThermal -source "slab.dat" [expr -$slabT/2] [expr $slabT/2];
+	eleLoad -range 1 $NumEles -type -shellThermal -Twosource "slab.dat" [expr -$slabT/2] [expr $slabT/2] "slab.dat" [expr -$slabT/2] [expr $slabT/2];
 }
 
 #wipe;
@@ -263,11 +264,11 @@ constraints Plain;
 numberer Plain;
 system BandGeneral;
 #test NormUnbalance 1.0e-4 10 1;
-test NormDispIncr 1e-3  500 1;
+test NormDispIncr 1e-3  1000 1;
 algorithm Newton;
-integrator LoadControl 15;	
-analysis Static;			
-analyze 720;
+integrator LoadControl 15 800 0.001 15 		
+analysis VariableStatic
+analyze 720 15 0.001 15 4
 
 }
 

@@ -35,9 +35,9 @@ node $NodeTag $locX 0;
 set EndNodeTag [expr $NumEles+1]
 set MidNodeTag [expr $NumEles/2+1]
 #define boundary condition;
-#fix 1 1 1 1;
-fix 1 1 1 0;
-fix $EndNodeTag 0 1 0;
+fix 1 1 1 1;
+#fix 1 1 1 0;
+#fix $EndNodeTag 0 1 0;
 
 
 #define an elastic material with Tag=1 and E=2e11.
@@ -88,8 +88,8 @@ geomTransf Corotational 1 ;
 for {set eleID 1} {$eleID<= $NumEles} {incr eleID} {
 	set NodeTag0 $eleID;
 	set NodeTag1 [expr $eleID+1];
-	element dispBeamColumnThermal $eleID $NodeTag0 $NodeTag1 $NumInts 1 1;
-	#element forceBeamColumnThermal $eleID $NodeTag0 $NodeTag1 $NumInts 1 1;
+	#element dispBeamColumnThermal $eleID $NodeTag0 $NodeTag1 $NumInts 1 1;
+	element forceBeamColumnThermal $eleID $NodeTag0 $NodeTag1 $NumInts 1 1;
 }
 
 #define output
@@ -153,11 +153,13 @@ pattern Plain 1 Linear {
 constraints Plain;
 numberer Plain;
 system BandGeneral;
-test NormDispIncr 1e-4 500 1 ;
+test NormDispIncr 1e-3 50 1 ;
 algorithm Newton;
-integrator LoadControl 0.1;
-analysis Static;
-analyze 50;
+integrator LoadControl 0.01 100 0.00001 0.1;
+#intial_stepsize, num of steps, minimum stepsize, maximum step size
+analysis VariableStatic
+analyze 100 0.01 0.00001 0.1 4
+#intial_stepsize, num of steps, minimum stepsize, maximum step size, controlling factor for size variation 
 }
 
 if {$ANALYSIS == "HasThermo"} {

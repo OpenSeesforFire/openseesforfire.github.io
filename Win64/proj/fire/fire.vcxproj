@@ -81,33 +81,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\FireModel.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\NaturalFire.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\TravellingFire.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\NorminalFireEC1.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\ParametricFireEC1.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\UserDefinedFire.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.h" />
-    <ClInclude Include="..\..\..\SRC\fire\FireModel.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\NaturalFire.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\TravellingFire.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\NorminalFireEC1.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\ParametricFireEC1.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\UserDefinedFire.h" />
-    <ClInclude Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

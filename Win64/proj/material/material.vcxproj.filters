@@ -1157,6 +1157,12 @@
     <ClCompile Include="..\..\..\SRC\material\uniaxial\JointEPMaterialThermal.cpp">
       <Filter>uniaxial</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\SRC\material\section\CompositeShellSectionThermal.cpp">
+      <Filter>section</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\material\uniaxial\TimberECThermal.cpp">
+      <Filter>uniaxial</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\SRC\material\uniaxial\AxialSp.h">
@@ -2166,6 +2172,12 @@
       <Filter>nD</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\SRC\material\uniaxial\JointEPMaterialThermal.h">
+      <Filter>uniaxial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\material\section\CompositeShellSectionThermal.h">
+      <Filter>section</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\material\uniaxial\TimberECThermal.h">
       <Filter>uniaxial</Filter>
     </ClInclude>
   </ItemGroup>

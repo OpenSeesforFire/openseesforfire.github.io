@@ -4,92 +4,15 @@
     <Filter Include="CFD_Interface">
       <UniqueIdentifier>{a7748516-18a1-44a3-9eb9-c9b6bbf70c10}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ZoneModel">
-      <UniqueIdentifier>{1df3c874-9a1f-4a51-9265-906bc3eb4c2f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Idealised_uniform_fires">
-      <UniqueIdentifier>{2835fea1-cf5f-4255-a2ef-7f9321a071c1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Idealised_nonuniform_fires">
-      <UniqueIdentifier>{78f4e460-4cb3-4ec3-b94c-13dba6ab7381}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.cpp">
       <Filter>CFD_Interface</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.cpp">
-      <Filter>ZoneModel</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\FireModel.cpp" />
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\UserDefinedFire.cpp">
-      <Filter>Idealised_uniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.cpp">
-      <Filter>Idealised_uniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\NorminalFireEC1.cpp">
-      <Filter>Idealised_uniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\ParametricFireEC1.cpp">
-      <Filter>Idealised_uniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.cpp">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.cpp">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.cpp">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.cpp">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\TravellingFire.cpp">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\NaturalFire.cpp">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\SRC\fire\CFD_Interface\CFD_Interface.h">
       <Filter>CFD_Interface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.h">
-      <Filter>ZoneModel</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\FireModel.h" />
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\ParametricFireEC1.h">
-      <Filter>Idealised_uniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\UserDefinedFire.h">
-      <Filter>Idealised_uniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.h">
-      <Filter>Idealised_uniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\NorminalFireEC1.h">
-      <Filter>Idealised_uniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.h">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.h">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.h">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.h">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\TravellingFire.h">
-      <Filter>Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\NaturalFire.h">
-      <Filter>Idealised_nonuniform_fires</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

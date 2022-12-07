@@ -4,7 +4,7 @@ wipe;
 				
 				
 set ANALYSIS "HasPoint";
-set TANALYSIS "Has0Thermo"; 
+set TANALYSIS "HasThermo"; 
 
 model BasicBuilder -ndm 3 -ndf 6;
 
@@ -79,7 +79,7 @@ nDMaterial   PlateFromPlaneStressThermal    46   13   20e10;
 
 puts "here0";
 #D147Mesh
-section LayeredShellThermal   1  13 -offset 0.02 4  0.005 4  0.01  4 0.009802 3 0.000198 5 0.000198 4 0.004802  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
+section LayeredShellThermal   1  13 4  0.005 4  0.01  4 0.009802 3 0.000198 5 0.000198 4 0.004802  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
 section LayeredShellThermal   2  12 4  0.01 4  0.01  4 0.005 44 0.000198 4 0.004802  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
 #661Mesh
 section LayeredShellThermal   3  13 4  0.01 4  0.01  4 0.005 3 0.000295 5 0.000295 4 0.00441  4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 4  0.01 ;
@@ -92,7 +92,7 @@ puts "here1";
 
 #section LayeredShellThermal  2  10  4  0.01 4 0.01  4 0.01  4  0.01  4 0.01 4  0.01  4  0.01 4  0.01 4  0.01 4  0.01 ;
 #block2D $nx $ny 1 1 ShellNLDKGQThermal 2  ShellMITC4Thermal ShellMITC4GNLThermal
-block2D $nx $ny 1 1 ShellNLDKGQThermal  1 { 
+block2D $nx $ny 1 1 ShellNLDKGQThermal  6 { 
     1   0. 0. 0.
     2   4.15 0. 0.
     3  4.15 3.15 0.
@@ -248,13 +248,26 @@ set NumEles [expr $nx*$ny];
 set StartNodeTag [expr ($nx+1)*($ny/2)+$nx/2+1]
 set MidNodeTag [expr ($nx+1)*($ny*3/4)+1+$nx*3/4]
 set EndNodeTag [expr ($nx+1)*($ny+1)]
-
+puts $StartNodeTag","$MidNodeTag","$EndNodeTag;
 set minusHalfD [expr -$slabT/2];
 set HalfD [expr $slabT/2];
 
 pattern Plain 3 Linear {
-
+    #For uniformly distributed shell thermal action
 	eleLoad -range 1 $NumEles -type -shellThermal -source "slab.dat" [expr -$slabT/2] [expr $slabT/2];
+	
+	#For localised distributed shell thermal action using appointed temperature
+	#load $StartNodeTag -nodalThermal 600 $minusHalfD 100 $HalfD;
+	#load $MidNodeTag -nodalThermal 150 $minusHalfD 25 $HalfD
+	#load $EndNodeTag -nodalThermal 0 $minusHalfD 0 $HalfD
+	
+		#For localised distributed shell thermal action using appointed temperature
+	load $StartNodeTag -nodalThermal -source "slab.dat"  $minusHalfD $HalfD;
+	load $MidNodeTag -nodalThermal -source "slab.dat"  $minusHalfD $HalfD;
+	load $EndNodeTag -nodalThermal -source "slab.dat"  $minusHalfD $HalfD;
+	#eleLoad -range 1 $NumEles -type -ThermalWrapper -nodeLoc $StartNodeTag 0 $MidNodeTag 0.5 $EndNodeTag 1; 
+	#eleLoad -range 1 $NumEles -type -ThermalWrapper -nodeLoc $StartNodeTag 0 $EndNodeTag 1;
+	
 
 }
 
@@ -266,8 +279,10 @@ system BandGeneral;
 test NormDispIncr 1e-3  500 1;
 algorithm Newton;
 integrator LoadControl 30;	
+#integrator LoadControl 0.01;	
 analysis Static;			
-analyze 360;
+#analyze 360;
+analyze 100;
 
 }
 

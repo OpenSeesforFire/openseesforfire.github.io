@@ -1,4 +1,5 @@
-
+#Korean Fire Tests on CHS
+#Experimental Study on Limiting Temperatures of Circular Hollow Sections
 
 # Units mm, N/mm²
 #		o-------------------------------------------------------o <---
@@ -21,7 +22,7 @@ source DisplayModel2D.tcl;		# procedure for displaying 2D perspective of model
 source DisplayModel3D.tcl;		# procedure for displaying 2D perspective of model
 
 #define node
-set NumEles 2;
+set NumEles 6;
 set BeamLen 3000.0;
 set EleLen [expr $BeamLen/$NumEles]
 for {set NodeID 0} {$NodeID <= $NumEles} {incr NodeID} {
@@ -34,18 +35,18 @@ set EndNodeTag [expr $NumEles+1]
 set MidNodeTag [expr $NumEles/2+1]
 #define boundary condition;
 fix 1 1 1 1 1 1 1 ; 
-#fix 2 0 0 0 1 0 0 ; 
 fix $EndNodeTag 1 1 1 1 1 1 ;
 
 
 #define an elastic material with Tag=1 and E=2e11.
 uniaxialMaterial ElasticThermal 1 200000 1.2e-5;
+uniaxialMaterial TimberECThermal 1 ;
 uniaxialMaterial StainlessECThermal 2  Grade14571 240 2e5  520;
 uniaxialMaterial SteelECThermal 3 300 200000;
 #uniaxialMaterial Steel01Thermal 1 300 200000 0.00001;
 #define fibred section; Two fibres: fiber $yLoc $zLoc $A $matTag 
 
-set NumFibers 4;
+set NumFibers 8;
 set b 40.0;
 set d 80.0;
 set secTag 1;
@@ -54,8 +55,8 @@ section fiberSecThermal $secTag -GJ 2e11 {
 	for {set fiberID 1} {$fiberID<=$NumFibers} {incr fiberID} {
 		set fiberLocy [expr ($d/$NumFibers)*($fiberID-0.5)-$d/2];
 		set fiberArea [expr ($d/$NumFibers)*$b*0.5];
-		fiber $fiberLocy -10 $fiberArea 3;
-		fiber $fiberLocy 10 $fiberArea 3;
+		fiber $fiberLocy -10 $fiberArea 2;
+		fiber $fiberLocy 10 $fiberArea 2;
 		puts "$fiberLocy, $fiberArea";
 		}
 	}
@@ -162,7 +163,7 @@ pattern Plain 2 Linear {
 #load $EndNodeTag -nodalThermal 800 $minusHalfD 400 $HalfD;
 #eleLoad -range 1 $NumEles -type -beamThermal -source -node
 #eleLoad -range 1 $NumEles -type -ThermalWrapper -nodeLoc 1 0 $MidNodeTag 0.5 $EndNodeTag 1; 
-
+eleLoad -range 1 1 -type -beamThermal -source  "timber.dat"  $minusHalfB $HalfB $minusHalfD $HalfD;
 eleLoad -range 1 1 -type -beamThermal 1000 -$HalfD 1000 $HalfD
 #eleLoad -ele 1 2 -type -beamUniform -10 0 0;
 }

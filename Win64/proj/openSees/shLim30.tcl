@@ -44,7 +44,7 @@ set UDL 5.4E3;
 #nDMaterial Damage2p 2 30;
 puts "3dhere0";
 #nDMaterial PlateFiberThermal 4 12;
-set gt [expr 3e6/2.2e10*3e6*2];
+set gt [expr 3e6/2.2e10*3e6*6];
 set gc [expr 30.0e6/2.2e10*30.0e6*6];
 nDMaterial  CDPPlaneStressThermal 100 2.2e10 0.2 3e6 30e6 $gt $gc;
 nDMaterial   PlateFromPlaneStressThermal    4   100   10e9;
@@ -63,7 +63,7 @@ uniaxialMaterial SteelECThermal 1 EC2NH 4.68e8 2e11;
 nDMaterial PlateRebarThermal 3 1 0;
 nDMaterial PlateRebarThermal 5 1 90;
 
-nDMaterial  J2PlaneStressThermal 11 22 2e11 0.3 5.65e8 6.45e8 0 2e11;
+nDMaterial  J2PlaneStressThermal 11 22 2e11 0.3 5.65e8 6.45e8 0 0;
 nDMaterial   PlateFromPlaneStressThermal    44   11   20e10;
 
 nDMaterial  J2PlaneStressThermal 12 22 2e11 0.3 5.68e8 6.45e8 0 2e11;

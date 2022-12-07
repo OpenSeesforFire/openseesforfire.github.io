@@ -82,6 +82,18 @@
     <Filter Include="Interpreter">
       <UniqueIdentifier>{9e32d20c-2d5b-45fd-8164-03b53c722f7c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FireModels">
+      <UniqueIdentifier>{da951db3-17d8-4513-ae66-62a7f08b16e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FireModels\ZoneModel">
+      <UniqueIdentifier>{68ecd249-8ebb-49f7-a4c7-61f79800201d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FireModels\Idealised_uniform_fires">
+      <UniqueIdentifier>{6b651370-e88d-42aa-a730-07fc7d92299e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FireModels\Idealised_nonuniform_fires">
+      <UniqueIdentifier>{c0710cb2-cce6-41c3-90f9-98c242bba535}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\SRC\HeatTransfer\HeatTransferMaterial\CarbonSteelEC3.cpp">
@@ -341,6 +353,42 @@
     </ClCompile>
     <ClCompile Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTMaterialResponse.cpp">
       <Filter>HTRecorder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\FireModel.cpp">
+      <Filter>FireModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\ZoneModel\ZoneModel.cpp">
+      <Filter>FireModels\ZoneModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.cpp">
+      <Filter>FireModels\Idealised_uniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Uniform_Fires\NorminalFireEC1.cpp">
+      <Filter>FireModels\Idealised_uniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Uniform_Fires\ParametricFireEC1.cpp">
+      <Filter>FireModels\Idealised_uniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Uniform_Fires\UserDefinedFire.cpp">
+      <Filter>FireModels\Idealised_uniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.cpp">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.cpp">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.cpp">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.cpp">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\NaturalFire.cpp">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\TravellingFire.cpp">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -607,6 +655,42 @@
     </ClInclude>
     <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTMaterialResponse.h">
       <Filter>HTRecorder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\FireModel.h">
+      <Filter>FireModels</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.h">
+      <Filter>FireModels\ZoneModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.h">
+      <Filter>FireModels\Idealised_uniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\NorminalFireEC1.h">
+      <Filter>FireModels\Idealised_uniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\ParametricFireEC1.h">
+      <Filter>FireModels\Idealised_uniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\UserDefinedFire.h">
+      <Filter>FireModels\Idealised_uniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.h">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.h">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.h">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.h">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\NaturalFire.h">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\TravellingFire.h">
+      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

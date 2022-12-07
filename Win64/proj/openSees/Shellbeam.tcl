@@ -17,8 +17,8 @@ source DisplayModel3D.tcl
 #8.72
 #Concrete model
 #these should both be even, number of elements per edge
-set nx 20;
-set ny 2
+set nx 40;
+set ny 4
 set slabT 0.1;
 set slabB 0.4;
 set slabL 3.0;
@@ -47,9 +47,9 @@ nDMaterial PlateRebarThermal 5 1 90;
 #section LayeredShellThermal  2  14  4  0.01  4 0.009497345 3 0.000502655 5 0.000502655 4 0.009497345 4  0.01  4  0.01 4  0.01  4  0.01 4 0.009497345 5 0.000502655 3 0.000502655 4 0.009497345 4  0.01 ;
 #section LayeredShellThermal  2  10  4  0.01  4 0.01 4 0.01 4  0.01  4  0.01 4  0.01  4  0.01 4  0.01  4 0.01 4 0.01 ;
 
-
-#nDMaterial ElasticIsotropic3DThermal  12 1.79e10 0.2 0 2.4e-5 -CSoft;
-#nDMaterial PlateFiberThermal 14 12;
+nDMaterial ElasticIsotropic3DThermal  12 2e10 0.0 0 1.0e-5;
+#nDMaterial ElasticIsotropic3DThermal  12 1.79e10 0.2 0 1.4e-5 -CSoft;
+nDMaterial PlateFiberThermal 14 12;
 #nDMaterial ElasticIsotropic3DThermal  22 1.79e5 0.2 0 2.4e-5 -CSoft;
 #nDMaterial PlateFiberThermal 24 22;
 
@@ -63,15 +63,21 @@ nDMaterial  J2PlaneStressThermal 23 21 2e11 0.3 3.45e8 4.00e8 0 0;
 nDMaterial   PlateFromPlaneStressThermal    24   23   20e10;
 
 
-section LayeredShellThermal  2  14  4  0.01  4 0.009607301 3 0.000392699 5 0.000392699 4 0.009607301 4  0.01  4  0.01 4  0.01  4  0.01 4 0.009607301 3 0.000392699 5 0.000392699 4 0.009607301 4  0.01 ;
-section LayeredShellThermal  3  12  4  0.01  4 0.01  24 0.000392699 4 0.00960731 4  0.01  4  0.01 4  0.01  4  0.01  4 0.00960731  24 0.000392699 4 0.01 4 0.01;
+#section LayeredShellThermal  2  14  4  0.01  4 0.009607301 3 0.000392699 5 0.000392699 4 0.009607301 4  0.01  4  0.01 4  0.01  4  0.01 4 0.009607301 3 0.000392699 5 0.000392699 4 0.009607301 4  0.01 ;
+#section LayeredShellThermal  3  12  4  0.01  4 0.01  24 0.000392699 4 0.00960731 4  0.01  4  0.01 4  0.01  4  0.01  4 0.00960731  24 0.000392699 4 0.01 4 0.01;
 
-#section LayeredShellThermal  3  4  14  0.02 14 0.02  14 0.02  24 0.02 24 0.02;
+section LayeredShellThermal  6  10  14  0.01  14 0.01 14 0.01 14  0.01  14  0.01 14  0.01  14  0.01 14  0.01  14 0.01 14 0.01 ;
+section LayeredShellThermal  4  5  14  0.02 14 0.02  14 0.02  14 0.02 14 0.02;
+
+section PlateFiberThermal 5 14 $slabT;
+set offset 0.3;
+section LayeredShellThermal  7  -offset $offset 10  14  0.01  14 0.01 14 0.01 14  0.01  14  0.01 14  0.01  14  0.01 14  0.01  14 0.01 14 0.01 ;
+
 
 puts "here0";
 #section LayeredShellThermal  2  10  4  0.005 4 0.005  4 0.005  4  0.005  4 0.005 4  0.005  4  0.005 4  0.005  4  0.005 4  0.005 ;
 #block2D $nx $ny 1 1 ShellNLDKGQThermal 2  ShellMITC4Thermal ShellMITC4GNLThermal
-block2D $nx $ny 1 1  ShellNLDKGQThermal 3 { 
+block2D $nx $ny 1 1  ShellNLDKGQThermal 7 { 
     1   0. 0. 0.
     2   3 0. 0.
     3  3 0.4 0.
@@ -79,17 +85,17 @@ block2D $nx $ny 1 1  ShellNLDKGQThermal 3 {
 }
 
 #fully simply supported
-fixX 0  1 0 1 1 1 1 ;
+fixX 0  1 1 1 1 1 1 ;
 #fixX 3  0 0 1 1 0 1 ;
 #fixX 6.0   0 1 0 1 0 1 ;
-#fixX 3.0   0 1 0 1 0 1 ;
+#fixX 3.0   0 0 1 0 0 0 ;
 #fixY 0  0 1 0 1 0 1 ;
 #fixY 0.2   0 1 0 1 0 1 ;
 
 #fix 6   1 1 1 1 1 1 ;
 #fix 11   1 0 1 1 1 1 ;
 #fixX 3.0 0 0 1 0 0 0 
-#fix 1 1 1 1 0 0 0;
+#fix 1 1 1 0 0 0 1;
 #fix [expr 1+($nx+1)*$ny/2]  0 1 0 0 0 0 ;
 #fix [expr ($nx+1)] 0 0 1 0 0 0 ;
 #fix [expr ($nx+1)*($ny+1)] 0 0 1 0 0 0;
@@ -105,16 +111,19 @@ set  yLoc1 10;	# vertical location of graphical window (0=upper left-most corner
 set ViewScale 0.01;	# scaling factor for viewing deformed shape, it depends on the dimensions of the model
 DisplayModel3D  DeformedShape $ViewScale $xLoc1 $yLoc1  $xPixels $yPixels
 
-set MidEle [expr 1+($nx)*$ny/2];
+set MidEle [expr 1+($nx)*$ny/2+$nx/2];
+set MidNode [expr ($nx+1)*$ny/2+$nx/2+1]
 set EndEle [expr 1+$nx];
 recorder Node -file ShellData/DFreeSlabxT.out -time -nodeRange [expr 1+($nx+1)*$ny/2] [expr ($ny/2+1)*($nx+1)] -dof 1  disp;
 recorder Node -file ShellData/DFreeSlabyT.out -time -nodeRange [expr 1+($nx+1)*$ny/2] [expr ($ny/2+1)*($nx+1)] -dof 2 disp;
-recorder Node -file ShellData/DFreeSlabzT.out -time -node [expr ($nx+1)*$ny/2] -dof 3 disp;
+recorder Node -file ShellData/DFreeSlabzT.out -time -node $MidNode -dof 1 2 3 disp;
 
 recorder Node -file ShellData/DFreeSlabzTUP.out -time -nodeRange 1 [expr ($nx+1)] -dof 3 disp;
 recorder Node -file ShellData/DFreeSlabzTDo.out -time -nodeRange [expr 1+($nx+1)*$ny] [expr ($ny+1)*($nx+1)] -dof 3 disp;
 
-
+recorder Element -file ShellData/EleForce.out -time -ele $MidEle force;	
+recorder Element -file ShellData/EleMatForce.out -time -ele $MidEle material 2 force;	
+recorder Element -file ShellData/EleMatDeform.out -time -ele $MidEle material 2 deformation;
 
 recorder Element -file ShellData/EleForceSec1sigma.out -time -ele $MidEle  material 1 fiber 1 stress;	
 recorder Element -file ShellData/EleForceSec1Eps.out -time -ele $MidEle  material 1 fiber 1 strain;
@@ -187,9 +196,9 @@ pattern Plain 1 Linear {
 	#for {set nodeID 1} {$nodeID<=$NumNodes} {incr nodeID} {
 		#load $nodeID 0 0 $UDLP 0 0 0 ;
 		#}
-    set Load 100;	
+    set Load -2000;	
 	for {set ID 0} {$ID<=$ny} {incr ID} {
-		set nodeID [expr ($nx+1)*($ID+1)];
+		set nodeID [expr ($nx+1)*($ID+1)-$nx/2];
 		load $nodeID  0 0 [expr $Load/($ny+1)] 0 0 0 ;
 	}
 		
@@ -203,9 +212,9 @@ numberer Plain;
 system BandGeneral;
 test NormDispIncr 1e-3 600 2;
 algorithm Newton;
-integrator LoadControl 0.5;	
+integrator LoadControl 0.2;	
 analysis Static;			
-analyze 100;
+analyze 5;
 loadConst -time 0.0
 }
 
@@ -237,7 +246,7 @@ pattern Plain 3 Linear {
 	load $EndNodeTag -nodalThermal 0 $minusHalfD 0 $HalfD
 	
 	#eleLoad -range 1 $NumEles -type -ThermalWrapper -nodeLoc 1 0 $MidNodeTag 0.5 $EndNodeTag 1; 
-	eleLoad -range 1 $NumEles -type -shellThermal 1000 [expr -$slabT/2] 100 [expr $slabT/2];
+	eleLoad -range 1 $NumEles -type -shellThermal 500 [expr -$HalfD-$offset] 100 [expr $HalfD-$offset]
 	
 #}
 #}
@@ -248,12 +257,12 @@ pattern Plain 3 Linear {
 constraints Plain;
 numberer Plain;
 system BandGeneral;
-#test NormUnbalance 1.0e-4 10 1;
-test NormDispIncr 1e-3  600 1;
+test NormUnbalance 0.1 1000 1;
+#test NormDispIncr 1e-3  600 1;
 algorithm Newton;
-integrator LoadControl 0.005;	
+integrator LoadControl 0.01;	
 analysis Static;			
-analyze 200;
+analyze 100;
 
 }
 
