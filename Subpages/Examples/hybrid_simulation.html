@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../../stylesheets/styles.css">
+    <link rel="stylesheet" href="../../stylesheets/github-light.css">
+    <meta name="viewport" content="../../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="../heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="../sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="../commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="../examples.html">Examples</a></p></small>
+        <!-- <small><p class="view"><a href="../sifexamples.html">SIFBuilder Examples</a></p></small> -->
+        <h4><p class="view"><a href="../../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>Hybrid simulation of Cardington Plane Frame Test</h2>
+<hr>
+<! You can leave your name here>
+<p>Developed by Dr Xuesong Cai and Dr Liming Jiang</p>
+<hr>
+<h4> Introduction</h4>
+<! -----A brief introduction of the problem---------->
+<p>
+Figure 1 shows the test configuration, which was tested at Cardington. The test was conducted in an eight-storey steel-frame structure, built in the BRE Cardington facility. The floor plan was 45 m long and 21 m wide and was spread over five 9 m longitudinal bays along the x-direction and three bays along the y-direction as shown in Fig. 2b. In the center of the floor plan, there was a 9.0 m×2.5 m lift core and two 4.0 m×4.5 m stairwells. The composite floor slabs were 130 mm thick with 55 mm deep ribs. More details of this test structure can be found in the literature [6]. To apply the fire loading, the furnace was constructed at the lower floor (Floor 3) of a heating area of 21.0 m×2.5 m primarily heating the Grid B frame. As shown in Table 1, the sections of the primary beams were 610×229×101UB, 356×171×51UB, and 356×171×51UB, while the section for the secondary beam was 305×165×40UB. The columns had the section of 305×305×137UC. The experimental furnace was heated with eight burners on the third floor and the temperature was nearly uniformly distributed. The primary beams and secondary beams as well as the floor slab were unprotected. The internal columns were enclosed in the furnace and were protected up to 200 mm below the beam-column connections.
+</p>
+<! -----Using the folliwng table to provide model information---------->
+<table style="width:100%">
+ <tr>
+    <th>OpenSees Model </th>
+    <th>Type used for this example</th>
+  </tr>
+  <tr>
+    <td>Element</td>
+    <td>ShellNLDKGQThermal, DispBeamColumnThermal</td>
+  </tr>
+  <tr>
+    <td>Section</td>
+    <td>LayeredShellThermal, FiberSection3D</td>
+  </tr>
+  <tr>
+    <td>Material</td>
+    <td>CDPPlaneStressThermal, SteelECThermal, J2PlaneStressThermal</td>
+  </tr>
+  <tr>
+    <td>Thermal Loading </td>
+    <td>ShellThermalAction, with userdefined dat file</td>
+  </tr>
+</table>
+<! -----A link for downloading this exampel package(package should be stored in download/example folder------->
+<p><b>Download:</b> <a href =/Download/Examples/VHSexample.zip> This Example Package </a> </p>
+<hr>
+<! -----A figure to show the model------->
+<h4> Model Geometry</h4>
+
+ <center><img src="../../images/CaseImgs/VHSexample.png"  style="width:800px;"> </center>
+ <center><small>Figure-1: Schematic of flat concrete slab subjected to furnace fire</small></center>
+
+<hr>
+<! -----Tcl scripts for the model defitnion------->
+<h4> Tcl scripts for model definition</h4>
+
+<code>
+#  units are mm, N, MPa, ton, and C <br>
+#  Column coordinates <br>
+
+# Model builder<br>
+model BasicBuilder -ndm 3 -ndf 6;<br>
+source DisplayPlane.tcl<br>
+source DisplayModel2D.tcl<br>
+source DisplayModel3D.tcl<br>
+#nodes#############################################################<br>
+logFile "Hybrid20210818_master.log"<br>
+# Load OpenFresco package<br>
+# -----------------------<br>
+# (make sure all dlls are in the same folder as openSees.exe)<br>
+loadPackage OpenFresco<br>
+
+# Execute<br>
+source sections.tcl<br>
+puts "loaded 'sections' correctly"<br>
+source nodes.tcl<br>
+puts "loaded 'nodes' correctly"<br>
+source constraints.tcl<br>
+puts "loaded 'constraints' correctly"<br>
+
+## Define the control point (Column B2)<br>
+#expControlPoint 1  -node 2817 3 disp <br>
+#expControlPoint 2  -node 2817 3 disp 3 force<br>
+
+expControlPoint 1 -node 2817 1 disp 2 disp 3 disp<br>
+expControlPoint 2 -node 2817 1 disp 2 disp 3 disp 1 force 2 force 3 force<br>
+
+expControlPoint 3 -node 2917 1 disp 2 disp 3 disp<br>
+expControlPoint 4 -node 2917 1 disp 2 disp 3 disp 1 force 2 force 3 force<br>
+
+#expControlPoint 1 -node 2817 1 disp<br>
+#expControlPoint 2 -node 2817 1 disp 1 force<br>
+
+## Define the test control method<br>
+#expControl SimFEAdapter 1 "127.0.0.1" 44000  -trialCP 1 -outCP 2<br>
+expControl SimFEAdapter 1 "127.0.0.1" 44000 -trialCP 1 -outCP 2<br>
+expControl SimFEAdapter 2 "127.0.0.1" 43000 -trialCP 3 -outCP 4<br>
+#expControl SimFEAdapter 2 "127.0.0.1" 44000 -trialCP 1 -outCP 2<br>
+## Define the transformation<br>
+expSetup NoTransformation 1 -control 1 -dir 2 4 1  -sizeTrialOut 6 6<br>
+expSetup NoTransformation 2 -control 2 -dir 2 4 1  -sizeTrialOut 6 6<br>
+#expSetup NoTransformation 1 -control 1 -dir 1  -sizeTrialOut 6 6<br>
+#expSetup NoTransformation 1 -control 1 -dir 1 2 3  -sizeTrialOut 6 6<br>
+#expSetup NoTransformation 1 -control 1 -dir 2 4 1 5 3 6  -sizeTrialOut 6 6<br>
+
+## Define the Test site<br>
+expSite LocalSite 1 1<br>
+expSite LocalSite 2 2<br>
+## End of OpenFresco<br>
+
+source elements.tcl<br>
+
+expElement beamColumn 200000 2801 2817 44 -site 1 -initStif\<br>
+9.1e5  0     0        0      0  0\<br>
+0      1054  0        0      0  0\<br>
+0      0     0        0      0  0\<br>
+0      0     0        3200    0  0\<br>
+0      0     0        0      0  0\<br>
+0      0     0        0      0  0\<br>
+
+expElement beamColumn 200001 2901 2917 44 -site 2 -initStif\<br>
+9.1e5  0     0        0      0  0\<br>
+0      1054  0        0      0  0\<br>
+0      0     0        0      0  0\<br>
+0      0     0        3200    0  0\<br>
+0      0     0        0      0  0\<br>
+0      0     0        0      0  0\<br>
+
+puts "loaded 'elements' correctly"<br>
+source loads.tcl<br>
+
+
+</code>
+
+<hr>
+<! -----Analysis results from OpenSees (better with reference paper)------->
+<h4> Output Results</h4>
+<p>Using the Dual-3D hybrid simulation, the fire responses of Beam B12 and column are shown in the following figure</p>
+
+ <center><img src="../../images/CaseImgs/VHSB12.png"  style="width:400px;"> </center>
+ <center><small>Figure 2:  B12 column response simulated using Dual-3D hybrid simulation framework</small></center>
+ <center><img src="../../images/CaseImgs/VHScolumn.png"  style="width:400px;"> </center>
+ <center><small>Figure 2:  B12 column response simulated using Dual-3D hybrid simulation framework</small></center>
+    
+<b>Reference:</b><p>X. Cai, Liming Jiang*, J. Qiu, A. Orabi, C. Yang, G. Lou, M. Khan, Y. Yuan, G-Q. Li, A. Usmani. 2022. Dual-3D Hybrid Simulation of Steel Structures in Fires Using OpenSees and OpenFresco. Journal of Construction Steel Research.https://doi.org/10.1016/j.jcsr.2022.107511</p>
+<hr>
+<small><p>This page is created by Liming Jiang, 2016</p></small>
+      </section>
+<footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>

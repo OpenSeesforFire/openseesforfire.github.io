@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenSees for Fire</title>
+
+    <link rel="stylesheet" href="../stylesheets/styles.css">
+    <link rel="stylesheet" href="../stylesheets/github-light.css">
+    <meta name="viewport" content="../width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+            <nav>
+      <center><img src="../images/banner.png" style="height:50px;"></center>
+      </nav>
+
+      <div class="wrapper">
+      <header>
+
+        <ul>
+          <li><a href="../index.html">Back<strong>Home</strong></a></li>
+          <li><a href="../download.html">Download <strong>OpenSees</strong></a></li>
+          <li><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <h4> <p class="view"><a href="../about.html">About </a></p></h4>
+        <h4><p class="view"><a href="../people.html">People</a></p></h4>
+        <h4><p class="view"><a href="../user.html">Users </a></p></h4>
+        <small><p class="view"><a href="heattransfer.html">Heat Transfer </a></p></small>
+        <small><p class="view"><a href="sifbuilder.html">SIFBuilder </a></p></small>
+        <small><p class="view"><a href="commands.html">Command manual </a></p></small>
+        <small><p class="view"><a href="examples.html">Examples</a></p></small>
+        <small><p class="view"><a href="../openfire.html">OpenFIRE</a></p></small>
+        <h4><p class="view"><a href="../developer.html">Developers </a></p></h4>
+        <h4><p class="view"><a href="../docs.html">Documents </a></p></h4>
+          <h4><p class="view"><a href="https://github.com/OpenSeesforFire/openseesforfire.github.io/issues">Q&A </a></p></h4>
+      </header>
+<section>
+
+<h2>Hybrid Fire Testing/Simulation</h2>
+    <hr>
+<h4> Introduction</h4>
+
+<p>
+OpenSees and OpenFresco were developed for hybrid simulation that enables a sructural system model being synchronized with a physical specimen test. Based on the development of OpenSees for fire, we have been able to conduct hybrid fire simulation/testing using multiple subsructure models and spceimen test. Examples of conducting hybrid fire simulation can be found in the <a href="Examples/hybrid_simulation.html"> Example</a> page. </p> 
+    
+<p> The work takes advantage of the previous development in OpenSees for fire on modelling frame beams, columns and slabs subjected to various types of fires. We now use OpenFresco as the middleware to synchronize the 3D thermo-mechanical model with substructure models (typically beams, columns). These substructure models could be given as high-resolution virtual models using shell or solid elements or physical specimens in labortory. For more information that may be not avialable on this website, you could contact Dr Liming Jiang and Dr Xuesong Cai.</p>
+
+<p>To cite this work, please refer to this paper: <a href="https://doi.org/10.1016/j.jcsr.2022.107511">Dual-3D hybrid fire simulation for modelling steel structures in fire with column failure，2022 </a> </p>
+
+<hr>
+<h4> Hybrid Testing Scheme</h4>
+<p>Before implementing hybrid simulation, we primarily developed analysis capabilities for including slabs in a 3D numerical model of structures in fire. This now can be done using shell elements with layered sections, which supports flat slabs and composite slabs with profiled steel and concrete ribs. The phase 2 of hybrid simulation/testing is carried out as a virtual scheme using 3D structural system model and multiple virtual substructure models. As shown in Fig.1, the Phase 3 will enter a stage using labortory specimens and virtual substructure models. </p>
+
+         <img src="../images/Hybrid_simulation.png"  style="width:840px;">
+<center><small>Figure 1: Various phases of hybrid simulation/testing</small></center>
+    
+<p>
+If taking the Cardington case discussed in the above paper as an example, when running the dual-3D hybrid simulation, the scripts for the two columns are routinely loaded in different command prompt windows of OpenSees for fire (Fig. 2). The OpenFresco has been compiled as a dynamic-link library (.dll) and placed in the same directory of OpenSees. Hence, the OpenFresco commands can be simultaneously activated when the command prompt receives a command “loadPackage OpenFresco”. Following the setup of the two slave programs, the modules are held awaiting the master program that is launched in the 3rd command prompt window of OpenSees for fire. If these two slave programs are running locally on the same computer (not necessarily), the default IP address “127.0.0.1” identified by OpenFresco as local server is assigned to the slave programs. To enable the connection of multiple sub-structures to the 3D structural model, two different ports (44000 and 43000) were assigned to the slave programs and the adapter elements. For more information, you could find it in the <a href="https://doi.org/10.1016/j.jcsr.2022.107511">reference paper </a>.
+</p>
+    
+<img src="../images/hybrid_operation.png"  style="width:650px;">
+<center><small>Figure 2:  Schematic operation for Virtual Hybrid simulation</small></center>    
+
+<p>
+More recently, we have conducted hybrid testing with a 3D structural model (system-level behaviour) and a labortory specimen(synchronized test) and multiple high-resolution virtual models (for complex local behaviour), as shown in Fig.3.   
+</p>   
+     <img src="../images/hybridtest.png"  style="width:600px;">
+<center><small>Figure 3:  Hybrid Testing scheme with Labortory Specimen and Virtual substructures</small></center>
+
+
+<hr>
+    
+    
+<h4> Hybrid Simulation script demo</h4>
+<code>
+model BasicBuilder -ndm 3 -ndf 6<br>
+# Load OpenFresco package<br>
+# -----------------------<br>
+# (make sure all dlls are in the same folder as openSees.exe)<br>
+loadPackage OpenFresco<br>
+...<br>
+element  adapter 10000  -node 41031 -dof 1 2 3 -stif 1.0e6 0 0 0 4.8e6 0 0 0 7.5e10 42000   <br>
+...<br>
+</code>
+<br>
+<hr>
+<small><p>This page is created by Liming Jiang, 2016</p></small>
+      </section>
+     <footer>
+        <p><small>This project is maintained by <a href="https://github.com/LimingXLiming">JIANG Liming </a></small> <br>
+        <small>Hosted on GitHub Pages, 2017</small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+
+  </body>
+</html>
