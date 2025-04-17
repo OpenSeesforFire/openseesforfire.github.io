@@ -17,7 +17,7 @@
 **   Filip C. Filippou (filippou@ce.berkeley.edu)                     **
 **                                                                    **
 ** ****************************************************************** */
-                                                                        
+
 // $Revision: 1.0 $
 // $Date: 2012-05-28 22:03:16 $
 // $Source: /usr/local/cvs/OpenSees/SRC/material/nD/PlateFromPlaneStressMaterialThermal.cpp,v $
@@ -27,8 +27,8 @@
 //
 // Generic Plate Material from Plane Stress Material
 //
-/* Ref: Lu X, Lu XZ, Guan H, Ye LP, Collapse simulation of reinforced 
-concrete high-rise building induced by extreme earthquakes, 
+/* Ref: Lu X, Lu XZ, Guan H, Ye LP, Collapse simulation of reinforced
+concrete high-rise building induced by extreme earthquakes,
 Earthquake Engineering & Structural Dynamics, 2013, 42(5): 705-723*/
 //Modified by Liming Jiang for considering elevated temperature
 
@@ -38,320 +38,361 @@ Earthquake Engineering & Structural Dynamics, 2013, 42(5): 705-723*/
 #include <Channel.h>
 #include <FEM_ObjectBroker.h>
 #include <MaterialResponse.h>
+#include <elementAPI.h>
 
 //static vector and matrices
-Vector  PlateFromPlaneStressMaterialThermal::stress(5) ;
-Matrix  PlateFromPlaneStressMaterialThermal::tangent(5,5) ;
+Vector  PlateFromPlaneStressMaterialThermal::stress(5);
+Matrix  PlateFromPlaneStressMaterialThermal::tangent(5, 5);
+void* OPS_PlateFromPlaneStressMaterialThermal()
+{
+    int numdata = OPS_GetNumRemainingInputArgs();
+    if (numdata < 3) {
+        opserr << "WARNING insufficient arguments\n";
+        opserr << "Want: nDMaterial PlateFromPlaneStressThermal tag? matTag? gmod?" << endln;
+        return 0;
+    }
 
+    int tag[2];
+    numdata = 2;
+    if (OPS_GetIntInput(&numdata, tag) < 0) {
+        opserr << "WARNING invalid nDMaterial PlateFromPlaneStress tag and matTag" << endln;
+        return 0;
+    }
+
+    NDMaterial* threeDMaterial = OPS_getNDMaterial(tag[1]);
+    if (threeDMaterial == 0) {
+        opserr << "WARNING nD material does not exist\n";
+        opserr << "nD material: " << tag[1];
+        opserr << "\nPlateFromplanestressThermal nDMaterial: " << tag[0] << endln;
+        return 0;
+    }
+
+    double gmod;
+    numdata = 1;
+    if (OPS_GetDoubleInput(&numdata, &gmod) < 0) {
+        opserr << "WARNING invalid gmod" << endln;
+        return 0;
+    }
+
+    NDMaterial* mat = new PlateFromPlaneStressMaterialThermal(tag[0], *threeDMaterial, gmod);
+
+    if (mat == 0) {
+        opserr << "WARNING: failed to create PlateFromplanestressThermal material\n";
+        return 0;
+    }
+
+    return mat;
+}
 //null constructor
-PlateFromPlaneStressMaterialThermal::PlateFromPlaneStressMaterialThermal( ) : 
-NDMaterial(0, ND_TAG_PlateFromPlaneStressMaterialThermal ), 
-strain(5) 
-{ }
+PlateFromPlaneStressMaterialThermal::PlateFromPlaneStressMaterialThermal() :
+    NDMaterial(0, ND_TAG_PlateFromPlaneStressMaterialThermal),
+    strain(5)
+{
+}
 
 
 //full constructor
-PlateFromPlaneStressMaterialThermal::PlateFromPlaneStressMaterialThermal(    
-				   int tag, NDMaterial &ndMat, double g ) :
-NDMaterial( tag, ND_TAG_PlateFromPlaneStressMaterialThermal ),
-strain(5),gmod(g)
+PlateFromPlaneStressMaterialThermal::PlateFromPlaneStressMaterialThermal(
+    int tag, NDMaterial& ndMat, double g) :
+    NDMaterial(tag, ND_TAG_PlateFromPlaneStressMaterialThermal),
+    strain(5), gmod(g)
 {
-  theMat = ndMat.getCopy("PlaneStress") ;
+    theMat = ndMat.getCopy("PlaneStress");
 }
 
 
 //destructor
-PlateFromPlaneStressMaterialThermal::~PlateFromPlaneStressMaterialThermal( ) 
-{ 
-  if (theMat != 0) delete theMat ;
-} 
+PlateFromPlaneStressMaterialThermal::~PlateFromPlaneStressMaterialThermal()
+{
+    if (theMat != 0) delete theMat;
+}
 
 
 
 //make a clone of this material
 NDMaterial*
-PlateFromPlaneStressMaterialThermal::getCopy( ) 
+PlateFromPlaneStressMaterialThermal::getCopy()
 {
-  PlateFromPlaneStressMaterialThermal *clone ;   //new instance of this class
+    PlateFromPlaneStressMaterialThermal* clone;   //new instance of this class
 
-  clone = new PlateFromPlaneStressMaterialThermal( this->getTag(), *theMat, gmod ) ;
+    clone = new PlateFromPlaneStressMaterialThermal(this->getTag(), *theMat, gmod);
 
-  return clone ;
+    return clone;
 }
 
 
 //make a clone of this material
-NDMaterial* 
-PlateFromPlaneStressMaterialThermal::getCopy( const char *type ) 
+NDMaterial*
+PlateFromPlaneStressMaterialThermal::getCopy(const char* type)
 {
-  if (strcmp(type, "PlateFiberThermal") == 0)
-    return this->getCopy( ) ;
-  else
-    return 0;
+    if (strcmp(type, "PlateFiberThermal") == 0)
+        return this->getCopy();
+    else
+        return 0;
 }
 
 
 //send back order of strain in vector form
-int 
-PlateFromPlaneStressMaterialThermal::getOrder( ) const
+int
+PlateFromPlaneStressMaterialThermal::getOrder() const
 {
-  return 5 ;
+    return 5;
 }
 
 
 const char*
-PlateFromPlaneStressMaterialThermal::getType( ) const 
+PlateFromPlaneStressMaterialThermal::getType() const
 {
-  if(theMat->getClassTag()== ND_TAG_J2PlaneStressThermal)
-      return "PlateFiberThermalSteel" ; 
-  else
-      return "PlateFiberThermal";
+    if (theMat->getClassTag() == ND_TAG_J2PlaneStressThermal)
+        return "PlateFiberThermalSteel";
+    else
+        return "PlateFiberThermal";
 
 }
 
 
 
 //swap history variables
-int 
-PlateFromPlaneStressMaterialThermal::commitState( ) 
+int
+PlateFromPlaneStressMaterialThermal::commitState()
 {
-  return theMat->commitState( ) ;
+    return theMat->commitState();
 }
 
 
 
 //revert to last saved state
-int 
-PlateFromPlaneStressMaterialThermal::revertToLastCommit( )
+int
+PlateFromPlaneStressMaterialThermal::revertToLastCommit()
 {
-  return theMat->revertToLastCommit( )  ;
+    return theMat->revertToLastCommit();
 }
 
 
 //revert to start
 int
-PlateFromPlaneStressMaterialThermal::revertToStart( )
+PlateFromPlaneStressMaterialThermal::revertToStart()
 {
 
-  strain.Zero();
+    strain.Zero();
 
-  return theMat->revertToStart( ) ;
+    return theMat->revertToStart();
 }
 
 
 //mass per unit volume
 double
-PlateFromPlaneStressMaterialThermal::getRho( )
+PlateFromPlaneStressMaterialThermal::getRho()
 {
-  return theMat->getRho( ) ;
+    return theMat->getRho();
 }
 
 
 //receive the strain
-int 
-PlateFromPlaneStressMaterialThermal::setTrialStrain( const Vector &strainFromElement )
+int
+PlateFromPlaneStressMaterialThermal::setTrialStrain(const Vector& strainFromElement)
 {
-  strain(0) = strainFromElement(0) ;
-  strain(1) = strainFromElement(1) ;
-  strain(2) = strainFromElement(2) ;
-  strain(3) = strainFromElement(3) ;
-  strain(4) = strainFromElement(4) ;
+    strain(0) = strainFromElement(0);
+    strain(1) = strainFromElement(1);
+    strain(2) = strainFromElement(2);
+    strain(3) = strainFromElement(3);
+    strain(4) = strainFromElement(4);
 
-  static Vector PSStrain(3) ;
-  
-  PSStrain(0) = strain(0);
-  PSStrain(1) = strain(1);
-  PSStrain(2) = strain(2);
-  
-  return theMat->setTrialStrain(PSStrain);
+    static Vector PSStrain(3);
+
+    PSStrain(0) = strain(0);
+    PSStrain(1) = strain(1);
+    PSStrain(2) = strain(2);
+
+    return theMat->setTrialStrain(PSStrain);
 }
 
 
 //send back the strain
-const Vector& 
-PlateFromPlaneStressMaterialThermal::getStrain( )
+const Vector&
+PlateFromPlaneStressMaterialThermal::getStrain()
 {
-  return strain ;
+    return strain;
 }
 
 
 //send back the stress 
-const Vector&  
-PlateFromPlaneStressMaterialThermal::getStress( )
+const Vector&
+PlateFromPlaneStressMaterialThermal::getStress()
 {
-  //three dimensional stress
-  const Vector &PSStress = theMat->getStress();
+    //three dimensional stress
+    const Vector& PSStress = theMat->getStress();
 
-  stress(0) = PSStress(0);
-  stress(1) = PSStress(1);
-  stress(2) = PSStress(2);
-  stress(3) = gmod * strain(3);
-  stress(4) = gmod * strain(4);
+    stress(0) = PSStress(0);
+    stress(1) = PSStress(1);
+    stress(2) = PSStress(2);
+    stress(3) = gmod * strain(3);
+    stress(4) = gmod * strain(4);
 
-  return stress ;
+    return stress;
 }
 
 
 //send back the tangent 
-const Matrix&  
-PlateFromPlaneStressMaterialThermal::getTangent( )
+const Matrix&
+PlateFromPlaneStressMaterialThermal::getTangent()
 {
-  const Matrix PSTangent = theMat->getTangent( ) ;
+    const Matrix PSTangent = theMat->getTangent();
 
-  tangent.Zero();
-  
-  tangent(0,0) = PSTangent(0,0);
-  tangent(0,1) = PSTangent(0,1);
-  tangent(0,2) = PSTangent(0,2);
-  tangent(1,0) = PSTangent(1,0);
-  tangent(1,1) = PSTangent(1,1);
-  tangent(1,2) = PSTangent(1,2);
-  tangent(2,0) = PSTangent(2,0);
-  tangent(2,1) = PSTangent(2,1);
-  tangent(2,2) = PSTangent(2,2);
-  tangent(3,3) = gmod;
-  tangent(4,4) = gmod;
+    tangent.Zero();
 
-  return tangent ;
+    tangent(0, 0) = PSTangent(0, 0);
+    tangent(0, 1) = PSTangent(0, 1);
+    tangent(0, 2) = PSTangent(0, 2);
+    tangent(1, 0) = PSTangent(1, 0);
+    tangent(1, 1) = PSTangent(1, 1);
+    tangent(1, 2) = PSTangent(1, 2);
+    tangent(2, 0) = PSTangent(2, 0);
+    tangent(2, 1) = PSTangent(2, 1);
+    tangent(2, 2) = PSTangent(2, 2);
+    tangent(3, 3) = gmod;
+    tangent(4, 4) = gmod;
+
+    return tangent;
 }
 
 //send back the tangent 
-const Matrix&  
+const Matrix&
 PlateFromPlaneStressMaterialThermal::getInitialTangent
-( )
+()
 {
-  const Matrix PSTangent = theMat->getInitialTangent( ) ;
+    const Matrix PSTangent = theMat->getInitialTangent();
 
-  tangent.Zero();
-  
-  tangent(0,0) = PSTangent(0,0);
-  tangent(0,1) = PSTangent(0,1);
-  tangent(0,2) = PSTangent(0,2);
-  tangent(1,0) = PSTangent(1,0);
-  tangent(1,1) = PSTangent(1,1);
-  tangent(1,2) = PSTangent(1,2);
-  tangent(2,0) = PSTangent(2,0);
-  tangent(2,1) = PSTangent(2,1);
-  tangent(2,2) = PSTangent(2,2);
-  tangent(3,3) = gmod;
-  tangent(4,4) = gmod;
+    tangent.Zero();
 
-  return tangent ;
+    tangent(0, 0) = PSTangent(0, 0);
+    tangent(0, 1) = PSTangent(0, 1);
+    tangent(0, 2) = PSTangent(0, 2);
+    tangent(1, 0) = PSTangent(1, 0);
+    tangent(1, 1) = PSTangent(1, 1);
+    tangent(1, 2) = PSTangent(1, 2);
+    tangent(2, 0) = PSTangent(2, 0);
+    tangent(2, 1) = PSTangent(2, 1);
+    tangent(2, 2) = PSTangent(2, 2);
+    tangent(3, 3) = gmod;
+    tangent(4, 4) = gmod;
+
+    return tangent;
 }
 
 
 //print out data
-void  
-PlateFromPlaneStressMaterialThermal::Print( OPS_Stream &s, int flag )
+void
+PlateFromPlaneStressMaterialThermal::Print(OPS_Stream& s, int flag)
 {
-  s << "PlateFromPlaneStress Material tag: " << this->getTag() << "" << endln ; 
-  s << "using PlaneStress material : " << endln ;
+    s << "PlateFromPlaneStress Material tag: " << this->getTag() << "" << endln;
+    s << "using PlaneStress material : " << endln;
 
-  theMat->Print( s, flag ) ;
+    theMat->Print(s, flag);
 
 }
 
 
-int 
-PlateFromPlaneStressMaterialThermal::sendSelf(int commitTag, Channel &theChannel) 
+int
+PlateFromPlaneStressMaterialThermal::sendSelf(int commitTag, Channel& theChannel)
 {
-  int res = 0;
+    int res = 0;
 
-  int dataTag = this->getDbTag();
+    int dataTag = this->getDbTag();
 
-  int matDbTag;
-  
-  static ID idData(3);
-  idData(0) = dataTag;
-  idData(1) = theMat->getClassTag();
-  matDbTag = theMat->getDbTag();
-  if (matDbTag == 0) {
-    matDbTag = theChannel.getDbTag();
-    theMat->setDbTag(matDbTag);
-  }
-  idData(2) = matDbTag;
+    int matDbTag;
 
-  res = theChannel.sendID(dataTag, commitTag, idData);
-  if (res < 0) {
-    opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to send data" << endln;
-    return res;
-  }
-
-  static Vector vecData(1);
-  vecData(0) = gmod;
-
-  res = theChannel.sendVector(dataTag, commitTag, vecData);
-  if (res < 0) {
-    opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to send data" << endln;
-    return res;
-  }
-
-  // now send the materials data
-  res += theMat->sendSelf(commitTag, theChannel);
-  if (res < 0) 
-    opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to send material1" << endln;
-
-  return res;
-}
-
-int 
-PlateFromPlaneStressMaterialThermal::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
-{
-  int res = 0;
-
-  int dataTag = this->getDbTag();
-
-  // recv an id containg the tag and associated materials class and db tags
-  static ID idData(3);
-  res = theChannel.recvID(dataTag, commitTag, idData);
-  if (res < 0) {
-    opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to receive id data" << endln;
-    return res;
-  }
-
-  this->setTag(idData(0));
-  int matClassTag = idData(1);
-  if (theMat->getClassTag() != matClassTag) {
-    if (theMat != 0) delete theMat;
-    theMat = theBroker.getNewNDMaterial(matClassTag);
-    if (theMat == 0) {
-      opserr << "PlateFromPlaneStressMaterialThermal::recvSelf() - failed to get a material of type: " << matClassTag << endln;
-      return -1;
+    static ID idData(3);
+    idData(0) = dataTag;
+    idData(1) = theMat->getClassTag();
+    matDbTag = theMat->getDbTag();
+    if (matDbTag == 0) {
+        matDbTag = theChannel.getDbTag();
+        theMat->setDbTag(matDbTag);
     }
-  }
-  theMat->setDbTag(idData(2));
+    idData(2) = matDbTag;
 
-  static Vector vecData(1);
-  res = theChannel.recvVector(dataTag, commitTag, vecData);
-  if (res < 0) {
-    opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to receive vector data" << endln;
+    res = theChannel.sendID(dataTag, commitTag, idData);
+    if (res < 0) {
+        opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to send data" << endln;
+        return res;
+    }
+
+    static Vector vecData(1);
+    vecData(0) = gmod;
+
+    res = theChannel.sendVector(dataTag, commitTag, vecData);
+    if (res < 0) {
+        opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to send data" << endln;
+        return res;
+    }
+
+    // now send the materials data
+    res += theMat->sendSelf(commitTag, theChannel);
+    if (res < 0)
+        opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to send material1" << endln;
+
     return res;
-  }
-  gmod = vecData(0);
-
-  // now receive the materials data
-  res = theMat->recvSelf(commitTag, theChannel, theBroker);
-  if (res < 0) 
-    opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to receive material1" << endln;
-  
-  return res;
 }
- 
 
-double 
-PlateFromPlaneStressMaterialThermal::getThermalTangentAndElongation(double &TempT, double&ET, double&Elong)
+int
+PlateFromPlaneStressMaterialThermal::recvSelf(int commitTag, Channel& theChannel, FEM_ObjectBroker& theBroker)
+{
+    int res = 0;
+
+    int dataTag = this->getDbTag();
+
+    // recv an id containg the tag and associated materials class and db tags
+    static ID idData(3);
+    res = theChannel.recvID(dataTag, commitTag, idData);
+    if (res < 0) {
+        opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to receive id data" << endln;
+        return res;
+    }
+
+    this->setTag(idData(0));
+    int matClassTag = idData(1);
+    if (theMat->getClassTag() != matClassTag) {
+        if (theMat != 0) delete theMat;
+        theMat = theBroker.getNewNDMaterial(matClassTag);
+        if (theMat == 0) {
+            opserr << "PlateFromPlaneStressMaterialThermal::recvSelf() - failed to get a material of type: " << matClassTag << endln;
+            return -1;
+        }
+    }
+    theMat->setDbTag(idData(2));
+
+    static Vector vecData(1);
+    res = theChannel.recvVector(dataTag, commitTag, vecData);
+    if (res < 0) {
+        opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to receive vector data" << endln;
+        return res;
+    }
+    gmod = vecData(0);
+
+    // now receive the materials data
+    res = theMat->recvSelf(commitTag, theChannel, theBroker);
+    if (res < 0)
+        opserr << "PlateFromPlaneStressMaterialThermal::sendSelf() - failed to receive material1" << endln;
+
+    return res;
+}
+
+
+double
+PlateFromPlaneStressMaterialThermal::getThermalTangentAndElongation(double& TempT, double& ET, double& Elong)
 {
 
-theMat->setThermalTangentAndElongation(TempT,ET,Elong );
-return 0;
+    theMat->setThermalTangentAndElongation(TempT, ET, Elong);
+    return 0;
 }
 
 const Vector&
 PlateFromPlaneStressMaterialThermal::getTempAndElong()
 {
-	//return theMaterial->getTempAndElong( );
-   static Vector returnedVec = Vector(2);
-	
+    //return theMaterial->getTempAndElong( );
+    static Vector returnedVec = Vector(2);
+
     if (theMat->getTempAndElong().Size() == 4) {
         returnedVec.resize(4);
         returnedVec(0) = theMat->getTempAndElong()(0);
@@ -364,5 +405,5 @@ PlateFromPlaneStressMaterialThermal::getTempAndElong()
         returnedVec(0) = theMat->getTempAndElong()(0);
         returnedVec(1) = theMat->getTempAndElong()(1);
     }
-	return returnedVec;
+    return returnedVec;
 }

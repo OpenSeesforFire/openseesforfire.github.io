@@ -60,12 +60,12 @@ class BeamColumnJoint3dThermal : public Element
   // defined constructor
   BeamColumnJoint3dThermal(int tag, int Nd1, int Nd2,
       UniaxialMaterial& theMat1, UniaxialMaterial& theMat2,
-      UniaxialMaterial& theMat3, Vector& dispLimit);
+      UniaxialMaterial& theMat3, double axiLimit, double shLimit, double mLimit);
   
   BeamColumnJoint3dThermal(int tag,int Nd1, int Nd2,
 		    UniaxialMaterial& theMat1, UniaxialMaterial& theMat2,
 		    UniaxialMaterial& theMat3, UniaxialMaterial& theMat4, UniaxialMaterial& theMat5,
-            UniaxialMaterial& theMat6, Vector& dispLimit);
+            UniaxialMaterial& theMat6, double axiLimit, double shLimit, double mLimit);
   
   // default destructor
   ~BeamColumnJoint3dThermal();
@@ -176,6 +176,11 @@ private:
     Vector* d0;
     Vector* v0;
     Vector deform;
+
+    // Limits for deformation in each direction
+    double Alimit;
+    double Slimit;
+    double Mlimit;
 
 
     Matrix* theMatrix;  // pointer to objects matrix (a class wide Matrix)

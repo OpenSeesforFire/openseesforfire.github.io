@@ -85,6 +85,8 @@ void* OPS_LayeredShellFiberSection();
 void* OPS_Bidirectional();
 void* OPS_Isolator2spring();
 void* OPS_FiberSection2dThermal();
+void* OPS_FiberSection3dThermal();
+void* OPS_LayeredShellFiberSectionThermal();
 
 namespace {
     static FiberSection2d* theActiveFiberSection2d = 0;
@@ -133,42 +135,7 @@ namespace {
 	return theSec;
     }
 
-    static void* OPS_FiberSection3dThermal(bool& isTorsion)
-    {
-	int numData = OPS_GetNumRemainingInputArgs();
-	if(numData < 1) {
-	    opserr<<"insufficient arguments for FiberSection3dThermal\n";
-	    return 0;
-	}
-
-	numData = 1;
-	int tag;
-	if (OPS_GetIntInput(&numData, &tag) < 0) {
-	    opserr<<"WARNING: failed to read tag\n";
-	    return 0;
-	}
-
-	double GJ = 0.0;
-	isTorsion = false;
-	if (OPS_GetNumRemainingInputArgs() >= 2) {
-	    const char* opt = OPS_GetString();
-	    if (strcmp(opt, "-GJ") == 0) {
-		if (OPS_GetDoubleInput(&numData, &GJ) < 0) {
-		    opserr << "WARNING: failed to read GJ\n";
-		    return 0;
-		}
-		isTorsion = true;
-	    }
-	}
-
-	int num = 30;
-
-	if (isTorsion) {
-	    return new FiberSectionGJThermal(tag,num,GJ);
-	} else {
-	    return new FiberSection3d(tag, num);
-	}
-    }
+  
 
     static void* OPS_FiberSection()
     {
@@ -185,26 +152,65 @@ namespace {
 	return theSec;
     }
 
-    static void* OPS_FiberSectionThermal()
-    {
-	void* theSec = 0;
-	int ndm = OPS_GetNDM();
-	if(ndm == 2) {
-	    theSec = OPS_FiberSection2dThermal();
-	    theActiveFiberSection2dThermal = (FiberSection2dThermal*)theSec;
-	} else if(ndm == 3) {
-	    bool isTorsion = false;
-	    theSec = OPS_FiberSection3dThermal(isTorsion);
-	    if (isTorsion) {
-		theActiveFiberSectionGJThermal = (FiberSectionGJThermal*)theSec;
-	    } else {
-		theActiveFiberSection3dThermal = (FiberSection3dThermal*)theSec;
-	    }
+	static void* OPS_FiberSection3dThermal(bool& isTorsion)
+	{
+		int numData = OPS_GetNumRemainingInputArgs();
+		if (numData < 1) {
+			opserr << "insufficient arguments for FiberSection3dThermal\n";
+			return 0;
+		}
 
+		numData = 1;
+		int tag;
+		if (OPS_GetIntInput(&numData, &tag) < 0) {
+			opserr << "WARNING: failed to read tag\n";
+			return 0;
+		}
+
+		double GJ = 0.0;
+		isTorsion = false;
+		if (OPS_GetNumRemainingInputArgs() >= 2) {
+			const char* opt = OPS_GetString();
+			if (strcmp(opt, "-GJ") == 0) {
+				if (OPS_GetDoubleInput(&numData, &GJ) < 0) {
+					opserr << "WARNING: failed to read GJ\n";
+					return 0;
+				}
+				isTorsion = true;
+			}
+		}
+
+		int num = 30;
+		if (isTorsion) {
+			return new FiberSectionGJThermal(tag, num, GJ);
+		}
+		else {
+			return new FiberSection3dThermal(tag, num);
+		}
 	}
 
-	return theSec;
-    }
+	static void* OPS_FiberSectionThermal()
+	{
+		void* theSec = 0;
+		int ndm = OPS_GetNDM();
+		if (ndm == 2) {
+			theSec = OPS_FiberSection2dThermal();
+			theActiveFiberSection2dThermal = (FiberSection2dThermal*)theSec;
+		}
+		else if (ndm == 3) {
+			bool isTorsion = false;
+			theSec = OPS_FiberSection3dThermal(isTorsion);
+			if (isTorsion) {
+				theActiveFiberSectionGJThermal = (FiberSectionGJThermal*)theSec;
+			}
+			else {
+				theActiveFiberSection3dThermal = (FiberSection3dThermal*)theSec;
+			}
+
+		}
+
+		return theSec;
+	}
 
     static void* OPS_NDFiberSection()
     {
@@ -846,7 +852,7 @@ namespace {
 	functionMap.insert(std::make_pair("LayeredShell", &OPS_LayeredShellFiberSection));
 	functionMap.insert(std::make_pair("Bidirectional", &OPS_Bidirectional));
 	functionMap.insert(std::make_pair("Isolator2spring", &OPS_Isolator2spring));
-
+	functionMap.insert(std::make_pair("LayeredShellThermal", &OPS_LayeredShellFiberSectionThermal));
 	return 0;
     }
 }

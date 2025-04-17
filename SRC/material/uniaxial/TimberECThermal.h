@@ -1,4 +1,4 @@
-/* ****************************************************************** **
+﻿/* ****************************************************************** **
 **    OpenSees - Open System for Earthquake Engineering Simulation    **
 **          Pacific Earthquake Engineering Research Center            **
 **                                                                    **
@@ -31,99 +31,139 @@
 
 
 
-#ifndef TimberECThermal_h
+#ifndef TimberECThermal_h  
 #define TimberECThermal_h
 
 #include <UniaxialMaterial.h>
+#include <Vector.h>
+#include <Matrix.h>
+
+// Define material tag
+#define MAT_TAG_TimberECThermal 1001
 
 class TimberECThermal : public UniaxialMaterial
 {
 public:
-    TimberECThermal(int tag, double _fc, double _epsc0, double _fcu,
-        double _Epos, double _Eneg, double _ft);
+    // Constructor that takes 12 parameters: E1, E2, E3, fc1, fc2, fc3, ft1, ft2, ft3, tempCoeff1, tempCoeff2, tempCoeff3
+    TimberECThermal(int tag, double* params);
 
+    // Default constructor
     TimberECThermal(void);
 
+    // Destructor
     virtual ~TimberECThermal();
 
+    // Get material type
     const char* getClassType(void) const { return "TimberECThermal"; };
-    double getInitialTangent(void);
+
+    // Get a copy of the material
     UniaxialMaterial* getCopy(void);
 
+    // Get initial tangent modulus
+    double getInitialTangent(void);
 
-    int setTrialStrain(double strain, double rate);     //JZ this function is no use, just for the definiation of pure virtual function.
-    int setTrialStrain(double strain, double FiberTemperature, double strainRate); //***JZ
+    // Set trial strain (unused, only for pure virtual function definition)
+    int setTrialStrain(double strain, double rate);
 
+    // Set trial strain, considering temperature and strain rate
+    int setTrialStrain(double strain, double FiberTemperature, double strainRate);
+
+    // Get strain (uniaxial strain, averaged from three directional strains)
     double getStrain(void);
+
+    // Get stress (uniaxial stress, averaged from three directional stresses)
     double getStress(void);
+
+    // Get tangent modulus
     double getTangent(void);
 
-    double getThermalElongation(void); //***JZ
-    double getElongTangent(double, double&, double&, double);//***JZ //PK add to include max temp
+    // Get thermal elongation
+    double getThermalElongation(void);
 
+    // Get tangent modulus of thermal elongation (including maximum temperature)
+    double getElongTangent(double temperature, double& ET, double& Elong, double TempTmax);
+
+    // Commit state
     int commitState(void);
+
+    // Revert to last committed state
     int revertToLastCommit(void);
+
+    // Revert to initial state
     int revertToStart(void);
 
+    // Send self to channel
     int sendSelf(int commitTag, Channel& theChannel);
-    int recvSelf(int commitTag, Channel& theChannel,
-        FEM_ObjectBroker& theBroker);
 
+    // Receive self from channel
+    int recvSelf(int commitTag, Channel& theChannel, FEM_ObjectBroker& theBroker);
+
+    // Print material information
     void Print(OPS_Stream& s, int flag = 0);
 
-    int getVariable(const char* variable, Information&);
-
+    // Get variable information
+    int getVariable(const char* variable, Information& theInfo);
 
 protected:
 
 private:
+    // Material parameters (three principal directions)
+    double E1, E2, E3;           // Elastic modulus
+    double fc1, fc2, fc3;        // Compressive strength
+    double ft1, ft2, ft3;        // Tensile strength
+    double tempCoeff1, tempCoeff2, tempCoeff3; // Temperature coefficients
 
-    double Temp;  // Timber temp
-    double TempMax;  // layer state tag:: 0:wet wood, 1: dry wood, 2:char layer
-    double TempMaxP; //committed fiber state
-    double ThermalElongation; // eps(theata) = alpha * temperature
-    double fcT;
-    double epsc0T;
-    double fcuT;
-    double ftT;
-    double EposT;
-    double EnegT;
+    // Current stress and strain (three directions)
+    double sig1, sig2, sig3;
+    double eps1, eps2, eps3;
 
+    // Positive and negative elastic moduli (three directions)
+    double Epos1, Eneg1;
+    double Epos2, Eneg2;
+    double Epos3, Eneg3;
 
-    // matpar : Concrete FIXED PROPERTIES
-    double fc0;    // concrete compression strength           : mp(1)
-    double epsc0; // strain at compression strength          : mp(2)
-    double fcu0;   // stress at ultimate (crushing) strain    : mp(3)
-//    double epscu; // ultimate (crushing) strain              : mp(4)       
-//    double rat;   // ratio between unloading slope at epscu and original slope : mp(5)
-    double Epos0;  // Modulus of Elasticity for compression   : mp(4)
-    double Eneg0;  // Modulus of Elasticity for tension       : mp(5)
-    double ft0;    // concrete tensile strength               : mp(6)
-    double E;   // tension stiffening slope                : mp(7)
+    // Temperature-related variables
+    double Temp;         // Current temperature
+    double TempMax;      // Maximum temperature reached
+    double TempMaxP;     // Maximum temperature at commit
+    double ThermalElongation; // Thermal elongation
 
+    // Committed state variables (store the state from the previous step)
+    double Csig1, Csig2, Csig3;
+    double Ceps1, Ceps2, Ceps3;
+    double CEpos1, CEneg1;
+    double CEpos2, CEneg2;
+    double CEpos3, CEneg3;
+    double CTemp;
+    double CTempMax;
 
+    // Combined uniaxial stress and strain
+    double sig; // Uniaxial stress
+    double eps; // Uniaxial strain
 
-    // hstvP : Concerete HISTORY VARIABLES last committed step
-//    double ecminP;  //  hstP(1)
-//    double deptP;   //  hstP(2)
-    double epsP;  //  = strain at previous converged step
-    double sigP;  //  = stress at previous converged step
-    double EposP;    //   Compression elasticity modulus at last converged step;
-    double EnegP;
+    double E; // Combined tangent modulus
 
-    double TempP; //
+    // Helper function: compute stress
+    void computeStress();
 
-    // hstv : Concerete HISTORY VARIABLES  current step
-//    double ecmin;
-//    double dept;
-    double sig;
-//    double Epos;
-//    double Eneg;
-    double eps;
+    // Helper function: update temperature effects
+    void updateTemperatureEffects();
 
-
+    // Set temperature
+    void setTemperature(double temperature);
 };
 
-
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -50,6 +50,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <SurfaceLoader.h>
 #include <SelfWeight.h>
 #include <Beam2dThermalAction.h>
+#include <Beam3dThermalAction.h>
 #include <Beam2dTempLoad.h>
 #include <SP_Constraint.h>
 #include <LoadPattern.h>
@@ -62,7 +63,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <GroundMotion.h>
 #include <vector>
 #include <InterpolatedGroundMotion.h>
-
+#include <ShellThermalAction.h>
 void* OPS_LoadPattern();
 void* OPS_UniformExcitationPattern();
 void* OPS_MultiSupportPattern();
@@ -633,10 +634,114 @@ int OPS_ElementalLoad()
         }
 	} // for the if (ndm==2)
 	else {//if (ndm=3)
-	    opserr << "WARNING eleLoad -beamThermalAction type currently only valid only for ndm=2\n";
-	    return -1;
+		double t1, locY1, t2, locY2, t3, locY3, t4, locY4, t5, locY5,
+			t6, t7, locZ1, t8, t9, locZ2, t10, t11, locZ3, t12, t13, locZ4, t14, t15, locZ5;
+		bool useGrid = false;
+		int numdata = OPS_GetNumRemainingInputArgs();
+		double data[35];
+		if (numdata == 25) {
+			if (OPS_GetDoubleInput(&numdata, data) < 0) {
+				opserr << OPS_GetDoubleInput(&numdata, data);
+				opserr << "WARNING eleLoad - invalid input\n";
+				return -1;
+			}
+			t1 = data[0]; locY1 = data[1];
+			t2 = data[2]; locY2 = data[3];
+			t3 = data[4]; locY3 = data[5];
+			t4 = data[6]; locY4 = data[7];
+			t5 = data[8]; locY5 = data[9];
+
+			t6 = data[10]; t7 = data[11]; locZ1 = data[12];
+			t8 = data[13]; t9 = data[14]; locZ2 = data[15];
+			t10 = data[16]; t11 = data[17]; locZ3 = data[18];
+			t12 = data[19]; t13 = data[20]; locZ4 = data[21];
+			t14 = data[22]; t15 = data[23]; locZ5 = data[24];
+		}
+		else if (numdata == 35) {
+			if (OPS_GetDoubleInput(&numdata, data) < 0) {
+				opserr << "WARNING eleLoad - invalid input\n";
+				return -1;
+			}
+			useGrid = true;
+		}
+		else if (numdata == 4) {
+			if (OPS_GetDoubleInput(&numdata, data) < 0) {
+				opserr << "WARNING eleLoad - invalid input\n";
+				return -1;
+			}
+
+			t1 = data[0];
+			locY1 = data[1];
+			t5 = data[2];
+			locY5 = data[3];
+
+			locY2 = locY1 + (locY5 - locY1) / 4;
+			locY3 = locY1 + (locY5 - locY1) / 2;
+			locY4 = locY1 + 3 * (locY5 - locY1) / 4;
+			t2 = t1 + (t5 - t1) / 4;
+			t3 = t1 + (t5 - t1) / 2;
+			t4 = t1 + 3 * (t5 - t1) / 4;
+			locZ1 = locZ2 = locZ3 = locZ4 = locZ5 = 0;
+			t6 = t7 = t8 = t9 = t10 = 0;
+			t11 = t12 = t13 = t14 = t15 = 0;
+		}
+		else if (numdata == 8) {
+			if (OPS_GetDoubleInput(&numdata, data) < 0) {
+				opserr << "WARNING eleLoad - invalid input\n";
+				return -1;
+			}
+
+			t1 = data[0];
+			locY1 = data[1];
+			t5 = data[2];
+			locY5 = data[3];
+			t6 = data[4];
+			locZ1 = data[5];
+			t10 = data[6];
+			locZ5 = data[7];
+
+			locY2 = locY1 + (locY5 - locY1) / 4;
+			locY3 = locY1 + (locY5 - locY1) / 2;
+			locY4 = locY1 + 3 * (locY5 - locY1) / 4;
+			t2 = t1 + (t5 - t1) / 4;
+			t3 = t1 + (t5 - t1) / 2;
+			t4 = t1 + 3 * (t5 - t1) / 4;
+
+			locZ2 = locZ1 + (locZ5 - locZ1) / 4;
+			locZ3 = locZ1 + (locZ5 - locZ1) / 2;
+			locZ4 = locZ1 + 3 * (locZ5 - locZ1) / 4;
+			t11 = t6; t15 = t10;
+			t7 = t6 + (t10 - t6) / 4; t12 = t11 + (t15 - t11) / 4;
+			t8 = t6 + (t10 - t6) / 2; t13 = t11 + (t15 - t11) / 2;
+			t9 = t6 + 3 * (t10 - t6) / 4; t14 = t11 + 3 * (t15 - t11) / 4;
+		}
+		else {
+			opserr << "WARNING eleLoad Beam3dThermalAction: invalid number of temperature arguments,/n looking for arguments for Temperatures and coordinates" << endln;
+			return -1;
+		}
+
+		for (int i = 0; i < theEleTags.Size(); i++) {
+			theLoad = new Beam3dThermalAction(eleLoadTag,
+				t1, locY1, t2, locY2, t3, locY3, t4, locY4,
+				t5, locY5, t6, t7, locZ1, t8, t9, locZ2, t10, t11, locZ3,
+				t12, t13, locZ4, t14, t15, locZ5, theEleTags(i));
+			
+			if (theLoad == 0) {
+				opserr << "WARNING eleLoad - out of memory creating load of type " << type << endln;
+				return -1;
+			}
+
+			// add the load to the domain
+			if (theDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
+				opserr << "WARNING eleLoad - could not add following load to domain:\n ";
+				opserr << theLoad;
+				delete theLoad;
+				return -1;
+			}
+			eleLoadTag++;
+		}
+	} // ndm==3
 	}
-    }
     //--Adding identifier for Beam2dThermalAction:[END] by UoE OpenSees Group--//
 
 
@@ -756,7 +861,151 @@ int OPS_ElementalLoad()
 
     // if get here we have sucessfully created the load and added it to the domain
 
-    return 0;
+	// Added by PolyU--ShellThermalAction
+	else if (strcmp(type, "-shellThermal") == 0) {
+
+		double t1, locY1, t2, locY2;
+		double t3, locY3, t4, locY4;
+		int shellThermalActionType = 0;
+		TimeSeries* theSeries = 0;
+		TimeSeries* theSeries1 = 0;
+
+		const char* opt = OPS_GetString();
+
+		if (strcmp(opt, "source") == 0 || strcmp(opt, "-source") == 0) {
+
+			const char* filename = OPS_GetString();
+			theSeries = new PathTimeSeriesThermal(eleLoadTag, filename, 9);
+			int numData = OPS_GetNumRemainingInputArgs();
+			if (numData == 2) {
+
+				int numdata = 1;
+				if (OPS_GetDoubleInput(&numdata, &locY1) != 0) {
+					opserr << "WARNING eleLoad - invalid locY1  " << " for -shellThermal\n";
+
+					return -1;
+				}
+				if (OPS_GetDoubleInput(&numdata, &locY2) != 0) {
+					opserr << "WARNING eleLoad - invalid single locY2 " << " for -shellThermal\n";
+
+					return -1;
+				}
+
+				shellThermalActionType = 1;
+			}
+			else {
+				opserr << "WARNING eleLoad - invalid input for -shellThermal\n";
+			}
+		}
+
+		else if (strcmp(opt, "Twosource") == 0 || strcmp(opt, "-Twosource") == 0) {
+
+			int numData = OPS_GetNumRemainingInputArgs();
+
+			if (numData != 6) {
+				opserr << "WARNING eleLoad - insufficient input  " << " for -shellThermal\n";
+				return -1;
+			}
+
+			//const char* pwd = getInterpPWD(interp);
+			int numdata = 1;
+
+			const char* filename1 = OPS_GetString();
+			//simulationInfo.addInputFile(argv[count], pwd);
+			theSeries = new PathTimeSeriesThermal(eleLoadTag, filename1, 9);
+
+			if (OPS_GetDouble(&numdata, &locY1) != 0) {
+				opserr << "WARNING eleLoad - invalid single locY1  " << " for -shellThermal\n";
+				return -1;
+			}
+			if (OPS_GetDouble(&numdata, &locY2) != 0) {
+				opserr << "WARNING eleLoad - invalid single locY2  " << " for -shellThermal\n";
+				return -1;
+			}
+
+			const char* filename2 = OPS_GetString();
+			//simulationInfo.addInputFile(argv[count + 3], pwd);
+			theSeries1 = new PathTimeSeriesThermal(eleLoadTag + 1, filename2, 9);
+
+			if (OPS_GetDouble(&numdata, &locY3) != 0) {
+				opserr << "WARNING eleLoad - invalid single locY1  " << " for -shellThermal\n";
+				return -1;
+			}
+			if (OPS_GetDouble(&numdata, &locY4) != 0) {
+				opserr << "WARNING eleLoad - invalid single locY2  " << " for -shellThermal\n";
+				return -1;
+			}
+
+			shellThermalActionType = 4;
+
+		}
+		// two temperature is given,
+		else {
+			OPS_ResetCurrentInputArg(-1);
+			int numData = OPS_GetNumRemainingInputArgs();
+
+			if (numData == 4) {
+
+				shellThermalActionType = 3;
+
+				int numdata = 1;
+				if (OPS_GetDouble(&numdata, &t1) != 0) {
+					opserr << "WARNING eleLoad - invalid T1 " << " for -shellThermal\n";
+					return -1;
+				}
+				if (OPS_GetDouble(&numdata, &locY1) != 0) {
+					opserr << "WARNING eleLoad - invalid LocY1 " << " for -shellThermal\n";
+					return -1;
+				}
+				if (OPS_GetDouble(&numdata, &t2) != 0) {
+					opserr << "WARNING eleLoad - invalid T2 " << " for -shellThermal\n";
+					return -1;
+				}
+				if (OPS_GetDouble(&numdata, &locY2) != 0) {
+					opserr << "WARNING eleLoad - invalid LocY2 " << " for -shellThermal\n";
+					return -1;
+				}
+
+			}
+			else {
+				opserr << "WARNING eleLoad -shellThermalAction invalid number of temperature aguments,/n looking for 4 arguments: Temp1,locy1, Temp2, Locy2 or source\n";
+			}
+			//finish the temperature arguments
+
+		}
+
+		//---------------------Now Adding ShellThermalAction to Domain-----------------------------
+		for (int i = 0; i < theEleTags.Size(); i++) {
+			if (shellThermalActionType == 1)
+				theLoad = new ShellThermalAction(eleLoadTag, locY1, locY2, theSeries, theEleTags(i));
+			//else if (shellThermalActionType == 2)
+			//	theLoad = new ShellThermalAction(eleLoadTag, theEleTags(i));
+			else if (shellThermalActionType == 3)
+				theLoad = new ShellThermalAction(eleLoadTag, t1, locY1, t2, locY2, theEleTags(i));
+			else if (shellThermalActionType == 4)
+				theLoad = new ShellThermalAction(eleLoadTag, locY1, locY2, locY3, locY4, theSeries, theSeries1, theEleTags(i));
+
+			if (theLoad == 0) {
+				opserr << "WARNING eleLoad - out of memory creating load of type ";
+				return -1;
+			}
+
+			// get the current pattern tag if no tag given in i/p
+			int loadPatternTag = theActiveLoadPattern->getTag();
+
+			// add the load to the domain
+			if (theDomain->addElementalLoad(theLoad, loadPatternTag) == false) {
+				opserr << "WARNING eleLoad - could not add following load to domain:\n ";
+				opserr << theLoad;
+				delete theLoad;
+				return -1;
+			}
+			eleLoadTag++;
+		}
+		//Added by PolyU--[End]--ShellThermalAction
+
+		return 0;
+		}
 }
 
 

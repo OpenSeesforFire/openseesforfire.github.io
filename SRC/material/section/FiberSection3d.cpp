@@ -181,6 +181,7 @@ FiberSection3d::FiberSection3d(int tag, int num, UniaxialMaterial *torsion):
   if (torsion != 0) {
     theTorsion = torsion->getCopy();
   } else {
+      opserr << "T=0\n";
     // assign zero torsional stiffness because people often use
     // the aggregator section to assign torsional stiffness
     theTorsion = new ElasticMaterial(0, 1.0E-10);
@@ -345,6 +346,7 @@ FiberSection3d::addFiber(Fiber &newFiber)
 
       theMaterials = newArray;
       matData = newMatData;
+      
   }
 	    
   // set the new pointers
@@ -354,9 +356,10 @@ FiberSection3d::addFiber(Fiber &newFiber)
   matData[numFibers*3] = yLoc;
   matData[numFibers*3+1] = zLoc;
   matData[numFibers*3+2] = Area;
+
   UniaxialMaterial *theMat = newFiber.getMaterial();
   theMaterials[numFibers] = theMat->getCopy();
-
+  
   if (theMaterials[numFibers] == 0) {
     opserr << "FiberSection3d::addFiber -- failed to get copy of a Material\n";
     return -1;
@@ -373,6 +376,7 @@ FiberSection3d::addFiber(Fiber &newFiber)
   zBar = QyBar/Abar;
 
   return 0;
+  
 }
 
 

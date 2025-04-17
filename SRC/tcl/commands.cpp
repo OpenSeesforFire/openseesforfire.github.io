@@ -376,7 +376,7 @@ int optimization(ClientData, Tcl_Interp *, int, TCL_Char **);  //Quan  (2)
 
 #ifdef _HEATTRANSFER
 //Adding HeatTransfer Module-----------------//Liming Jiang,UoE,2014
-#include <HeatTransferDomain.h>
+//#include <HeatTransferDomain.h>
 #include <TclHeatTransferModule.h>
 
 int HeatTransfer(ClientData, Tcl_Interp *, int, TCL_Char **);  
@@ -387,7 +387,7 @@ static TclHeatTransferModule *theTclHTModule = 0;
 
 #ifdef _SIFBUILDER
 //Adding SIFBUILDER Module-----------------//Liming Jiang,UoE,2014
-#include <HeatTransferDomain.h>
+//#include <HeatTransferDomain.h>
 #include <TclSIFBuilder.h>
 
 int SIFBuilder(ClientData, Tcl_Interp *, int, TCL_Char **);

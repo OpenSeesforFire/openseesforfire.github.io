@@ -50,7 +50,7 @@
 #include <NodalThermalAction.h>
 #include <ThermalActionWrapper.h>
 #include <elementAPI.h>
-
+#include <Beam2dThermalAction.h>
 #include <math.h>
 #include <StandardStream.h>
 #include <fstream>
@@ -362,7 +362,7 @@ int
 DispBeamColumn2dThermal::commitState()
 {
     int retVal = 0;
-
+    // opserr << "*" << endln;
     // call element commitState to do any base class stuff
     if ((retVal = this->Element::commitState()) != 0) {
       opserr << "DispBeamColumn2dThermal::commitState () - failed in base class";
@@ -408,7 +408,7 @@ DispBeamColumn2dThermal::revertToStart()
 int
 DispBeamColumn2dThermal::update(void)
 {
-  //opserr<<"**Now Update: Ele "<< this->getTag()<<" **"<<endln;
+  // opserr<<"**Now Update: Ele "<< this->getTag()<<" **"<<endln;
   int err = 0;
 
   // Update the transformation
@@ -417,13 +417,14 @@ DispBeamColumn2dThermal::update(void)
   // Get basic deformations
   const Vector &v = crdTransf->getBasicTrialDisp();
   double L = crdTransf->getInitialLength();
+
+  //opserr<< "Basic Deformation: "<<v[0] <<endln;
   double oneOverL = 1.0/L;
 
   //const Matrix &pts = quadRule.getIntegrPointCoords(numSections);
   double xi[maxNumSections];
   beamInt->getSectionLocations(numSections, L, xi);
   
-  //opserr<< "Basic Deformation: "<<v<<endln;
   // Loop over the integration points
   #ifdef _DEBUG
   //opserr << "BeamNUT_" << this->getTag() << " ,  v  " << v << endln;
@@ -450,7 +451,6 @@ DispBeamColumn2dThermal::update(void)
 	e(j) = 0.0; break;
       }
     }
-    
     // Set the section deformations	
    // err += theSections[i]->setTrialSectionDeformation(e);
     //J.Z
@@ -574,7 +574,7 @@ DispBeamColumn2dThermal::getTangentStiff()
   q(2) += q0[2];
   // Transform to global stiffness
   K = crdTransf->getGlobalStiffMatrix(kb, q);
-
+  //opserr << "K:" << K << endln;
   return K;
 }
 
@@ -793,6 +793,7 @@ DispBeamColumn2dThermal::addLoad(ElementalLoad *theLoad, double loadFactor)
 		  dataMixV(18+m)=1000;
 		  }
       const Vector &s = theSections[i]->getTemperatureStress(dataMixV);    //contribuited by ThermalElongation
+      opserr << "Thermal Stress " << s << endln;
 #ifdef _BDEBUG
 	  if(this->getTag()==1)
 	  opserr<<"Thermal Stress "<<s<<endln;
@@ -1227,7 +1228,7 @@ DispBeamColumn2dThermal::getResistingForce()
   Vector p0Vec(p0, 3);
 
   P = crdTransf->getGlobalResistingForce(q, p0Vec);
-
+  // opserr << "Applied Force: " << P(1) << endln;
   // Subtract other external nodal loads ... P_res = P_int - P_ext
   //P.addVector(1.0, Q, -1.0);
 // opserr <<" Ele: "<< this->getTag()<< ", P "<<P<<endln;

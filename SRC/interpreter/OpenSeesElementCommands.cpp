@@ -57,7 +57,6 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <BbarBrick.h>
 #include <ShellMITC4.h>
 #include <FourNodeTetrahedron.h>
-
 // no 'beamWithHinges', 'GenericClient', 'GenericCopy', 'flBrick', 'Adapter'
 
 void* OPS_ZeroLengthND();
@@ -137,6 +136,7 @@ void* OPS_ForceBeamColumnWarping2d();
 void* OPS_ElasticForceBeamColumnWarping2d();
 void* OPS_DispBeamColumn2dThermal();
 void* OPS_DispBeamColumn3dThermal();
+void* OPS_DispBeamColumn2dThermalAI();
 void* OPS_ElasticForceBeamColumn2d();
 void* OPS_ElasticForceBeamColumn3d();
 void* OPS_DispBeamColumn3dWithSensitivity();
@@ -253,6 +253,7 @@ namespace {
 	    return OPS_DispBeamColumn3dThermal();
 	}
     }
+
 
     static void* OPS_DispBeamColumnWithSensitivity()
     {
@@ -438,6 +439,7 @@ namespace {
 	functionMap.insert(std::make_pair("forceBeamColumnWarping", &OPS_ForceBeamColumnWarping2d));
 	functionMap.insert(std::make_pair("elasticForceBeamColumnWarping", &OPS_ElasticForceBeamColumnWarping2d));
 	functionMap.insert(std::make_pair("dispBeamColumnInt", &OPS_DispBeamColumn2dInt));
+	functionMap.insert(std::make_pair("dispBeamColumn2dThermalAI", &OPS_DispBeamColumn2dThermalAI));
 	functionMap.insert(std::make_pair("fTruss", &OPS_fElmt02));
 	functionMap.insert(std::make_pair("PFEMElementCompressible", &OPS_PFEMElementCompressible));
 	functionMap.insert(std::make_pair("PFEMElementBubble", &OPS_PFEMElementBubble));

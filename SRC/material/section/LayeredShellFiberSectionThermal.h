@@ -116,8 +116,10 @@ class LayeredShellFiberSectionThermal : public SectionForceDeformation{
 
 	const Vector &getTemperatureStress(const Vector&); //Added by LMJ
 	double determineFiberTemperature(const Vector& DataMixed, double fiberLoc, int matType) ; //Added by LMJ
-
-
+   
+    //send back the thermal deformation 
+    const Vector &getThermalDeformation(); //Added by QJ
+    const Vector& getThermalForce(); //Added by QJ
 
   private :
     
@@ -152,6 +154,13 @@ class LayeredShellFiberSectionThermal : public SectionForceDeformation{
 	double AverageThermalMomentP;
     double AverageThermalElongP;
 
+    Vector thermalDeformation; //Added by QJ
+    Vector thermalForce; //Added by QJ
+    double Totalthickness;//Added by QJ
+    double ThermalAxialStrain;//Added by QJ
+    double ElongationMax;//Added by QJ
+    double ElongationMin;//Added by QJ
+    int NeutralLayer;
 } ; //end of LayeredShellFiberSectionThermal declarations
 
 

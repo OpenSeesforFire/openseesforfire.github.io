@@ -45,60 +45,60 @@ class Response;
 
 class FiberSection3dThermal : public SectionForceDeformation
 {
-  public:
+public:
     FiberSection3dThermal();
-    FiberSection3dThermal(int tag, int numFibers, Fiber **fibers);
+    FiberSection3dThermal(int tag, int numFibers, Fiber** fibers);
     FiberSection3dThermal(int tag, int numFibers);
     ~FiberSection3dThermal();
 
-    const char *getClassType(void) const {return "FiberSection3dThermal";};
+    const char* getClassType(void) const { return "FiberSection3dThermal"; };
 
-    int   setTrialSectionDeformation(const Vector &deforms);
-    const Vector &getSectionDeformation(void);
+    int   setTrialSectionDeformation(const Vector& deforms);
+    const Vector& getSectionDeformation(void);
 
-	const Vector &getTemperatureStress(const Vector& dataMixed); //JJadd to get Ft=EA*Elongation//
+    const Vector& getTemperatureStress(const Vector& dataMixed); //JJadd to get Ft=EA*Elongation//
 
-    const Vector &getStressResultant(void);
-    const Matrix &getSectionTangent(void);
-    const Matrix &getInitialTangent(void);
+    const Vector& getStressResultant(void);
+    const Matrix& getSectionTangent(void);
+    const Matrix& getInitialTangent(void);
 
     int   commitState(void);
     int   revertToLastCommit(void);
     int   revertToStart(void);
 
-    SectionForceDeformation *getCopy(void);
-    const ID &getType (void);
-    int getOrder (void) const;
+    SectionForceDeformation* getCopy(void);
+    const ID& getType(void);
+    int getOrder(void) const;
 
-    int sendSelf(int cTag, Channel &theChannel);
-    int recvSelf(int cTag, Channel &theChannel,
-		 FEM_ObjectBroker &theBroker);
-    void Print(OPS_Stream &s, int flag = 0);
+    int sendSelf(int cTag, Channel& theChannel);
+    int recvSelf(int cTag, Channel& theChannel,
+        FEM_ObjectBroker& theBroker);
+    void Print(OPS_Stream& s, int flag = 0);
 
-    Response *setResponse(const char **argv, int argc,
-			  OPS_Stream &s);
-    int getResponse(int responseID, Information &info);
+    Response* setResponse(const char** argv, int argc,
+        OPS_Stream& s);
+    int getResponse(int responseID, Information& info);
 
-    int addFiber(Fiber &theFiber);
+    int addFiber(Fiber& theFiber);
 
     // AddingSensitivity:BEGIN //////////////////////////////////////////
-    int setParameter(const char **argv, int argc, Parameter &param);
+    int setParameter(const char** argv, int argc, Parameter& param);
 
-    const Vector & getStressResultantSensitivity(int gradIndex, bool conditional);
-    const Matrix & getSectionTangentSensitivity(int gradIndex);
+    const Vector& getStressResultantSensitivity(int gradIndex, bool conditional);
+    const Matrix& getSectionTangentSensitivity(int gradIndex);
     int   commitSensitivity(const Vector& sectionDeformationGradient, int gradIndex, int numGrads);
 
-    const Vector & getSectionDeformationSensitivity(int gradIndex);
+    const Vector& getSectionDeformationSensitivity(int gradIndex);
     // AddingSensitivity:END ///////////////////////////////////////////
 
-	double determineFiberTemperature(const Vector& , double , double);
+    double determineFiberTemperature(const Vector&, double, double);
+    double getTemperature(void);  //WEIJI
+protected:
 
-  protected:
-
-  private:
+private:
     int numFibers, sizeFibers;                   // number of fibers in the section
-    UniaxialMaterial **theMaterials; // array of pointers to materials
-    double   *matData;               // data for the materials [yloc and area]
+    UniaxialMaterial** theMaterials; // array of pointers to materials
+    double* matData;               // data for the materials [yloc and area]
     double   kData[9];               // data for ks matrix
     double   sData[3];               // data for s vector
 
@@ -110,21 +110,21 @@ class FiberSection3dThermal : public SectionForceDeformation
 
     Vector e;          // trial section deformations
     Vector eCommit;    // committed section deformations
-    Vector *s;         // section resisting forces  (axial force, bending moment)
-    Matrix *ks;        // section stiffness
+    Vector* s;         // section resisting forces  (axial force, bending moment)
+    Matrix* ks;        // section stiffness
 
     // AddingSensitivity:BEGIN //////////////////////////////////////////
     int parameterID;
-    Matrix *SHVs;
+    Matrix* SHVs;
     // AddingSensitivity:END ///////////////////////////////////////////
 
 
     double   sTData[3];               //JZ data for s vector
-	Vector *sT;  // JZ  section resisting forces, caused by the temperature
-	//double  *TemperatureTangent; // JZ  the E of E*A*alpha*DeltaT
-    double *Fiber_T;  //An array storing the TempT of the fibers.
-	double *Fiber_TMax; //An array storing the TempTMax of the fibers.
-
+    Vector* sT;  // JZ  section resisting forces, caused by the temperature
+    //double  *TemperatureTangent; // JZ  the E of E*A*alpha*DeltaT
+    double* Fiber_T;  //An array storing the TempT of the fibers.
+    double* Fiber_TMax; //An array storing the TempTMax of the fibers.
+    double AverageTemperature; 
 };
 
 #endif

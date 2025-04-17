@@ -467,7 +467,7 @@ bool
 Domain::addNode(Node * node)
 {
   int nodTag = node->getTag();
-
+  
   TaggedObject *other = theNodes->getComponentPtr(nodTag);
   if (other != 0) {
     opserr << "Domain::addNode - node with tag " << nodTag << "already exists in model\n"; 

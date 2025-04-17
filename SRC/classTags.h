@@ -722,7 +722,10 @@
 #define ELE_TAG_PFEMElement2DQuasi        187
 #define ELE_TAG_MINI                      188
 #define ELE_TAG_PFEMElement3DBubble       189
-
+#define ELE_TAG_DispBeamColumn2dThermalAI       190
+#define ELE_TAG_DispBeamColumn2dThermalAI2      191
+#define ELE_TAG_DispBeamColumn3dThermalAI      192
+#define ELE_TAG_DispBeamColumn3dThermalAI2      193
 #define FRN_TAG_Coulomb            1
 #define FRN_TAG_VelDependent       2
 #define FRN_TAG_VelPressureDep     3

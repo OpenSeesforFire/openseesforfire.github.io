@@ -17,7 +17,7 @@
 **   Filip C. Filippou (filippou@ce.berkeley.edu)                     **
 **                                                                    **
 ** ****************************************************************** */
-                                                                        
+
 // $Revision: 1.14 $
 // $Date: 2007-10-13 00:03:31 $
 // $Source: /usr/local/cvs/OpenSees/SRC/element/dispBeamColumn/DispBeamColumn3dThermal.h,v $
@@ -49,22 +49,22 @@ class Response;
 
 class DispBeamColumn3dThermal : public Element
 {
-  public:
+public:
     DispBeamColumn3dThermal(int tag, int nd1, int nd2,
-		     int numSections, SectionForceDeformation **s,
-		     BeamIntegration &bi,
-		     CrdTransf &coordTransf, double rho = 0.0);
+        int numSections, SectionForceDeformation** s,
+        BeamIntegration& bi,
+        CrdTransf& coordTransf, double rho = 0.0);
     DispBeamColumn3dThermal();
     ~DispBeamColumn3dThermal();
 
-    const char *getClassType(void) const {return "DispBeamColumn3dThermal";};
+    const char* getClassType(void) const { return "DispBeamColumn3dThermal"; };
 
     int getNumExternalNodes(void) const;
-    const ID &getExternalNodes(void);
-    Node **getNodePtrs(void);
+    const ID& getExternalNodes(void);
+    Node** getNodePtrs(void);
 
     int getNumDOF(void);
-    void setDomain(Domain *theDomain);
+    void setDomain(Domain* theDomain);
 
     // public methods to set the state of the element    
     int commitState(void);
@@ -73,52 +73,52 @@ class DispBeamColumn3dThermal : public Element
 
     // public methods to obtain stiffness, mass, damping and residual information    
     int update(void);
-    const Matrix &getTangentStiff(void);
-    const Matrix &getInitialStiff(void);
-    const Matrix &getMass(void);
+    const Matrix& getTangentStiff(void);
+    const Matrix& getInitialStiff(void);
+    const Matrix& getMass(void);
 
     void zeroLoad();
-    int addLoad(ElementalLoad *theLoad, double loadFactor);
+    int addLoad(ElementalLoad* theLoad, double loadFactor);
     //int addLoad(ElementalLoad *theLoad, const Vector &loadFactors);
-    int addInertiaLoadToUnbalance(const Vector &accel);
+    int addInertiaLoadToUnbalance(const Vector& accel);
 
-    const Vector &getResistingForce(void);
-    const Vector &getResistingForceIncInertia(void);            
+    const Vector& getResistingForce(void);
+    const Vector& getResistingForceIncInertia(void);
 
     // public methods for element output
-    int sendSelf(int commitTag, Channel &theChannel);
-    int recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker 
-		  &theBroker);
-    int displaySelf(Renderer &theViewer, int displayMode, float fact, const char **modes, int numModes);
-    void Print(OPS_Stream &s, int flag =0);
+    int sendSelf(int commitTag, Channel& theChannel);
+    int recvSelf(int commitTag, Channel& theChannel, FEM_ObjectBroker
+        & theBroker);
+    int displaySelf(Renderer& theViewer, int displayMode, float fact, const char** modes, int numModes);
+    void Print(OPS_Stream& s, int flag = 0);
 
-    Response *setResponse(const char **argv, int argc, OPS_Stream &s);
-    int getResponse(int responseID, Information &eleInfo);
+    Response* setResponse(const char** argv, int argc, OPS_Stream& s);
+    int getResponse(int responseID, Information& eleInfo);
 
     // AddingSensitivity:BEGIN //////////////////////////////////////////
-    int setParameter(const char **argv, int argc, Parameter &param);
-    int            updateParameter(int parameterID, Information &info);
+    int setParameter(const char** argv, int argc, Parameter& param);
+    int            updateParameter(int parameterID, Information& info);
     int            activateParameter(int parameterID);
-    const Vector & getResistingForceSensitivity(int gradNumber);
-    const Matrix & getKiSensitivity(int gradNumber);
-    const Matrix & getMassSensitivity(int gradNumber);
+    const Vector& getResistingForceSensitivity(int gradNumber);
+    const Matrix& getKiSensitivity(int gradNumber);
+    const Matrix& getMassSensitivity(int gradNumber);
     int            commitSensitivity(int gradNumber, int numGrads);
     // AddingSensitivity:END ///////////////////////////////////////////
 
-  protected:
-    
-  private:
-    const Matrix &getInitialBasicStiff(void);
+protected:
+
+private:
+    const Matrix& getInitialBasicStiff(void);
 
     int numSections;
-    SectionForceDeformation **theSections; // pointer to the ND material objects
-    CrdTransf *crdTransf;        // pointer to coordinate transformation object 
+    SectionForceDeformation** theSections; // pointer to the ND material objects
+    CrdTransf* crdTransf;        // pointer to coordinate transformation object 
 
-    BeamIntegration *beamInt;
+    BeamIntegration* beamInt;
 
     ID connectedExternalNodes; // Tags of quad nodes
 
-    Node *theNodes[2];
+    Node* theNodes[2];
 
     static Matrix K;		// Element stiffness, damping, and mass Matrix
     static Vector P;		// Element resisting force vector
@@ -130,20 +130,18 @@ class DispBeamColumn3dThermal : public Element
 
     double rho;			// Mass density per unit length
 
-	//double *dataMix; //J.Jiang
-	int counterTemperature;//J.Jiang
-	double residThermal[5];//J.Jiang
-	double residThermalP[5]; //Liming
-	int parameterID;
+    //double *dataMix; //J.Jiang
+    int counterTemperature;//J.Jiang
+    double residThermal[5];//J.Jiang
+    double residThermalP[5]; //Liming
+    int parameterID;
 
-    enum {maxNumSections = 20};
+    enum { maxNumSections = 20 };
     static double workArea[];
 
-	double SectionThermalElong[20];
+    double SectionThermalElong[20];
     double AverageThermalElong;
-    
 
 };
 
 #endif
-

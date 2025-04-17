@@ -351,7 +351,7 @@ int
 DispBeamColumn3dThermal::commitState()
 {
     int retVal = 0;
-
+    //opserr << " commitState " << endln;
     // call element commitState to do any base class stuff
     if ((retVal = this->Element::commitState()) != 0) {
       opserr << "DispBeamColumn3dThermal::commitState () - failed in base class";
@@ -599,7 +599,7 @@ DispBeamColumn3dThermal::getTangentStiff()
 
   // Transform to global stiffness
   K = crdTransf->getGlobalStiffMatrix(kb, q);
-
+  //opserr << "K: " << K << endln;
   #ifdef _bDEBUG
   if(this->getTag() == 601 || this->getTag() == 602){
   opserr<<"DispBeam3d "<<this->getTag()<<" q after tangent: "<<q<<endln;
@@ -830,7 +830,6 @@ DispBeamColumn3dThermal::addLoad(ElementalLoad *theLoad, double loadFactor)
 
 //To consider thermal load
 else if (type == LOAD_TAG_Beam3dThermalAction) {
-      
 	// load not inside fire load pattern
 	 //static Vector factors(9);
 	 //factors.Zero();
@@ -872,14 +871,14 @@ else if (type == LOAD_TAG_Beam3dThermalAction) {
       bool zAxis = ((Beam3dThermalAction*)theLoad)->getZaxis(); //Mhd Anwar Orabi 2021
 	for (int i = 0; i < numSections; i++) {
 		// Get section stress resultant
-        if (zAxis)
+        //if (zAxis)
         {
             ((FiberSectionGJThermal*)theSections[i])->setZaxis(zAxis); //Mhd Anwar Orabi 2021 - Forces the section to be a GJ thermal section but this is bad! Need to check section type and assign based on that.
         }
-        
+
         const Vector& s = theSections[i]->getTemperatureStress(*dataMixV);
         
-		//opserr<< "Temperature  Stress "<<s<<endln;
+		// opserr<< "Temperature  Stress "<<s<<endln;
 
 		//apply temp along y
 		residThermal[0] = -s(0);
@@ -900,7 +899,6 @@ else if (type == LOAD_TAG_Beam3dThermalAction) {
   }
 //Added by Liming for implementation of NodalThermalAction
 else if (type == LOAD_TAG_NodalThermalAction) {
-
 	// load not inside fire load pattern
   //static Vector factors(9);
   //factors.Zero();
@@ -1220,7 +1218,7 @@ DispBeamColumn3dThermal::getResistingForce()
   Vector p0Vec(p0, 5);
   P = crdTransf->getGlobalResistingForce(q, p0Vec);
   //opserr<<"Beam "<<q<<endln;
-
+  //opserr << "P: " << P << endln;
   // Subtract other external nodal loads ... P_res = P_int - P_ext
    //opserr <<" Ele: "<< this->getTag()<< ", P "<<P<<endln;
   P.addVector(1.0, Q, -1.0);

@@ -389,7 +389,6 @@ double
 Steel01Thermal::getElongTangent(double TempT, double &ET, double &Elong, double TempTmax) //PK add to include max temp
 {
   //JZ updated, from rebar to C steel
-  
   // EN 1992 pt 1-2-1. Class N hot rolled  reinforcing steel at elevated temperatures
   if (TempT <= 80) {
     fy = fyT;

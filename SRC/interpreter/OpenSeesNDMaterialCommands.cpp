@@ -53,7 +53,11 @@ void* OPS_ConcreteS();
 void* OPS_PlaneStressUserMaterial();
 void* OPS_BeamFiberMaterial();
 void* OPS_PM4Sand();
-
+void* OPS_J2PlaneStressThermal();
+void* OPS_PlasticDamageConcretePlaneStressThermal();
+void* OPS_ElasticIsotropicMaterialThermal();
+void* OPS_PlateFromPlaneStressMaterialThermal();
+void* OPS_PlateFiberMaterialThermal();
 namespace {
 
     struct char_cmp { 
@@ -144,6 +148,12 @@ namespace {
 	nDMaterialsMap.insert(std::make_pair("BeamFiber", &OPS_BeamFiberMaterial));
 	nDMaterialsMap.insert(std::make_pair("PM4Sand", &OPS_BeamFiberMaterial));
 	
+	nDMaterialsMap.insert(std::make_pair("J2PlaneStressThermal", &OPS_J2PlaneStressThermal));
+	nDMaterialsMap.insert(std::make_pair("CDPPlaneStressThermal", &OPS_PlasticDamageConcretePlaneStressThermal));
+	nDMaterialsMap.insert(std::make_pair("ElasticIsotropicThermal", &OPS_ElasticIsotropicMaterialThermal));
+	nDMaterialsMap.insert(std::make_pair("ElasticIsotropic3DThermal", &OPS_ElasticIsotropicMaterialThermal));
+	nDMaterialsMap.insert(std::make_pair("PlateFromPlaneStressThermal", &OPS_PlateFromPlaneStressMaterialThermal));
+	nDMaterialsMap.insert(std::make_pair("PlateFiberThermal", &OPS_PlateFiberMaterialThermal));
 	return 0;
     }
 }

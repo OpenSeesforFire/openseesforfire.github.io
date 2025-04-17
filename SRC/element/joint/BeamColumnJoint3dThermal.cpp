@@ -101,20 +101,22 @@ void* OPS_BeamColumnJoint3dThermal()
 	   Vector dispLimits(3);
 	   dispLimits(0) = data[0]; dispLimits(1) = data[1]; dispLimits(2) = data[2];
 	   return new BeamColumnJoint3dThermal(idata[0], idata[1], idata[2],
-		   *mats[0], *mats[1], *mats[2], dispLimits);
+		   *mats[0], *mats[1], *mats[2],  data[0], data[1], data[2]);
 
    }
    else if (numArgs == 12) {
 	   int idata[9];
 	   int numdata = 9;
+	   opserr << "BeamColumnJoint3D is using more than 3 limits" << endln;
+	   
 	   if (OPS_GetIntInput(&numdata, idata) < 0) {
 		   opserr << "WARNING: invalid integer inputs\n";
 		   return 0;
 	   }
 
 	   numdata = OPS_GetNumRemainingInputArgs();
-	   double data[6] = { -1.0, -1.0, -1.0, -1.0,-1.0,-1.0 };
-	   numdata = 6;
+	   double data[3] = { -1.0, -1.0, -1.0};
+	   numdata = 3;
 	   if (numdata > 0) {
 		   const char* typeChar = OPS_GetString();
 		   if ((strcmp(typeChar, "-limit") == 0) || (strcmp(typeChar, "-Limit") == 0) || (strcmp(typeChar, "limit") == 0)) {
@@ -139,7 +141,7 @@ void* OPS_BeamColumnJoint3dThermal()
 	   
 
 	   return new BeamColumnJoint3dThermal(idata[0], idata[1], idata[2],
-		   *mats[0], *mats[1], *mats[2], *mats[3], *mats[4], *mats[5], dispLimits);
+		   *mats[0], *mats[1], *mats[2], *mats[3], *mats[4], *mats[5], data[0], data[1], data[2]);
 
    }
 
@@ -154,9 +156,10 @@ BeamColumnJoint3dThermal::BeamColumnJoint3dThermal(int tag, int Nd1, int Nd2,
 	UniaxialMaterial& theMat1,
 	UniaxialMaterial& theMat2,
 	UniaxialMaterial& theMat3,
-	Vector& dispLimit) :
+	double aLimit, double sLimit, double mLimit) :
 	Element(tag, ELE_TAG_BeamColumnJoint3d), connectedExternalNodes(2),
 	d0(0), v0(0), theMatrix(0), theVector(0), theLoad(0), elemType(1),
+	Alimit(aLimit), Slimit(sLimit), Mlimit(mLimit),
 	dimension(3), nDOF(0), transformation(6, 6)
 {
 	// ensure the connectedExternalNode ID is of correct size & set values
@@ -201,10 +204,10 @@ BeamColumnJoint3dThermal::BeamColumnJoint3dThermal(int tag, int Nd1, int Nd2,
 
 // full constructors for 6 materials:
 BeamColumnJoint3dThermal::BeamColumnJoint3dThermal(int tag,int Nd1, int Nd2, 
-				     UniaxialMaterial& theMat1,
-				     UniaxialMaterial& theMat2,
-				     UniaxialMaterial& theMat3, UniaxialMaterial& theMat4, UniaxialMaterial& theMat5, UniaxialMaterial& theMat6,
-					 Vector& dispLimit):
+				     UniaxialMaterial& theMat1, UniaxialMaterial& theMat2,
+					 UniaxialMaterial& theMat3, UniaxialMaterial& theMat4,
+				     UniaxialMaterial& theMat5, UniaxialMaterial& theMat6,
+	                 double aLimit, double sLimit, double mLimit):
   Element(tag,ELE_TAG_BeamColumnJoint3d), connectedExternalNodes(2),
 	d0(0), v0(0), theMatrix(0), theVector(0), theLoad(0), elemType(1),
 	dimension(3), nDOF(0), transformation(6, 6)
@@ -240,6 +243,18 @@ BeamColumnJoint3dThermal::BeamColumnJoint3dThermal(int tag,int Nd1, int Nd2,
   MaterialPtr[2] = theMat3.getCopy();
   if (!MaterialPtr[2]){
 		opserr << "ERROR : BeamColumnJoint::Constructor failed to get a copy of material 3"<< endln;}
+  MaterialPtr[3] = theMat4.getCopy();
+  if (!MaterialPtr[3]) {
+	  opserr << "ERROR : BeamColumnJoint::Constructor failed to get a copy of material 1" << endln;
+  }
+  MaterialPtr[4] = theMat5.getCopy();
+  if (!MaterialPtr[4]) {
+	  opserr << "ERROR : BeamColumnJoint::Constructor failed to get a copy of material 2" << endln;
+  }
+  MaterialPtr[5] = theMat6.getCopy();
+  if (!MaterialPtr[5]) {
+	  opserr << "ERROR : BeamColumnJoint::Constructor failed to get a copy of material 3" << endln;
+  }
   mInitialize = 1;
 }
 

@@ -30,6 +30,7 @@ all:         $(OBJS)
 	@$(CD) $(FE)/element/updatedLagrangianBeamColumn; $(MAKE);
 	@$(CD) $(FE)/element/forceBeamColumn; $(MAKE);
 	@$(CD) $(FE)/element/dispBeamColumnInt; $(MAKE);
+	@$(CD) $(FE)/element/dispBeam3dThermalAI; $(MAKE);
 	@$(CD) $(FE)/element/generic; $(MAKE);
 	@$(CD) $(FE)/element/elastomericBearing; $(MAKE);
 	@$(CD) $(FE)/element/frictionBearing; $(MAKE);
@@ -75,6 +76,7 @@ spotless: clean
 	@$(CD) $(FE)/element/updatedLagrangianBeamColumn; $(MAKE) wipe;
 	@$(CD) $(FE)/element/forceBeamColumn; $(MAKE) wipe;
 	@$(CD) $(FE)/element/dispBeamColumnInt; $(MAKE) wipe;
+	@$(CD) $(FE)/element/dispBeamColumn3dThermalAI; $(MAKE) wipe;
 	@$(CD) $(FE)/element/generic; $(MAKE) wipe;
 	@$(CD) $(FE)/element/elastomericBearing; $(MAKE) wipe;
 	@$(CD) $(FE)/element/adapter; $(MAKE) wipe;

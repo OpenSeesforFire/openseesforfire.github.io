@@ -139,7 +139,7 @@ MapOfTaggedObjects::getComponentPtr(int tag)
 {
     TaggedObject *removed =0;
     MAP_TAGGED_ITERATOR theEle;
-    
+
     // return 0 if component does not exist, otherwise remove it
     theEle = theMap.find(tag);
     if (theEle == theMap.end()) 
