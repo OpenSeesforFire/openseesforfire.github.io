@@ -893,8 +893,8 @@
     <ClCompile Include="..\..\..\SRC\element\fourNodeQuad\IGAQuad.cpp">
       <Filter>quad</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\SRC\element\shell\IGAShellMITC9.cpp">
-      <Filter>shell</Filter>
+    <ClCompile Include="..\..\..\SRC\element\dispBeamColumn\DispBeamColumn2dThermalAI.cpp">
+      <Filter>dispBeamColumn</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1564,8 +1564,16 @@
     <ClInclude Include="..\..\..\SRC\element\fourNodeQuad\IGAQuad.h">
       <Filter>quad</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\SRC\element\shell\IGAShellMITC9.h">
-      <Filter>shell</Filter>
+    <ClInclude Include="..\..\..\SRC\element\dispBeamColumn\DispBeamColumn2dThermalAI.h">
+      <Filter>dispBeamColumn</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="element.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

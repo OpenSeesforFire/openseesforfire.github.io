@@ -656,41 +656,17 @@
     <ClInclude Include="..\..\..\SRC\HeatTransfer\HTRecorder\HTMaterialResponse.h">
       <Filter>HTRecorder</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\FireModel.h">
-      <Filter>FireModels</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\ZoneModel\ZoneModel.h">
-      <Filter>FireModels\ZoneModel</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.h">
-      <Filter>FireModels\Idealised_uniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\NorminalFireEC1.h">
-      <Filter>FireModels\Idealised_uniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\ParametricFireEC1.h">
-      <Filter>FireModels\Idealised_uniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Uniform_Fires\UserDefinedFire.h">
-      <Filter>FireModels\Idealised_uniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.h">
-      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.h">
-      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.h">
-      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.h">
-      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\NaturalFire.h">
-      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\SRC\fire\Idealised_Nonuniform_fires\TravellingFire.h">
-      <Filter>FireModels\Idealised_nonuniform_fires</Filter>
-    </ClInclude>
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\FireModel.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\AlpertCeilingJetModel.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\Idealised_Local_Fire.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\LocalizedFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\LocalizedFireSFPE.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\NaturalFire.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Nonuniform_fires\TravellingFire.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Uniform_Fires\EmpericalCompartmentFire.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Uniform_Fires\NorminalFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Uniform_Fires\ParametricFireEC1.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\Idealised_Uniform_Fires\UserDefinedFire.h" />
+    <ClInclude Include="..\..\..\SRC\HeatTransfer\fire\ZoneModel\ZoneModel.h" />
   </ItemGroup>
 </Project>
